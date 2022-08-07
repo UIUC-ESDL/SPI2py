@@ -1,18 +1,13 @@
-# This is a sample Python script.
-
-# Press ⌃R to execute it or replace it with your code.
-# Press Double ⇧ to search everywhere for classes, files, tool windows, actions, and settings.
-
-# This is a change
-# This is another change
-
-def print_hi(name):
-    # Use a breakpoint in the code line below to debug your script.
-    print(f'Hi, {name}')  # Press ⌘F8 to toggle the breakpoint.
+import numpy as np
+from scipy.optimize import minimize, show_options
 
 
-# Press the green button in the gutter to run the script.
-if __name__ == '__main__':
-    print_hi('PyCharm')
+def callback(xk):
+    print('xk', xk)
 
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
+
+def fun(x): return x ** 2 + 2
+
+
+x0 = np.array([1, 2, 3])
+res = minimize(fun, x0, method='COBYLA', callback=callback)
