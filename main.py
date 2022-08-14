@@ -1,6 +1,7 @@
 import numpy as np
 import json
 import yaml
+from datetime import datetime
 from scipy.optimize import minimize, show_options
 from scipy.spatial.distance import pdist, cdist
 from time import perf_counter_ns
@@ -10,8 +11,8 @@ from time import perf_counter_ns
 with open('config.yaml', 'r') as f:
     config = yaml.safe_load(f)
 
-# with open(config['Input Filepath'], 'r') as f:
-#     inputs = json.load(f)
+with open(config['Input Filepath'], 'r') as f:
+    inputs = json.load(f)
 
 # outputs = {'Placeholder': 1}
 #

@@ -1,3 +1,8 @@
-Input Filepath : "Input/input.json",
-  "Output Filepath" : "Output/output.json",
-  "Components": "1"
+Input Filepath : Input/input.json
+Output Filepath : Output/output.json
+
+Visualization :
+
+  # Value between 0 and 20
+  resolution: 8
+
