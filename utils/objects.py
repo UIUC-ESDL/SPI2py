@@ -10,7 +10,10 @@ from itertools import product, combinations
 
 
 class Object:
-    def __init__(self):
+
+    # Can I add a component instance counter here? Do I need it?
+
+    def __init__(self, name, positions, radii):
         pass
 
 

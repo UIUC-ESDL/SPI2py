@@ -159,7 +159,7 @@ def translate():
     pass
 
 
-def rotate(positions, angles,):
+def rotate(positions, angles, reverse_direction=False):
     """
     ...
 
@@ -170,8 +170,12 @@ def rotate(positions, angles,):
     :return:
     """
 
-    r = from_euler()
+    r = Rotation.from_euler('xyz', [angles[0], angles[1], angles[2]], degrees= True)
 
+    # If reverse then invert rotation matrix...
 
+    positions_rotated = r.apply(positions)
+
+    return positions_rotated
 
 
