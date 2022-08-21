@@ -146,7 +146,7 @@ def calculate_gap(radius1, radius2, min_dist):
     gap=0 means tangent
     gap>0 means overlap
 
-    :param radius1:
+    :param radius1: int
     :param radius2:
     :param min_dist:
     :return:
