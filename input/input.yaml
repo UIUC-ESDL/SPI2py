@@ -1,0 +1,24 @@
+components:
+    0:
+        name: component0
+        position: [[0,0,0]]
+        dimensions: [[1,2,3]]
+        diameters: [0.25]
+    1:
+        name: component1
+        position: [ [ 0,0,0 ] ]
+        dimensions: [ [ 1,2,3 ] ]
+        diameters: [ 0.25 ]
+
+interconnects:
+    0:
+        Component 1: 0
+        Component 2: 1
+        diameter: 0.25
+
+structures:
+    0:
+        name: structure0
+        position: [[0,0,0]]
+        dimensions: [[1,2,3]]
+        diameters: [0.25]
