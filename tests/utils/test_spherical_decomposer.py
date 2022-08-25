@@ -1,4 +1,4 @@
-from utils.spherical_decomposer import generate_rectangular_prism
+from utils.shape_generator import generate_rectangular_prism
 
 
 def test_no_origin():

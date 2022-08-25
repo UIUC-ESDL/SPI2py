@@ -1,4 +1,4 @@
-from utils.spherical_decomposer import generate_rectangular_prism
+from utils.shape_generator import generate_rectangular_prism, generate_rectangular_prisms
 from utils.visualization import plot, plot_sphere
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
@@ -25,3 +25,9 @@ plot_dict = {'object1':{'positions':pos,
 
 plot(plot_dict)
 
+
+dimensions = [[1,1,1]]
+diameter = [0.5]
+position = [[0,0,0]]
+
+pos, rad = generate_rectangular_prism(dimensions,diameter, position)
