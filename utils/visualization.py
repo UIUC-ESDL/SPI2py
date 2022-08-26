@@ -63,3 +63,42 @@ def plot(plot_dict):
     ax.set_ylim(0, 2)
     ax.set_zlim(0, 2)
     plt.show()
+
+
+
+    import os
+    import imageio.v2 as imageio
+    import tempfile
+
+def generate_gif(layout, design_vector_log, frames_per_figure, name):
+
+    temp = tempfile.TemporaryDirectory()
+    tempDir = temp.name
+
+    def plot_all(design_vectors):
+        i = 1
+        for xk in design_vectors:
+            new_positions_dict = layout.calculate_positions(xk)
+            layout.update_positions(new_positions_dict)
+
+            layout.plot_layout(savefig=True, temp_directory=tempDir)
+
+            i += 1
+
+    plot_all(design_vector_log)
+
+    files = os.listdir(tempDir)
+
+    # Sort files based on numerical order (i.e., 1,2,... 11,12 not 1,11,12,2,...)
+    order = [int(file[0:-4]) for file in files]
+    files = [file for _, file in sorted(zip(order, files))]
+
+    filenames = [tempDir + '/' + filename for filename in files]
+
+    with imageio.get_writer(name, mode='I') as writer:
+
+        for filename in filenames:
+            image = imageio.imread(filename)
+
+            for _ in range(frames_per_figure):
+                writer.append_data(image)
