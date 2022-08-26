@@ -5,7 +5,7 @@
 import numpy as np
 
 
-def generate_rectangular_prism(dimension, diameter, origin=None):
+def generate_rectangular_prism(origin, dimension, diameter):
     """
 
     :param dimension:
@@ -13,10 +13,6 @@ def generate_rectangular_prism(dimension, diameter, origin=None):
     :param origin:
     :return:
     """
-    if origin is None:
-        origin_x, origin_y, origin_z = 0, 0, 0
-    else:
-        origin_x, origin_y, origin_z = origin
 
     radius = diameter / 2
 
@@ -27,9 +23,9 @@ def generate_rectangular_prism(dimension, diameter, origin=None):
     num_z_spheres = int(len_z // diameter)
 
     # Positions
-    pos_x = origin_x + radius
-    pos_y = origin_y + radius
-    pos_z = origin_z + radius
+    pos_x = origin[0] + radius
+    pos_y = origin[1] + radius
+    pos_z = origin[2] + radius
 
     x = np.linspace(pos_x, pos_x + len_x, num_x_spheres)
     y = np.linspace(pos_y, pos_y + len_y, num_y_spheres)
@@ -45,11 +41,13 @@ def generate_rectangular_prism(dimension, diameter, origin=None):
     return positions, radii
 
 
-def generate_rectangular_prisms(dimensions, diameters, origins= None):
+def generate_rectangular_prisms(origins, dimensions, diameters):
 
-    # Add an if statement for origins
+    positions, radii = np.empty(0), np.empty(0)
 
-    for dimension, diameter, origin in zip(dimensions, diameters, origins):
-        pos, rad = generate_rectangular_prism(dimension,diameter,origin)
+    for origin, dimension, diameter in zip(origins, dimensions, diameters):
+        sphere_positions, sphere_radius = generate_rectangular_prism(origin, dimension,diameter)
+        positions = np.append(positions, sphere_positions)
+        radii = np.append(radii, sphere_radius)
 
-    return pos, rad
+    return positions, radii
