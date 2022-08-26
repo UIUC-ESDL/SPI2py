@@ -66,9 +66,9 @@ def plot(plot_dict):
 
 
 
-    import os
-    import imageio.v2 as imageio
-    import tempfile
+import os
+import imageio.v2 as imageio
+import tempfile
 
 def generate_gif(layout, design_vector_log, frames_per_figure, name):
 
