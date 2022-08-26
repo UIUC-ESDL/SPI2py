@@ -43,11 +43,11 @@ def generate_rectangular_prism(origin, dimension, diameter):
 
 def generate_rectangular_prisms(origins, dimensions, diameters):
 
-    positions, radii = np.empty(0), np.empty(0)
+    positions, radii = np.empty((0,3)), np.empty(0)
 
     for origin, dimension, diameter in zip(origins, dimensions, diameters):
         sphere_positions, sphere_radius = generate_rectangular_prism(origin, dimension,diameter)
-        positions = np.append(positions, sphere_positions)
+        positions = np.vstack((positions, sphere_positions))
         radii = np.append(radii, sphere_radius)
 
     return positions, radii

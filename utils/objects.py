@@ -24,17 +24,23 @@ class Object:
 
 
 
-class Component:
+class Component(Object):
+
+    # def __init__(self):
+    #     pass
+
+    def get_design_vector(self):
+        pass
+
+class Interconnect(Object):
     def __init__(self):
         pass
 
-
-class Interconnect:
+class InterconnectNode(Object):
     def __init__(self):
         pass
 
-
-class Structure:
+class Structure(Object):
     def __init__(self):
         pass
 
