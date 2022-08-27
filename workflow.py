@@ -8,7 +8,7 @@ from time import perf_counter_ns
 
 from utils.layout_generator import generate_layout
 from utils.shape_generator import generate_rectangular_prism, generate_rectangular_prisms
-from utils.objects import Component, Interconnect, InterconnectNode, Structure
+from utils.objects import Component, Interconnect, InterconnectNode, Structure, Layout
 
 
 # Set filepaths
@@ -35,6 +35,7 @@ for component in inputs['components']:
     components.append(Component(name,positions,radii))
 
 interconnect_nodes = []
+# Add more...
 
 
 interconnects = []
@@ -55,10 +56,20 @@ for structure in inputs['structures']:
     positions, radii = generate_rectangular_prisms(origins, dimensions, diameters)
     structures.append(Structure(positions, radii))
 
+layout = Layout(components, interconnect_nodes, interconnects, structures)
+
 
 # Generate random initial layouts
 
 # Set positions...
+
+
+# Run solver...
+
+
+
+
+
 
 # outputs = {'Placeholder': 1}
 #

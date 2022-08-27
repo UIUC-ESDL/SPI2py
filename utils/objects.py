@@ -47,15 +47,50 @@ class InterconnectNode(Object):
         pass
 
 class Structure(Object):
-    # def __init__(self):
-    #     pass
+    pass
 
 
 class Layout:
-    def __init__(self):
+    def __init__(self, components, interconnect_nodes, interconnects, structures):
+        self.components = components
+        self.interconnect_nodes = interconnect_nodes
+        self.interconnects = interconnects
+        self.structures = structures
+
+        self.objects = components + interconnect_nodes + interconnects + structures
+
+        #
+        self.design_vector_objects = components + interconnect_nodes
+
+        # Get possible collision pairs
+        self.component_component_pairs = 1
+        self.component_interconnect_pairs = 1
+        self.interconnect_interconnect_pairs = 1
+        self.structure_all_pairs = 1
+
+    def get_component_component_pairs(self):
         pass
 
-        # Objective pairs
+    def get_component_interconnect_pairs(self):
+        pass
 
-        # Collision pairs
+    def get_interconnect_interconnect_pairs(self):
+        pass
+
+    def get_structure_all_pairs(self):
+        pass
+
+    def get_design_vector(self):
+        pass
+
+    def get_positions(self):
+        pass
+
+    def get_radii(self):
+        pass
+
+    def plot(self):
+        pass
+
+
 
