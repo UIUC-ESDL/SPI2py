@@ -51,3 +51,6 @@ def generate_rectangular_prisms(origins, dimensions, diameters):
         radii = np.append(radii, sphere_radius)
 
     return positions, radii
+
+def generate_line_segment(position_1, position_2, diameter):
+    pass

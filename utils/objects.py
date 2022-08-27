@@ -14,8 +14,7 @@ class Object:
 
     # Can I add a component instance counter here? Do I need it?
 
-    def __init__(self, name, positions, radii):
-        self.name = name
+    def __init__(self, positions, radii):
         self.positions = positions
         self.radii = radii
 
@@ -26,23 +25,30 @@ class Object:
 
 class Component(Object):
 
-    # def __init__(self):
-    #     pass
+    def __init__(self, name, positions, radii):
+        self.name = name
+        self.positions = positions
+        self.radii = radii
 
     def get_design_vector(self):
         pass
 
 class Interconnect(Object):
-    def __init__(self):
-        pass
+    def __init__(self, component_1, component_2, diameter):
+        self.component_1 = component_1
+        self.component_2 = component_2
+        self.diameter = diameter
+
+        # Create edge tuple for NetworkX graphs
+        self.edge = (self.component_1, self.component_2)
 
 class InterconnectNode(Object):
     def __init__(self):
         pass
 
 class Structure(Object):
-    def __init__(self):
-        pass
+    # def __init__(self):
+    #     pass
 
 
 class Layout:
