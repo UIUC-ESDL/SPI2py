@@ -53,6 +53,8 @@ class Structure(Object):
 class Layout:
     def __init__(self, components, interconnect_nodes, interconnects, structures):
         self.components = components
+
+        # Vertices
         self.interconnect_nodes = interconnect_nodes
         self.interconnects = interconnects
         self.structures = structures
