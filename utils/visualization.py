@@ -5,9 +5,13 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
+import os
+import imageio.v2 as imageio
+import tempfile
+from utils.shape_generator import generate_rectangular_prism
+
 
 def plot_sphere(position, radius, color, ax):
-
     # The effective resolution of the sphere
     num_points = 12
 
@@ -22,7 +26,6 @@ def plot_sphere(position, radius, color, ax):
 
 
 def plot(plot_dict):
-
     """
     Plots objects...
 
@@ -45,15 +48,11 @@ def plot(plot_dict):
     objects = list(plot_dict.keys())
     for obj in objects:
         positions = plot_dict[obj]['positions']
-        radii = plot_dict[obj]['radius']
+        radii = plot_dict[obj]['radii']
         color = plot_dict[obj]['color']
 
         for position, radius in zip(positions, radii):
             plot_sphere(position, radius, color, ax)
-
-
-
-
 
     ax.set_xlabel('X Label')
     ax.set_ylabel('Y Label')
@@ -66,12 +65,8 @@ def plot(plot_dict):
 
 
 
-import os
-import imageio.v2 as imageio
-import tempfile
 
 def generate_gif(layout, design_vector_log, frames_per_figure, name):
-
     temp = tempfile.TemporaryDirectory()
     tempDir = temp.name
 

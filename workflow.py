@@ -26,6 +26,7 @@ layout = generate_layout(inputs)
 
 
 # Generate random initial layouts
+positions = layout.generate_random_layout()
 
 # Set positions...
 

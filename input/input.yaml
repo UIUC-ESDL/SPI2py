@@ -23,6 +23,6 @@ structures:
     0:
         name: structure0
         color: black
-        origins: [[0,0,0]]
-        dimensions: [[1,2,3]]
-        diameters: [0.25]
+        origins: [[-1,-1,-1]]
+        dimensions: [[1,1,1]]
+        diameters: [0.5]
