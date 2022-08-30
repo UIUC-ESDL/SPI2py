@@ -62,7 +62,7 @@ class Interconnect(Object):
         self.edge = (self.component_1, self.component_2)
 
         # Placeholder for plot test functionality, random positions
-        self.positions = np.array([1,2,3])
+        self.positions = np.array([[1, 2, 3]])
         self.radii = np.array([0.5])
 
     def get_edge(self):
@@ -158,7 +158,7 @@ class Layout:
             object_plot_dict['color'] = color
 
             layout_plot_dict[obj] = object_plot_dict
-
+        print('wait here')
         plot(layout_plot_dict)
 
 

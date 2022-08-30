@@ -58,9 +58,9 @@ def plot(plot_dict):
     ax.set_ylabel('Y Label')
     ax.set_zlabel('Z Label')
 
-    ax.set_xlim(0, 2)
-    ax.set_ylim(0, 2)
-    ax.set_zlim(0, 2)
+    ax.set_xlim(-5, 5)
+    ax.set_ylim(-5, 5)
+    ax.set_zlim(-5, 5)
     plt.show()
 
 

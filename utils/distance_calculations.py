@@ -11,9 +11,19 @@ from time import perf_counter_ns
 
 # Check shapely min dist function speed
 
+@njit
+def min_cdist_njit(a, b):
+    return np.min(cdist(a, b))
 
 def min_cdist(a, b):
     return np.min(cdist(a, b))
+
+from time import perf_counter_ns
+
+a = np.array([[1., 2., 3.]])
+b = np.array([[2., 3., 4.]])
+
+
 
 
 def min_kdtree_distance(tree, positions):
@@ -33,12 +43,23 @@ def min_kdtree_distance(tree, positions):
 
 @njit
 def min_point_line_distance(p, a, b):
+    """
+    Function not tested for all conditions yet
+
+    :param p:
+    :param a:
+    :param b:
+    :return:
+    """
+
     return np.linalg.norm(np.dot(p - b, a - b) / np.dot(a - b, a - b) * (a - b) + b - p)
 
 
 # @njit
 def min_line_line_distance(a0, a1, b0, b1):
     """
+    Function not tested for all conditions yet
+
     Given two lines defined by numpy.array pairs (a0,a1,b0,b1)
     Return the closest points on each segment and their distance
 

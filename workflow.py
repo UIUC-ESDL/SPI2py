@@ -23,10 +23,12 @@ with open(config['Input Filepath'], 'r') as f:
 # Initialize the layout
 layout = generate_layout(inputs)
 
+layout.plot_layout()
+
 
 
 # Generate random initial layouts
-positions = layout.generate_random_layout()
+# positions = layout.generate_random_layout()
 
 # Set positions...
 

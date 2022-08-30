@@ -14,9 +14,8 @@ def generate_layout(inputs):
         color = inputs['components'][component]['color']
         origins = inputs['components'][component]['origins']
         dimensions = inputs['components'][component]['dimensions']
-        diameters = inputs['components'][component]['diameters']
 
-        positions, radii = generate_rectangular_prisms(origins, dimensions, diameters)
+        positions, radii = generate_rectangular_prisms(origins, dimensions)
         components.append(Component(positions, radii, color, node, name))
 
     interconnect_nodes = []
@@ -37,9 +36,8 @@ def generate_layout(inputs):
         color = inputs['structures'][structure]['color']
         origins = inputs['structures'][structure]['origins']
         dimensions = inputs['structures'][structure]['dimensions']
-        diameters = inputs['structures'][structure]['diameters']
 
-        positions, radii = generate_rectangular_prisms(origins, dimensions, diameters)
+        positions, radii = generate_rectangular_prisms(origins, dimensions)
         structures.append(Structure(positions, radii, color))
 
     layout = Layout(components, interconnect_nodes, interconnects, structures)
