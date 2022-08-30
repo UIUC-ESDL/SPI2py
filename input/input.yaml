@@ -1,17 +1,20 @@
 components:
     0:
         name: component0
+        color: blue
         origins: [ [ 0, 0, 0 ] ]
         dimensions: [ [ 1, 1, 1 ]]
         diameters: [0.5]
     1:
         name: component1
+        color: blue
         origins: [ [ 2,2,2 ] ]
         dimensions: [ [ 1,1,1 ] ]
         diameters: [ 0.5 ]
 
 interconnects:
     0:
+        color: gray
         component 1: 0
         component 2: 1
         diameter: 0.25
@@ -19,6 +22,7 @@ interconnects:
 structures:
     0:
         name: structure0
+        color: black
         origins: [[0,0,0]]
         dimensions: [[1,2,3]]
         diameters: [0.25]

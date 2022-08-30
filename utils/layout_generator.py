@@ -1,57 +1,46 @@
-import yaml
-from utils.shape_generator import generate_rectangular_prism, generate_rectangular_prisms
-from utils.visualization import plot, plot_sphere
-import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
+"""
 
+"""
 
-def spherical_decomposition(self, dimensions, diameters, origins):
-    """
-    Generates a set of spheres packaged into a given volume
+from utils.objects import Component, Interconnect, InterconnectNode, Structure, Layout
+from utils.shape_generator import generate_rectangular_prisms
 
-    For now, we are only using rectangular prisms
-
-    :param dimensions:
-    :param diameters:
-    :param origins:
-    :return:
-    """
-
-    positions, radii = generate_rectangular_prisms(dimensions, diameters, origins)
-
-    return positions, radii
 
 def generate_layout(inputs):
+    components = []
+    for component in inputs['components']:
+        node = component
+        name = inputs['components'][component]['name']
+        color = inputs['components'][component]['color']
+        origins = inputs['components'][component]['origins']
+        dimensions = inputs['components'][component]['dimensions']
+        diameters = inputs['components'][component]['diameters']
 
-    pass
+        positions, radii = generate_rectangular_prisms(origins, dimensions, diameters)
+        components.append(Component(node, name, color, positions, radii))
+
+    interconnect_nodes = []
+    # Add more...
+
+    interconnects = []
+    for interconnect in inputs['interconnects']:
+        component_1 = inputs['interconnects'][interconnect]['component 1']
+        component_2 = inputs['interconnects'][interconnect]['component 2']
+        diameter = inputs['interconnects'][interconnect]['diameter']
+
+        interconnects.append(Interconnect(component_1, component_2, diameter))
+
+    structures = []
+    for structure in inputs['structures']:
+        origins = inputs['structures'][structure]['origins']
+        dimensions = inputs['structures'][structure]['dimensions']
+        diameters = inputs['structures'][structure]['diameters']
+
+        positions, radii = generate_rectangular_prisms(origins, dimensions, diameters)
+        structures.append(Structure(positions, radii))
+
+    layout = Layout(components, interconnect_nodes, interconnects, structures)
+
+    return layout
 
 
-
-# dimensions = [1,1,1]
-# diameter = 0.5
-# position = [0,0,0]
-#
-# pos, rad = generate_rectangular_prism(dimensions,diameter, position)
-#
-# fig = plt.figure()
-# ax = fig.add_subplot(projection='3d')
-#
-# x = pos[:,0]
-# y = pos[:,1]
-# z = pos[:,2]
-#
-# ax.scatter(x,y,z, marker='.', s=100)
-#
-# plot_dict = {'object1':{'positions':pos,
-#                         'radius': rad,
-#                         'color': 'r'}
-#              }
-#
-# plot(plot_dict)
-#
-#
-# dimensions = [[1,1,1]]
-# diameters = [0.5]
-# positions = [[0,0,0]]
-#
-# pos, rad = generate_rectangular_prisms(dimensions,diameters, positions)

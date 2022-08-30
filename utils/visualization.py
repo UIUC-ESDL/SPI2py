@@ -28,7 +28,7 @@ def plot(plot_dict):
 
     {
     object1:    {
-                spheres:
+                positions:
                 radii:
                 color
                 }
