@@ -8,7 +8,7 @@ components:
     1:
         name: component1
         color: orange
-        origins: [ [ 2,2,2 ] ]
+        origins: [ [ 0,0,0 ] ]
         dimensions: [ [ 1,1,2 ] ]
 
 interconnects:
@@ -23,4 +23,4 @@ structures:
         name: structure0
         color: black
         origins: [[-1,-1,-1]]
-        dimensions: [[1,1,1]]
+        dimensions: [[2,2,1]]

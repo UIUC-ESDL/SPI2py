@@ -3,21 +3,23 @@ Docstring
 
 """
 
-
 import numpy as np
 import networkx as nx
 from itertools import product, combinations
 from utils.shape_generator import generate_rectangular_prism, generate_rectangular_prisms
 from utils.visualization import plot
+from utils.transformations import translate, rotate
+
 
 class Object:
 
     # Can I add a component instance counter here? Do I need it?
 
-    def __init__(self, positions, radii, color):
+    def __init__(self, positions, radii, color, name):
         self.positions = positions
         self.radii = radii
         self.color = color
+        self.name = name
 
     def get_positions(self):
         return self.positions
@@ -32,9 +34,8 @@ class Object:
 class Component(Object):
 
     def __init__(self, positions, radii, color, node, name):
-        super().__init__(positions, radii, color)
+        super().__init__(positions, radii, color, name)
         self.node = node
-        self.name = name
 
     def get_node(self):
         return self.node
@@ -62,7 +63,7 @@ class Interconnect(Object):
         self.edge = (self.component_1, self.component_2)
 
         # Placeholder for plot test functionality, random positions
-        self.positions = np.array([[1, 2, 3]])
+        self.positions = np.array([[0, 0, 0]])
         self.radii = np.array([0.5])
 
     def get_edge(self):
@@ -70,7 +71,8 @@ class Interconnect(Object):
 
 
 class Structure(Object):
-    pass
+    def __init__(self, positions, radii, color, name):
+        super().__init__(positions, radii, color, name)
 
 
 class Layout:
@@ -142,11 +144,9 @@ class Layout:
         pass
 
     def plot_layout(self):
-
         layout_plot_dict = {}
 
         for obj in self.objects:
-
             object_plot_dict = {}
 
             positions = obj.get_positions()
@@ -161,11 +161,4 @@ class Layout:
         print('wait here')
         plot(layout_plot_dict)
 
-
-
         # return layout_plot_dict
-
-
-
-
-

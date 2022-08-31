@@ -4,26 +4,11 @@
 
 import numpy as np
 from scipy.spatial.distance import cdist, pdist
-from scipy.spatial.transform import Rotation
-from numba import jit, njit
-from time import perf_counter_ns
+from numba import njit
 
-
-# Check shapely min dist function speed
-
-@njit
-def min_cdist_njit(a, b):
-    return np.min(cdist(a, b))
 
 def min_cdist(a, b):
     return np.min(cdist(a, b))
-
-from time import perf_counter_ns
-
-a = np.array([[1., 2., 3.]])
-b = np.array([[2., 3., 4.]])
-
-
 
 
 def min_kdtree_distance(tree, positions):
@@ -156,7 +141,7 @@ def min_line_line_distance(a0, a1, b0, b1):
             pA = a0 + (_A * dot)
 
     return pA, pB, np.linalg.norm(pA - pB)
-#
+
 
 def calculate_gap(radius1, radius2, min_dist):
     """
@@ -175,25 +160,4 @@ def calculate_gap(radius1, radius2, min_dist):
     return radius1 + radius2 - min_dist
 
 
-def translate():
-    pass
 
-
-def rotate(positions, angles, reverse_direction=False):
-    """
-    ...
-
-    how make reversible for FD...
-    https://math.stackexchange.com/questions/838885/reverse-of-a-rotation-matrix-for-superposition-colon-a-on-b-to-b-on-a
-
-
-    :return:
-    """
-
-    r = Rotation.from_euler('xyz', [angles[0], angles[1], angles[2]], degrees=True)
-
-    # If reverse then invert rotation matrix...
-
-    positions_rotated = r.apply(positions)
-
-    return positions_rotated

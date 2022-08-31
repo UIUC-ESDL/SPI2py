@@ -38,7 +38,7 @@ def generate_layout(inputs):
         dimensions = inputs['structures'][structure]['dimensions']
 
         positions, radii = generate_rectangular_prisms(origins, dimensions)
-        structures.append(Structure(positions, radii, color))
+        structures.append(Structure(positions, radii, color, name))
 
     layout = Layout(components, interconnect_nodes, interconnects, structures)
 
