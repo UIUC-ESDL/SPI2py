@@ -36,6 +36,7 @@ def min_kdtree_distance(tree, positions):
 def min_point_line_distance(p, a, b):
     """
     Function not tested for all conditions yet
+    #change name to segment
 
     :param p: (3,)
     :param a: (3,)
@@ -50,7 +51,7 @@ def min_point_line_distance(p, a, b):
 def min_line_line_distance(a0, a1, b0, b1):
     """
     Function not tested for all conditions yet
-
+    # sgement segment
     Given two lines defined by numpy.array pairs (a0,a1,b0,b1)
     Return the closest points on each segment and their distance
 

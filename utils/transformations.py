@@ -2,37 +2,61 @@
 
 """
 
-import numpy as np
-from scipy.spatial.transform import Rotation
-from numba import njit
+import jax.numpy as jnp
+from jax import jit
+from jax.numpy import sin, cos
 
 
-def translate(current_reference_point, new_reference_point):
+@jit
+def translate(current_positions, current_reference_point, new_reference_point):
     """
-    Takes the change in the object's reference point and returns the new position of each sphere
-    :param current_position:
-    :param new_position:
-    :return:
-    """
-    x_current, y_current, z_current
+    Translates a set of points based on the change in position of a reference point
 
-
-def rotate(positions, angles, reverse_direction=False):
-    """
-    ...
-    change for design vectors...?
-
-    how make reversible for FD...
-    https://math.stackexchange.com/questions/838885/reverse-of-a-rotation-matrix-for-superposition-colon-a-on-b-to-b-on-a
-
-
+    :param current_positions:
+    :param current_reference_point:
+    :param new_reference_point:
     :return:
     """
 
-    r = Rotation.from_euler('xyz', [angles[0], angles[1], angles[2]], degrees=True)
+    delta_x, delta_y, delta_z = new_reference_point - current_reference_point
 
-    # If reverse then invert rotation matrix...
+    new_positions = current_positions + jnp.array([delta_x, delta_y, delta_z])
 
-    positions_rotated = r.apply(positions)
+    return new_positions
 
-    return positions_rotated
+
+@jit
+def rotate(current_positions, current_reference_point, new_reference_point):
+    """
+    Rotates a set of points based on the change of rotation of a reference point
+
+    Need to verify the function rotates correctly
+    Angles in radians...
+
+    :param current_positions:
+    :param current_reference_point:
+    :param new_reference_point:
+    :return:
+    """
+
+    delta_theta_x, delta_theta_y, delta_theta_z = new_reference_point - current_reference_point
+
+    r_x = jnp.array([[1, 0,                  0                  ],
+                     [0, cos(delta_theta_x), -sin(delta_theta_x)],
+                     [0, sin(delta_theta_x), cos(delta_theta_x)]])
+
+    r_y = jnp.array([[cos(delta_theta_y),  0, sin(delta_theta_y)],
+                     [0,                   1, 0                 ],
+                     [-sin(delta_theta_y), 0, cos(delta_theta_y)]])
+
+    r_z = jnp.array([[cos(delta_theta_z), -sin(delta_theta_z), 0],
+                     [sin(delta_theta_z), cos(delta_theta_z),  0],
+                     [0,                  0,                   1]])
+
+    # Apple rotation matrix with ZYX Euler angle convention
+    r = r_z @ r_y @ r_x
+
+    # Transpose positions from [[x1,y1,z1],[x2... ] to [[x1,x2,x3],[y1,... ]
+    new_positions = r @ current_positions.T
+
+    return new_positions
