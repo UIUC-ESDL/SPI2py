@@ -3,9 +3,8 @@
 """
 
 import jax.numpy as jnp
-from jax import jit, grad
+from jax import jit, grad, jacfwd
 from jax.numpy.linalg import norm
-from jax import jacfwd
 
 from scipy.optimize import minimize, Bounds, NonlinearConstraint
 
@@ -52,11 +51,18 @@ def hessian(x):
 
 
 
-x0 = jnp.array([[1., 2., 3.], [4., 3., 1.], [0., 5., 2.]])
-x0 = x0.reshape(-1)
-
-ans = objective_function(x0 )
-print(ans)
+# x0 = jnp.array([[1., 2., 3.], [4., 3., 1.], [0., 5., 2.]])
+# x0 = x0.reshape(-1)
+#
+#
+# def f(x): return x ** 2
+#
+# def g(x): return grad(f)(x)
+#
+# def h(x): return jacfwd(g)(x)
+#
+# ans = objective_function(x0 )
+# print(ans)
 
 
 
@@ -92,7 +98,8 @@ def constraint_function():
 
     pass
 
-def solver(x0):
+# for testability take objective and constraint functions as args too
+def solver(fun, x0, con, jac, hessian):
     """
     Constrained optimization...
 
@@ -102,14 +109,20 @@ def solver(x0):
     :return:
     """
 
-    def fun(x):
-        return objective_function(x), objective_function_gradient(x)
+    # def fun(x):
+    #     return objective_function(x), objective_function_gradient(x)
 
     # fun = (objective_function, objective_function_gradient)
 
 
     # bounds = Bounds()
 
-    res = minimize(fun, x0, method='trust-constr', jac=True, hess=hessian)
+    res = minimize(fun, x0, method='trust-constr', jac=jac, hess=hessian)
 
     return res
+
+
+
+
+
+
