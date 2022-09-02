@@ -95,11 +95,13 @@ class Layout:
         #
         self.design_vector_objects = components + interconnect_nodes
 
-        # Get possible collision pairs
+        # Get possible object collision pairs
         self.component_component_pairs = 1
         self.component_interconnect_pairs = 1
         self.interconnect_interconnect_pairs = 1
         self.structure_all_pairs = 1
+
+        self.all_pairs = self.component_component_pairs+self.component_interconnect_pairs+self.interconnect_interconnect_pairs+self.structure_all_pairs
 
     def get_component_component_pairs(self):
         pass
@@ -143,6 +145,9 @@ class Layout:
     def get_radii(self):
         pass
 
+    def get_objective(self):
+        pass
+
     def plot_layout(self):
         layout_plot_dict = {}
 
@@ -158,7 +163,5 @@ class Layout:
             object_plot_dict['color'] = color
 
             layout_plot_dict[obj] = object_plot_dict
-        print('wait here')
-        plot(layout_plot_dict)
 
-        # return layout_plot_dict
+        plot(layout_plot_dict)
