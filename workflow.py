@@ -9,7 +9,7 @@ from time import perf_counter_ns
 from utils.layout_generator import generate_layout
 from utils.shape_generator import generate_rectangular_prism, generate_rectangular_prisms
 from utils.objects import Component, Interconnect, InterconnectNode, Structure, Layout
-
+from utils.optimizer import optimize
 
 # Set filepaths
 

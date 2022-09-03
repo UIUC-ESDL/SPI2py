@@ -1,6 +1,6 @@
 import jax.numpy as jnp
 from jax import jit, grad, jacfwd
-from utils.solver import solver, objective_function, objective_function_gradient
+from utils.optimizer import optimize, objective, objective_jacobian
 from scipy.optimize import minimize, Bounds, NonlinearConstraint
 
 def test_objective_function():
@@ -9,11 +9,11 @@ def test_objective_function():
 
     obj = objective_function(x0)
 
-def test_objective_function_gradient():
+def test_objective_function_jacobian():
     x0 = jnp.array([[1., 2., 3.], [4., 3., 1.], [0., 5., 2.]])
     x0 = x0.reshape(-1)
 
-    g = objective_function_gradient(x0)
+    g = objective_function_jacobian(x0)
 
 
 
@@ -53,17 +53,24 @@ def test_constrained_optimization():
     @jit
     def h(x): return jacfwd(g)(x)
 
-    def c(x): return x[0]+x[1]
+    def c1(x): return x[0]+x[1]
 
-    def c_jac(x): return grad(c)(x)
+    def c1_jac(x): return grad(c1)(x)
 
     # Why do I get an error specifying the Hessian in the NonlinearConstrain object?
-    def c_hess(x): return jacfwd(c_jac)(x)
+    # def c_hess(x): return jacfwd(c_jac)(x)
 
-    nlc = NonlinearConstraint(c, 0, 5, jac=c_jac)
+    nlc1 = NonlinearConstraint(c1, 0, 5, jac=c1_jac)
+
+    def c2(x): return x[0]+2*x[1]
+
+    def c2_jac(x): return grad(c2)(x)
+
+
+    nlc2 = NonlinearConstraint(c2, 0, 5, jac=c2_jac)
 
     x0 = jnp.array([1., 2.])
-    res = minimize(f, x0, method = 'trust-constr', constraints = nlc,jac=g, hess=h)
+    res = minimize(f, x0, method = 'trust-constr', constraints = [nlc1,nlc2],jac=g, hess=h)
 
     assert res.success is True
     assert all(res.x == jnp.array([1., 1.]))
@@ -72,7 +79,7 @@ def test_constrained_optimization():
 
 
 
-def test_solver():
+def test_optimize():
     x0 = jnp.array([[1.,2.,3.],[4.,3.,1.],[0.,5.,2.]])
     x0 = x0.reshape(-1)
 
