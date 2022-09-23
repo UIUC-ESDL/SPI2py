@@ -1,6 +1,11 @@
 """Module...
 Docstring
 
+To Do:
+-Fill out all the blank functions and write tests for them...
+-Look into replacing get/set methods with appropriate decorators...
+
+
 """
 
 import numpy as np
@@ -21,6 +26,10 @@ class Object:
         self.color = color
         self.name = name
 
+
+    def get_reference_position(self):
+        return self.positions[0]
+
     def get_positions(self):
         return self.positions
 
@@ -30,15 +39,29 @@ class Object:
     def get_color(self):
         return self.color
 
+    def set_reference_position(self, new_reference_position):
+        pass
+
+
 
 class Component(Object):
 
     def __init__(self, positions, radii, color, node, name):
+
         super().__init__(positions, radii, color, name)
+
         self.node = node
+
+        self.rotation = np.array([0,0,0]) # Initialize the rotation attribute
 
     def get_node(self):
         return self.node
+
+    def get_rotation(self):
+        return self.rotation
+
+    def set_rotation(self, new_rotation):
+        self.rotation = new_rotation
 
     def get_design_vector(self):
         pass
@@ -134,16 +157,37 @@ class Layout:
 
         positions = nx.spring_layout(g, k=k, dim=dim)
 
+        # Generate random angles too
+
         return positions
 
     def get_design_vector(self):
         pass
+
+    def get_reference_positions(self):
+
+        reference_positions_dict = {}
+
+        for obj in self.objects:
+            reference_positions_dict[obj]= obj.get_reference_position()
+
+        return reference_positions_dict
+
 
     def get_positions(self):
         pass
 
     def get_radii(self):
         pass
+
+
+    def set_positions(self):
+        pass
+
+    def set_rotations(self):
+        pass
+
+
 
     def get_objective(self):
         pass

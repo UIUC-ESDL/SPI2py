@@ -1,5 +1,5 @@
 import jax.numpy as jnp
-from utils.transformations import , rotate
+from utils.transformations import rotate
 
 
 a = jnp.array([[1,2,3], [1,2,3], [1,2,3]])

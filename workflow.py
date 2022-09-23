@@ -28,6 +28,7 @@ layout.plot_layout()
 
 
 # Generate random initial layouts
+# Set random seed
 # positions = layout.generate_random_layout()
 
 # Set positions...

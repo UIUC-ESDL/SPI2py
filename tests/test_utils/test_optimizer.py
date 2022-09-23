@@ -7,13 +7,13 @@ def test_objective_function():
     x0 = jnp.array([[1.,2.,3.],[4.,3.,1.],[0.,5.,2.]])
     x0 = x0.reshape(-1)
 
-    obj = objective_function(x0)
+    obj = objective(x0)
 
 def test_objective_function_jacobian():
     x0 = jnp.array([[1., 2., 3.], [4., 3., 1.], [0., 5., 2.]])
     x0 = x0.reshape(-1)
 
-    g = objective_function_jacobian(x0)
+    g = objective_jacobian(x0)
 
 
 
@@ -89,5 +89,5 @@ def test_optimize():
     def h(x): return jacfwd(g)(x)
 
 
-    res = solver(f,x0,1)
+    res = optimize(f,x0,1)
     print('res', res)
