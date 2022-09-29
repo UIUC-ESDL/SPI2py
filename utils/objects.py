@@ -26,9 +26,13 @@ class Object:
         self.color = color
         self.name = name
 
-
-    def get_reference_position(self):
+    @property
+    def reference_position(self):
         return self.positions[0]
+
+    @reference_position.setter
+    def reference_position(self, new_reference_position):
+        self.positions[0] = new_reference_position
 
     def get_positions(self):
         return self.positions
@@ -39,8 +43,7 @@ class Object:
     def get_color(self):
         return self.color
 
-    def set_reference_position(self, new_reference_position):
-        pass
+
 
 
 
@@ -73,6 +76,7 @@ class InterconnectNode(Object):
 
     def get_node(self):
         return self.node
+
 
 
 class Interconnect(Object):
@@ -157,7 +161,10 @@ class Layout:
 
         positions = nx.spring_layout(g, k=k, dim=dim)
 
-        # Generate random angles too
+        # Generate random angles too?
+
+        # Now create a positions dictionary
+
 
         return positions
 
@@ -179,6 +186,12 @@ class Layout:
 
     def get_radii(self):
         pass
+
+    def set_reference_positions(self, new_reference_positions):
+
+        for obj in self.design_vector_objects:
+            obj.set_reference_position(new_reference_positions[obj])
+
 
 
     def set_positions(self):

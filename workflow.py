@@ -1,3 +1,13 @@
+"""
+To Do:
+1. Set object position
+2. Moving objects and objective/constraint functions
+3.
+4.
+5.
+
+"""
+
 import numpy as np
 import json
 import yaml
