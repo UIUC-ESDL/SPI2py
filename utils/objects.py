@@ -34,14 +34,6 @@ class Object:
     def reference_position(self, new_reference_position):
         self.positions[0] = new_reference_position
 
-    def get_positions(self):
-        return self.positions
-
-    def get_radii(self):
-        return self.radii
-
-    def get_color(self):
-        return self.color
 
 
 
@@ -211,9 +203,9 @@ class Layout:
         for obj in self.objects:
             object_plot_dict = {}
 
-            positions = obj.get_positions()
-            radii = obj.get_radii()
-            color = obj.get_color()
+            positions = obj.positions
+            radii = obj.radii
+            color = obj.color
 
             object_plot_dict['positions'] = positions
             object_plot_dict['radii'] = radii
