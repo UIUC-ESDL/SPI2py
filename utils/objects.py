@@ -207,6 +207,16 @@ class Layout:
         return design_vector
 
     @property
+    def design_vectors(self):
+
+        num_design_vectors = len(self.design_vector_objects)
+        design_vectors = []
+        for i, obj in enumerate(self.design_vector_objects):
+            design_vectors.append(obj.design_vector)
+
+        return design_vectors
+
+    @property
     def reference_positions(self):
 
         reference_positions_dict = {}
@@ -223,11 +233,10 @@ class Layout:
     def get_radii(self):
         pass
 
-    @reference_positions.setter
-    def reference_positions(self, new_reference_positions):
-
-        for i, obj in enumerate(self.design_vector_objects):
-            obj.reference_position = new_reference_positions[i]
+    # @ reference_positions.setter
+    # def update_positions(self,design_vector):
+    #
+    #     for
 
 
 

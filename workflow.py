@@ -35,6 +35,11 @@ layout = generate_layout(inputs)
 
 layout.plot_layout()
 
+# design_vector = layout.design_vector
+#
+# new_design_vector = design_vector + 1
+#
+# layout.design_
 # initial_layout = layout.generate_random_layout()
 
 # layout.reference_positions = initial_layout
