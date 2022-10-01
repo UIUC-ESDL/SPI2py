@@ -35,11 +35,11 @@ layout = generate_layout(inputs)
 
 layout.plot_layout()
 
-initial_layout = layout.generate_random_layout()
+# initial_layout = layout.generate_random_layout()
 
-layout.reference_positions = initial_layout
+# layout.reference_positions = initial_layout
 
-layout.plot_layout()
+# layout.plot_layout()
 
 
 # Generate random initial layouts

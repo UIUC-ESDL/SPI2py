@@ -9,6 +9,7 @@ To Do:
 """
 
 import numpy as np
+import jax.numpy as jnp
 import networkx as nx
 from itertools import product, combinations
 from utils.shape_generator import generate_rectangular_prism, generate_rectangular_prisms
@@ -55,40 +56,52 @@ class Component:
             delta_position = new_reference_position - self.reference_position
             delta_rotation = new_rotation - self.rotation
 
+            translated_positions = translate(self.positions, delta_position)
 
+            rotated_translated_positions = rotate(translated_positions, delta_rotation)
+
+            # Update values
+            self.positions = rotated_translated_positions
+            self.rotation = new_rotation
 
         else:
             print('Placeholder')
 
 
-
-
-
-
-        # Update reference position
-
-        self.positions[0] = new_reference_position
-
-        # Update remaining positions
-
     @property
     def design_vector(self):
-        return np.concatenate((self.reference_position, self.rotation))
+        return jnp.concatenate((self.reference_position, self.rotation))
 
 
 class InterconnectNode:
-    def __init__(self, node):
+    def __init__(self, node, position=jnp.array([0.,0.,0.])):
         self.node = node
+        self.position = position
 
     @property
     def reference_position(self):
         return self.positions[0]
 
-    @reference_position.setter
-    def reference_position(self, new_reference_position):
-        self.positions[0] = new_reference_position
+    def update_position(self, design_vector, constraint=None):
 
-        # Update remaining positions
+        if constraint is None:
+
+            new_reference_position = design_vector[0:3]
+
+            delta_position = new_reference_position - self.reference_position
+
+            translated_positions = translate(self.positions, delta_position)
+
+            # Update values
+            self.position = translated_positions
+
+
+        else:
+            print('Placeholder')
+
+    @property
+    def design_vector(self):
+        return self.position
 
 
 
@@ -107,13 +120,16 @@ class Interconnect:
         self.radii = np.array([0.5])
 
 
-class Structure():
+class Structure:
     def __init__(self, positions, radii, color, name):
 
         self.positions = positions
         self.radii = radii
         self.color = color
         self.name = name
+
+
+
 
 class Layout:
     def __init__(self, components, interconnect_nodes, interconnects, structures):
@@ -181,8 +197,14 @@ class Layout:
 
         return positions
 
-    def get_design_vector(self):
-        pass
+    @property
+    def design_vector(self):
+
+        design_vector = jnp.empty(0)
+        for obj in self.design_vector_objects:
+            design_vector = jnp.concatenate((design_vector,obj.design_vector))
+
+        return design_vector
 
     @property
     def reference_positions(self):
@@ -207,13 +229,6 @@ class Layout:
         for i, obj in enumerate(self.design_vector_objects):
             obj.reference_position = new_reference_positions[i]
 
-
-
-    def set_positions(self):
-        pass
-
-    def set_rotations(self):
-        pass
 
 
 
