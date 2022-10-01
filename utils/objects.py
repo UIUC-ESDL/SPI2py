@@ -16,15 +16,20 @@ from utils.visualization import plot
 from utils.transformations import translate, rotate
 
 
-class Object:
 
-    # Can I add a component instance counter here? Do I need it?
 
-    def __init__(self, positions, radii, color, name):
+class Component:
+
+    def __init__(self, positions, radii, color, node, name):
+
         self.positions = positions
         self.radii = radii
         self.color = color
         self.name = name
+
+        self.node = node
+
+        self.rotation = np.array([0,0,0]) # Initialize the rotation attribute
 
     @property
     def reference_position(self):
@@ -34,44 +39,33 @@ class Object:
     def reference_position(self, new_reference_position):
         self.positions[0] = new_reference_position
 
+        # Update remaining positions
+
+    @property
+    def design_vector(self):
+        return np.concatenate((self.reference_position, self.rotation))
 
 
-
-
-
-class Component(Object):
-
-    def __init__(self, positions, radii, color, node, name):
-
-        super().__init__(positions, radii, color, name)
-
-        self.node = node
-
-        self.rotation = np.array([0,0,0]) # Initialize the rotation attribute
-
-    def get_node(self):
-        return self.node
-
-    def get_rotation(self):
-        return self.rotation
-
-    def set_rotation(self, new_rotation):
-        self.rotation = new_rotation
-
-    def get_design_vector(self):
-        pass
-
-
-class InterconnectNode(Object):
+class InterconnectNode:
     def __init__(self, node):
         self.node = node
 
+    @property
+    def reference_position(self):
+        return self.positions[0]
+
+    @reference_position.setter
+    def reference_position(self, new_reference_position):
+        self.positions[0] = new_reference_position
+
+        # Update remaining positions
+
     def get_node(self):
         return self.node
 
 
 
-class Interconnect(Object):
+class Interconnect:
     def __init__(self, component_1, component_2, diameter, color):
         self.component_1 = component_1
         self.component_2 = component_2
@@ -85,14 +79,14 @@ class Interconnect(Object):
         self.positions = np.array([[0, 0, 0]])
         self.radii = np.array([0.5])
 
-    def get_edge(self):
-        return self.edge
 
-
-class Structure(Object):
+class Structure():
     def __init__(self, positions, radii, color, name):
-        super().__init__(positions, radii, color, name)
 
+        self.positions = positions
+        self.radii = radii
+        self.color = color
+        self.name = name
 
 class Layout:
     def __init__(self, components, interconnect_nodes, interconnects, structures):
@@ -108,8 +102,8 @@ class Layout:
         self.design_objects = components + interconnect_nodes
 
         #
-        self.nodes = [design_object.get_node() for design_object in self.design_objects]
-        self.edges = [interconnect.get_edge() for interconnect in self.interconnects]
+        self.nodes = [design_object.node for design_object in self.design_objects]
+        self.edges = [interconnect.edge for interconnect in self.interconnects]
 
         #
         self.design_vector_objects = components + interconnect_nodes
@@ -163,12 +157,13 @@ class Layout:
     def get_design_vector(self):
         pass
 
-    def get_reference_positions(self):
+    @property
+    def reference_positions(self):
 
         reference_positions_dict = {}
 
         for obj in self.objects:
-            reference_positions_dict[obj]= obj.get_reference_position()
+            reference_positions_dict[obj] = obj.reference_position
 
         return reference_positions_dict
 
@@ -179,10 +174,11 @@ class Layout:
     def get_radii(self):
         pass
 
-    def set_reference_positions(self, new_reference_positions):
+    @reference_positions.setter
+    def reference_positions(self, new_reference_positions):
 
-        for obj in self.design_vector_objects:
-            obj.set_reference_position(new_reference_positions[obj])
+        for i, obj in enumerate(self.design_vector_objects):
+            obj.reference_position = new_reference_positions[i]
 
 
 
