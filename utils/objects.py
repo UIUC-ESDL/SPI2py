@@ -35,8 +35,38 @@ class Component:
     def reference_position(self):
         return self.positions[0]
 
-    @reference_position.setter
-    def reference_position(self, new_reference_position):
+    def update_positions(self,design_vector, constraint=None):
+        """
+        Update positions of object spheres given a design vector
+
+        Constraint refers to how if we constrain the object, it will have a different size design vector
+
+        :param design_vector:
+        :param constraint:
+        :return:
+        """
+
+        # Assumes (1,6) design vector... will need to expand in future
+        if constraint is None:
+
+            new_reference_position = design_vector[0:3]
+            new_rotation = design_vector[3:None]
+
+            delta_position = new_reference_position - self.reference_position
+            delta_rotation = new_rotation - self.rotation
+
+
+
+        else:
+            print('Placeholder')
+
+
+
+
+
+
+        # Update reference position
+
         self.positions[0] = new_reference_position
 
         # Update remaining positions
@@ -59,9 +89,6 @@ class InterconnectNode:
         self.positions[0] = new_reference_position
 
         # Update remaining positions
-
-    def get_node(self):
-        return self.node
 
 
 
