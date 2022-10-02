@@ -191,6 +191,7 @@ class Layout:
     @property
     def design_vector(self):
 
+        # Convert this to a flatten-like from design_vectors?
         design_vector = np.empty(0)
         for obj in self.design_vector_objects:
             design_vector = np.concatenate((design_vector, obj.design_vector))
