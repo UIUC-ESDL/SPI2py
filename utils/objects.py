@@ -9,14 +9,11 @@ To Do:
 """
 
 import numpy as np
-import jax.numpy as jnp
 import networkx as nx
 from itertools import product, combinations
 from utils.shape_generator import generate_rectangular_prism, generate_rectangular_prisms
 from utils.visualization import plot
 from utils.transformations import translate, rotate
-
-
 
 
 class Component:
@@ -30,13 +27,13 @@ class Component:
 
         self.node = node
 
-        self.rotation = np.array([0,0,0]) # Initialize the rotation attribute
+        self.rotation = np.array([0, 0, 0])  # Initialize the rotation attribute
 
     @property
     def reference_position(self):
         return self.positions[0]
 
-    def update_positions(self,design_vector, constraint=None):
+    def update_positions(self, design_vector, constraint=None):
         """
         Update positions of object spheres given a design vector
 
@@ -67,14 +64,13 @@ class Component:
         else:
             print('Placeholder')
 
-
     @property
     def design_vector(self):
-        return jnp.concatenate((self.reference_position, self.rotation))
+        return np.concatenate((self.reference_position, self.rotation))
 
 
 class InterconnectNode:
-    def __init__(self, node, position=jnp.array([0.,0.,0.])):
+    def __init__(self, node, position=np.array([0., 0., 0.])):
         self.node = node
         self.position = position
 
@@ -104,7 +100,6 @@ class InterconnectNode:
         return self.position
 
 
-
 class Interconnect:
     def __init__(self, component_1, component_2, diameter, color):
         self.component_1 = component_1
@@ -122,13 +117,10 @@ class Interconnect:
 
 class Structure:
     def __init__(self, positions, radii, color, name):
-
         self.positions = positions
         self.radii = radii
         self.color = color
         self.name = name
-
-
 
 
 class Layout:
@@ -157,7 +149,7 @@ class Layout:
         self.interconnect_interconnect_pairs = 1
         self.structure_all_pairs = 1
 
-        self.all_pairs = self.component_component_pairs+self.component_interconnect_pairs+self.interconnect_interconnect_pairs+self.structure_all_pairs
+        self.all_pairs = self.component_component_pairs + self.component_interconnect_pairs + self.interconnect_interconnect_pairs + self.structure_all_pairs
 
     def get_component_component_pairs(self):
         pass
@@ -194,15 +186,14 @@ class Layout:
 
         # Now create a positions dictionary
 
-
         return positions
 
     @property
     def design_vector(self):
 
-        design_vector = jnp.empty(0)
+        design_vector = np.empty(0)
         for obj in self.design_vector_objects:
-            design_vector = jnp.concatenate((design_vector,obj.design_vector))
+            design_vector = np.concatenate((design_vector, obj.design_vector))
 
         return design_vector
 
@@ -226,7 +217,6 @@ class Layout:
 
         return reference_positions_dict
 
-
     def get_positions(self):
         pass
 
@@ -237,9 +227,6 @@ class Layout:
     # def update_positions(self,design_vector):
     #
     #     for
-
-
-
 
     def get_objective(self):
         pass

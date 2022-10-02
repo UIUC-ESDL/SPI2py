@@ -2,12 +2,12 @@
 
 """
 
-import jax.numpy as jnp
-from jax import jit
-from jax.numpy import sin, cos
+import numpy as np
+from numpy import sin, cos
+from numba import njit
 
 
-@jit
+@njit(cache=True)
 def translate(current_positions, delta_position):
     """
     Translates a set of points based on the change in position of a reference point
@@ -20,12 +20,12 @@ def translate(current_positions, delta_position):
 
     delta_x, delta_y, delta_z = delta_position
 
-    new_positions = current_positions + jnp.array([delta_x, delta_y, delta_z])
+    new_positions = current_positions + np.array([delta_x, delta_y, delta_z])
 
     return new_positions
 
 
-@jit
+@njit(cache=True)
 def rotate(positions, delta_rotation):
     """
     Rotates a set of points based on the change of rotation of a reference point
@@ -46,17 +46,19 @@ def rotate(positions, delta_rotation):
 
     delta_theta_x, delta_theta_y, delta_theta_z = delta_rotation
 
-    r_x = jnp.array([[1, 0,                  0                  ],
-                     [0, cos(delta_theta_x), -sin(delta_theta_x)],
-                     [0, sin(delta_theta_x), cos(delta_theta_x)]])
+    # np.array([sin(delta_theta_x)])
 
-    r_y = jnp.array([[cos(delta_theta_y),  0, sin(delta_theta_y)],
-                     [0,                   1, 0                 ],
-                     [-sin(delta_theta_y), 0, cos(delta_theta_y)]])
+    r_x = np.array([[1., 0., 0.],
+                    [0., cos(delta_theta_x), -sin(delta_theta_x)],
+                    [0., sin(delta_theta_x), cos(delta_theta_x)]])
 
-    r_z = jnp.array([[cos(delta_theta_z), -sin(delta_theta_z), 0],
-                     [sin(delta_theta_z), cos(delta_theta_z),  0],
-                     [0,                  0,                   1]])
+    r_y = np.array([[cos(delta_theta_y), 0., sin(delta_theta_y)],
+                    [0., 1., 0.],
+                    [-sin(delta_theta_y), 0., cos(delta_theta_y)]])
+
+    r_z = np.array([[cos(delta_theta_z), -sin(delta_theta_z), 0.],
+                    [sin(delta_theta_z), cos(delta_theta_z), 0.],
+                    [0., 0., 1.]])
 
     # Apple rotation matrix with ZYX Euler angle convention
     r = r_z @ r_y @ r_x
@@ -68,3 +70,4 @@ def rotate(positions, delta_rotation):
     new_positions = rotated_origin_positions + reference_position
 
     return new_positions
+
