@@ -143,24 +143,24 @@ class Layout:
         #
         self.design_vector_objects = components + interconnect_nodes
 
-        # Get possible object collision pairs
-        self.component_component_pairs = 1
-        self.component_interconnect_pairs = 1
-        self.interconnect_interconnect_pairs = 1
-        self.structure_all_pairs = 1
-
-        self.all_pairs = self.component_component_pairs + self.component_interconnect_pairs + self.interconnect_interconnect_pairs + self.structure_all_pairs
-
-    def get_component_component_pairs(self):
+    @property
+    def component_component_pairs(self):
         pass
 
-    def get_component_interconnect_pairs(self):
+    @property
+    def component_interconnect_pairs(self):
         pass
 
-    def get_interconnect_interconnect_pairs(self):
+    @property
+    def interconnect_interconnect_pairs(self):
         pass
 
-    def get_structure_all_pairs(self):
+    @property
+    def structure_all_pairs(self):
+        pass
+
+    @property
+    def all_pairs(self):
         pass
 
     def generate_random_layout(self):

@@ -37,12 +37,12 @@ design_vector = layout.design_vector
 
 new_design_vector = design_vector + 1
 
-# layout.design_
+layout.update_positions(new_design_vector)
 # initial_layout = layout.generate_random_layout()
 
 # layout.reference_positions = initial_layout
 
-# layout.plot_layout()
+layout.plot_layout()
 
 
 # Generate random initial layouts
