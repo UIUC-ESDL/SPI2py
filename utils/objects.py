@@ -114,6 +114,9 @@ class Interconnect:
         self.positions = np.array([[0, 0, 0]])
         self.radii = np.array([0.5])
 
+    def update_position(self):
+        pass
+
 
 class Structure:
     def __init__(self, positions, radii, color, name):
@@ -209,6 +212,30 @@ class Layout:
         return design_vectors
 
     @property
+    def design_vector_sizes(self):
+
+        num_design_vectors = len(self.design_vector_objects)
+        design_vector_sizes = []
+        for i, obj in enumerate(self.design_vector_objects):
+            design_vector_sizes.append(obj.design_vector.size)
+
+        return design_vector_sizes
+
+    @property
+    def design_vector_indices(self):
+
+        num_design_vectors = len(self.design_vector_objects)
+        start = []
+        stop = []
+
+        for i, obj in enumerate(self.design_vector_objects):
+            design_vector_sizes.append(obj.design_vector.size)
+
+        return design_vector_sizes
+
+        return 1
+
+    @property
     def reference_positions(self):
 
         reference_positions_dict = {}
@@ -218,16 +245,39 @@ class Layout:
 
         return reference_positions_dict
 
-    def get_positions(self):
-        pass
+    def slice_design_vector(self):
+        """
+        Since design vectors are irregularly sized, come up with indexing scheme.
+        Not the most elegant method.
 
-    def get_radii(self):
-        pass
+        :return:
+        """
 
-    # @ reference_positions.setter
-    # def update_positions(self,design_vector):
-    #
-    #     for
+        # Manually enter first case with start = 0
+        start = [0]
+        stop = [self.design_vector_sizes[0]]
+
+        for i, size in enumerate(self.design_vector_sizes):
+            # Increase index by one b/c we already typed in first index (I de-increments every loop)
+            i += 1
+
+            start = stop
+            stop = size[i]
+
+        return start, stop
+
+    def update_positions(self, design_vector):
+
+        indices = self.slice_design_vector()
+
+        for obj in self.components:
+            pass
+
+        for obj in self.interconnect_nodes:
+            pass
+
+        for obj in self.interconnects:
+            pass
 
     def get_objective(self):
         pass

@@ -35,14 +35,16 @@ layout.plot_layout()
 
 design_vector = layout.design_vector
 
-new_design_vector = design_vector + 1
+new_design_vector = design_vector + 3
 
-layout.update_positions(new_design_vector)
+# start, stop = layout.slice_design_vector()
+
+# layout.update_positions(new_design_vector)
 # initial_layout = layout.generate_random_layout()
 
 # layout.reference_positions = initial_layout
 
-layout.plot_layout()
+# layout.plot_layout()
 
 
 # Generate random initial layouts
