@@ -54,20 +54,7 @@ def rotate(positions, delta_rotation):
 
     alpha, beta, gamma = delta_rotation
 
-    r_x = np.array([[1., 0., 0.],
-                    [0., cos(alpha), -sin(alpha)],
-                    [0., sin(alpha), cos(alpha)]])
-
-    r_y = np.array([[cos(beta), 0., sin(beta)],
-                    [0., 1., 0.],
-                    [-sin(beta), 0., cos(beta)]])
-
-    r_z = np.array([[cos(gamma), -sin(gamma), 0.],
-                    [sin(gamma), cos(gamma), 0.],
-                    [0., 0., 1.]])
-
-    # Apply rotation matrix with ZYX Euler angle convention
-    # r = r_z(gamma) @ r_y(beta) @ r_x(alpha)
+    # Rotation matrix Euler angle convention r = r_z(gamma) @ r_y(beta) @ r_x(alpha)
     r = np.array([[cos(alpha)*cos(beta),
                    cos(alpha)*sin(beta)*sin(gamma)-sin(alpha)*cos(gamma),
                    cos(alpha)*sin(beta)*cos(gamma)+sin(alpha)*sin(gamma)],
