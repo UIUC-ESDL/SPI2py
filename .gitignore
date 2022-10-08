@@ -1,1 +1,6 @@
-venv
+dist/
+src/SPI2Py/output/
+tests/.pytest_cache/
+venv/
+
+
