@@ -8,7 +8,7 @@ from mpl_toolkits.mplot3d import Axes3D
 import os
 import imageio.v2 as imageio
 import tempfile
-from utils.shape_generator import generate_rectangular_prism
+from src.SPI2Py.utils.shape_generator import generate_rectangular_prism
 
 
 def plot_sphere(position, radius, color, ax):
@@ -62,8 +62,6 @@ def plot(plot_dict):
     ax.set_ylim(-5, 5)
     ax.set_zlim(-5, 5)
     plt.show()
-
-
 
 
 def generate_gif(layout, design_vector_log, frames_per_figure, name):

@@ -54,6 +54,7 @@ def rotate(positions, delta_rotation):
 
     alpha, beta, gamma = delta_rotation
 
+    # TODO Double check I typed in the matrix correctly https://en.wikipedia.org/wiki/Rotation_matrix
     # Rotation matrix Euler angle convention r = r_z(gamma) @ r_y(beta) @ r_x(alpha)
     r = np.array([[cos(alpha)*cos(beta),
                    cos(alpha)*sin(beta)*sin(gamma)-sin(alpha)*cos(gamma),
