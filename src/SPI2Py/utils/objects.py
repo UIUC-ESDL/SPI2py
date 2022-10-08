@@ -11,9 +11,9 @@ To Do:
 import numpy as np
 import networkx as nx
 from itertools import product, combinations
-from utils.shape_generator import generate_rectangular_prism, generate_rectangular_prisms
-from utils.visualization import plot
-from utils.transformations import translate, rotate
+from src.SPI2Py.utils.shape_generator import generate_rectangular_prism, generate_rectangular_prisms
+from src.SPI2Py.utils.visualization import plot
+from src.SPI2Py.utils.spatial_transformations import translate, rotate
 
 
 class Component:
@@ -224,6 +224,7 @@ class Layout:
     @property
     def design_vector_indices(self):
 
+        # FIXME Fix this function...
         num_design_vectors = len(self.design_vector_objects)
         start = []
         stop = []

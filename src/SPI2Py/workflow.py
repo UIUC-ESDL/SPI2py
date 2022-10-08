@@ -1,6 +1,6 @@
 """
-To Do:
-1. Set object position
+TODO: do this...
+TODO: Set object position
 2. Moving objects and objective/constraint functions
 3.
 4.

@@ -6,7 +6,7 @@ Use round to avoid small numerical differences
 """
 
 import numpy as np
-from src.SPI2Py.utils.transformations import rotate
+from src.SPI2Py.utils.spatial_transformations import rotate
 
 positions = np.array([[2., 2., 0.], [4., 2., 0.], [4, 0, 0]])
 current_angle = np.array([0., 0., 0.])

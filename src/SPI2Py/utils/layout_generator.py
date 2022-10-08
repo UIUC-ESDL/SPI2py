@@ -1,9 +1,11 @@
-"""
+"""Layout Generator
+
+This module provides functions to create objects from the user input file
 
 """
 import networkx as nx
-from utils.objects import Component, Interconnect, InterconnectNode, Structure, Layout
-from utils.shape_generator import generate_rectangular_prisms
+from src.SPI2Py.utils.objects import Component, Interconnect, InterconnectNode, Structure, Layout
+from src.SPI2Py.utils.shape_generator import generate_rectangular_prisms
 
 
 def create_objects_from_input(inputs):
@@ -12,7 +14,6 @@ def create_objects_from_input(inputs):
     :param inputs:
     :return:
     """
-
 
     # Create Components
     components = []
@@ -26,11 +27,9 @@ def create_objects_from_input(inputs):
         positions, radii = generate_rectangular_prisms(origins, dimensions)
         components.append(Component(positions, radii, color, node, name))
 
-
     # Create Interconnect Nodes
     interconnect_nodes = []
-    # Add more...
-
+    # TODO Add functionality to create InterconnectNode objects.
 
     # Create Interconnects
     interconnects = []
@@ -41,7 +40,6 @@ def create_objects_from_input(inputs):
         color = inputs['interconnects'][interconnect]['color']
 
         interconnects.append(Interconnect(component_1, component_2, diameter, color))
-
 
     # Create Structures
     structures = []
@@ -58,14 +56,8 @@ def create_objects_from_input(inputs):
 
 
 def generate_layout(inputs):
-
     components, interconnect_nodes, interconnects, structures = create_objects_from_input(inputs)
 
     layout = Layout(components, interconnect_nodes, interconnects, structures)
 
     return layout
-
-
-def generate_random_positions():
-    # Maybe we want this object oriented?
-    pass
