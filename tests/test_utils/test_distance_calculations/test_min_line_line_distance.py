@@ -16,6 +16,7 @@ def test_parallel():
     print('dist', dist)
 
     assert round(dist,2) == 1
+    #Add more tests
 
 
 def test_skew():
