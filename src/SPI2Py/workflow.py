@@ -2,6 +2,7 @@
 TODO: do this...
 TODO: Set object position
 TODO Add logger
+TODO place workflow in if name == __main__ statement
 2. Moving objects and objective/constraint functions
 3.
 4.
