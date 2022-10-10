@@ -7,7 +7,7 @@ TODO place workflow in if name == __main__ statement
 3.
 4.
 5.
-
+This is Chad's commit
 """
 
 import numpy as np
