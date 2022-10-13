@@ -10,6 +10,7 @@ To Do:
 
 import numpy as np
 import networkx as nx
+from scipy.spatial.distance import euclidean
 from itertools import product, combinations
 from src.SPI2Py.utils.shape_generator import generate_rectangular_prism, generate_rectangular_prisms
 from src.SPI2Py.utils.visualization import plot
@@ -113,6 +114,14 @@ class Interconnect:
         # Placeholder for plot test functionality, random positions
         self.positions = np.array([[0, 0, 0]])
         self.radii = np.array([0.5])
+
+    def positions(self):
+
+        dist = euclidean(self.componponent_1.reference_position, self.component_2.reference_position)
+
+        return dist
+
+
 
     def update_position(self):
         pass
@@ -221,20 +230,20 @@ class Layout:
 
         return design_vector_sizes
 
-    @property
-    def design_vector_indices(self):
-
-        # FIXME Fix this function...
-        num_design_vectors = len(self.design_vector_objects)
-        start = []
-        stop = []
-
-        for i, obj in enumerate(self.design_vector_objects):
-            design_vector_sizes.append(obj.design_vector.size)
-
-        return design_vector_sizes
-
-        return 1
+    # @property
+    # def design_vector_indices(self):
+    #
+    #     # FIXME Fix this function...
+    #     num_design_vectors = len(self.design_vector_objects)
+    #     start = []
+    #     stop = []
+    #
+    #     for i, obj in enumerate(self.design_vector_objects):
+    #         design_vector_sizes.append(obj.design_vector.size)
+    #
+    #     return design_vector_sizes
+    #
+    #     return 1
 
     @property
     def reference_positions(self):

@@ -1,4 +1,4 @@
-Input Filepath : Input/input.yaml
+Input Filepath : Input/input_demo.yaml
 Output Filepath : Output/output.json
 
 geometry:
@@ -11,7 +11,7 @@ solver:
   # The number of random initial layouts and subsequent optimizations
   number of solutions: 1
 
-  # A tolerance of 2.5e-1 seems to work good enough without slowing things down, use 1e-1 for better precision
+  # Tolerances between 1e-1 and 2.5e-1 solve within a reasonable time
   convergence tolerance: 2.5e-1
 
   # 0 to 1; 0 means no collision, >0 means some collision
@@ -25,7 +25,8 @@ visualization :
   # Value between 0 and 20
   resolution: 8
 
-  # true or false; should the program generate a GIF? Warning, generating GIFs increases the runtime
+  # true or false; should the program generate a GIF?
+  # Warning, generating GIFs increases the runtime
   output_gif: false
 
 
