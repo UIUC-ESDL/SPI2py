@@ -35,32 +35,19 @@ layout = generate_layout(inputs)
 
 layout.plot_layout()
 
-design_vector = layout.design_vector
-new_design_vector = design_vector + [1,1,1,0,0,0,1,1,1,0,0,0]
-layout.update_positions(new_design_vector)
-
-# Update component 1
-
-# component0 = layout.components[0]
-#
-# component0_dv = component0.design_vector
-#
-# component0_ndv = component0_dv + [1, 1, 1, 0, 0, 0]
-#
-# component0.update_positions(component0_ndv)
-#
-layout.plot_layout()
-
-#a = layout.slice_design_vector()
-
-# start, stop = layout.slice_design_vector()
-
+# design_vector = layout.design_vector
+# new_design_vector = design_vector + [1,1,1,1,1,1,1,1,1,0,0,0]
 # layout.update_positions(new_design_vector)
-# initial_layout = layout.generate_random_layout()
-
-# layout.reference_positions = initial_layout
 
 # layout.plot_layout()
+
+
+initial_layout = layout.generate_random_layout()
+
+layout.update_positions(initial_layout)
+# layout.reference_positions = initial_layout
+
+layout.plot_layout()
 
 
 # Generate random initial layouts

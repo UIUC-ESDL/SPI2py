@@ -178,6 +178,10 @@ class Layout:
         """
         Generates random layouts using a force-directed algorithm
 
+        Initially assumes 0 rotation and 1x6 design vector
+        TODO Add flexible design vector size and rotation
+
+
         :return:
         """
 
@@ -195,9 +199,20 @@ class Layout:
 
         # Generate random angles too?
 
-        # Now create a positions dictionary
+        # Temporarily pad zeros for rotations
+        design_vectors = []
+        rotation = np.array([0,0,0])
 
-        return positions
+        for i in positions:
+            position = positions[i]
+            design_vector = np.concatenate((position, rotation))
+            design_vectors.append(design_vector)
+
+        # Flatten design vectors
+        # TODO Make more efficient?
+        design_vector = np.concatenate(design_vectors)
+
+        return design_vector
 
     @property
     def design_vector(self):
