@@ -211,13 +211,18 @@ class Layout:
 
     @property
     def design_vectors(self):
+        """
+        Returns objects and their design vectors
+
+        :return:
+        """
 
         num_design_vectors = len(self.design_vector_objects)
         design_vectors = []
         for i, obj in enumerate(self.design_vector_objects):
             design_vectors.append(obj.design_vector)
 
-        return design_vectors
+        return self.design_vector_objects, design_vectors
 
     @property
     def design_vector_sizes(self):
@@ -254,39 +259,52 @@ class Layout:
 
         return reference_positions_dict
 
-    def slice_design_vector(self):
+    def slice_design_vector(self, design_vector):
         """
         Since design vectors are irregularly sized, come up with indexing scheme.
         Not the most elegant method.
 
+        Takes argument b.c. new design vector...
+
         :return:
         """
 
-        # Manually enter first case with start = 0
-        start = [0]
-        stop = [self.design_vector_sizes[0]]
+        design_vectors = []
+
+        # Index values
+        start = 0
+        stop = 0
 
         for i, size in enumerate(self.design_vector_sizes):
-            # Increase index by one b/c we already typed in first index (I de-increments every loop)
-            i += 1
 
+            # Increment stop index
+            stop += self.design_vector_sizes[i]
+
+            design_vectors.append(design_vector[start:stop])
+
+            # Increment start index
             start = stop
-            stop = size[i]
 
-        return start, stop
+        return design_vectors
 
-    def update_positions(self, design_vector):
+    def update_positions(self, new_design_vector):
 
-        indices = self.slice_design_vector()
+        new_design_vectors = self.slice_design_vector(new_design_vector)
 
-        for obj in self.components:
-            pass
+        # TODO Assert len of objects and vectors match
 
-        for obj in self.interconnect_nodes:
-            pass
+        for obj, new_design_vector in zip(self.design_vector_objects, new_design_vectors):
+            obj.update_positions(new_design_vector)
 
-        for obj in self.interconnects:
-            pass
+        # Is there some class-specific logic?
+        # for obj in self.components:
+        #     pass
+        #
+        # for obj in self.interconnect_nodes:
+        #     pass
+        #
+        # for obj in self.interconnects:
+        #     pass
 
     def get_objective(self):
         pass
