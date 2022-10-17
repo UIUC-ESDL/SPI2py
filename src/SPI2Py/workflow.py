@@ -32,30 +32,17 @@ with open(config['Input Filepath'], 'r') as f:
 
 # Initialize the layout
 layout = generate_layout(inputs)
-
 layout.plot_layout()
-
-# design_vector = layout.design_vector
-# new_design_vector = design_vector + [1,1,1,1,1,1,1,1,1,0,0,0]
-# layout.update_positions(new_design_vector)
-
-# layout.plot_layout()
-
 
 initial_layout = layout.generate_random_layout()
 
-layout.update_positions(initial_layout)
-# layout.reference_positions = initial_layout
-
-layout.plot_layout()
-
-
 # Generate random initial layouts
 # Set random seed
-# positions = layout.generate_random_layout()
+layout.update_positions(initial_layout)
 
 # Set positions...
 
+layout.plot_layout()
 
 # Run solver...
 

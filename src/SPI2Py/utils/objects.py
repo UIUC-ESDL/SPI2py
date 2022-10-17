@@ -192,10 +192,15 @@ class Layout:
         # Optimal distance between nodes
         k = 1
 
+        scale = 4
+
+        # TODO remove seed for actual problems...
+        seed = 1
+
         # Dimension of layout
         dim = 3
 
-        positions = nx.spring_layout(g, k=k, dim=dim)
+        positions = nx.spring_layout(g, k=k, dim=dim, scale=scale, seed=seed)
 
         # Generate random angles too?
 
