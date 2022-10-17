@@ -161,16 +161,43 @@ class Layout:
         self.design_vector_objects = components + interconnect_nodes
 
     @property
+    def positions(self):
+
+        positions = np.empty((0,3))
+
+        for obj in self.objects:
+            positions = np.vstack((positions,obj.positions))
+
+        return positions
+    
+    @property
     def component_component_pairs(self):
-        pass
+        return list(combinations(self.components, 2))
 
     @property
     def component_interconnect_pairs(self):
-        pass
+
+        component_interconnect_pairs = list(product(self.components, self.interconnects))
+
+
+        # TODO Make it sure it's actually removing the correct pairs...
+
+        # Remove interconnects attached to components b/c ...
+        for component, interconnect in component_interconnect_pairs:
+
+            if component is interconnect.component_1 or component is interconnect.component_2:
+                component_interconnect_pairs.remove((component, interconnect))
+
+        return component_interconnect_pairs
 
     @property
     def interconnect_interconnect_pairs(self):
-        pass
+
+        # TODO Test case: empty
+        # TODO Remove segments from the same interconnect
+        # TODO Remove segments from the same component
+
+        return list(combinations(self.interconnects, 2))
 
     @property
     def structure_all_pairs(self):
@@ -259,21 +286,6 @@ class Layout:
             design_vector_sizes.append(obj.design_vector.size)
 
         return design_vector_sizes
-
-    # @property
-    # def design_vector_indices(self):
-    #
-    #     # FIXME Fix this function...
-    #     num_design_vectors = len(self.design_vector_objects)
-    #     start = []
-    #     stop = []
-    #
-    #     for i, obj in enumerate(self.design_vector_objects):
-    #         design_vector_sizes.append(obj.design_vector.size)
-    #
-    #     return design_vector_sizes
-    #
-    #     return 1
 
     @property
     def reference_positions(self):

@@ -21,7 +21,7 @@ def objective(positions):
     # Fix this comment for actual reshape...
     # Reshape flattened design vector from 1D to 2D
     # [x1,y1,z1,x2,... ] to [[x1,y1,z1],[x2... ]
-    positions = positions.reshape(-1, 3)
+    # positions = positions.reshape(-1, 3)
 
     #
     pairwise_distance_pairs = list(combinations(positions, 2))
