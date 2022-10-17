@@ -19,6 +19,7 @@ from datetime import datetime
 from time import perf_counter_ns
 
 from utils.layout_generator import generate_layout
+
 # from utils.optimizer import optimize
 
 # Set filepaths
@@ -29,15 +30,25 @@ with open('config.yaml', 'r') as f:
 with open(config['Input Filepath'], 'r') as f:
     inputs = yaml.safe_load(f)
 
-
 # Initialize the layout
 layout = generate_layout(inputs)
 
 layout.plot_layout()
 
-design_vector = layout.design_vector
+# design_vector = layout.design_vector
+# new_design_vector = design_vector + 3
 
-new_design_vector = design_vector + 3
+# Update component 1
+
+component0 = layout.components[0]
+
+component0_dv = component0.design_vector
+
+component0_ndv = component0_dv + [1, 1, 1, 0, 0, 0]
+
+component0.update_positions(component0_ndv)
+
+layout.plot_layout()
 
 # start, stop = layout.slice_design_vector()
 
@@ -59,13 +70,7 @@ new_design_vector = design_vector + 3
 # Run solver...
 
 
-
-
-
-
 # outputs = {'Placeholder': 1}
 #
 # with open(config['Output Filepath'], 'w') as f:
 #     json.dump(outputs, f)
-
-
