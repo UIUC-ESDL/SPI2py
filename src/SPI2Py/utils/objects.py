@@ -91,7 +91,6 @@ class InterconnectNode:
             # Update values
             self.position = translated_positions
 
-
         else:
             print('Placeholder')
 
@@ -102,28 +101,35 @@ class InterconnectNode:
 
 class Interconnect:
     def __init__(self, component_1, component_2, diameter, color):
+
         self.component_1 = component_1
         self.component_2 = component_2
+
         self.diameter = diameter
+        self.radius = diameter/2
         self.color = color
 
         # Create edge tuple for NetworkX graphs
-        self.edge = (self.component_1, self.component_2)
+        self.edge = (self.component_1.node, self.component_2.node)
 
         # Placeholder for plot test functionality, random positions
-        self.positions = np.array([[0, 0, 0]])
-        self.radii = np.array([0.5])
+        self.positions, self.radii = self.update_positions()
 
-    def positions(self):
+    def update_positions(self):
+        pos_1 = self.component_1.reference_position
+        pos_2 = self.component_2.reference_position
 
-        dist = euclidean(self.componponent_1.reference_position, self.component_2.reference_position)
+        dist = euclidean(pos_1, pos_2)
 
-        return dist
+        num_spheres = int(dist / self.diameter)
 
+        positions = np.linspace(pos_1, pos_2, num_spheres)
 
+        # Temporary value
 
-    def update_position(self):
-        pass
+        radii = np.repeat(self.radius, positions.shape[0])
+
+        return positions, radii
 
 
 class Structure:

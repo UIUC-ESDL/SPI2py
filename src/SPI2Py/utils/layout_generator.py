@@ -34,9 +34,9 @@ def create_objects_from_input(inputs):
     # Create Interconnects
     interconnects = []
     for interconnect in inputs['interconnects']:
-        component_1 = inputs['interconnects'][interconnect]['component 1']
-        component_2 = inputs['interconnects'][interconnect]['component 2']
-        diameter = inputs['interconnects'][interconnect]['diameter']
+        component_1 = components[inputs['interconnects'][interconnect]['component 1']]
+        component_2 = components[inputs['interconnects'][interconnect]['component 2']]
+        diameter = inputs['interconnects'][interconnect]['diameter'][0]
         color = inputs['interconnects'][interconnect]['color']
 
         interconnects.append(Interconnect(component_1, component_2, diameter, color))
