@@ -7,14 +7,15 @@ import numpy as np
 from itertools import combinations
 
 
-def objective(positions):
+def objective(x, layout):
     """
     Temp-For now calculate the pairwise distances between all design vectors
 
     Given a flat list and reshape
     jit
     vectorize
-    :param positions:
+    :param x0:
+    :param layout:
     :return:
     """
 
@@ -24,7 +25,7 @@ def objective(positions):
     # positions = positions.reshape(-1, 3)
 
     #
-    pairwise_distance_pairs = list(combinations(positions, 2))
+    pairwise_distance_pairs = list(combinations(layout.positions, 2))
 
     objective = 0
     for point1, point2 in pairwise_distance_pairs:

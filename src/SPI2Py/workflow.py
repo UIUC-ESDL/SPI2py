@@ -20,7 +20,7 @@ from time import perf_counter_ns
 
 from utils.layout_generator import generate_layout
 
-# from utils.optimizer import optimize
+from utils.optimizer import optimize
 
 # Set filepaths
 
@@ -45,7 +45,7 @@ layout.update_positions(initial_layout)
 layout.plot_layout()
 
 # Run solver...
-
+res = optimize(layout)
 
 # outputs = {'Placeholder': 1}
 #

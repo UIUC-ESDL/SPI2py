@@ -3,8 +3,11 @@
 
 
 """
+import numpy as np
 
-def constraint_component_component(positions, radii):
+from src.SPI2Py.utils.distance_calculations import min_points_points_distance
+
+def constraint_component_component(x,lay):
     """
     ...
     Applies hierarchical collision detection to both components
@@ -15,7 +18,18 @@ def constraint_component_component(positions, radii):
     :param radii:
     :return:
     """
-    pass
+
+    # distances = []
+    # for obj1, obj2 in layout.component_component_pairs:
+    #     dist = min_points_points_distance(obj1.positions, obj2.positions)
+    #     distances.append(dist)
+    #
+    # return min(distances)
+
+    print('x',x)
+    # print('layout',layout)
+
+    return 1.2
 
 
 def constraint_component_interconnect(positions, radii):

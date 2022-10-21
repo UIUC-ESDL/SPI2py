@@ -205,13 +205,13 @@ def min_linesegment_linesegment_distance(a0, a1, b0, b1):
 
 
 @njit(cache=True)
-def calculate_gap(radius1, radius2, min_dist):
+def calculate_interference(radius1, radius2, min_dist):
     """
-    Calculate the gap between two objects
+    Calculate the interference between two objects
 
-    gap<0 means no overlap
-    gap=0 means tangent
-    gap>0 means overlap
+    interference<0 means no overlap
+    interference=0 means tangent
+    interference>0 means overlap
 
     :param radius1: int
     :param radius2:

@@ -28,8 +28,13 @@ from numba import njit
 
 from scipy.optimize import minimize, Bounds, NonlinearConstraint
 
+from src.SPI2Py.utils.objective_functions import objective
 
-def optimize(x0):
+from src.SPI2Py.utils.constraint_functions import constraint_component_component, constraint_component_interconnect, \
+    constraint_interconnect_interconnect, constraint_structure_all
+
+
+def optimize(layout):
     """
     Constrained optimization...
 
@@ -38,6 +43,7 @@ def optimize(x0):
 
     For now objective function and constraints are hard-coded into this solver. Future versions
     may seek more flexibility.
+    :param layout:
     :param x0: Initial design vector
     :return:
     """
@@ -45,15 +51,16 @@ def optimize(x0):
     # Initialize the objective function and its gradient information
     fun = objective
 
+    x0 = layout.design_vector
     # Define the bounds of the design vector
     # TODO Implement bounds
     # bounds = Bounds()
 
     # Initialize the geometric constraints
-    nlc_component_component       = NonlinearConstraint(constraint_component_component, -np.inf, 0.5)
-    nlc_component_interconnect    = NonlinearConstraint(constraint_component_interconnect, -np.inf, 0.5)
+    nlc_component_component = NonlinearConstraint(constraint_component_component, -np.inf, 0.5)
+    nlc_component_interconnect = NonlinearConstraint(constraint_component_interconnect, -np.inf, 0.5)
     nlc_interconnect_interconnect = NonlinearConstraint(constraint_interconnect_interconnect, -np.inf, 0.5)
-    nlc_structure_all             = NonlinearConstraint(constraint_structure_all, -np.inf, 0.5)
+    nlc_structure_all = NonlinearConstraint(constraint_structure_all, -np.inf, 0.5)
 
     nlcs = [nlc_component_component, nlc_component_interconnect, nlc_interconnect_interconnect, nlc_structure_all]
 
@@ -62,7 +69,9 @@ def optimize(x0):
 
     # TODO Evaluate different solver methods and parametric tunings
     # TODO Check how I pass constraints argument as list instead of dict
-    res = minimize(fun, x0, method='trust-constr', constraints=nlcs)
+    # res = minimize(fun, x0, method='trust-constr', constraints=nlcs)
+
+    res = minimize(fun, x0, args=layout, method='trust-constr',constraints=nlc_component_component)
 
     return res
 
