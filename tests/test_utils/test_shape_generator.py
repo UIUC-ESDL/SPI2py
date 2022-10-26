@@ -1,4 +1,4 @@
-from src.SPI2Py.utils.shape_generator import generate_rectangular_prism
+from SPI2Py.utils.shape_generator import generate_rectangular_prism
 
 
 def test_origin():
