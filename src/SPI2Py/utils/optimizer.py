@@ -12,7 +12,7 @@ Instead of specifying one constraint function for interference, we split it up i
 This provides more flexibility. For instance, depending on the level of fidelity, it can be hard to prevent two
 interconnects that connect to the same component, from overlapping at the starting point. If you enforce a
 zero-tolerance interference, then the solver will never be able to avoid collision and will get all confused. So
-we slightly relaxthe interconnect-interconnect constraint. On the other hand, strictly enforcing interference
+we slightly relax the interconnect-interconnect constraint. On the other hand, strictly enforcing interference
 constraints for component-component doesn't seem to cause any problems.
 
 In the future, if JAX supports adds native Windows support, or Numba adds support to Autograd,
@@ -48,21 +48,19 @@ def optimize(layout):
     :return:
     """
 
-    # Initialize the objective function and its gradient information
     fun = objective
-
     x0 = layout.design_vector
-    # Define the bounds of the design vector
-    # TODO Implement bounds
-    # bounds = Bounds()
 
-    # Initialize the geometric constraints
+    # bounds = Bounds() TODO Implement bounds
+
     nlc_component_component = NonlinearConstraint(constraint_component_component, -np.inf, 0.5)
-    nlc_component_interconnect = NonlinearConstraint(constraint_component_interconnect, -np.inf, 0.5)
-    nlc_interconnect_interconnect = NonlinearConstraint(constraint_interconnect_interconnect, -np.inf, 0.5)
-    nlc_structure_all = NonlinearConstraint(constraint_structure_all, -np.inf, 0.5)
+    # nlc_component_interconnect = NonlinearConstraint(constraint_component_interconnect, -np.inf, 0.5)
+    # nlc_interconnect_interconnect = NonlinearConstraint(constraint_interconnect_interconnect, -np.inf, 0.5)
+    # nlc_structure_all = NonlinearConstraint(constraint_structure_all, -np.inf, 0.5)
 
-    nlcs = [nlc_component_component, nlc_component_interconnect, nlc_interconnect_interconnect, nlc_structure_all]
+    # nlcs = [nlc_component_component, nlc_component_interconnect, nlc_interconnect_interconnect, nlc_structure_all]
+
+    print('TEST', constraint_component_component(x0, layout))
 
     # TODO Implement options
     options = {}
@@ -71,9 +69,11 @@ def optimize(layout):
     # TODO Check how I pass constraints argument as list instead of dict
     # res = minimize(fun, x0, method='trust-constr', constraints=nlcs)
 
-    res = minimize(fun, x0, args=layout, method='trust-constr',constraints=nlc_component_component)
+    # res = minimize(fun, x0, args=layout, method='trust-constr',constraints=nlc_component_component)
+    #
+    # return res
 
-    return res
+    return 1
 
 #
 #

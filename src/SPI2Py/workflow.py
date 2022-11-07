@@ -3,6 +3,7 @@ TODO: do this...
 TODO: Set object position
 TODO Add logger
 TODO place workflow in if name == __main__ statement
+TODO Ensure add src to python path for pytest
 2. Moving objects and objective/constraint functions
 3.
 4.

@@ -17,6 +17,11 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 
+[tool.pytest.ini_options]
+pythonpath = [
+  ".","src",
+]
+
 [project.urls]
 "Homepage" = "https://github.com/SPI2Py/SPI2Py"
 "Bug Tracker" = "https://github.com/SPI2Py/SPI2Py/issues"

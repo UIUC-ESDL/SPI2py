@@ -172,6 +172,14 @@ class Layout:
     
     @property
     def component_component_pairs(self):
+
+        """
+        TODO add kwargs for specifying the design vector
+        TODO switch so this function returns coords instead of objects!
+
+        :return:
+        """
+
         return list(combinations(self.components, 2))
 
     @property
