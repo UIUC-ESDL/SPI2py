@@ -171,19 +171,36 @@ class Layout:
         return positions
     
     @property
-    def component_component_pairs(self):
+    def component_component_pairs(self, x=None):
 
+        """
+        TODO add kwargs for specifying the design vector
+        TODO switch so this function returns coords instead of objects!
+
+        1. Slice design vector x
+        2. Iterate thru each design vector object and get all pos from x_slice
+        3. Don't forget non-design vector objects for structure, etc.
+
+        :return:
+        """
+
+        if x is None:
+            component_positions = [component.positions for component in self.components]
+        else:
+            pass
+
+        component_positions_combo = list(combinations(component_positions, 2))
+
+        return component_positions_combo
+
+    @property
+    def component_interconnect_pairs(self):
         """
         TODO add kwargs for specifying the design vector
         TODO switch so this function returns coords instead of objects!
 
         :return:
         """
-
-        return list(combinations(self.components, 2))
-
-    @property
-    def component_interconnect_pairs(self):
 
         component_interconnect_pairs = list(product(self.components, self.interconnects))
 
@@ -200,7 +217,12 @@ class Layout:
 
     @property
     def interconnect_interconnect_pairs(self):
+        """
+        TODO add kwargs for specifying the design vector
+        TODO switch so this function returns coords instead of objects!
 
+        :return:
+        """
         # TODO Test case: empty
         # TODO Remove segments from the same interconnect
         # TODO Remove segments from the same component
@@ -209,10 +231,22 @@ class Layout:
 
     @property
     def structure_all_pairs(self):
+        """
+        TODO add kwargs for specifying the design vector
+        TODO switch so this function returns coords instead of objects!
+
+        :return:
+        """
         pass
 
     @property
     def all_pairs(self):
+        """
+        TODO add kwargs for specifying the design vector
+        TODO switch so this function returns coords instead of objects!
+
+        :return:
+        """
         pass
 
     def generate_random_layout(self):
@@ -351,9 +385,6 @@ class Layout:
         #
         # for obj in self.interconnects:
         #     pass
-
-    def get_objective(self):
-        pass
 
     def plot_layout(self):
         layout_plot_dict = {}
