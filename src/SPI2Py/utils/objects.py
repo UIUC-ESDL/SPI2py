@@ -18,7 +18,7 @@ from src.SPI2Py.utils.spatial_transformations import translate, rotate
 
 class Component:
 
-    def __init__(self, positions, radii, color, node, name):
+    def __init__(self, positions, radii, color, node, name, constraints=None):
 
         self.positions = positions
         self.radii = radii
@@ -27,25 +27,60 @@ class Component:
 
         self.node = node
 
-        self.rotation = np.array([0, 0, 0])  # Initialize the rotation attribute
+        # Initialize the rotation attribute
+        # TODO Get rid of this?
+        self.rotation = np.array([0, 0, 0])
+
+        self.constraints = constraints
 
     @property
     def reference_position(self):
         return self.positions[0]
 
-    def update_positions(self, design_vector, constraint=None):
+    def calculate_positions(self, design_vector):
         """
         Update positions of object spheres given a design vector
 
         Constraint refers to how if we constrain the object, it will have a different size design vector
 
         :param design_vector:
-        :param constraint:
         :return:
         """
 
         # Assumes (1,6) design vector... will need to expand in future
-        if constraint is None:
+        if self.constraints is None:
+
+            new_reference_position = design_vector[0:3]
+            new_rotation = design_vector[3:None]
+
+            delta_position = new_reference_position - self.reference_position
+            delta_rotation = new_rotation - self.rotation
+
+            translated_positions = translate(self.positions, delta_position)
+
+            rotated_translated_positions = rotate(translated_positions, delta_rotation)
+
+            # Update values
+            self.positions = rotated_translated_positions
+            self.rotation = new_rotation
+
+        else:
+            print('Placeholder')
+
+        return self.updated_positions
+
+    def update_positions(self, design_vector):
+        """
+        Update positions of object spheres given a design vector
+
+        Constraint refers to how if we constrain the object, it will have a different size design vector
+
+        :param design_vector:
+        :return:
+        """
+
+        # Assumes (1,6) design vector... will need to expand in future
+        if self.constraints is None:
 
             new_reference_position = design_vector[0:3]
             new_rotation = design_vector[3:None]
