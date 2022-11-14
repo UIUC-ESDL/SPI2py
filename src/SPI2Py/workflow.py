@@ -39,9 +39,7 @@ initial_layout_design_vector = layout.generate_random_layout()
 layout.update_positions(initial_layout_design_vector)
 
 positions_dict = layout.get_positions(initial_layout_design_vector)
-#
-# cpairs = layout.component_component_pairs
-# pos_dict = layout.get_position
+
 
 # Generate random initial layouts
 # Set random seed
@@ -51,21 +49,34 @@ positions_dict = layout.get_positions(initial_layout_design_vector)
 
 layout.plot_layout()
 
+from utils.constraint_functions import constraint_component_component
+print(constraint_component_component(initial_layout_design_vector, layout))
+# from scipy.spatial.distance import cdist
 
+# from utils.distance_calculations import min_spheres_spheres_interference
+#
+# positions_a = layout.components[0].positions
+# radii_a = layout.components[0].radii
+#
+# positions_b = layout.components[1].positions
+# radii_b = layout.components[1].radii
+#
+# pairwise_distances = cdist(positions_a, positions_b)
+# pairwise_radii = cdist(radii_a.reshape(-1,1), radii_b.reshape(-1,1))
+#
+# pairwise_interferences = pairwise_radii-pairwise_distances
+#
+# max_interference = np.max(pairwise_interferences)
 
-
-
-
-
-
+# dists = min_spheres_spheres_distance(positions_a, radii_a, positions_b, radii_b)
 
 # Run solver...
-res = optimize(layout)
-
-print('res:', res)
-
-layout.update_positions(res.x)
-layout.plot_layout()
+# res = optimize(layout)
+#
+# print('res:', res)
+#
+# layout.update_positions(res.x)
+# layout.plot_layout()
 
 # outputs = {'Placeholder': 1}
 #

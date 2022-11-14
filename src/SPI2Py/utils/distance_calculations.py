@@ -10,7 +10,34 @@ TODO I think it makes sense to get rid of the calculate gap function and to work
 import numpy as np
 from numba import njit
 from scipy.spatial.distance import cdist
+from itertools import combinations
 
+def min_spheres_spheres_interference(positions_a, radii_a, positions_b, radii_b):
+    """
+    Computes the minimum distance between two sets of points.
+
+    This function utilizes scipy.spatial.cdist to compute the Euclidean distance
+    between each point in "points_a" and each point in "points_b" and then returns
+    the minimum of these distances.
+
+    TODO Complete documentation
+    TODO Write tests
+    TODO Confirm np.min is right ufunc and not np.minimum
+    TODO Confirm I do not need to apply numba.vectorize or numba.guvectorize
+
+    :param points_a: array_like
+    :param points_b: array_like
+    :return:
+    """
+
+    pairwise_distances = cdist(positions_a, positions_b)
+    pairwise_radii = cdist(radii_a, radii_b)
+
+    pairwise_interferences = pairwise_radii-pairwise_distances
+
+    max_interference = np.max(pairwise_interferences)
+
+    return max_interference
 
 def min_points_points_distance(points_a, points_b):
     """
@@ -208,6 +235,8 @@ def min_linesegment_linesegment_distance(a0, a1, b0, b1):
 def calculate_interference(radius1, radius2, min_dist):
     """
     Calculate the interference between two objects
+
+    TODO Adjust this to work as a loop with variable radii
 
     interference<0 means no overlap
     interference=0 means tangent

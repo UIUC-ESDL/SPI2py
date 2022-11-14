@@ -410,14 +410,10 @@ class Layout:
         positions_dict = {}
 
         if design_vector is None:
-            print('1')
-
             for obj in self.objects:
                 positions_dict[obj] = obj.positions
 
         else:
-            print('2')
-
             design_vectors = self.slice_design_vector(design_vector)
 
             # Get positions of design  objects

@@ -5,34 +5,43 @@
 """
 import numpy as np
 
-from src.SPI2Py.utils.distance_calculations import min_points_points_distance
+from src.SPI2Py.utils.distance_calculations import min_points_points_distance, min_spheres_spheres_interference
 
 
-def constraint_component_component(component_component_pairs, positions_dict):
+def constraint_component_component(x, layout):
     """
     ...
     Applies hierarchical collision detection to both components
 
     TODO Write this function
 
+    TODO Fix this to work with variable radii
+
     :param layout:
     :param x:
     :return:
     """
 
-    # print('DESIGN VECTOR', layout.design_vector)
+    positions_dict = layout.get_positions(x)
 
-    # distances = []
-    # for obj1, obj2 in layout.component_component_pairs:
-    #     dist = min_points_points_distance(obj1.positions, obj2.positions)
-    #     distances.append(dist)
-    #
-    # return min(distances)
+    distances = []
+    for obj1, obj2 in layout.component_component_pairs:
 
-    # print('x', x)
-    # print('layout',layout)
+        positions_a = obj1.positions
+        radii_a = obj1.radii.reshape(-1, 1)
 
-    return 1.2
+        positions_b = obj2.positions
+        radii_b = obj2.radii.reshape(-1, 1)
+
+        dist = min_spheres_spheres_interference(positions_a, radii_a, positions_b, radii_b)
+
+        distances.append(dist)
+
+
+
+
+    return min(distances)
+
 
 
 def constraint_component_interconnect(positions, radii):
