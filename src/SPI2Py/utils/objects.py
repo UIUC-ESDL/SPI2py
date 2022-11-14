@@ -37,7 +37,7 @@ class Component:
     def reference_position(self):
         return self.positions[0]
 
-    def calculate_positions(self, design_vector):
+    def get_positions(self, design_vector):
         """
         Update positions of object spheres given a design vector
 
@@ -60,14 +60,10 @@ class Component:
 
             rotated_translated_positions = rotate(translated_positions, delta_rotation)
 
-            # Update values
-            self.positions = rotated_translated_positions
-            self.rotation = new_rotation
-
         else:
             print('Placeholder')
 
-        return self.updated_positions
+        return rotated_translated_positions
 
     def update_positions(self, design_vector):
         """
@@ -176,6 +172,12 @@ class Structure:
 
 
 class Layout:
+    """
+    1. Specify design vector once, grab objects with positions, take list...?
+    2.
+    3.
+
+    """
     def __init__(self, components, interconnect_nodes, interconnects, structures):
         self.components = components
         self.interconnect_nodes = interconnect_nodes
@@ -206,7 +208,7 @@ class Layout:
         return positions
     
     @property
-    def component_component_pairs(self, x=None):
+    def component_component_pairs(self):
 
         """
         TODO add kwargs for specifying the design vector
@@ -219,14 +221,9 @@ class Layout:
         :return:
         """
 
-        if x is None:
-            component_positions = [component.positions for component in self.components]
-        else:
-            pass
+        component_component_pairs = list(combinations(self.components, 2))
 
-        component_positions_combo = list(combinations(component_positions, 2))
-
-        return component_positions_combo
+        return component_component_pairs
 
     @property
     def component_interconnect_pairs(self):
@@ -401,6 +398,36 @@ class Layout:
             start = stop
 
         return design_vectors
+
+    def get_positions(self, design_vector=None):
+        """
+
+        :param design_vector:
+        :param design_vector:
+        :return:
+        """
+
+        positions_dict = {}
+
+        if design_vector is None:
+            print('1')
+
+            for obj in self.objects:
+                positions_dict[obj] = obj.positions
+
+        else:
+            print('2')
+
+            design_vectors = self.slice_design_vector(design_vector)
+
+            # Get positions of design  objects
+            for obj, design_vector_row in zip(self.design_vector_objects, design_vectors):
+                positions_dict[obj] = obj.get_positions(design_vector_row)
+
+            # Get positions of interconnects and structures...
+            # for ...
+
+        return positions_dict
 
     def update_positions(self, new_design_vector):
 
