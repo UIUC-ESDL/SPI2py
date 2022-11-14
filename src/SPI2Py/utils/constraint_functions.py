@@ -24,23 +24,23 @@ def constraint_component_component(x, layout):
 
     positions_dict = layout.get_positions(x)
 
+    # TODO relabel everything as interferences and maxes...
     distances = []
     for obj1, obj2 in layout.component_component_pairs:
 
-        positions_a = obj1.positions
+        positions_a = positions_dict[obj1]
         radii_a = obj1.radii.reshape(-1, 1)
 
-        positions_b = obj2.positions
+        positions_b = positions_dict[obj2]
         radii_b = obj2.radii.reshape(-1, 1)
 
         dist = min_spheres_spheres_interference(positions_a, radii_a, positions_b, radii_b)
 
         distances.append(dist)
 
+        print('interference',max(distances))
 
-
-
-    return min(distances)
+    return max(distances)
 
 
 

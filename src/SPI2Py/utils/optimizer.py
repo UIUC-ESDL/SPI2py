@@ -54,7 +54,7 @@ def optimize(layout):
     # scipy minimize does not allow us to pass kwargs to constraint
     # Add ticket to allow this?
     con = lambda x: constraint_component_component(x, layout)
-    nlc = NonlinearConstraint(con, -np.inf, 0.5)
+    nlc = NonlinearConstraint(con, -np.inf, -1)
 
     # bounds = Bounds() TODO Implement bounds
 
@@ -73,7 +73,7 @@ def optimize(layout):
     # TODO Evaluate different solver methods and parametric tunings
     # TODO Check how I pass constraints argument as list instead of dict
 
-    res = minimize(fun, x0, args=layout, method='trust-constr', constraints=nlc)
+    res = minimize(fun, x0, args=layout, constraints=nlc)
 
     # res = minimize(fun, x0, method='trust-constr', constraints=nlcs)
 
