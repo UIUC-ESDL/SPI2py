@@ -8,7 +8,7 @@ import numpy as np
 from src.SPI2Py.utils.distance_calculations import min_points_points_distance
 
 
-def constraint_component_component(x, layout):
+def constraint_component_component(component_component_pairs, positions_dict):
     """
     ...
     Applies hierarchical collision detection to both components
@@ -29,7 +29,7 @@ def constraint_component_component(x, layout):
     #
     # return min(distances)
 
-    print('x', x)
+    # print('x', x)
     # print('layout',layout)
 
     return 1.2

@@ -36,15 +36,16 @@ layout = generate_layout(inputs)
 layout.plot_layout()
 
 initial_layout_design_vector = layout.generate_random_layout()
+layout.update_positions(initial_layout_design_vector)
 
 positions_dict = layout.get_positions(initial_layout_design_vector)
-
-cpairs = layout.component_component_pairs
-pos_dict = layout.get_position
+#
+# cpairs = layout.component_component_pairs
+# pos_dict = layout.get_position
 
 # Generate random initial layouts
 # Set random seed
-layout.update_positions(initial_layout_design_vector)
+
 
 # Set positions...
 
@@ -55,8 +56,16 @@ layout.plot_layout()
 
 
 
+
+
+
 # Run solver...
-# res = optimize(layout)
+res = optimize(layout)
+
+print('res:', res)
+
+layout.update_positions(res.x)
+layout.plot_layout()
 
 # outputs = {'Placeholder': 1}
 #

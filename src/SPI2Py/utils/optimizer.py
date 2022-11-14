@@ -28,7 +28,7 @@ from numba import njit
 
 from scipy.optimize import minimize, Bounds, NonlinearConstraint
 
-from src.SPI2Py.utils.objective_functions import objective
+from src.SPI2Py.utils.objective_functions import objective_1
 
 from src.SPI2Py.utils.constraint_functions import constraint_component_component, constraint_component_interconnect, \
     constraint_interconnect_interconnect, constraint_structure_all
@@ -48,32 +48,37 @@ def optimize(layout):
     :return:
     """
 
-    fun = objective
+    fun = objective_1
     x0 = layout.design_vector
+
+
 
     # bounds = Bounds() TODO Implement bounds
 
-    nlc_component_component = NonlinearConstraint(constraint_component_component, -np.inf, 0.5)
+    # nlc_component_component = NonlinearConstraint(constraint_component_component, -np.inf, 0.5)
     # nlc_component_interconnect = NonlinearConstraint(constraint_component_interconnect, -np.inf, 0.5)
     # nlc_interconnect_interconnect = NonlinearConstraint(constraint_interconnect_interconnect, -np.inf, 0.5)
     # nlc_structure_all = NonlinearConstraint(constraint_structure_all, -np.inf, 0.5)
 
     # nlcs = [nlc_component_component, nlc_component_interconnect, nlc_interconnect_interconnect, nlc_structure_all]
 
-    print('TEST', constraint_component_component(x0, layout))
+    # print('TEST', constraint_component_component(x0, layout))
 
     # TODO Implement options
     options = {}
 
     # TODO Evaluate different solver methods and parametric tunings
     # TODO Check how I pass constraints argument as list instead of dict
+
+    res = minimize(fun, x0, args=layout)
+
     # res = minimize(fun, x0, method='trust-constr', constraints=nlcs)
 
     # res = minimize(fun, x0, args=layout, method='trust-constr',constraints=nlc_component_component)
     #
     # return res
 
-    return 1
+    return res
 
 #
 #
