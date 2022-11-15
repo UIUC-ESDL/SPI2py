@@ -6,7 +6,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import os
+# import imageio
 import imageio.v2 as imageio
+# import imageio.v3 as imageio
 import tempfile
 from src.SPI2Py.utils.shape_generator import generate_rectangular_prism
 
@@ -75,7 +77,7 @@ def generate_gif(layout, design_vector_log, frames_per_figure, name):
     def plot_all(design_vectors):
         i = 1
         for xk in design_vectors:
-            filepath = tempDir+str(i)
+            filepath = tempDir+'/'+str(i)
             layout.set_positions(xk)
 
             layout.plot_layout(savefig=True, directory=filepath)
@@ -92,10 +94,8 @@ def generate_gif(layout, design_vector_log, frames_per_figure, name):
 
     filenames = [tempDir + '/' + filename for filename in files]
 
-    with imageio.get_writer(name, mode='I') as writer:
+    images = []
+    for filename in filenames:
+        images.append(imageio.imread(filename))
+    imageio.mimsave('mygif.gif', images)
 
-        for filename in filenames:
-            image = imageio.imread(filename)
-
-            for _ in range(frames_per_figure):
-                writer.append_data(image)
