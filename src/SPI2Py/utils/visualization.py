@@ -25,7 +25,7 @@ def plot_sphere(position, radius, color, ax):
     ax.plot_surface(x, y, z, linewidth=0.0, color=color)
 
 
-def plot(plot_dict):
+def plot(plot_dict, savefig, directory):
     """
     Plots objects...
 
@@ -63,18 +63,22 @@ def plot(plot_dict):
     ax.set_zlim(-5, 5)
     plt.show()
 
+    if savefig is True:
+        fig.savefig(directory)
+
 
 def generate_gif(layout, design_vector_log, frames_per_figure, name):
+
     temp = tempfile.TemporaryDirectory()
     tempDir = temp.name
 
     def plot_all(design_vectors):
         i = 1
         for xk in design_vectors:
-            new_positions_dict = layout.calculate_positions(xk)
-            layout.update_positions(new_positions_dict)
+            filepath = tempDir+str(i)
+            layout.set_positions(xk)
 
-            layout.plot_layout(savefig=True, temp_directory=tempDir)
+            layout.plot_layout(savefig=True, directory=filepath)
 
             i += 1
 

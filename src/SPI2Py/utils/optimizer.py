@@ -82,24 +82,20 @@ def optimize(layout):
 
     # print('TEST', constraint_component_component(x0, layout))
 
-    # TODO Implement options
+
     options = {}
 
-    # TODO add initial result
+    # Add initial value
     design_vector_log.append(x0)
 
     # TODO Evaluate different solver methods and parametric tunings
     # TODO Check how I pass constraints argument as list instead of dict
 
-    res = minimize(fun, x0, args=layout, method='trust-constr', constraints=nlc, callback=log_design_vector)
+    res = minimize(fun, x0, args=layout, method='trust-constr', constraints=nlc, tol=1e-1, options=options, callback=log_design_vector)
 
-    # res = minimize(fun, x0, method='trust-constr', constraints=nlcs)
 
-    # res = minimize(fun, x0, args=layout, method='trust-constr',constraints=nlc_component_component)
-    #
-    # return res
 
-    # TODO add final design vector
+    # Add final value
     design_vector_log.append(res.x)
 
     # For troubleshooting

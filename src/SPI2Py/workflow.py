@@ -11,13 +11,12 @@ TODO Ensure add src to python path for pytest
 This is Chad's commit
 """
 
-import numpy as np
+
 import json
 import yaml
-from datetime import datetime
-from time import perf_counter_ns
 from utils.layout_generator import generate_layout
 from utils.optimizer import optimize
+from utils.visualization import generate_gif
 
 
 '''Set the Filepaths'''
@@ -32,6 +31,7 @@ with open(config['Input Filepath'], 'r') as f:
 
 '''Initialize the Layout'''
 
+
 # Generate objects from the inputs file
 layout = generate_layout(inputs)
 
@@ -42,6 +42,7 @@ layout.set_positions(initial_layout_design_vector)
 # Plot the initial layout
 layout.plot_layout()
 
+
 '''Perform Gradient-Based Optimization'''
 
 
@@ -49,13 +50,13 @@ res, design_vector_log = optimize(layout)
 
 print('res:', res)
 
-layout.set_positions(res.x)
-layout.plot_layout()
+# layout.set_positions(res.x)
+# layout.plot_layout(savefig=True, directory="cats")
 
 
 # Generate GIF
 
-
+generate_gif(layout, design_vector_log, 1, 'coolgif')
 
 '''Write output file'''
 

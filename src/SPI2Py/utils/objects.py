@@ -444,7 +444,8 @@ class Layout:
         # for obj in self.interconnects:
         #     pass
 
-    def plot_layout(self):
+    def plot_layout(self, savefig=False, directory=None):
+
         layout_plot_dict = {}
 
         for obj in self.objects:
@@ -460,4 +461,6 @@ class Layout:
 
             layout_plot_dict[obj] = object_plot_dict
 
-        plot(layout_plot_dict)
+        plot(layout_plot_dict, savefig, directory)
+
+
