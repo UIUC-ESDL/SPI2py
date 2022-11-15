@@ -15,7 +15,7 @@ This is Chad's commit
 import json
 import yaml
 from utils.layout_generator import generate_layout
-from utils.optimizer import optimize
+from utils.gradient_based_optimization import optimize
 from utils.visualization import generate_gif
 
 
