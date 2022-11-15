@@ -10,7 +10,6 @@ TODO I think it makes sense to get rid of the calculate gap function and to work
 import numpy as np
 from numba import njit
 from scipy.spatial.distance import cdist
-from itertools import combinations
 
 def min_spheres_spheres_interference(positions_a, radii_a, positions_b, radii_b):
     """

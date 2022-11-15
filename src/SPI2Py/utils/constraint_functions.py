@@ -38,8 +38,6 @@ def constraint_component_component(x, layout):
 
         distances.append(dist)
 
-        print('interference',max(distances))
-
     return max(distances)
 
 

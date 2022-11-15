@@ -12,18 +12,16 @@ This is Chad's commit
 """
 
 import numpy as np
-
 import json
 import yaml
 from datetime import datetime
-
 from time import perf_counter_ns
-
 from utils.layout_generator import generate_layout
-
 from utils.optimizer import optimize
 
-# Set filepaths
+
+'''Set the Filepaths'''
+
 
 with open('config.yaml', 'r') as f:
     config = yaml.safe_load(f)
@@ -31,39 +29,37 @@ with open('config.yaml', 'r') as f:
 with open(config['Input Filepath'], 'r') as f:
     inputs = yaml.safe_load(f)
 
-# Initialize the layout
+
+'''Initialize the Layout'''
+
+# Generate objects from the inputs file
 layout = generate_layout(inputs)
-layout.plot_layout()
 
+# Generate a random initial layout
 initial_layout_design_vector = layout.generate_random_layout()
-layout.update_positions(initial_layout_design_vector)
+layout.set_positions(initial_layout_design_vector)
 
-positions_dict = layout.get_positions(initial_layout_design_vector)
-
-
-# Generate random initial layouts
-# Set random seed
-
-
-# Set positions...
-
+# Plot the initial layout
 layout.plot_layout()
 
-from utils.constraint_functions import constraint_component_component
-print(constraint_component_component(initial_layout_design_vector, layout))
+'''Perform Gradient-Based Optimization'''
 
 
-# Run solver...
-res = optimize(layout)
-#
+res, design_vector_log = optimize(layout)
+
 print('res:', res)
 
-layout.update_positions(res.x)
+layout.set_positions(res.x)
 layout.plot_layout()
 
-print('Constraint:',constraint_component_component(res.x, layout))
 
-# outputs = {'Placeholder': 1}
-#
-# with open(config['Output Filepath'], 'w') as f:
-#     json.dump(outputs, f)
+# Generate GIF
+
+
+
+'''Write output file'''
+
+outputs = {'Placeholder': 1}
+
+with open(config['Output Filepath'], 'w') as f:
+    json.dump(outputs, f)

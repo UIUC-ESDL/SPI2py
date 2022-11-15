@@ -425,7 +425,7 @@ class Layout:
 
         return positions_dict
 
-    def update_positions(self, new_design_vector):
+    def set_positions(self, new_design_vector):
 
         new_design_vectors = self.slice_design_vector(new_design_vector)
 

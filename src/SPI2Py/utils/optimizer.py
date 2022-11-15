@@ -34,6 +34,19 @@ from src.SPI2Py.utils.constraint_functions import constraint_component_component
     constraint_interconnect_interconnect, constraint_structure_all
 
 
+def log_design_vector(xk, state):
+    """
+    Logs the design vector...
+
+    Note: callback function args for trust-const method
+    :return:
+    """
+
+    global design_vector_log
+
+    design_vector_log.append(xk)
+
+
 def optimize(layout):
     """
     Constrained optimization...
@@ -47,6 +60,8 @@ def optimize(layout):
     :param x0: Initial design vector
     :return:
     """
+
+    global design_vector_log
 
     fun = objective_1
     x0 = layout.design_vector
@@ -70,10 +85,13 @@ def optimize(layout):
     # TODO Implement options
     options = {}
 
+    # TODO add initial result
+    design_vector_log.append(x0)
+
     # TODO Evaluate different solver methods and parametric tunings
     # TODO Check how I pass constraints argument as list instead of dict
 
-    res = minimize(fun, x0, args=layout, constraints=nlc)
+    res = minimize(fun, x0, args=layout, method='trust-constr', constraints=nlc, callback=log_design_vector)
 
     # res = minimize(fun, x0, method='trust-constr', constraints=nlcs)
 
@@ -81,10 +99,13 @@ def optimize(layout):
     #
     # return res
 
-    return res
+    # TODO add final design vector
+    design_vector_log.append(res.x)
 
-#
-#
-#
-#
-#
+    # For troubleshooting
+    print('Constraint is', constraint_component_component(res.x, layout))
+
+    return res, design_vector_log
+
+
+design_vector_log = []
