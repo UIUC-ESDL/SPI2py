@@ -56,7 +56,7 @@ print('res:', res)
 
 # Generate GIF
 
-generate_gif(layout, design_vector_log, 1, 'coolgif')
+generate_gif(layout, design_vector_log, 3, config['Output Folderpath'])
 
 '''Write output file'''
 

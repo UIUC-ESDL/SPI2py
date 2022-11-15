@@ -69,12 +69,21 @@ def plot(plot_dict, savefig, directory):
         fig.savefig(directory)
 
 
-def generate_gif(layout, design_vector_log, frames_per_figure, name):
+def generate_gif(layout, design_vector_log, frames_per_figure, GIFfilepath):
+    """
 
-    temp = tempfile.TemporaryDirectory()
-    tempDir = temp.name
-
+    :param layout:
+    :param design_vector_log:
+    :param frames_per_figure:
+    :param name:
+    :return:
+    """
     def plot_all(design_vectors):
+        """
+
+        :param design_vectors:
+        :return:
+        """
         i = 1
         for xk in design_vectors:
             filepath = tempDir+'/'+str(i)
@@ -83,6 +92,10 @@ def generate_gif(layout, design_vector_log, frames_per_figure, name):
             layout.plot_layout(savefig=True, directory=filepath)
 
             i += 1
+
+    # Create a temporary directory to save to plotted figures
+    temp = tempfile.TemporaryDirectory()
+    tempDir = temp.name
 
     plot_all(design_vector_log)
 
@@ -94,8 +107,13 @@ def generate_gif(layout, design_vector_log, frames_per_figure, name):
 
     filenames = [tempDir + '/' + filename for filename in files]
 
+    # Generate the GIF
     images = []
     for filename in filenames:
-        images.append(imageio.imread(filename))
-    imageio.mimsave('mygif.gif', images)
+        for _ in range(frames_per_figure):
+            images.append(imageio.imread(filename))
+
+    filepath = GIFfilepath + 'geo_opt.gif'
+
+    imageio.mimsave(filepath, images)
 
