@@ -9,6 +9,7 @@ TODO Ensure add src to python path for pytest
 import json
 import yaml
 from utils.layout_generator import generate_layout
+from utils.spatial_topology import generate_random_layout
 from utils.gradient_based_optimization import optimize
 from utils.visualization import generate_gif
 from datetime import datetime
@@ -33,7 +34,7 @@ with open(input_file, 'r') as f:
 layout = generate_layout(inputs)
 
 # Generate a random initial layout
-initial_layout_design_vector = layout.generate_random_layout()
+initial_layout_design_vector = generate_random_layout(layout)
 layout.set_positions(initial_layout_design_vector)
 
 # For development: Plot initial layout

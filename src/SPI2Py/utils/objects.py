@@ -172,9 +172,7 @@ class Structure:
 
 class Layout:
     """
-    1. Specify design vector once, grab objects with positions, take list...?
-    2.
-    3.
+
 
     """
     def __init__(self, components, interconnect_nodes, interconnects, structures):
@@ -255,51 +253,6 @@ class Layout:
         :return:
         """
         pass
-
-    def generate_random_layout(self):
-        """
-        Generates random layouts using a force-directed algorithm
-
-        Initially assumes 0 rotation and 1x6 design vector
-        TODO Create a separate file for topology enumeration, etc.
-
-
-        :return:
-        """
-
-        g = nx.MultiGraph()
-        g.add_nodes_from(self.nodes)
-        g.add_edges_from(self.edges)
-
-        # Optimal distance between nodes
-        k = 1
-
-        scale = 4
-
-        # TODO remove this random number seed for actual problems
-        seed = 1
-
-        # Dimension of layout
-        dim = 3
-
-        positions = nx.spring_layout(g, k=k, dim=dim, scale=scale, seed=seed)
-
-        # Generate random angles too?
-
-        # Temporarily pad zeros for rotations
-        design_vectors = []
-        rotation = np.array([0,0,0])
-
-        for i in positions:
-            position = positions[i]
-            design_vector = np.concatenate((position, rotation))
-            design_vectors.append(design_vector)
-
-        # Flatten design vectors
-        # TODO Make more efficient?
-        design_vector = np.concatenate(design_vectors)
-
-        return design_vector
 
     @property
     def design_vector(self):
