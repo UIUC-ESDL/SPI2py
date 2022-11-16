@@ -43,30 +43,33 @@ layout.plot_layout()
 
 # from utils.constraint_functions import interference_component_component, interference_component_interconnect
 # from src.SPI2Py.utils.distance_calculations import min_spheres_spheres_interference
-
+#
 # a = interference_component_component(initial_layout_design_vector, layout)
 # print('a',a)
-
-
+#
+#
 # positions_dict = layout.get_positions(initial_layout_design_vector)
-
-# Calculate the interferences between each sphere of each object pair
+#
+# # Calculate the interferences between each sphere of each object pair
 # interferences = []
 # for obj1, obj2 in layout.component_interconnect_pairs:
-#     print('loop', obj1, obj2)
-    # positions_a = positions_dict[obj1]
-    # radii_a = obj1.radii.reshape(-1, 1)
-    #
-    # positions_b = positions_dict[obj2]
-    # radii_b = obj2.radii.reshape(-1, 1)
-
-    # dist = min_spheres_spheres_interference(positions_a, radii_a, positions_b, radii_b)
-    #
-    # interferences.append(dist)
-    #
-    # max_interference = max(interferences)
-
-
+#     # print('loop', obj1, obj2)
+#     positions_a = positions_dict[obj1]
+#
+#     radii_a = obj1.radii.reshape(-1, 1)
+#
+#     positions_b = positions_dict[obj2]
+#     radii_b = obj2.radii.reshape(-1, 1)
+#
+#     # print('pos a', positions_b)
+#
+#     dist = min_spheres_spheres_interference(positions_a, radii_a, positions_b, radii_b)
+#
+#     interferences.append(dist)
+#
+#     max_interference = max(interferences)
+#
+#
 # b = interference_component_interconnect(initial_layout_design_vector, layout)
 # print('b',b)
 

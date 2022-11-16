@@ -162,6 +162,10 @@ class Interconnect:
 
         num_spheres = int(dist / self.diameter)
 
+        # Don't want zero-length interconencts
+        if num_spheres == 0:
+            num_spheres = 1
+
         positions = np.linspace(pos_1, pos_2, num_spheres)
 
         # Temporary value
@@ -169,6 +173,22 @@ class Interconnect:
         radii = np.repeat(self.radius, positions.shape[0])
 
         return positions, radii
+
+    def calculate_positions(self, positions_dict):
+
+        # TODO revise logic for getting the reference point
+        # Address varying number of spheres
+
+
+
+        pos_1 = positions_dict[self.component_1][0]
+        pos_2 = positions_dict[self.component_2][0]
+
+
+        positions = np.linspace(pos_1, pos_2, self.num_spheres)
+
+        return {self:positions}
+
 
     def update_positions(self, positions_dict):
 
@@ -363,8 +383,6 @@ class Layout:
             for obj in self.objects:
                 positions_dict[obj] = obj.positions
 
-            # for ...
-
         else:
             design_vectors = self.slice_design_vector(design_vector)
 
@@ -373,12 +391,11 @@ class Layout:
                 # positions_dict[obj] = obj.get_positions(design_vector_row)
                 positions_dict = {**positions_dict, **obj.get_positions(design_vector_row)}
 
-            # for interconect in self.interconnects:
-            #     positions_dict[interconnect] = interconnect.
+            for interconnect in self.interconnects:
+                positions_dict = {**positions_dict, **interconnect.calculate_positions(positions_dict)}
 
+            # Get positions of interconnect nodes and structures...
 
-            # Get positions of interconnects and structures...
-            # for ...
 
         return positions_dict
 
