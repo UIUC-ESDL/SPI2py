@@ -41,14 +41,14 @@ layout.set_positions(initial_layout_design_vector)
 layout.plot_layout()
 
 
-from utils.constraint_functions import interference_component_component, interference_component_interconnect
-from src.SPI2Py.utils.distance_calculations import min_spheres_spheres_interference
+# from utils.constraint_functions import interference_component_component, interference_component_interconnect
+# from src.SPI2Py.utils.distance_calculations import min_spheres_spheres_interference
 
-a = interference_component_component(initial_layout_design_vector, layout)
-print('a',a)
+# a = interference_component_component(initial_layout_design_vector, layout)
+# print('a',a)
 
 
-positions_dict = layout.get_positions(initial_layout_design_vector)
+# positions_dict = layout.get_positions(initial_layout_design_vector)
 
 # Calculate the interferences between each sphere of each object pair
 # interferences = []
@@ -70,46 +70,46 @@ positions_dict = layout.get_positions(initial_layout_design_vector)
 # b = interference_component_interconnect(initial_layout_design_vector, layout)
 # print('b',b)
 
-# '''Perform Gradient-Based Optimization'''
-#
-#
-# res, design_vector_log = optimize(layout)
-#
-#
-# '''Post Processing'''
-#
-#
-# # For development: Print Results
-# print('Result:', res)
-#
-# # For development: Plot the final layout to see the change
-# layout.set_positions(res.x)
-# layout.plot_layout()
-#
-#
-# # Generate GIF
-# if config['Visualization']['Output GIF'] is True:
-#     generate_gif(layout, design_vector_log, 3, config['Outputs']['Folderpath'])
-#
-#
-# '''Write output file'''
-#
-#
-# # Create a timestamp
-# now = datetime.now()
-# now_formatted = now.strftime("%d/%m/%Y %H:%M:%S")
-#
-# # TODO Create a prompt to ask user for comments on the results
-#
-# # Create the output dictionary
-# outputs = {'Placeholder': 1,
-#            '':1,
-#            'Date and time': now_formatted,
-#            '':1,
-#            'Comments': 'Placeholder'}
-#
-#
-#
-# output_file = config['Outputs']['Folderpath'] + config['Outputs']['Report Filename']
-# with open(output_file, 'w') as f:
-#     json.dump(outputs, f)
+'''Perform Gradient-Based Optimization'''
+
+
+res, design_vector_log = optimize(layout)
+
+
+'''Post Processing'''
+
+
+# For development: Print Results
+print('Result:', res)
+
+# For development: Plot the final layout to see the change
+layout.set_positions(res.x)
+layout.plot_layout()
+
+
+# Generate GIF
+if config['Visualization']['Output GIF'] is True:
+    generate_gif(layout, design_vector_log, 3, config['Outputs']['Folderpath'])
+
+
+'''Write output file'''
+
+
+# Create a timestamp
+now = datetime.now()
+now_formatted = now.strftime("%d/%m/%Y %H:%M:%S")
+
+# TODO Create a prompt to ask user for comments on the results
+
+# Create the output dictionary
+outputs = {'Placeholder': 1,
+           '':1,
+           'Date and time': now_formatted,
+           '':1,
+           'Comments': 'Placeholder'}
+
+
+
+output_file = config['Outputs']['Folderpath'] + config['Outputs']['Report Filename']
+with open(output_file, 'w') as f:
+    json.dump(outputs, f)

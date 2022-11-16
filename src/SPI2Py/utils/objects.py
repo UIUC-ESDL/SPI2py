@@ -46,6 +46,9 @@ class Component:
         :return:
         """
 
+        positions_dict = {}
+
+
         # Assumes (1,6) design vector... will need to expand in future
         if self.constraints is None:
 
@@ -62,7 +65,9 @@ class Component:
         else:
             print('Placeholder')
 
-        return rotated_translated_positions
+        positions_dict[self] = rotated_translated_positions
+
+        return positions_dict
 
     def update_positions(self, design_vector):
         """
@@ -365,10 +370,11 @@ class Layout:
 
             # Get positions of design  objects
             for obj, design_vector_row in zip(self.design_vector_objects, design_vectors):
-                positions_dict[obj] = obj.get_positions(design_vector_row)
+                # positions_dict[obj] = obj.get_positions(design_vector_row)
+                positions_dict = {**positions_dict, **obj.get_positions(design_vector_row)}
 
-            for interconect in self.interconnects:
-                positions_dict[interconnect] = interconnect.
+            # for interconect in self.interconnects:
+            #     positions_dict[interconnect] = interconnect.
 
 
             # Get positions of interconnects and structures...

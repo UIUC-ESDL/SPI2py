@@ -82,8 +82,8 @@ def optimize(layout):
     nlc_interconnect_interconnect = NonlinearConstraint(lambda_interference_interconnect_interconnect, -np.inf, 0.5)
     nlc_structure_all = NonlinearConstraint(lambda_interference_structure_all, -np.inf, 0.5)
 
-    # nlcs = [nlc_component_component]
-    nlcs = [nlc_component_component, nlc_component_interconnect]
+    nlcs = [nlc_component_component]
+    # nlcs = [nlc_component_component, nlc_component_interconnect]
     # nlcs = [nlc_component_component, nlc_component_interconnect, nlc_interconnect_interconnect, nlc_structure_all]
 
     # print('TEST', constraint_component_component(x0, layout))
