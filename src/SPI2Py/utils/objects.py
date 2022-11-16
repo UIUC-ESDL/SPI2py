@@ -201,6 +201,7 @@ class Layout:
 
         # All objects
         self.objects = components + interconnect_nodes + interconnects + structures
+        self.objects_minus_structures = components + interconnect_nodes + interconnects
 
         # All objects with a design vector
         self.design_objects = components + interconnect_nodes
@@ -245,32 +246,35 @@ class Layout:
     @property
     def interconnect_interconnect_pairs(self):
         """
-        TODO Remove segments from the same interconnect
-        TODO Remove segments from the same component
+
         :return:
         """
 
-        return list(combinations(self.interconnects, 2))
+        # Create a list of all interconnect pairs
+        interconnect_interconnect_pairs = list(combinations(self.interconnects, 2))
+
+        # Remove segments that share the same component
+        # This is a temporary feature b/c the ends of those two interconnects will share a point
+        # and thus always overlap slightly...
+        # TODO implement this feature
+
+        # Remove segments that are from the same interconenct
+        # If a pipe intersects itself, usually the pipe can just be made shorter...
+        # TODO implement this feature
+
+
+        return interconnect_interconnect_pairs
 
     @property
     def structure_all_pairs(self):
         """
-        TODO add kwargs for specifying the design vector
-        TODO switch so this function returns coords instead of objects!
 
         :return:
         """
-        pass
 
-    @property
-    def all_pairs(self):
-        """
-        TODO add kwargs for specifying the design vector
-        TODO switch so this function returns coords instead of objects!
+        structure_all_pairs = component_interconnect_pairs = list(product(self.structures, self.objects_minus_structures))
 
-        :return:
-        """
-        pass
+        return structure_all_pairs
 
     @property
     def design_vector(self):
@@ -342,7 +346,7 @@ class Layout:
 
     def get_positions(self, design_vector=None):
         """
-
+        TODO get positions for interconnects, structures, etc
         :param design_vector:
         :param design_vector:
         :return:
@@ -354,12 +358,18 @@ class Layout:
             for obj in self.objects:
                 positions_dict[obj] = obj.positions
 
+            # for ...
+
         else:
             design_vectors = self.slice_design_vector(design_vector)
 
             # Get positions of design  objects
             for obj, design_vector_row in zip(self.design_vector_objects, design_vectors):
                 positions_dict[obj] = obj.get_positions(design_vector_row)
+
+            for interconect in self.interconnects:
+                positions_dict[interconnect] = interconnect.
+
 
             # Get positions of interconnects and structures...
             # for ...
