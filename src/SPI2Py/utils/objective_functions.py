@@ -3,27 +3,24 @@
 
 
 """
-import numpy as np
+
 from itertools import combinations
 from scipy.spatial.distance import cdist
 
 
-def objective_1(x, layout):
+def aggregate_pairwise_distance(x, layout):
     """
-    Combinatorial check
+    Aggregates the distiance between each 2-pair of objects
 
-    Temp-For now calculate the pairwise distances between all design vectors
-
-    Given a flat list and reshape
-    jit
-    vectorize
     :param x:
     :param layout:
     :return:
     """
 
+    # Calculate the position of every sphere based on design vector x
     positions_dict = layout.get_positions(x)
 
+    # Create a list of object pairs
     object_pairs = list(combinations(positions_dict.keys(), 2))
 
     objective = 0

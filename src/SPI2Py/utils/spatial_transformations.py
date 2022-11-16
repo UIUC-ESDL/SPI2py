@@ -12,7 +12,7 @@ def translate(current_positions, delta_position):
     """
     Translates a set of points based on the change in position of a reference point
 
-    TODO Write tests for this function
+    TODO Write unit tests for this function
 
     :param current_positions:
     :param delta_position:
@@ -29,10 +29,7 @@ def translate(current_positions, delta_position):
 @njit(cache=True)
 def rotate(positions, delta_rotation):
     """
-    Rotates a set of points based on the change of rotation of a reference point
-
-    Need to verify the function rotates correctly (e.g., when not about the axis)
-    Angles in radians...
+    Rotates a set of points based on the change of rotation of a reference point.
 
     Note: Why do I manually define the rotation matrix instead of use
     scipy.spatial.transform.Rotation? Because in the future, the goal is to apply algorithmic
@@ -40,11 +37,10 @@ def rotate(positions, delta_rotation):
     At the time being, I do not believe AD would be compatible with scipy functions that are compiled
     in a different langauge (most of SciPy is actually written in other languages).
 
-    TODO Consider adding a reverse direction option
-    TODO Write tests for this function
+    TODO Write unit tests for this function
 
     :param positions:
-    :param delta_rotation: Angle in radians!!!
+    :param delta_rotation: Angle in radians!
     :return: new_positions:
     """
 
@@ -54,7 +50,6 @@ def rotate(positions, delta_rotation):
 
     alpha, beta, gamma = delta_rotation
 
-    # TODO Double check I typed in the matrix correctly https://en.wikipedia.org/wiki/Rotation_matrix
     # Rotation matrix Euler angle convention r = r_z(gamma) @ r_y(beta) @ r_x(alpha)
     r = np.array([[cos(alpha)*cos(beta),
                    cos(alpha)*sin(beta)*sin(gamma)-sin(alpha)*cos(gamma),

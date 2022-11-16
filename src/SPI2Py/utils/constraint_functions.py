@@ -3,29 +3,25 @@
 
 
 """
-import numpy as np
 
-from src.SPI2Py.utils.distance_calculations import min_points_points_distance, min_spheres_spheres_interference
+
+from src.SPI2Py.utils.distance_calculations import min_spheres_spheres_interference
 
 
 def interference_component_component(x, layout):
     """
-    ...
-    Applies hierarchical collision detection to both components
+    Checks for the maximum collision between two ojects
 
-    TODO Write this function
-
-    TODO Fix this to work with variable radii
-
-    :param layout:
     :param x:
+    :param layout:
     :return:
     """
 
+    # Calculate the positions of all spheres in layout given design vector x
     positions_dict = layout.get_positions(x)
 
-    # TODO relabel everything as interferences and maxes...
-    distances = []
+    # Calculate the interferences between each sphere of each object pair
+    interferences = []
     for obj1, obj2 in layout.component_component_pairs:
 
         positions_a = positions_dict[obj1]
@@ -36,31 +32,24 @@ def interference_component_component(x, layout):
 
         dist = min_spheres_spheres_interference(positions_a, radii_a, positions_b, radii_b)
 
-        distances.append(dist)
+        interferences.append(dist)
 
-    return max(distances)
+        max_interference = max(interferences)
 
-
-
-def interference_component_interconnect(positions, radii):
-    """
-
-    TODO Write this function
-
-    Applies hierarchical collision detection to component
-    :param positions:
-    :param radii:
-    :return:
-    """
-    pass
+    return max_interference
 
 
-def interference_interconnect_interconnect(positions, radii):
+def interference_component_interconnect(x, layout):
     # TODO Write this function
     pass
 
 
-def interference_structure_all(positions, radii):
+def interference_interconnect_interconnect(x, layout):
+    # TODO Write this function
+    pass
+
+
+def interference_structure_all(x, layout):
     # TODO Write this function
     pass
 

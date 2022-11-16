@@ -28,7 +28,7 @@ from numba import njit
 
 from scipy.optimize import minimize, Bounds, NonlinearConstraint
 
-from src.SPI2Py.utils.objective_functions import objective_1
+from src.SPI2Py.utils.objective_functions import aggregate_pairwise_distance
 
 from src.SPI2Py.utils.constraint_functions import interference_component_component, interference_component_interconnect, \
     interference_interconnect_interconnect, interference_structure_all
@@ -63,7 +63,7 @@ def optimize(layout):
 
     global design_vector_log
 
-    fun = objective_1
+    fun = aggregate_pairwise_distance
     x0 = layout.design_vector
 
     # scipy minimize does not allow us to pass kwargs to constraint

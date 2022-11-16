@@ -42,7 +42,7 @@ layout = generate_layout(inputs)
 initial_layout_design_vector = layout.generate_random_layout()
 layout.set_positions(initial_layout_design_vector)
 
-# Plot the initial layout
+# For development: Plot initial layout
 layout.plot_layout()
 
 
@@ -51,11 +51,16 @@ layout.plot_layout()
 
 res, design_vector_log = optimize(layout)
 
-print('res:', res)
-
 
 '''Post Processing'''
 
+
+# For development: Print Results
+print('Result:', res)
+
+# For development: Plot the final layout to see the change
+layout.set_positions(res.x)
+layout.plot_layout()
 
 # Generate GIF
 if config['Visualization']['Output GIF'] is True:
@@ -63,6 +68,7 @@ if config['Visualization']['Output GIF'] is True:
 
 
 '''Write output file'''
+
 
 # Create a timestamp
 now = datetime.now()
