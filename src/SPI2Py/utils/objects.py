@@ -28,7 +28,6 @@ class Component:
         self.node = node
 
         # Initialize the rotation attribute
-        # TODO Get rid of this?
         self.rotation = np.array([0, 0, 0])
 
         self.constraints = constraints
@@ -197,26 +196,10 @@ class Layout:
         #
         self.design_vector_objects = components + interconnect_nodes
 
-    @property
-    def positions(self):
-
-        positions = np.empty((0,3))
-
-        for obj in self.objects:
-            positions = np.vstack((positions,obj.positions))
-
-        return positions
     
     @property
     def component_component_pairs(self):
-
         """
-        TODO add kwargs for specifying the design vector
-        TODO switch so this function returns coords instead of objects!
-
-        1. Slice design vector x
-        2. Iterate thru each design vector object and get all pos from x_slice
-        3. Don't forget non-design vector objects for structure, etc.
 
         :return:
         """
@@ -228,16 +211,12 @@ class Layout:
     @property
     def component_interconnect_pairs(self):
         """
-        TODO add kwargs for specifying the design vector
-        TODO switch so this function returns coords instead of objects!
+        TODO Make it sure it's actually removing the correct pairs.
 
         :return:
         """
 
         component_interconnect_pairs = list(product(self.components, self.interconnects))
-
-
-        # TODO Make it sure it's actually removing the correct pairs...
 
         # Remove interconnects attached to components b/c ...
         for component, interconnect in component_interconnect_pairs:
@@ -250,14 +229,10 @@ class Layout:
     @property
     def interconnect_interconnect_pairs(self):
         """
-        TODO add kwargs for specifying the design vector
-        TODO switch so this function returns coords instead of objects!
-
+        TODO Remove segments from the same interconnect
+        TODO Remove segments from the same component
         :return:
         """
-        # TODO Test case: empty
-        # TODO Remove segments from the same interconnect
-        # TODO Remove segments from the same component
 
         return list(combinations(self.interconnects, 2))
 
@@ -286,7 +261,7 @@ class Layout:
         Generates random layouts using a force-directed algorithm
 
         Initially assumes 0 rotation and 1x6 design vector
-        TODO Add flexible design vector size and rotation
+        TODO Create a separate file for topology enumeration, etc.
 
 
         :return:
@@ -301,7 +276,7 @@ class Layout:
 
         scale = 4
 
-        # TODO remove seed for actual problems...
+        # TODO remove this random number seed for actual problems
         seed = 1
 
         # Dimension of layout
@@ -353,6 +328,11 @@ class Layout:
 
     @property
     def design_vector_sizes(self):
+        """
+        Helper function...
+
+        :return:
+        """
 
         num_design_vectors = len(self.design_vector_objects)
         design_vector_sizes = []
@@ -360,16 +340,6 @@ class Layout:
             design_vector_sizes.append(obj.design_vector.size)
 
         return design_vector_sizes
-
-    @property
-    def reference_positions(self):
-
-        reference_positions_dict = {}
-
-        for obj in self.objects:
-            reference_positions_dict[obj] = obj.reference_position
-
-        return reference_positions_dict
 
     def slice_design_vector(self, design_vector):
         """
@@ -429,7 +399,6 @@ class Layout:
 
         new_design_vectors = self.slice_design_vector(new_design_vector)
 
-        # TODO Assert len of objects and vectors match
 
         for obj, new_design_vector in zip(self.design_vector_objects, new_design_vectors):
             obj.update_positions(new_design_vector)
@@ -441,8 +410,8 @@ class Layout:
         # for obj in self.interconnect_nodes:
         #     pass
         #
-        # for obj in self.interconnects:
-        #     pass
+        for interconnect in self.interconnects:
+            interconnect.update_positions()
 
     def plot_layout(self, savefig=False, directory=None):
 
