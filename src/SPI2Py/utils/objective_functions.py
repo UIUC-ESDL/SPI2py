@@ -24,11 +24,6 @@ def objective_1(x, layout):
 
     positions_dict = layout.get_positions(x)
 
-    # Fix this comment for actual reshape...
-    # Reshape flattened design vector from 1D to 2D
-    # [x1,y1,z1,x2,... ] to [[x1,y1,z1],[x2... ]
-    # positions = positions.reshape(-1, 3)
-
     object_pairs = list(combinations(positions_dict.keys(), 2))
 
     objective = 0

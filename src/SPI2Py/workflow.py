@@ -17,7 +17,8 @@ import yaml
 from utils.layout_generator import generate_layout
 from utils.gradient_based_optimization import optimize
 from utils.visualization import generate_gif
-
+from datetime import datetime
+from time import perf_counter_ns
 
 '''Set the Filepaths'''
 
@@ -25,7 +26,9 @@ from utils.visualization import generate_gif
 with open('config.yaml', 'r') as f:
     config = yaml.safe_load(f)
 
-with open(config['Input Filepath'], 'r') as f:
+input_file = config['Inputs']['Folderpath'] + config['Inputs']['Filename']
+
+with open(input_file, 'r') as f:
     inputs = yaml.safe_load(f)
 
 
@@ -50,17 +53,32 @@ res, design_vector_log = optimize(layout)
 
 print('res:', res)
 
-# layout.set_positions(res.x)
-# layout.plot_layout(savefig=True, directory="cats")
+
+'''Post Processing'''
 
 
 # Generate GIF
+if config['Visualization']['Output GIF'] is True:
+    generate_gif(layout, design_vector_log, 3, config['Output Folderpath'])
 
-generate_gif(layout, design_vector_log, 3, config['Output Folderpath'])
 
 '''Write output file'''
 
-outputs = {'Placeholder': 1}
+# Create a timestamp
+now = datetime.now()
+now_formatted = now.strftime("%d/%m/%Y %H:%M:%S")
 
-with open(config['Output Filepath'], 'w') as f:
+# TODO Create a prompt to ask user for comments on the results
+
+# Create the output dictionary
+outputs = {'Placeholder': 1,
+           '':1,
+           'Date and time': now_formatted,
+           '':1,
+           'Comments': 'Placeholder'}
+
+
+
+output_file = config['Outputs']['Folderpath'] + config['Outputs']['Report Filename']
+with open(output_file, 'w') as f:
     json.dump(outputs, f)

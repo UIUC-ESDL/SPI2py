@@ -1,13 +1,16 @@
-Input Filepath : Input/input_demo.yaml
-Output Filepath : Output/output.json
-Output Folderpath: Output/
+Inputs:
 
-geometry:
+  Folderpath: Input/
+  Filename : input_demo.yaml
+  User: Chad Peterson
+
+
+Geometry:
 
   # The number of bends per each interconnect
   bends per interconnect: 1
 
-solver:
+Solver:
 
   # The number of random initial layouts and subsequent optimizations
   number of solutions: 1
@@ -21,14 +24,22 @@ solver:
   interconnect_interconnect_collision_tolerance: 0.5
   structure_all_collision_tolerance: 0
 
-visualization :
+Visualization:
 
   # Value between 0 and 20
+  # Corresponds to...
   resolution: 8
 
   # true or false; should the program generate a GIF?
   # Warning, generating GIFs increases the runtime
-  output_gif: false
+  Output GIF: false
+  GIF Filename: geometric_optimization
+
+
+Outputs:
+
+  Folderpath: Output/
+  Report Filename: output.json
 
 
 

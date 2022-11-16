@@ -30,8 +30,8 @@ from scipy.optimize import minimize, Bounds, NonlinearConstraint
 
 from src.SPI2Py.utils.objective_functions import objective_1
 
-from src.SPI2Py.utils.constraint_functions import constraint_component_component, constraint_component_interconnect, \
-    constraint_interconnect_interconnect, constraint_structure_all
+from src.SPI2Py.utils.constraint_functions import interference_component_component, interference_component_interconnect, \
+    interference_interconnect_interconnect, interference_structure_all
 
 
 def log_design_vector(xk, state):
@@ -68,7 +68,7 @@ def optimize(layout):
 
     # scipy minimize does not allow us to pass kwargs to constraint
     # Add ticket to allow this?
-    con = lambda x: constraint_component_component(x, layout)
+    con = lambda x: interference_component_component(x, layout)
     nlc = NonlinearConstraint(con, -np.inf, -1)
 
     # bounds = Bounds() TODO Implement bounds
@@ -99,7 +99,7 @@ def optimize(layout):
     design_vector_log.append(res.x)
 
     # For troubleshooting
-    print('Constraint is', constraint_component_component(res.x, layout))
+    print('Constraint is', interference_component_component(res.x, layout))
 
     return res, design_vector_log
 

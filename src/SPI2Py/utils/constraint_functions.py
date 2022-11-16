@@ -8,7 +8,7 @@ import numpy as np
 from src.SPI2Py.utils.distance_calculations import min_points_points_distance, min_spheres_spheres_interference
 
 
-def constraint_component_component(x, layout):
+def interference_component_component(x, layout):
     """
     ...
     Applies hierarchical collision detection to both components
@@ -42,7 +42,7 @@ def constraint_component_component(x, layout):
 
 
 
-def constraint_component_interconnect(positions, radii):
+def interference_component_interconnect(positions, radii):
     """
 
     TODO Write this function
@@ -55,12 +55,12 @@ def constraint_component_interconnect(positions, radii):
     pass
 
 
-def constraint_interconnect_interconnect(positions, radii):
+def interference_interconnect_interconnect(positions, radii):
     # TODO Write this function
     pass
 
 
-def constraint_structure_all(positions, radii):
+def interference_structure_all(positions, radii):
     # TODO Write this function
     pass
 
