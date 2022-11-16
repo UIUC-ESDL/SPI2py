@@ -89,9 +89,9 @@ def optimize(layout):
     design_vector_log.append(x0)
 
     # TODO Evaluate different solver methods and parametric tunings
-    # TODO Check how I pass constraints argument as list instead of dict
 
-    res = minimize(fun, x0, args=layout, method='trust-constr', constraints=nlc, tol=1e-1, options=options, callback=log_design_vector)
+    res = minimize(fun, x0, args=layout, method='trust-constr', constraints=nlc, tol=1e-5,
+                   options=options, callback=log_design_vector)
 
 
 

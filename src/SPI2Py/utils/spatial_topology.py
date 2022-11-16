@@ -20,10 +20,10 @@ def generate_random_layout(layout):
     # Optimal distance between nodes
     k = 1
 
-    scale = 4
+    scale = 6
 
     # TODO remove this random number seed for actual problems
-    seed = 1
+    seed = 6
 
     # Dimension of layout
     dim = 3

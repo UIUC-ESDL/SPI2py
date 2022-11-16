@@ -1,7 +1,7 @@
 Inputs:
 
   Folderpath: Input/
-  Filename : input_demo.yaml
+  Filename : input_demo2.yaml
   User: Chad Peterson
 
 
@@ -32,7 +32,7 @@ Visualization:
 
   # true or false; should the program generate a GIF?
   # Warning, generating GIFs increases the runtime
-  Output GIF: false
+  Output GIF: true
   GIF Filename: geometric_optimization
 
 

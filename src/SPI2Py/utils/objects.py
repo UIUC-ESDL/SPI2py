@@ -145,6 +145,10 @@ class Interconnect:
         # Placeholder for plot test functionality, random positions
         self.positions, self.radii = self.set_positions()
 
+        # Temporary
+        self.num_spheres = len(self.radii)
+
+
     def set_positions(self):
         pos_1 = self.component_1.reference_position
         pos_2 = self.component_2.reference_position
@@ -161,19 +165,16 @@ class Interconnect:
 
         return positions, radii
 
-    def update_positions(self):
-        pos_1 = self.component_1.reference_position
-        pos_2 = self.component_2.reference_position
+    def update_positions(self, positions_dict):
 
-        dist = euclidean(pos_1, pos_2)
+        # TODO revise logic for getting the reference point
+        # Address varying number of spheres
 
-        num_spheres = int(dist / self.diameter)
+        pos_1 = positions_dict[self.component_1][0]
+        pos_2 = positions_dict[self.component_2][0]
 
-        positions = np.linspace(pos_1, pos_2, num_spheres)
 
-        # Temporary value
-
-        radii = np.repeat(self.radius, positions.shape[0])
+        positions = np.linspace(pos_1, pos_2, self.num_spheres)
 
         self.positions = positions
 
@@ -369,6 +370,7 @@ class Layout:
 
         new_design_vectors = self.slice_design_vector(new_design_vector)
 
+        positions_dict = self.get_positions(new_design_vector)
 
         for obj, new_design_vector in zip(self.design_vector_objects, new_design_vectors):
             obj.update_positions(new_design_vector)
@@ -381,7 +383,7 @@ class Layout:
         #     pass
         #
         for interconnect in self.interconnects:
-            interconnect.update_positions()
+            interconnect.update_positions(positions_dict)
 
     def plot_layout(self, savefig=False, directory=None):
 
