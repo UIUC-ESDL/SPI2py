@@ -143,7 +143,23 @@ class Interconnect:
         self.edge = (self.component_1.node, self.component_2.node)
 
         # Placeholder for plot test functionality, random positions
-        self.positions, self.radii = self.update_positions()
+        self.positions, self.radii = self.set_positions()
+
+    def set_positions(self):
+        pos_1 = self.component_1.reference_position
+        pos_2 = self.component_2.reference_position
+
+        dist = euclidean(pos_1, pos_2)
+
+        num_spheres = int(dist / self.diameter)
+
+        positions = np.linspace(pos_1, pos_2, num_spheres)
+
+        # Temporary value
+
+        radii = np.repeat(self.radius, positions.shape[0])
+
+        return positions, radii
 
     def update_positions(self):
         pos_1 = self.component_1.reference_position
@@ -159,7 +175,8 @@ class Interconnect:
 
         radii = np.repeat(self.radius, positions.shape[0])
 
-        return positions, radii
+        self.positions = positions
+
 
 
 class Structure:

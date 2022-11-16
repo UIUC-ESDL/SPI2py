@@ -5,7 +5,7 @@ TODO place workflow in if name == __main__ statement
 TODO Ensure add src to python path for pytest
 """
 
-
+import numpy as np
 import json
 import yaml
 from utils.layout_generator import generate_layout
@@ -56,6 +56,7 @@ print('Result:', res)
 # For development: Plot the final layout to see the change
 layout.set_positions(res.x)
 layout.plot_layout()
+
 
 # Generate GIF
 if config['Visualization']['Output GIF'] is True:
