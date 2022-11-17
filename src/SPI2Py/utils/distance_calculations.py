@@ -11,55 +11,30 @@ import numpy as np
 from numba import njit
 from scipy.spatial.distance import cdist
 
+
 def min_spheres_spheres_interference(positions_a, radii_a, positions_b, radii_b):
     """
-    Computes the minimum distance between two sets of points.
-
-    This function utilizes scipy.spatial.cdist to compute the Euclidean distance
-    between each point in "points_a" and each point in "points_b" and then returns
-    the minimum of these distances.
+    Computes the minimum distance between two sets of spheres.
 
     TODO Complete documentation
-    TODO Write tests
-    TODO Confirm np.min is right ufunc and not np.minimum
-    TODO Confirm I do not need to apply numba.vectorize or numba.guvectorize
+    TODO Write unit tests
+    TODO Vectorize?
 
-    :param points_a: array_like
-    :param points_b: array_like
+    :param radii_b:
+    :param positions_b:
+    :param radii_a:
+    :param positions_a:
     :return:
     """
 
     pairwise_distances = cdist(positions_a, positions_b)
     pairwise_radii = cdist(radii_a, radii_b)
 
-    pairwise_interferences = pairwise_radii-pairwise_distances
+    pairwise_interferences = pairwise_radii - pairwise_distances
 
     max_interference = np.max(pairwise_interferences)
 
     return max_interference
-
-def min_points_points_distance(points_a, points_b):
-    """
-    Computes the minimum distance between two sets of points.
-
-    This function utilizes scipy.spatial.cdist to compute the Euclidean distance
-    between each point in "points_a" and each point in "points_b" and then returns
-    the minimum of these distances.
-
-    TODO Complete documentation
-    TODO Write tests
-    TODO Confirm np.min is right ufunc and not np.minimum
-    TODO Confirm I do not need to apply numba.vectorize or numba.guvectorize
-
-    :param points_a: array_like
-    :param points_b: array_like
-    :return:
-    """
-
-    pairwise_distances = cdist(points_a, points_b)
-    min_distance = np.min(pairwise_distances)
-
-    return min_distance
 
 
 def min_kdtree_distance(tree, positions):
@@ -80,7 +55,7 @@ def min_kdtree_distance(tree, positions):
     function call.
 
     TODO Complete documentation
-    TODO Write tests
+    TODO Write unit tests
 
     :param tree:
     :param positions:
@@ -105,7 +80,7 @@ def min_points_linesegment_distance(points, a, b):
 
     TODO Modify function calls to provide a list of point(s) instead of a single point
     TODO Fix documentation
-    TODO Vectorize for loop with numba.vectorize or numba.guvectorize
+    TODO Vectorize?
 
     :param points: list of
     :param a: (3,)
@@ -175,7 +150,6 @@ def min_linesegment_linesegment_distance(a0, a1, b0, b1):
         elif d0 >= magA <= d1:
 
             if np.absolute(d0) < np.absolute(d1):
-
                 # Explain case
                 return np.linalg.norm(a1 - b0)
 
