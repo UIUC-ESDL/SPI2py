@@ -3,7 +3,7 @@
 This module provides functions to create objects from the user input file
 
 """
-import networkx as nx
+
 from src.SPI2Py.utils.objects import Component, Interconnect, InterconnectNode, Structure, Layout
 from src.SPI2Py.utils.shape_generator import generate_rectangular_prisms
 

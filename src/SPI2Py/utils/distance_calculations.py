@@ -16,6 +16,10 @@ def min_spheres_spheres_interference(positions_a, radii_a, positions_b, radii_b)
     """
     Computes the minimum distance between two sets of spheres.
 
+    interference<0 means no overlap
+    interference=0 means tangent
+    interference>0 means overlap
+
     TODO Complete documentation
     TODO Write unit tests
     TODO Vectorize?
@@ -54,6 +58,10 @@ def min_kdtree_distance(tree, positions):
     takes the tree as an argument instead of trying to create a tree from points every
     function call.
 
+    interference<0 means no overlap
+    interference=0 means tangent
+    interference>0 means overlap
+
     TODO Complete documentation
     TODO Write unit tests
 
@@ -71,12 +79,16 @@ def min_kdtree_distance(tree, positions):
 
 
 @njit(cache=True)
-def min_points_linesegment_distance(points, a, b):
+def min_spheres_linesegment_distance(points, a, b):
     """
     Finds the minimum distance between a set 3D point and a line segment [a,b].
 
     With hierarchical collision detection we represent objects as recursive sphere trees.
     First,
+
+    interference<0 means no overlap
+    interference=0 means tangent
+    interference>0 means overlap
 
     TODO Modify function calls to provide a list of point(s) instead of a single point
     TODO Fix documentation
@@ -106,11 +118,13 @@ def min_linesegment_linesegment_distance(a0, a1, b0, b1):
     Given two lines defined by numpy.array pairs (a0,a1,b0,b1)
     Return the closest points on each segment and their distance
 
-    TODO Write tests for all cases, when developing tests check out
-        https://stackoverflow.com/questions/2824478/shortest-distance-between-two-line-segments
+    interference<0 means no overlap
+    interference=0 means tangent
+    interference>0 means overlap
 
-    TODO Make clamp = True for all cases
-    TODO Bonus: Make function more readable
+    TODO Write unit tests
+    TODO Document function logic more clearly
+    TODO Vectorize?
     """
 
     # Calculate denominator
@@ -203,22 +217,3 @@ def min_linesegment_linesegment_distance(a0, a1, b0, b1):
 
     return np.linalg.norm(pA - pB)
 
-
-@njit(cache=True)
-def calculate_interference(radius1, radius2, min_dist):
-    """
-    Calculate the interference between two objects
-
-    TODO Adjust this to work as a loop with variable radii
-
-    interference<0 means no overlap
-    interference=0 means tangent
-    interference>0 means overlap
-
-    :param radius1: int
-    :param radius2:
-    :param min_dist:
-    :return:
-    """
-
-    return radius1 + radius2 - min_dist

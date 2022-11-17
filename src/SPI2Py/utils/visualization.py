@@ -6,11 +6,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import os
-# import imageio
 import imageio.v2 as imageio
-# import imageio.v3 as imageio
 import tempfile
-from src.SPI2Py.utils.shape_generator import generate_rectangular_prism
+
 
 
 def plot_sphere(position, radius, color, ax):
@@ -41,6 +39,8 @@ def plot(plot_dict, savefig, directory):
     }
 
     :param plot_dict:
+    :param savefig:
+    :param directory:
     :return:
     """
 
@@ -75,7 +75,7 @@ def generate_gif(layout, design_vector_log, frames_per_figure, GIFfilepath):
     :param layout:
     :param design_vector_log:
     :param frames_per_figure:
-    :param name:
+    :param GIFfilepath:
     :return:
     """
     def plot_all(design_vectors):
@@ -113,6 +113,7 @@ def generate_gif(layout, design_vector_log, frames_per_figure, GIFfilepath):
         for _ in range(frames_per_figure):
             images.append(imageio.imread(filename))
 
+    # TODO Add config file input for GIF name
     filepath = GIFfilepath + 'geo_opt.gif'
 
     imageio.mimsave(filepath, images)

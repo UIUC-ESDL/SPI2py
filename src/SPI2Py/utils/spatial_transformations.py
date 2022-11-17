@@ -13,6 +13,7 @@ def translate(current_positions, delta_position):
     Translates a set of points based on the change in position of a reference point
 
     TODO Write unit tests for this function
+    TODO Vectorize?
 
     :param current_positions:
     :param delta_position:
@@ -38,6 +39,7 @@ def rotate(positions, delta_rotation):
     in a different langauge (most of SciPy is actually written in other languages).
 
     TODO Write unit tests for this function
+    TODO Vectorize?
 
     :param positions:
     :param delta_rotation: Angle in radians!

@@ -7,7 +7,6 @@ def generate_random_layout(layout):
     Generates random layouts using a force-directed algorithm
 
     Initially assumes 0 rotation and 1x6 design vector
-    TODO Create a separate file for topology enumeration, etc.
 
 
     :return:

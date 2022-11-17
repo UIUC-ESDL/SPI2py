@@ -24,7 +24,6 @@ and are not allowed to build from the source (or it just adds another level of d
 """
 
 import numpy as np
-from numba import njit
 
 from scipy.optimize import minimize, Bounds, NonlinearConstraint
 
@@ -61,6 +60,7 @@ def optimize(layout):
     :return:
     """
 
+    # Declare design vector log as global to read/write it
     global design_vector_log
 
     fun = aggregate_pairwise_distance
@@ -70,24 +70,15 @@ def optimize(layout):
     # bounds = Bounds()
 
     # NonlinearConstraint object for trust-constr method does not take kwargs
-    # Use lambda functions to format constraint functions as needed
-    # TODO clarify these aren't actually lambda functions...
-    def lambda_interference_component_component(x): return interference_component_component(x, layout)
-    def lambda_interference_component_interconnect(x): return interference_component_interconnect(x, layout)
-    def lambda_interference_interconnect_interconnect(x): return interference_interconnect_interconnect(x, layout)
-    def lambda_interference_structure_all(x): return interference_structure_all(x, layout)
-
-    nlc_component_component = NonlinearConstraint(lambda_interference_component_component, -np.inf, -1)
-    nlc_component_interconnect = NonlinearConstraint(lambda_interference_component_interconnect, -np.inf, 0)
-    nlc_interconnect_interconnect = NonlinearConstraint(lambda_interference_interconnect_interconnect, -np.inf, 0)
-    nlc_structure_all = NonlinearConstraint(lambda_interference_structure_all, -np.inf, 0)
+    # Use lambda functions to format constraint functions as needed with kwargs
+    nlc_component_component = NonlinearConstraint(lambda x: interference_component_component(x, layout), -np.inf, -1)
+    nlc_component_interconnect = NonlinearConstraint(lambda x: interference_component_interconnect(x, layout), -np.inf, 0)
+    nlc_interconnect_interconnect = NonlinearConstraint(lambda x: interference_interconnect_interconnect(x, layout), -np.inf, 0)
+    nlc_structure_all = NonlinearConstraint(lambda x: interference_structure_all(x, layout), -np.inf, 0)
 
     nlcs = [nlc_component_component]
     # nlcs = [nlc_component_component, nlc_component_interconnect]
     # nlcs = [nlc_component_component, nlc_component_interconnect, nlc_interconnect_interconnect, nlc_structure_all]
-
-    # print('TEST', constraint_component_component(x0, layout))
-    # nlc = NonlinearConstraint(con, -np.inf, -1)
 
     options = {}
 
@@ -98,8 +89,6 @@ def optimize(layout):
 
     res = minimize(fun, x0, args=layout, method='trust-constr', constraints=nlcs, tol=1e-5,
                    options=options, callback=log_design_vector)
-
-
 
     # Add final value
     design_vector_log.append(res.x)
