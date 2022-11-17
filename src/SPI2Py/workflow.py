@@ -92,7 +92,7 @@ layout.plot_layout()
 
 # Generate GIF
 if config['Visualization']['Output GIF'] is True:
-    generate_gif(layout, design_vector_log, 3, config['Outputs']['Folderpath'])
+    generate_gif(layout, design_vector_log, 1, config['Outputs']['Folderpath'])
 
 
 '''Write output file'''

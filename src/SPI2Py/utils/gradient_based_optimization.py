@@ -87,7 +87,7 @@ def optimize(layout):
 
     # TODO Evaluate different solver methods and parametric tunings
 
-    res = minimize(fun, x0, args=layout, method='trust-constr', constraints=nlcs, tol=1e-6,
+    res = minimize(fun, x0, args=layout, method='trust-constr', constraints=nlcs, tol=1e-2,
                    options=options, callback=log_design_vector)
 
     # Add final value
