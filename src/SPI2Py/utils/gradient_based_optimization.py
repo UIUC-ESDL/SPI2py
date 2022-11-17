@@ -71,7 +71,7 @@ def optimize(layout):
 
     # NonlinearConstraint object for trust-constr method does not take kwargs
     # Use lambda functions to format constraint functions as needed with kwargs
-    nlc_component_component = NonlinearConstraint(lambda x: interference_component_component(x, layout), -np.inf, -1)
+    nlc_component_component = NonlinearConstraint(lambda x: interference_component_component(x, layout), -np.inf, -1.5)
     nlc_component_interconnect = NonlinearConstraint(lambda x: interference_component_interconnect(x, layout), -np.inf, 0)
     nlc_interconnect_interconnect = NonlinearConstraint(lambda x: interference_interconnect_interconnect(x, layout), -np.inf, 0)
     nlc_structure_all = NonlinearConstraint(lambda x: interference_structure_all(x, layout), -np.inf, 0)
@@ -87,7 +87,7 @@ def optimize(layout):
 
     # TODO Evaluate different solver methods and parametric tunings
 
-    res = minimize(fun, x0, args=layout, method='trust-constr', constraints=nlcs, tol=1e-5,
+    res = minimize(fun, x0, args=layout, method='trust-constr', constraints=nlcs, tol=1e-6,
                    options=options, callback=log_design_vector)
 
     # Add final value
@@ -98,5 +98,6 @@ def optimize(layout):
 
     return res, design_vector_log
 
-
+# Define the log outside the functions so functions can declare it as a global variable and read/write to it
+# without the callback function needing to take an argument
 design_vector_log = []

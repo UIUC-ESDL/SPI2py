@@ -22,7 +22,7 @@ def generate_random_layout(layout):
     scale = 6
 
     # TODO remove this random number seed for actual problems
-    seed = 6
+    seed = 11
 
     # Dimension of layout
     dim = 3

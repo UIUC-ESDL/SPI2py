@@ -3,7 +3,7 @@ components:
         name: component0
         color: blue
         origins: [ [ 1, 1, 1 ], [2, 1, 1], [3, 1, 1], ]
-        dimensions: [ [ 2, 2, 2 ], [2, 2, 2], [2, 2, 2] ]
+        dimensions: [ [ 2, 2, 2 ], [2, 2, 4], [2, 2, 2] ]
 
     1:
         name: component1
@@ -15,35 +15,35 @@ components:
         name: component2
         color: cyan
         origins: [ [0,0,0] ]
-        dimensions: [ [ 1,1,2 ] ]
+        dimensions: [ [ 1,3,3 ] ]
 
     3:
         name: component3
         color: green
-        origins: [ [ 0,0,0 ] ]
-        dimensions: [ [ 1,1,1 ]]
+        origins: [ [ 0,0,0 ], [1,0,0], [1,1,0], [1,1,3]]
+        dimensions: [ [ 1,1,1 ],[1,2,1], [1,1,4], [2,1,1]]
 
 interconnects:
     0:
-        color: gray
+        color: black
         component 1: 0
         component 2: 1
         diameter: [0.25]
 
     1:
-        color: gray
+        color: black
         component 1: 1
         component 2: 2
         diameter: [ 0.25 ]
 
     2:
-        color: gray
+        color: black
         component 1: 2
         component 2: 3
         diameter: [ 0.25 ]
 
     3:
-        color: gray
+        color: black
         component 1: 3
         component 2: 1
         diameter: [ 0.25 ]
@@ -51,8 +51,8 @@ interconnects:
 structures:
     0:
         name: structure0
-        color: black
-        origins: [[-1,-1,-6], [-1,1,-6]]
-        dimensions: [[5,5,1], [1,1,1]]
+        color: darkgrey
+        origins: [[-5,-5,-6], [-5,-5,-6],[-5,5,-6]]
+        dimensions: [[10,11,1], [1,11,10], [10,1,10]]
 
 

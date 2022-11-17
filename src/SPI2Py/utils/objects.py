@@ -8,10 +8,8 @@ TODO Look into replacing get/set methods with appropriate decorators...
 """
 
 import numpy as np
-import networkx as nx
 from scipy.spatial.distance import euclidean
 from itertools import product, combinations
-from src.SPI2Py.utils.shape_generator import generate_rectangular_prism, generate_rectangular_prisms
 from src.SPI2Py.utils.visualization import plot
 from src.SPI2Py.utils.spatial_transformations import translate, rotate
 
@@ -23,14 +21,12 @@ class Component:
         self.positions = positions
         self.radii = radii
         self.color = color
-        self.name = name
-
         self.node = node
+        self.name = name
+        self.constraints = constraints
 
         # Initialize the rotation attribute
         self.rotation = np.array([0, 0, 0])
-
-        self.constraints = constraints
 
     @property
     def reference_position(self):
@@ -162,7 +158,7 @@ class Interconnect:
 
         num_spheres = int(dist / self.diameter)
 
-        # Don't want zero-length interconencts
+        # Don't want zero-length interconnects
         if num_spheres == 0:
             num_spheres = 1
 
@@ -178,8 +174,6 @@ class Interconnect:
 
         # TODO revise logic for getting the reference point
         # Address varying number of spheres
-
-
 
         pos_1 = positions_dict[self.component_1][0]
         pos_2 = positions_dict[self.component_2][0]
@@ -202,7 +196,6 @@ class Interconnect:
         positions = np.linspace(pos_1, pos_2, self.num_spheres)
 
         self.positions = positions
-
 
 
 class Structure:
@@ -242,6 +235,7 @@ class Layout:
     @property
     def component_component_pairs(self):
         """
+        TODO Write unit tests to ensure it creates the correct pairs
 
         :return:
         """
@@ -253,7 +247,7 @@ class Layout:
     @property
     def component_interconnect_pairs(self):
         """
-        TODO Make it sure it's actually removing the correct pairs.
+        TODO Write unit tests to ensure it creates the correct pairs
 
         :return:
         """
@@ -271,6 +265,7 @@ class Layout:
     @property
     def interconnect_interconnect_pairs(self):
         """
+        TODO Write unit tests to ensure it creates the correct pairs
 
         :return:
         """
@@ -293,6 +288,7 @@ class Layout:
     @property
     def structure_all_pairs(self):
         """
+        TODO Write unit tests to ensure it creates the correct pairs
 
         :return:
         """
