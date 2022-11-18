@@ -3,6 +3,7 @@ src/SPI2Py/output/*
 !src/SPI2Py/output/.gitkeep
 tests/.pytest_cache/
 venv/
+**/.DS_Store
 .idea/
 .vscode/
 **/.DS_Store
