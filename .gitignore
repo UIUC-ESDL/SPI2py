@@ -4,6 +4,7 @@ src/SPI2Py/output/*
 tests/.pytest_cache/
 venv/
 .idea/
+.vscode/
 **/.DS_Store
 .idea/
 .vscode/
