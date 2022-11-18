@@ -1,6 +1,6 @@
 Inputs:
 
-  Folderpath: Input/
+  Folderpath: src/SPI2Py/Input/
   Filename : input_demo2.yaml
   User: Chad Peterson
 
@@ -38,7 +38,7 @@ Visualization:
 
 Outputs:
 
-  Folderpath: Output/
+  Folderpath: src/SPI2Py/Output/
   Report Filename: output.json
 
 
