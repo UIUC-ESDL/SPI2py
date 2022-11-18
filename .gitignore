@@ -1,5 +1,7 @@
 dist/
-src/SPI2Py/output/
+src/SPI2Py/output/*
+!src/SPI2Py/output/.gitkeep
 tests/.pytest_cache/
 venv/
+.idea/
 **/.DS_Store
