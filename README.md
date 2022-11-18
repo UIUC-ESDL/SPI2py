@@ -17,11 +17,22 @@ Website:
 
 https://spi2.illinois.edu/
 
-Publication: 
+## Publications
 
 Satya R T Peddada, Kai A James, James T Allison. 
 'A Novel Two-Stage Design Framework for 2d Spatial Packing of Interconnected Components.' 
 ASME Journal of Mechanical Design, Dec 2020.
-DOI: 10.1115/1.4048817
+DOI: [10.1115/1.4048817](https://dx.doi.org/10.1115/1.4048817)
+```
+@article{peddada2021novel,
+  title={A novel two-stage design framework for two-dimensional spatial packing of interconnected components},
+  author={Peddada, Satya RT and James, Kai A and Allison, James T},
+  journal={Journal of Mechanical Design},
+  volume={143},
+  number={3},
+  year={2021},
+  publisher={American Society of Mechanical Engineers Digital Collection}
+}
+```
 
 TODO Add the new SPI2 JMD article once published.
