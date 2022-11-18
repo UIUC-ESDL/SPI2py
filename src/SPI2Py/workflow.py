@@ -3,6 +3,7 @@
 TODO Add a logger
 TODO place workflow in if name == __main__ statement
 TODO Ensure add src to python path for pytest
+Test commit for develop branch post-rebase
 """
 
 import numpy as np
