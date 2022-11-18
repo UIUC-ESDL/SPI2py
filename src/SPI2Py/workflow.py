@@ -6,6 +6,7 @@ TODO Ensure add src to python path for pytest
 Test commit for develop branch post-rebase
 """
 
+import os
 import numpy as np
 import json
 import yaml
@@ -19,7 +20,8 @@ from time import perf_counter_ns
 '''Set the Filepaths'''
 
 
-with open('config.yaml', 'r') as f:
+# Assumes current working directory is main SPI2py
+with open('src\SPI2Py\config.yaml', 'r') as f:
     config = yaml.safe_load(f)
 
 input_file = config['Inputs']['Folderpath'] + config['Inputs']['Filename']
