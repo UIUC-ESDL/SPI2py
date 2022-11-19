@@ -30,7 +30,7 @@ def translate(current_positions, delta_position):
 @njit(cache=True)
 def rotate(positions, rotation):
     """
-    Rotates a set of points based on the change of rotation of a reference point.
+    Rotates a set of points about the first 3D point in the array.
 
     Note: Why do I manually define the rotation matrix instead of use
     scipy.spatial.transform.Rotation? Because in the future, the goal is to apply algorithmic
@@ -42,7 +42,7 @@ def rotate(positions, rotation):
     TODO Vectorize?
 
     :param positions:
-    :param delta_rotation: Angle in radians!
+    :param rotation: Angle in radians
     :return: new_positions:
     """
 
@@ -53,17 +53,20 @@ def rotate(positions, rotation):
     alpha, beta, gamma = rotation
 
     # Rotation matrix Euler angle convention r = r_z(gamma) @ r_y(beta) @ r_x(alpha)
-    r = np.array([[cos(beta)*cos(gamma),
-                   sin(alpha)*cos(beta)*cos(gamma)-cos(alpha)*sin(gamma),
-                   cos(alpha)*sin(beta)*cos(gamma)+sin(alpha)*sin(gamma)],
 
-                  [cos(beta)*sin(alpha),
-                   sin(alpha)*sin(beta)*sin(gamma)+cos(alpha)*cos(gamma),
-                   cos(alpha)*sin(beta)*sin(gamma)-sin(alpha)*cos(gamma)],
+    r_x = np.array([[1., 0., 0.],
+                    [0., cos(alpha), -sin(alpha)],
+                    [0., sin(alpha), cos(alpha)]])
 
-                  [-sin(beta),
-                   sin(alpha)*cos(beta),
-                   cos(alpha)*cos(beta)]])
+    r_y = np.array([[cos(beta), 0., sin(beta)],
+                    [0., 1., 0.],
+                    [-sin(beta), 0., cos(beta)]])
+
+    r_z = np.array([[cos(gamma), -sin(gamma), 0.],
+                    [sin(gamma), cos(gamma), 0.],
+                    [0., 0., 1.]])
+
+    r = r_z @ r_y @ r_x
 
     # Transpose positions from [[x1,y1,z1],[x2... ] to [[x1,x2,x3],[y1,... ]
     rotated_origin_positions = (r @ origin_positions.T).T
