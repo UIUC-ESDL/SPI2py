@@ -28,7 +28,7 @@ def translate(current_positions, delta_position):
 
 
 @njit(cache=True)
-def rotate(positions, delta_rotation):
+def rotate(positions, rotation):
     """
     Rotates a set of points based on the change of rotation of a reference point.
 
@@ -50,20 +50,20 @@ def rotate(positions, delta_rotation):
     reference_position = positions[0]
     origin_positions = positions - reference_position
 
-    alpha, beta, gamma = delta_rotation
+    alpha, beta, gamma = rotation
 
     # Rotation matrix Euler angle convention r = r_z(gamma) @ r_y(beta) @ r_x(alpha)
-    r = np.array([[cos(alpha)*cos(beta),
-                   cos(alpha)*sin(beta)*sin(gamma)-sin(alpha)*cos(gamma),
+    r = np.array([[cos(beta)*cos(gamma),
+                   sin(alpha)*cos(beta)*cos(gamma)-cos(alpha)*sin(gamma),
                    cos(alpha)*sin(beta)*cos(gamma)+sin(alpha)*sin(gamma)],
 
-                  [sin(alpha)*cos(beta),
+                  [cos(beta)*sin(alpha),
                    sin(alpha)*sin(beta)*sin(gamma)+cos(alpha)*cos(gamma),
-                   sin(alpha)*sin(beta)*cos(gamma)-cos(alpha)*sin(gamma)],
+                   cos(alpha)*sin(beta)*sin(gamma)-sin(alpha)*cos(gamma)],
 
                   [-sin(beta),
-                   cos(beta)*sin(gamma),
-                   cos(beta)*cos(gamma)]])
+                   sin(alpha)*cos(beta),
+                   cos(alpha)*cos(beta)]])
 
     # Transpose positions from [[x1,y1,z1],[x2... ] to [[x1,x2,x3],[y1,... ]
     rotated_origin_positions = (r @ origin_positions.T).T
