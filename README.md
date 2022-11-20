@@ -1,7 +1,6 @@
-
-
 ![](logo.png)
 
+[![Site](https://img.shields.io/badge/Project%20URL-spi2.illinois.edu%2F-orange)](https://spi2.illinois.edu/)
 [![PyTest](https://github.com/SPI2Py/SPI2Py/actions/workflows/tests.yml/badge.svg?branch=master)](https://github.com/SPI2Py/SPI2Py/actions/workflows/tests.yml)
 
 # Welcome to SPI2Py
@@ -12,12 +11,6 @@ The SPI2 framework packages components, routes interconnects, and performs multi
 
 At this point in time, we are working on the initial release so many features are missing/untested. We plan to 
 demonstrate an early working version in mid-November of 2022.
-
-For more information regarding the SPI2 Strategic Research Initiative see the following.
-
-Website: 
-
-https://spi2.illinois.edu/
 
 ## Publications
 
@@ -36,5 +29,3 @@ DOI: [10.1115/1.4048817](https://dx.doi.org/10.1115/1.4048817)
   publisher={American Society of Mechanical Engineers Digital Collection}
 }
 ```
-
-TODO Add the new SPI2 JMD article once published.
