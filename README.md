@@ -2,6 +2,8 @@
 
 ![](logo.png)
 
+[![PyTest](https://github.com/SPI2Py/SPI2Py/actions/workflows/tests.yml/badge.svg?branch=master)](https://github.com/SPI2Py/SPI2Py/actions/workflows/tests.yml)
+
 # Welcome to SPI2Py
 
 SPI2 stands for the Spatial Packaging of Interconnected Systems with Physical Interactions.
