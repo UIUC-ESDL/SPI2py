@@ -1,4 +1,7 @@
-
+# import networkx as nx
+# import pickle
+# import collections
+# from cypari import pari
 # import itertools
 # import subprocess
 # import string
@@ -112,7 +115,7 @@
 # def spatial_graph_diagrams_from_shadow(shadow, signs):
 #    assert len(signs
 
-# TODO Compile Plantri for Windows...
+# TODO Compile Plantri for Windows
 # def spatial_graph_diagrams_fixed_crossings(G, crossings):
 #     """
 #     Let's start with the theta graph
