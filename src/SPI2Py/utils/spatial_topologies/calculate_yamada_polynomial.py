@@ -264,56 +264,6 @@ class Edge(BaseVertex):
 class SpatialGraphDiagram:
     """
 
-
-
-    Infinity symbol:
-
-    >>> C = Crossing('X')
-    >>> C[0], C[2] = C[1], C[3]
-    >>> D = SpatialGraphDiagram([C])
-    >>> D.yamada_polynomial()
-    A^3 + A^2 + A
-
-    Other infinity symbol:
-
-    >>> C = Crossing('X')
-    >>> C[1], C[3] = C[2], C[0]
-    >>> D = SpatialGraphDiagram([C])
-    >>> D.yamada_polynomial()
-    (A^2 + A + 1)/A^3
-
-    The Theta_2 graph from Drobrynin and Vesnin:
-
-    >>> A, B = Vertex(3, 'A'), Vertex(3, 'B')
-    >>> X, Y, Z = [Crossing(L) for L in 'XYZ']
-    >>> A[0], A[1], A[2] = X[0], B[2], Y[1]
-    >>> B[0], B[1] = X[3], Z[0]
-    >>> X[1], X[2] = Y[0], Z[1]
-    >>> Y[2], Y[3] = Z[3], Z[2]
-    >>> D = SpatialGraphDiagram([A, B, X, Y, Z])
-    >>> G = D.underlying_graph()
-    >>> nx.is_isomorphic(G, T)
-    True
-    >>> D.yamada_polynomial()
-    (A^12 - A^8 - A^6 - A^4 - A^3 - A^2 - A - 1)/A^6
-
-    The Omega_2 graph from Drobrynin and Vesnin:
-
-    >>> A, B, C, D = [Vertex(3, L) for L in 'ABCD']
-    >>> X, Y, Z = [Crossing(L) for L in 'XYZ']
-    >>> A[0], A[1], A[2] = D[0], B[2], X[2]
-    >>> B[0], B[1] = C[0], X[3]
-    >>> C[1], C[2] = D[2], Z[0]
-    >>> D[1] = Z[1]
-    >>> X[0], X[1] = Y[3], Y[2]
-    >>> Y[0], Y[1] = Z[3], Z[2]
-    >>> D = SpatialGraphDiagram([A, B, C, D, X, Y, Z])
-    >>> G = D.underlying_graph()
-    >>> nx.is_isomorphic(G, nx.complete_graph(4))
-    True
-    >>> D.yamada_polynomial()
-    (A^13 + A^11 + A^10 - A^9 + A^8 - 2*A^7 + A^6 - A^5 + A^4 + A^3 + A^2 + A + 1)/A^5
-
     """
 
     def __init__(self, data, check=True):
@@ -542,7 +492,7 @@ class SpatialGraphDiagram:
 
 
 if __name__ == '__main__':
-    import doctest
+
 
     A = pari('A')
 
