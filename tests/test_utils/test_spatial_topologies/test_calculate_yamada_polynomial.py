@@ -1,21 +1,17 @@
 import networkx as nx
 from cypari import pari
-from src.SPI2Py.utils.spatial_topologies.calculate_yamada_polynomial import has_cut_edge, remove_valence_two_vertices, H_poly
+from src.SPI2Py.utils.spatial_topologies.calculate_yamada_polynomial import has_cut_edge, remove_valence_two_vertices, h_poly, SpatialGraphDiagram, Vertex, Edge, Crossing
 
 
 
 def test_has_cut_edge_1():
-
     G = nx.MultiGraph(nx.barbell_graph(3, 0))
-
     assert has_cut_edge(G)
 
 
 def test_has_cut_edge_1():
-
     G = nx.MultiGraph(nx.barbell_graph(3, 0))
-    ekey = G.add_edge(2, 3)
-
+    G.add_edge(2, 3)
     assert not has_cut_edge(G)
 
 
@@ -25,26 +21,95 @@ def test_remove_valence_two_vertices():
     assert list(C.edges()) == [(0, 0)]
 
 
-def test_H_poly_1():
-
+def test_h_poly_1():
     G = nx.barbell_graph(3, 0)
-    assert H_poly(G) == 0
+    assert h_poly(G) == 0
 
 
-def test_H_poly_2():
-
+def test_h_poly_2():
     A = pari('A')
-    assert H_poly(nx.MultiGraph([(0, 0)])) == (A**2 + A + 1)/A
+    assert h_poly(nx.MultiGraph([(0, 0)])) == (A ** 2 + A + 1) / A
 
 
-def test_H_poly_3():
+def test_h_poly_3():
     A = pari('A')
-    assert H_poly(nx.MultiGraph([(0, 1), (1, 2), (2, 0)])) == (A**2 + A + 1)/A
+    assert h_poly(nx.MultiGraph([(0, 1), (1, 2), (2, 0)])) == (A ** 2 + A + 1) / A
 
 
-# def test_H_poly_4():
-#     ...
+def test_h_poly_4():
+    A = pari('A')
+    G = nx.MultiGraph([(0, 0), (0, 0)])
+    assert -h_poly(G) == (A**4 + 2*A**3 + 3*A**2 + 2*A + 1)/A**2
+
+
+def test_h_poly_5():
+    A = pari('A')
+    theta = nx.MultiGraph(3*[(0, 1)])
+    assert -h_poly(theta) == (A**4 + A**3 + 2*A**2 + A + 1)/A**2
+
+
+def test_h_poly_6():
+    A = pari('A')
+    G = nx.MultiGraph([(0, 0), (1, 1)])
+    assert h_poly(G) == (A**4 + 2*A**3 + 3*A**2 + 2*A + 1)/A**2
+
+
+def test_h_poly_7():
+    A = pari('A')
+    G = nx.MultiGraph([(0, 1), (0, 1), (2, 3), (2, 3), (0, 2), (1, 3)])
+    assert h_poly(G) == (A**6 + A**5 + 3*A**4 + 2*A**3 + 3*A**2 + A + 1)/A**3
+
+
+def test_spatial_graph_diagram_unknotted_theta_graph_1():
+    a, b = Vertex(3, 'a'), Vertex(3, 'b')
+    e0, e1, e2 = Edge(0), Edge(1), Edge(2)
+    a[0], a[1], a[2] = e0[0], e1[0], e2[0]
+    b[0], b[1], b[2] = e0[1], e2[1], e1[1]
+    D = SpatialGraphDiagram([a, b, e0, e1, e2])
+
+    assert len(D.crossings) == 0
+    assert len(D.vertices) == 2
+
+    G = D.projection_graph()
+    T = nx.MultiGraph(3 * [(0, 1)])
+
+    assert nx.is_isomorphic(remove_valence_two_vertices(G), T)
+
+
+def test_spatial_graph_diagram_unknotted_theta_graph_2():
+
+    a, b = Vertex(3, 'a'), Vertex(3, 'b')
+    e0, e1, e2 = Edge(0), Edge(1), Edge(2)
+    a[0], a[1], a[2] = e0[0], e1[0], e2[0]
+    b[0], b[1], b[2] = e0[1], e2[1], e1[1]
+    D = SpatialGraphDiagram([a, b, e0, e1, e2])
+
+    G = D.projection_graph()
+    T = nx.MultiGraph(3 * [(0, 1)])
+
+    assert nx.is_isomorphic(remove_valence_two_vertices(G), T)
+
+
+def test_yamada_polynomial_unknotted_theta_graph_1():
+    a, b = Vertex(3, 'a'), Vertex(3, 'b')
+    e0, e1, e2 = Edge(0), Edge(1), Edge(2)
+    a[0], a[1], a[2] = e0[0], e1[0], e2[0]
+    b[0], b[1], b[2] = e0[1], e2[1], e1[1]
+    D = SpatialGraphDiagram([a, b, e0, e1, e2])
+
+    T = nx.MultiGraph(3 * [(0, 1)])
+
+    assert D.yamada_polynomial() == h_poly(T)
+
+
+def test_yamada_polynomial_infinity_symbol_1():
+    A = pari('A')
+    C = Crossing('X')
+    C[0], C[2] = C[1], C[3]
+    D = SpatialGraphDiagram([C])
+    assert D.yamada_polynomial() == A**3 + A**2 + A
+
 #
 #
-# def test_H_poly_5():
-#     ...
+# def test_yamada_polynomial_3():
+#     pass

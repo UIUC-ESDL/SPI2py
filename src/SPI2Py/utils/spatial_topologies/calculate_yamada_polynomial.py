@@ -111,29 +111,13 @@ def graph_hash(graph):
 H_poly_cache = collections.defaultdict(list)
 
 
-def H_poly(abstract_graph):
+def h_poly(abstract_graph):
     """
 
-
-    >>> H_poly(nx.MultiGraph([(0, 1), (1, 2), (2, 0)]))
-    (A^2 + A + 1)/A
-    >>> G = nx.MultiGraph([(0, 0), (0, 0)])
-    >>> -H_poly(G)
-    (A^4 + 2*A^3 + 3*A^2 + 2*A + 1)/A^2
-    >>> theta = nx.MultiGraph(3*[(0, 1)])
-    >>> -H_poly(theta)
-    (A^4 + A^3 + 2*A^2 + A + 1)/A^2
-    >>> G = nx.MultiGraph([(0, 0), (1, 1)])
-    >>> H_poly(G)
-    (A^4 + 2*A^3 + 3*A^2 + 2*A + 1)/A^2
-    >>> H_poly(nx.complete_graph(4))
-    (A^6 + 2*A^4 + 2*A^2 + 1)/A^3
-    >>> G = nx.MultiGraph([(0, 1), (0, 1), (2, 3), (2, 3), (0, 2), (1, 3)])
-    >>> H_poly(G)
-    (A^6 + A^5 + 3*A^4 + 2*A^3 + 3*A^2 + A + 1)/A^3
     """
     A = pari('A')
     G = abstract_graph
+
     if not isinstance(G, nx.MultiGraph):
         G = nx.MultiGraph(G)
     if G.number_of_nodes() == 0:
@@ -172,7 +156,7 @@ def H_poly(abstract_graph):
                 G_mod_e = nx.contracted_edge(G, e, self_loops=True)
                 G_mod_e.remove_edge(e[0], e[0])
                 G.remove_edge(*e)
-                ans = (H_poly(G_mod_e) + H_poly(G)) * loop_factor
+                ans = (h_poly(G_mod_e) + h_poly(G)) * loop_factor
 
         H_poly_cache[its_hash].append((G_for_cache, ans))
         return ans
@@ -182,7 +166,7 @@ def H_poly(abstract_graph):
 
         for vertices in nx.connected_components(G):
             S = G.subgraph(vertices).copy()
-            h = H_poly(S)
+            h = h_poly(S)
             if h == 0:
                 # return R(0)
                 return pari(0)
@@ -279,21 +263,8 @@ class Edge(BaseVertex):
 
 class SpatialGraphDiagram:
     """
-    Unknotted theta graph:
 
-    >>> A, B = Vertex(3, 'A'), Vertex(3, 'B')
-    >>> E0, E1, E2 = Edge(0), Edge(1), Edge(2)
-    >>> A[0], A[1], A[2] = E0[0], E1[0], E2[0]
-    >>> B[0], B[1], B[2] = E0[1], E2[1], E1[1]
-    >>> D = SpatialGraphDiagram([A, B, E0, E1, E2])
-    >>> len(D.crossings), len(D.vertices)
-    (0, 2)
-    >>> G = D.projection_graph()
-    >>> T = nx.MultiGraph(3*[(0, 1)])
-    >>> nx.is_isomorphic(remove_valence_two_vertices(G), T)
-    True
-    >>> D.yamada_polynomial() == H_poly(T)
-    True
+
 
     Infinity symbol:
 
@@ -520,8 +491,11 @@ class SpatialGraphDiagram:
         return False
 
     def yamada_polynomial(self, check_pieces=False):
+
+        A = pari('A')
+
         if len(self.crossings) == 0:
-            return H_poly(self.projection_graph())
+            return h_poly(self.projection_graph())
 
         C = self.crossings[0]
         c = C.label
