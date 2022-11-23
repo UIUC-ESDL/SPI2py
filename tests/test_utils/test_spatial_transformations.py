@@ -8,7 +8,7 @@ TODO write tests to ensure negative values are same e.g., 90 degrees ccw (-90) =
 """
 
 import numpy as np
-from src.SPI2Py.utils.spatial_transformations import rotate
+from src.SPI2Py.utils.spatial_transformations import rotate_about_point
 
 
 positions = np.array([[2., 2., 0.], [4., 2., 0.], [4., 0., 0.]])
@@ -20,7 +20,7 @@ def test_rotate_x_90():
 
     # Round to avoid 0.9999 != 1, but keep at least one decimal point to avoid njit errors
     # Njit requires floats not integers!
-    new_positions = np.round(rotate(positions, rotation_x_90), 0)
+    new_positions = np.round(rotate_about_point(positions, rotation_x_90), 0)
 
     # See accompanying PPT file for test case derivations
     expected = np.array([[2., 2., 0.], [4., 2., 0.], [4., 2., -2.]])
