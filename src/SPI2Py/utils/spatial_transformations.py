@@ -28,7 +28,7 @@ def translate(current_positions, delta_position):
 
 
 @njit(cache=True)
-def rotate(positions, rotation):
+def rotate_about_point(positions, rotation):
     """
     Rotates a set of points about the first 3D point in the array.
 
