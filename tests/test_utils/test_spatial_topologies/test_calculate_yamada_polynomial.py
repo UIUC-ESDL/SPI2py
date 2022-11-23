@@ -109,7 +109,54 @@ def test_yamada_polynomial_infinity_symbol_1():
     D = SpatialGraphDiagram([C])
     assert D.yamada_polynomial() == A**3 + A**2 + A
 
-#
-#
-# def test_yamada_polynomial_3():
-#     pass
+
+def test_yamada_polynomial_infinity_symbol_2():
+    A = pari('A')
+    C = Crossing('X')
+    C[1], C[3] = C[2], C[0]
+    D = SpatialGraphDiagram([C])
+    assert D.yamada_polynomial() == (A**2 + A + 1)/A**3
+
+
+def test_yamada_polynomial_theta_2_graph():
+    """
+    The Theta_2 graph from Drobrynin and Vesnin
+    """
+
+    A = pari('A')
+
+    a, b = Vertex(3, 'a'), Vertex(3, 'b')
+    X, Y, Z = [Crossing(L) for L in 'XYZ']
+    a[0], a[1], a[2] = X[0], b[2], Y[1]
+    b[0], b[1] = X[3], Z[0]
+    X[1], X[2] = Y[0], Z[1]
+    Y[2], Y[3] = Z[3], Z[2]
+    D = SpatialGraphDiagram([a, b, X, Y, Z])
+    G = D.underlying_graph()
+    T = nx.MultiGraph(3 * [(0, 1)])
+
+    assert nx.is_isomorphic(G, T)
+
+    assert D.yamada_polynomial() == (A**12 - A**8 - A**6 - A**4 - A**3 - A**2 - A - 1)/A**6
+
+
+def test_yamada_polynomial_omega_2_graph():
+    """
+    The Omega_2 graph from Drobrynin and Vesnin:
+    """
+
+    A = pari('A')
+
+    a, b, C, D = [Vertex(3, L) for L in 'abCD']
+    X, Y, Z = [Crossing(L) for L in 'XYZ']
+    a[0], a[1], a[2] = D[0], b[2], X[2]
+    b[0], b[1] = C[0], X[3]
+    C[1], C[2] = D[2], Z[0]
+    D[1] = Z[1]
+    X[0], X[1] = Y[3], Y[2]
+    Y[0], Y[1] = Z[3], Z[2]
+    D = SpatialGraphDiagram([a, b, C, D, X, Y, Z])
+    G = D.underlying_graph()
+    assert nx.is_isomorphic(G, nx.complete_graph(4))
+
+    assert D.yamada_polynomial() == (A**13 + A**11 + A**10 - A**9 + A**8 - 2*A**7 + A**6 - A**5 + A**4 + A**3 + A**2 + A + 1)/A**5
