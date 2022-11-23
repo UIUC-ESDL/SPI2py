@@ -42,14 +42,9 @@ Compared to Dobrynin and Vesnin:
 
 import networkx as nx
 import pickle
-
 import collections
-
-
 from cypari import pari
 
-
-# A = pari('A')
 
 def has_cut_edge(abstract_graph):
     """
@@ -488,27 +483,5 @@ class SpatialGraphDiagram:
         Y_0 = S_0.yamada_polynomial()
         return A * Y_plus + (A ** -1) * Y_minus + Y_0
 
-
-
-
-if __name__ == '__main__':
-
-
-    A = pari('A')
-
-    doctest.testmod()
-    T = nx.MultiGraph(3 * [(0, 1)])
-    G = nx.MultiGraph([(0, 1), (0, 1), (2, 3), (2, 3), (0, 2), (1, 3)])
-    H = nx.complete_graph(6, nx.MultiGraph)
-    # H = nx.complete_graph(4, nx.MultiGraph)
-
-    print('main')
-
-    a, b = Vertex(3, 'a'), Vertex(3, 'b')
-    E0, E1, E2 = Edge(0), Edge(1), Edge(2)
-    a[0], a[1], a[2] = E0[0], E1[0], E2[0]
-    b[0], b[1], b[2] = E0[1], E2[1], E1[1]
-    D = SpatialGraphDiagram([a, b, E0, E1, E2])
-    D.yamada_polynomial()
 
 
