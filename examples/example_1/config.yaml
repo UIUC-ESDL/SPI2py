@@ -1,8 +1,5 @@
-Inputs:
-
-  Folderpath: Input/
-  Filename : input_demo2.yaml
-  User: Chad Peterson
+Input: examples/example_1/input_demo2.yaml
+User: Chad Peterson
 
 
 Geometry:
@@ -38,7 +35,7 @@ Visualization:
 
 Outputs:
 
-  Folderpath: Output/
+  Folderpath: src/SPI2py/output/
   Report Filename: output.json
 
 

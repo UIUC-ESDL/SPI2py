@@ -4,29 +4,32 @@ TODO Add a logger
 TODO place workflow in if name == __main__ statement
 TODO Ensure add src to python path for pytest
 Test commit for develop branch post-rebase
+
+Note: Make sure to run this from the top-level SPI2Py directory
 """
 
 import numpy as np
 import json
 import yaml
-from utils.layout_generator import generate_layout
-from utils.spatial_topology import generate_random_layout
-from utils.gradient_based_optimization import optimize
-from utils.visualization import generate_gif
 from datetime import datetime
 from time import perf_counter_ns
+
+from src.SPI2Py.utils.layout_generator import generate_layout
+from src.SPI2Py.utils.spatial_topology import generate_random_layout
+from src.SPI2Py.utils.gradient_based_optimization import optimize
+from src.SPI2Py.utils.visualization import generate_gif
+
+
 
 '''Set the Filepaths'''
 
 
-
 # Assumes current working directory is main SPI2py
-with open('config.yaml', 'r') as f:
+with open('examples/example_1/config.yaml', 'r') as f:
     config = yaml.safe_load(f)
 
-input_file = config['Inputs']['Folderpath'] + config['Inputs']['Filename']
 
-with open(input_file, 'r') as f:
+with open(config['Input'], 'r') as f:
     inputs = yaml.safe_load(f)
 
 
