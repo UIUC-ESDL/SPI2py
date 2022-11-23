@@ -147,15 +147,15 @@ def test_yamada_polynomial_omega_2_graph():
 
     A = pari('A')
 
-    a, b, C, D = [Vertex(3, L) for L in 'abCD']
+    a, b, c, d = [Vertex(3, L) for L in 'abcd']
     X, Y, Z = [Crossing(L) for L in 'XYZ']
-    a[0], a[1], a[2] = D[0], b[2], X[2]
-    b[0], b[1] = C[0], X[3]
-    C[1], C[2] = D[2], Z[0]
-    D[1] = Z[1]
+    a[0], a[1], a[2] = d[0], b[2], X[2]
+    b[0], b[1] = c[0], X[3]
+    c[1], c[2] = d[2], Z[0]
+    d[1] = Z[1]
     X[0], X[1] = Y[3], Y[2]
     Y[0], Y[1] = Z[3], Z[2]
-    D = SpatialGraphDiagram([a, b, C, D, X, Y, Z])
+    D = SpatialGraphDiagram([a, b, c, d, X, Y, Z])
     G = D.underlying_graph()
     assert nx.is_isomorphic(G, nx.complete_graph(4))
 

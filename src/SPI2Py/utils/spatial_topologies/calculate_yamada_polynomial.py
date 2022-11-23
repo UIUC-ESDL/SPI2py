@@ -37,6 +37,8 @@ Compared to Dobrynin and Vesnin:
 2. For the tetrahedral graph, the list of Yamada polynomials through 4
    crossings matches after removing the non-prime Omega_5.
 
+Note: The way this script is written w/ pickling you must import this script into another script
+rather than directly calculate Yamada polynomials in this script (you'll get error messages)
 
 """
 
@@ -482,6 +484,3 @@ class SpatialGraphDiagram:
         Y_minus = S_minus.yamada_polynomial()
         Y_0 = S_0.yamada_polynomial()
         return A * Y_plus + (A ** -1) * Y_minus + Y_0
-
-
-
