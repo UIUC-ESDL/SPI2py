@@ -817,3 +817,11 @@ if __name__ == '__main__':
 
     print('main')
 
+    a, b = Vertex(3, 'a'), Vertex(3, 'b')
+    E0, E1, E2 = Edge(0), Edge(1), Edge(2)
+    a[0], a[1], a[2] = E0[0], E1[0], E2[0]
+    b[0], b[1], b[2] = E0[1], E2[1], E1[1]
+    D = SpatialGraphDiagram([a, b, E0, E1, E2])
+    D.yamada_polynomial()
+
+
