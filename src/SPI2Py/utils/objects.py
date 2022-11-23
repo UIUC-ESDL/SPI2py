@@ -10,8 +10,8 @@ TODO Look into replacing get/set methods with appropriate decorators...
 import numpy as np
 from scipy.spatial.distance import euclidean
 from itertools import product, combinations
-from utils.visualization import plot
-from utils.spatial_transformations import translate, rotate
+from src.SPI2Py.utils.visualization import plot
+from src.SPI2Py.utils.spatial_transformations import translate, rotate_about_point
 
 
 class Component:
@@ -56,7 +56,7 @@ class Component:
 
             translated_positions = translate(self.positions, delta_position)
 
-            rotated_translated_positions = rotate(translated_positions, delta_rotation)
+            rotated_translated_positions = rotate_about_point(translated_positions, delta_rotation)
 
         else:
             print('Placeholder')
@@ -86,7 +86,7 @@ class Component:
 
             translated_positions = translate(self.positions, delta_position)
 
-            rotated_translated_positions = rotate(translated_positions, delta_rotation)
+            rotated_translated_positions = rotate_about_point(translated_positions, delta_rotation)
 
             # Update values
             self.positions = rotated_translated_positions
