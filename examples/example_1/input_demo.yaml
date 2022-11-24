@@ -13,7 +13,7 @@ components:
 
 interconnects:
     0:
-        color: gray
+        color: black
         component 1: 0
         component 2: 1
         diameter: [0.25]
@@ -21,7 +21,7 @@ interconnects:
 structures:
     0:
         name: structure0
-        color: black
+        color: gray
         origins: [[-1,-1,-3], [-1,1,-3]]
         dimensions: [[5,5,1], [1,1,1]]
 

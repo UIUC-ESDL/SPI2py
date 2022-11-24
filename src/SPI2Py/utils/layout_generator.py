@@ -5,7 +5,7 @@ This module provides functions to create objects from the user input file
 """
 
 
-from src.SPI2Py.utils.objects import Component, Interconnect, InterconnectNode, Structure, Layout
+from src.SPI2Py.utils.objects import Component, Interconnect, InterconnectNode, Structure, System, Problem
 from src.SPI2Py.utils.shape_generator import generate_rectangular_prisms
 
 
@@ -59,6 +59,8 @@ def create_objects_from_input(inputs):
 def generate_layout(inputs):
     components, interconnect_nodes, interconnects, structures = create_objects_from_input(inputs)
 
-    layout = Layout(components, interconnect_nodes, interconnects, structures)
+    system = System(components, interconnect_nodes, interconnects, structures)
+
+    layout = Problem(system)
 
     return layout
