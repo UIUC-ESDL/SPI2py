@@ -44,7 +44,6 @@ class Component:
 
         positions_dict = {}
 
-
         # Assumes (1,6) design vector... will need to expand in future
         if self.constraints is None:
 
@@ -132,12 +131,11 @@ class InterconnectNode:
 
 class Interconnect:
     def __init__(self, component_1, component_2, diameter, color):
-
         self.component_1 = component_1
         self.component_2 = component_2
 
         self.diameter = diameter
-        self.radius = diameter/2
+        self.radius = diameter / 2
         self.color = color
 
         # Create edge tuple for NetworkX graphs
@@ -148,7 +146,6 @@ class Interconnect:
 
         # Temporary
         self.num_spheres = len(self.radii)
-
 
     def set_positions(self):
         pos_1 = self.component_1.reference_position
@@ -171,27 +168,22 @@ class Interconnect:
         return positions, radii
 
     def calculate_positions(self, positions_dict):
-
         # TODO revise logic for getting the reference point
         # Address varying number of spheres
 
         pos_1 = positions_dict[self.component_1][0]
         pos_2 = positions_dict[self.component_2][0]
-
 
         positions = np.linspace(pos_1, pos_2, self.num_spheres)
 
-        return {self:positions}
-
+        return {self: positions}
 
     def update_positions(self, positions_dict):
-
         # TODO revise logic for getting the reference point
         # Address varying number of spheres
 
         pos_1 = positions_dict[self.component_1][0]
         pos_2 = positions_dict[self.component_2][0]
-
 
         positions = np.linspace(pos_1, pos_2, self.num_spheres)
 
@@ -206,11 +198,12 @@ class Structure:
         self.name = name
 
 
-class Layout:
+class System:
     """
 
 
     """
+
     def __init__(self, components, interconnect_nodes, interconnects, structures):
         self.components = components
         self.interconnect_nodes = interconnect_nodes
@@ -231,7 +224,12 @@ class Layout:
         #
         self.design_vector_objects = components + interconnect_nodes
 
-    
+    def add_object(self):
+        pass
+
+    def remove_object(self):
+        pass
+
     @property
     def component_component_pairs(self):
         """
@@ -282,7 +280,6 @@ class Layout:
         # If a pipe intersects itself, usually the pipe can just be made shorter...
         # TODO implement this feature
 
-
         return interconnect_interconnect_pairs
 
     @property
@@ -293,7 +290,8 @@ class Layout:
         :return:
         """
 
-        structure_all_pairs = component_interconnect_pairs = list(product(self.structures, self.objects_minus_structures))
+        structure_all_pairs = component_interconnect_pairs = list(
+            product(self.structures, self.objects_minus_structures))
 
         return structure_all_pairs
 
@@ -354,7 +352,6 @@ class Layout:
         stop = 0
 
         for i, size in enumerate(self.design_vector_sizes):
-
             # Increment stop index
             stop += self.design_vector_sizes[i]
 
@@ -392,7 +389,6 @@ class Layout:
 
             # Get positions of interconnect nodes and structures...
 
-
         return positions_dict
 
     def set_positions(self, new_design_vector):
@@ -414,11 +410,22 @@ class Layout:
         for interconnect in self.interconnects:
             interconnect.update_positions(positions_dict)
 
+
+
+
+class Problem:
+    """
+
+    """
+
+    def __init__(self, system):
+        self.system = system
+
     def plot_layout(self, savefig=False, directory=None):
 
         layout_plot_dict = {}
 
-        for obj in self.objects:
+        for obj in self.system.objects:
             object_plot_dict = {}
 
             positions = obj.positions
@@ -432,5 +439,3 @@ class Layout:
             layout_plot_dict[obj] = object_plot_dict
 
         plot(layout_plot_dict, savefig, directory)
-
-
