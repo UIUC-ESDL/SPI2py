@@ -3,7 +3,7 @@
 """
 import yaml
 
-from src.SPI2Py.utils.geometry.shape_generator import generate_rectangular_prisms
+from src.SPI2Py.utils.spherical_decomposition.prismatic_shapes import generate_rectangular_prisms
 from src.SPI2Py.utils.objects import Component, InterconnectSegment, Structure, SpatialConfiguration
 from src.SPI2Py.utils.spatial_topologies.force_directed_layouts import generate_random_layout
 
