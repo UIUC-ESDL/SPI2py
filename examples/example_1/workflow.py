@@ -39,10 +39,6 @@ config_filepath = 'examples/example_1/config.yaml'
 demo.add_configuration_file(config_filepath)
 
 
-
-# with open(demo.config['Input'], 'r') as f:
-#     inputs = yaml.safe_load(f)
-
 # Generate objects from the inputs file
 demo.generate_layout(demo.inputs)
 layout = demo.layout
