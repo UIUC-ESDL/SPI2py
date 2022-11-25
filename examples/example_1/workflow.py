@@ -16,6 +16,7 @@ from src.SPI2Py.utils.gradient_based_optimization.gradient_based_optimization im
 from src.SPI2Py.utils.layout_generator import generate_layout
 from src.SPI2Py.utils.spatial_topologies.force_directed_layouts import generate_random_layout
 from src.SPI2Py.utils.visualization.visualization import generate_gif
+from src.SPI2Py.utils.objects import SPI2
 
 '''Set the Filepaths'''
 
@@ -31,9 +32,12 @@ with open(config['Input'], 'r') as f:
 
 '''Initialize the Layout'''
 
+# Initialize the class
+demo = SPI2()
 
 # Generate objects from the inputs file
-layout = generate_layout(inputs)
+demo.generate_layout(inputs)
+layout = demo.layout
 
 # Generate a random initial layout
 initial_layout_design_vector = generate_random_layout(layout)

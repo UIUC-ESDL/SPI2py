@@ -10,6 +10,8 @@ TODO Look into replacing get/set methods with appropriate decorators...
 import numpy as np
 from scipy.spatial.distance import euclidean
 from itertools import product, combinations
+
+from src.SPI2Py.utils.geometry.shape_generator import generate_rectangular_prisms
 from src.SPI2Py.utils.visualization.visualization import plot
 from src.SPI2Py.utils.geometry.spatial_transformations import translate, rotate_about_point
 
@@ -419,3 +421,82 @@ class SpatialConfiguration(System):
             layout_plot_dict[obj] = object_plot_dict
 
         plot(layout_plot_dict, savefig, directory)
+
+
+class SPI2:
+    """
+
+    """
+
+    def __init__(self):
+        self.components = None
+        self.interconnect_nodes = None
+        self.interconnects = None
+        self.structures = None
+
+        self.layout = None
+
+
+    def create_objects_from_input(self, inputs):
+        """
+
+        :param inputs:
+        :return:
+        """
+
+
+        # Create Components
+        components = []
+        for component in inputs['components']:
+            node = component
+            name = inputs['components'][component]['name']
+            color = inputs['components'][component]['color']
+            origins = inputs['components'][component]['origins']
+            dimensions = inputs['components'][component]['dimensions']
+
+            positions, radii = generate_rectangular_prisms(origins, dimensions)
+            components.append(Component(positions, radii, color, node, name))
+
+        self.components = components
+
+
+        # Create Interconnect Nodes
+        interconnect_nodes = []
+        # TODO Add functionality to create InterconnectNode objects.
+
+        self.interconnect_nodes = interconnect_nodes
+
+
+        # Create Interconnects
+        interconnects = []
+        for interconnect in inputs['interconnects']:
+            component_1 = components[inputs['interconnects'][interconnect]['component 1']]
+            component_2 = components[inputs['interconnects'][interconnect]['component 2']]
+            diameter = inputs['interconnects'][interconnect]['diameter'][0]
+            color = inputs['interconnects'][interconnect]['color']
+
+            interconnects.append(Interconnect(component_1, component_2, diameter, color))
+
+        self.interconnects = interconnects
+
+
+        # Create Structures
+        structures = []
+        for structure in inputs['structures']:
+            name = inputs['structures'][structure]['name']
+            color = inputs['structures'][structure]['color']
+            origins = inputs['structures'][structure]['origins']
+            dimensions = inputs['structures'][structure]['dimensions']
+
+            positions, radii = generate_rectangular_prisms(origins, dimensions)
+            structures.append(Structure(positions, radii, color, name))
+
+        self.structures = structures
+
+    def generate_layout(self, inputs):
+
+        self.create_objects_from_input(inputs)
+
+        layout = SpatialConfiguration(self.components, self.interconnect_nodes, self.interconnects, self.structures)
+
+        self.layout = layout
