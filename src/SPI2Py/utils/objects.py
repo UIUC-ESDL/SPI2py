@@ -8,12 +8,9 @@ TODO Look into replacing get/set methods with appropriate decorators...
 """
 
 import numpy as np
-import yaml
 from scipy.spatial.distance import euclidean
 from itertools import product, combinations
 
-from src.SPI2Py.utils.geometry.shape_generator import generate_rectangular_prisms
-from src.SPI2Py.utils.spatial_topologies.force_directed_layouts import generate_random_layout
 from src.SPI2Py.utils.visualization.visualization import plot
 from src.SPI2Py.utils.geometry.spatial_transformations import translate, rotate_about_point
 
@@ -133,7 +130,7 @@ class InterconnectNode:
         return self.position
 
 
-class Interconnect:
+class InterconnectSegment:
     def __init__(self, component_1, component_2, diameter, color):
         self.component_1 = component_1
         self.component_2 = component_2
@@ -192,6 +189,13 @@ class Interconnect:
         positions = np.linspace(pos_1, pos_2, self.num_spheres)
 
         self.positions = positions
+
+
+class Interconnect(InterconnectNode, InterconnectSegment):
+    """
+
+    """
+    pass
 
 
 class Structure:

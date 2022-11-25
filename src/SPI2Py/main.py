@@ -4,7 +4,7 @@
 import yaml
 
 from src.SPI2Py.utils.geometry.shape_generator import generate_rectangular_prisms
-from src.SPI2Py.utils.objects import Component, Interconnect, Structure, SpatialConfiguration
+from src.SPI2Py.utils.objects import Component, InterconnectSegment, Structure, SpatialConfiguration
 from src.SPI2Py.utils.spatial_topologies.force_directed_layouts import generate_random_layout
 
 
@@ -66,7 +66,7 @@ class SPI2:
             diameter = inputs['interconnects'][interconnect]['diameter'][0]
             color = inputs['interconnects'][interconnect]['color']
 
-            self.interconnects.append(Interconnect(component_1, component_2, diameter, color))
+            self.interconnects.append(InterconnectSegment(component_1, component_2, diameter, color))
 
 
 
