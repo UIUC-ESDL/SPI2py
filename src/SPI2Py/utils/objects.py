@@ -308,6 +308,52 @@ class SpatialConfiguration(System):
 
     """
 
+    @property
+    def design_vector(self):
+        """
+        Flattened format is necessary for the optimizer...
+
+        Returns
+        -------
+
+        """
+        # Convert this to a flatten-like from design_vectors?
+        design_vector = np.empty(0)
+        for obj in self.design_vector_objects:
+            design_vector = np.concatenate((design_vector, obj.design_vector))
+
+        return design_vector
+
+    def slice_design_vector(self, design_vector):
+        """
+        Since design vectors are irregularly sized, come up with indexing scheme.
+        Not the most elegant method.
+
+        Takes argument b.c. new design vector...
+
+        :return:
+        """
+
+        # Get the size of the design vector for each design vector object
+        design_vector_sizes = []
+        for i, obj in enumerate(self.design_vector_objects):
+            design_vector_sizes.append(obj.design_vector.size)
+
+        # Index values
+        start, stop = 0, 0
+        design_vectors = []
+
+        for i, size in enumerate(design_vector_sizes):
+            # Increment stop index
+            stop += design_vector_sizes[i]
+
+            design_vectors.append(design_vector[start:stop])
+
+            # Increment start index
+            start = stop
+
+        return design_vectors
+
     def get_positions(self, design_vector=None):
         """
         TODO get positions for interconnects, structures, etc
@@ -327,7 +373,6 @@ class SpatialConfiguration(System):
 
             # Get positions of design  objects
             for obj, design_vector_row in zip(self.design_vector_objects, design_vectors):
-                # positions_dict[obj] = obj.get_positions(design_vector_row)
                 positions_dict = {**positions_dict, **obj.get_positions(design_vector_row)}
 
             for interconnect in self.interconnects:
@@ -355,49 +400,6 @@ class SpatialConfiguration(System):
         #
         for interconnect in self.interconnects:
             interconnect.update_positions(positions_dict)
-
-    @property
-    def design_vector(self):
-
-        # Convert this to a flatten-like from design_vectors?
-        design_vector = np.empty(0)
-        for obj in self.design_vector_objects:
-            design_vector = np.concatenate((design_vector, obj.design_vector))
-
-        return design_vector
-
-    def slice_design_vector(self, design_vector):
-        """
-        Since design vectors are irregularly sized, come up with indexing scheme.
-        Not the most elegant method.
-
-        Takes argument b.c. new design vector...
-
-        :return:
-        """
-
-        # Get the size of the design vector for each design vector object
-        design_vector_sizes = []
-        for i, obj in enumerate(self.design_vector_objects):
-            design_vector_sizes.append(obj.design_vector.size)
-
-
-        design_vectors = []
-
-        # Index values
-        start = 0
-        stop = 0
-
-        for i, size in enumerate(design_vector_sizes):
-            # Increment stop index
-            stop += design_vector_sizes[i]
-
-            design_vectors.append(design_vector[start:stop])
-
-            # Increment start index
-            start = stop
-
-        return design_vectors
 
     def plot_layout(self, savefig=False, directory=None):
 
