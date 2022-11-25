@@ -32,10 +32,10 @@ from src.SPI2Py.main import SPI2
 demo = SPI2()
 
 # Specify the input and config file
-input_filepath = 'examples/example_1/input_demo.yaml'
+input_filepath = 'examples/demo_1/input_demo_1.yaml'
 demo.add_input_file(input_filepath)
 
-config_filepath = 'examples/example_1/config.yaml'
+config_filepath = 'examples/demo_1/config_demo_1.yaml'
 demo.add_configuration_file(config_filepath)
 
 
