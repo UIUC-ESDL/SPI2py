@@ -206,9 +206,12 @@ class Structure:
         self.name = name
 
 
-class System:
-    """
 
+
+
+class Subsystem:
+    """
+    Defines the non-spatial aspects of the system.
 
     """
 
@@ -309,6 +312,13 @@ class System:
         structure_moving_object_pairs = list(product(self.structures, self.moving_objects))
 
         return structure_moving_object_pairs
+
+
+class System(Subsystem):
+    """
+    System combines subsystems from various disciplines (e.g., fluid, electrical, structural)
+    """
+    pass
 
 
 class SpatialConfiguration(System):
