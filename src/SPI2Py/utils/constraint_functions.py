@@ -91,7 +91,7 @@ def interference_structure_all(x, layout):
 
     # Calculate the interferences between each sphere of each object pair
     interferences = []
-    for obj1, obj2 in layout.structure_all_pairs:
+    for obj1, obj2 in layout.structure_moving_object_pairs:
         positions_a = positions_dict[obj1]
         radii_a = obj1.radii.reshape(-1, 1)
 

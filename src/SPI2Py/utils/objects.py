@@ -210,32 +210,33 @@ class System:
         self.interconnects = interconnects
         self.structures = structures
 
-        # All objects
-        # self.objects = components + interconnect_nodes + interconnects + structures
-        self.objects_minus_structures = components + interconnect_nodes + interconnects
-
-        # All objects with a design vector
-        self.design_vector_objects = components + interconnect_nodes
-
-        #
-        self.nodes = [design_object.node for design_object in self.design_vector_objects]
-        self.edges = [interconnect.edge for interconnect in self.interconnects]
-
-        #
-
+    @property
+    def objects(self):
+        return self.components + self.interconnect_nodes + self.interconnects + self.structures
 
     @property
-    def objects(self): return self.components + self.interconnect_nodes + self.interconnects + self.structures
+    def design_vector_objects(self):
+        return self.components + self.interconnect_nodes
 
-    # @property
-    # def
+    @property
+    def moving_objects(self):
+        return self.components + self.interconnect_nodes + self.interconnects
+
+    @property
+    def nodes(self):
+        return [design_object.node for design_object in self.design_vector_objects]
+
+    @property
+    def edges(self):
+        return [interconnect.edge for interconnect in self.interconnects]
 
     def add_object(self):
+        # TODO Implement this function
         pass
 
     def remove_object(self):
+        # TODO Implement this function
         pass
-
 
     @property
     def component_component_pairs(self):
@@ -283,36 +284,30 @@ class System:
         # and thus always overlap slightly...
         # TODO implement this feature
 
-        # Remove segments that are from the same interconenct
+        # Remove segments that are from the same interconnect
         # If a pipe intersects itself, usually the pipe can just be made shorter...
         # TODO implement this feature
 
         return interconnect_interconnect_pairs
 
     @property
-    def structure_all_pairs(self):
+    def structure_moving_object_pairs(self):
         """
         TODO Write unit tests to ensure it creates the correct pairs
 
         :return:
         """
 
-        structure_all_pairs = component_interconnect_pairs = list(
-            product(self.structures, self.objects_minus_structures))
+        structure_moving_object_pairs = list(product(self.structures, self.moving_objects))
 
-        return structure_all_pairs
-
-
-
-
-
-
+        return structure_moving_object_pairs
 
 
 class SpatialConfiguration(System):
     """
 
     """
+
     def get_positions(self, design_vector=None):
         """
         TODO get positions for interconnects, structures, etc
@@ -341,6 +336,7 @@ class SpatialConfiguration(System):
             # Get positions of interconnect nodes and structures...
 
         return positions_dict
+
     def set_positions(self, new_design_vector):
 
         new_design_vectors = self.slice_design_vector(new_design_vector)
@@ -360,8 +356,6 @@ class SpatialConfiguration(System):
         for interconnect in self.interconnects:
             interconnect.update_positions(positions_dict)
 
-
-
     @property
     def design_vector(self):
 
@@ -373,7 +367,7 @@ class SpatialConfiguration(System):
         return design_vector
 
     @property
-    def design_vectors(self):
+    def design_objects_and_vectors(self):
         """
         Returns objects and their design vectors
 
@@ -387,21 +381,6 @@ class SpatialConfiguration(System):
 
         return self.design_vector_objects, design_vectors
 
-    @property
-    def design_vector_sizes(self):
-        """
-        Helper function...
-
-        :return:
-        """
-
-        num_design_vectors = len(self.design_vector_objects)
-        design_vector_sizes = []
-        for i, obj in enumerate(self.design_vector_objects):
-            design_vector_sizes.append(obj.design_vector.size)
-
-        return design_vector_sizes
-
     def slice_design_vector(self, design_vector):
         """
         Since design vectors are irregularly sized, come up with indexing scheme.
@@ -412,15 +391,21 @@ class SpatialConfiguration(System):
         :return:
         """
 
+        # Get the size of the design vector for each design vector object
+        design_vector_sizes = []
+        for i, obj in enumerate(self.design_vector_objects):
+            design_vector_sizes.append(obj.design_vector.size)
+
+
         design_vectors = []
 
         # Index values
         start = 0
         stop = 0
 
-        for i, size in enumerate(self.design_vector_sizes):
+        for i, size in enumerate(design_vector_sizes):
             # Increment stop index
-            stop += self.design_vector_sizes[i]
+            stop += design_vector_sizes[i]
 
             design_vectors.append(design_vector[start:stop])
 
@@ -428,7 +413,6 @@ class SpatialConfiguration(System):
             start = stop
 
         return design_vectors
-
 
     def plot_layout(self, savefig=False, directory=None):
 
