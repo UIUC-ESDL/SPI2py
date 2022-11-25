@@ -462,7 +462,7 @@ class SPI2:
 
 
         # Create Components
-        components = []
+        self.components = []
         for component in inputs['components']:
             node = component
             name = inputs['components'][component]['name']
@@ -471,9 +471,22 @@ class SPI2:
             dimensions = inputs['components'][component]['dimensions']
 
             positions, radii = generate_rectangular_prisms(origins, dimensions)
-            components.append(Component(positions, radii, color, node, name))
+            self.components.append(Component(positions, radii, color, node, name))
 
-        self.components = components
+
+
+        # Create Interconnects
+        self.interconnects = []
+        for interconnect in inputs['interconnects']:
+            component_1 = self.components[inputs['interconnects'][interconnect]['component 1']]
+            component_2 = self.components[inputs['interconnects'][interconnect]['component 2']]
+            diameter = inputs['interconnects'][interconnect]['diameter'][0]
+            color = inputs['interconnects'][interconnect]['color']
+
+            self.interconnects.append(Interconnect(component_1, component_2, diameter, color))
+
+
+
 
 
         # Create Interconnect Nodes
@@ -483,21 +496,10 @@ class SPI2:
         self.interconnect_nodes = interconnect_nodes
 
 
-        # Create Interconnects
-        interconnects = []
-        for interconnect in inputs['interconnects']:
-            component_1 = components[inputs['interconnects'][interconnect]['component 1']]
-            component_2 = components[inputs['interconnects'][interconnect]['component 2']]
-            diameter = inputs['interconnects'][interconnect]['diameter'][0]
-            color = inputs['interconnects'][interconnect]['color']
-
-            interconnects.append(Interconnect(component_1, component_2, diameter, color))
-
-        self.interconnects = interconnects
 
 
         # Create Structures
-        structures = []
+        self.structures = []
         for structure in inputs['structures']:
             name = inputs['structures'][structure]['name']
             color = inputs['structures'][structure]['color']
@@ -505,9 +507,10 @@ class SPI2:
             dimensions = inputs['structures'][structure]['dimensions']
 
             positions, radii = generate_rectangular_prisms(origins, dimensions)
-            structures.append(Structure(positions, radii, color, name))
+            self.structures.append(Structure(positions, radii, color, name))
 
-        self.structures = structures
+
+
 
     def generate_layout(self, layout_generation_method):
 
