@@ -3,9 +3,9 @@
 """
 import yaml
 
-from src.SPI2Py.utils.spherical_decomposition.prismatic_shapes import generate_rectangular_prisms
-from src.SPI2Py.utils.objects import Component, InterconnectSegment, Structure, SpatialConfiguration
-from src.SPI2Py.utils.spatial_topologies.force_directed_layouts import generate_random_layout
+from .utils.spherical_decomposition.prismatic_shapes import generate_rectangular_prisms
+from .utils.objects import Component, InterconnectSegment, Structure, SpatialConfiguration
+from .utils.spatial_topologies.force_directed_layouts import generate_random_layout
 
 
 class SPI2:
