@@ -14,7 +14,7 @@ import yaml
 from src.SPI2Py.utils.optimizers.gradient_based_optimization import optimize
 from src.SPI2Py.utils.spatial_topologies.force_directed_layouts import generate_random_layout
 from src.SPI2Py.utils.visualization.visualization import generate_gif
-from src.SPI2Py.utils.objects import SPI2
+from src.SPI2Py.main import SPI2
 
 '''Set the Filepaths'''
 
