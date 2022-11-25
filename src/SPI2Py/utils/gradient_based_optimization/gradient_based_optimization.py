@@ -25,11 +25,11 @@ and are not allowed to build from the source (or it just adds another level of d
 
 import numpy as np
 
-from scipy.optimize import minimize, Bounds, NonlinearConstraint
+from scipy.optimize import minimize, NonlinearConstraint
 
-from src.SPI2Py.utils.objective_functions import aggregate_pairwise_distance
+from src.SPI2Py.utils.gradient_based_optimization.objective_functions import aggregate_pairwise_distance
 
-from src.SPI2Py.utils.constraint_functions import interference_component_component, interference_component_interconnect, \
+from src.SPI2Py.utils.gradient_based_optimization.constraint_functions import interference_component_component, interference_component_interconnect, \
     interference_interconnect_interconnect, interference_structure_all
 
 

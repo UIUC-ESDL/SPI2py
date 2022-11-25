@@ -10,8 +10,8 @@ TODO Look into replacing get/set methods with appropriate decorators...
 import numpy as np
 from scipy.spatial.distance import euclidean
 from itertools import product, combinations
-from src.SPI2Py.utils.visualization import plot
-from src.SPI2Py.utils.spatial_transformations import translate, rotate_about_point
+from src.SPI2Py.utils.visualization.visualization import plot
+from src.SPI2Py.utils.geometry.spatial_transformations import translate, rotate_about_point
 
 
 class Component:
