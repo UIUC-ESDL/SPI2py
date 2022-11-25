@@ -211,24 +211,31 @@ class System:
         self.structures = structures
 
         # All objects
-        self.objects = components + interconnect_nodes + interconnects + structures
+        # self.objects = components + interconnect_nodes + interconnects + structures
         self.objects_minus_structures = components + interconnect_nodes + interconnects
 
         # All objects with a design vector
-        self.design_objects = components + interconnect_nodes
+        self.design_vector_objects = components + interconnect_nodes
 
         #
-        self.nodes = [design_object.node for design_object in self.design_objects]
+        self.nodes = [design_object.node for design_object in self.design_vector_objects]
         self.edges = [interconnect.edge for interconnect in self.interconnects]
 
         #
-        self.design_vector_objects = components + interconnect_nodes
+
+
+    @property
+    def objects(self): return self.components + self.interconnect_nodes + self.interconnects + self.structures
+
+    # @property
+    # def
 
     def add_object(self):
         pass
 
     def remove_object(self):
         pass
+
 
     @property
     def component_component_pairs(self):
@@ -294,6 +301,66 @@ class System:
             product(self.structures, self.objects_minus_structures))
 
         return structure_all_pairs
+
+
+
+
+
+
+
+
+class SpatialConfiguration(System):
+    """
+
+    """
+    def get_positions(self, design_vector=None):
+        """
+        TODO get positions for interconnects, structures, etc
+        :param design_vector:
+        :param design_vector:
+        :return:
+        """
+
+        positions_dict = {}
+
+        if design_vector is None:
+            for obj in self.objects:
+                positions_dict[obj] = obj.positions
+
+        else:
+            design_vectors = self.slice_design_vector(design_vector)
+
+            # Get positions of design  objects
+            for obj, design_vector_row in zip(self.design_vector_objects, design_vectors):
+                # positions_dict[obj] = obj.get_positions(design_vector_row)
+                positions_dict = {**positions_dict, **obj.get_positions(design_vector_row)}
+
+            for interconnect in self.interconnects:
+                positions_dict = {**positions_dict, **interconnect.calculate_positions(positions_dict)}
+
+            # Get positions of interconnect nodes and structures...
+
+        return positions_dict
+    def set_positions(self, new_design_vector):
+
+        new_design_vectors = self.slice_design_vector(new_design_vector)
+
+        positions_dict = self.get_positions(new_design_vector)
+
+        for obj, new_design_vector in zip(self.design_vector_objects, new_design_vectors):
+            obj.update_positions(new_design_vector)
+
+        # Is there some class-specific logic?
+        # for obj in self.components:
+        #     pass
+        #
+        # for obj in self.interconnect_nodes:
+        #     pass
+        #
+        for interconnect in self.interconnects:
+            interconnect.update_positions(positions_dict)
+
+
 
     @property
     def design_vector(self):
@@ -362,70 +429,12 @@ class System:
 
         return design_vectors
 
-    def get_positions(self, design_vector=None):
-        """
-        TODO get positions for interconnects, structures, etc
-        :param design_vector:
-        :param design_vector:
-        :return:
-        """
-
-        positions_dict = {}
-
-        if design_vector is None:
-            for obj in self.objects:
-                positions_dict[obj] = obj.positions
-
-        else:
-            design_vectors = self.slice_design_vector(design_vector)
-
-            # Get positions of design  objects
-            for obj, design_vector_row in zip(self.design_vector_objects, design_vectors):
-                # positions_dict[obj] = obj.get_positions(design_vector_row)
-                positions_dict = {**positions_dict, **obj.get_positions(design_vector_row)}
-
-            for interconnect in self.interconnects:
-                positions_dict = {**positions_dict, **interconnect.calculate_positions(positions_dict)}
-
-            # Get positions of interconnect nodes and structures...
-
-        return positions_dict
-
-    def set_positions(self, new_design_vector):
-
-        new_design_vectors = self.slice_design_vector(new_design_vector)
-
-        positions_dict = self.get_positions(new_design_vector)
-
-        for obj, new_design_vector in zip(self.design_vector_objects, new_design_vectors):
-            obj.update_positions(new_design_vector)
-
-        # Is there some class-specific logic?
-        # for obj in self.components:
-        #     pass
-        #
-        # for obj in self.interconnect_nodes:
-        #     pass
-        #
-        for interconnect in self.interconnects:
-            interconnect.update_positions(positions_dict)
-
-
-
-
-class Problem:
-    """
-
-    """
-
-    def __init__(self, system):
-        self.system = system
 
     def plot_layout(self, savefig=False, directory=None):
 
         layout_plot_dict = {}
 
-        for obj in self.system.objects:
+        for obj in self.objects:
             object_plot_dict = {}
 
             positions = obj.positions

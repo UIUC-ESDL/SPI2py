@@ -32,8 +32,8 @@ with open(config['Input'], 'r') as f:
 layout = generate_layout(inputs)
 
 # Generate a random initial layout
-initial_layout_design_vector = generate_random_layout(layout.system)
-layout.system.set_positions(initial_layout_design_vector)
+initial_layout_design_vector = generate_random_layout(layout)
+layout.set_positions(initial_layout_design_vector)
 
 # For development: Plot initial layout
 layout.plot_layout()
