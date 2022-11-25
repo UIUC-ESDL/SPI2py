@@ -427,7 +427,7 @@ class SpatialConfiguration(System):
 
 class SPI2:
     """
-
+    The SPI2 Class provides the user with a means to interact with the API...
     """
 
     def __init__(self):
@@ -445,6 +445,7 @@ class SPI2:
 
         with open(input_filepath, 'r') as f:
             self.inputs = yaml.safe_load(f)
+
 
     def add_configuration_file(self, config_filepath):
 
