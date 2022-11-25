@@ -9,7 +9,6 @@ Note: Make sure to run this from the top-level SPI2Py directory
 """
 import json
 from datetime import datetime
-
 import yaml
 
 from src.SPI2Py.utils.gradient_based_optimization.gradient_based_optimization import optimize
@@ -21,12 +20,10 @@ from src.SPI2Py.utils.objects import SPI2
 
 
 # Assumes current working directory is main SPI2py
-with open('examples/example_1/config.yaml', 'r') as f:
-    config = yaml.safe_load(f)
 
 
-with open(config['Input'], 'r') as f:
-    inputs = yaml.safe_load(f)
+
+
 
 
 '''Initialize the Layout'''
@@ -34,8 +31,20 @@ with open(config['Input'], 'r') as f:
 # Initialize the class
 demo = SPI2()
 
+# Specify the input and config file
+input_filepath = 'examples/example_1/input_demo.yaml'
+demo.add_input_file(input_filepath)
+
+config_filepath = 'examples/example_1/config.yaml'
+demo.add_configuration_file(config_filepath)
+
+
+
+# with open(demo.config['Input'], 'r') as f:
+#     inputs = yaml.safe_load(f)
+
 # Generate objects from the inputs file
-demo.generate_layout(inputs)
+demo.generate_layout(demo.inputs)
 layout = demo.layout
 
 # Generate a random initial layout
@@ -65,8 +74,8 @@ layout.plot_layout()
 #
 
 # Generate GIF
-if config['Visualization']['Output GIF'] is True:
-    generate_gif(layout, design_vector_log, 1, config['Outputs']['Folderpath'])
+if demo.config['Visualization']['Output GIF'] is True:
+    generate_gif(layout, design_vector_log, 1, demo.config['Outputs']['Folderpath'])
 
 
 '''Write output file'''
@@ -87,6 +96,6 @@ outputs = {'Placeholder': 1,
 
 
 
-output_file = config['Outputs']['Folderpath'] + config['Outputs']['Report Filename']
+output_file = demo.config['Outputs']['Folderpath'] + demo.config['Outputs']['Report Filename']
 with open(output_file, 'w') as f:
     json.dump(outputs, f)

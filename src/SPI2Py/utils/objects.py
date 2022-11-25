@@ -8,6 +8,7 @@ TODO Look into replacing get/set methods with appropriate decorators...
 """
 
 import numpy as np
+import yaml
 from scipy.spatial.distance import euclidean
 from itertools import product, combinations
 
@@ -429,12 +430,26 @@ class SPI2:
     """
 
     def __init__(self):
+        self.config = None
+        self.inputs = None
+
         self.components = None
         self.interconnect_nodes = None
         self.interconnects = None
         self.structures = None
 
         self.layout = None
+
+    def add_input_file(self, input_filepath):
+
+        with open(input_filepath, 'r') as f:
+            self.inputs = yaml.safe_load(f)
+
+    def add_configuration_file(self, config_filepath):
+
+        with open(config_filepath, 'r') as f:
+            self.config = yaml.safe_load(f)
+
 
 
     def create_objects_from_input(self, inputs):
