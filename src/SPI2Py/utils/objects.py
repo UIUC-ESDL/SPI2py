@@ -13,6 +13,7 @@ from scipy.spatial.distance import euclidean
 from itertools import product, combinations
 
 from src.SPI2Py.utils.geometry.shape_generator import generate_rectangular_prisms
+from src.SPI2Py.utils.spatial_topologies.force_directed_layouts import generate_random_layout
 from src.SPI2Py.utils.visualization.visualization import plot
 from src.SPI2Py.utils.geometry.spatial_transformations import translate, rotate_about_point
 
@@ -451,7 +452,6 @@ class SPI2:
             self.config = yaml.safe_load(f)
 
 
-
     def create_objects_from_input(self, inputs):
         """
 
@@ -508,10 +508,17 @@ class SPI2:
 
         self.structures = structures
 
-    def generate_layout(self, inputs):
+    def generate_layout(self, layout_generation_method):
 
-        self.create_objects_from_input(inputs)
+        self.create_objects_from_input(self.inputs)
 
-        layout = SpatialConfiguration(self.components, self.interconnect_nodes, self.interconnects, self.structures)
+        self.layout = SpatialConfiguration(self.components, self.interconnect_nodes, self.interconnects, self.structures)
 
-        self.layout = layout
+        # TODO implement different layout generation methods
+
+        if layout_generation_method == 'force directed':
+            initial_layout_design_vector = generate_random_layout(self.layout)
+            self.layout.set_positions(initial_layout_design_vector)
+
+        else:
+            print('Sorry, no other layout generation methods are implemented yet')
