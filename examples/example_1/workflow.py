@@ -13,7 +13,6 @@ from datetime import datetime
 import yaml
 
 from src.SPI2Py.utils.gradient_based_optimization.gradient_based_optimization import optimize
-from src.SPI2Py.utils.layout_generator import generate_layout
 from src.SPI2Py.utils.spatial_topologies.force_directed_layouts import generate_random_layout
 from src.SPI2Py.utils.visualization.visualization import generate_gif
 from src.SPI2Py.utils.objects import SPI2
