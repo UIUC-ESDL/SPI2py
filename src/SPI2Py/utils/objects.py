@@ -366,21 +366,6 @@ class SpatialConfiguration(System):
 
         return design_vector
 
-    @property
-    def design_objects_and_vectors(self):
-        """
-        Returns objects and their design vectors
-
-        :return:
-        """
-
-        num_design_vectors = len(self.design_vector_objects)
-        design_vectors = []
-        for i, obj in enumerate(self.design_vector_objects):
-            design_vectors.append(obj.design_vector)
-
-        return self.design_vector_objects, design_vectors
-
     def slice_design_vector(self, design_vector):
         """
         Since design vectors are irregularly sized, come up with indexing scheme.
