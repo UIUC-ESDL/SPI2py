@@ -5,7 +5,7 @@ import yaml
 
 from .utils.spherical_decomposition.prismatic_shapes import generate_rectangular_prisms
 from src.SPI2Py.utils.classes.objects import Component, InterconnectSegment, Structure
-from src.SPI2Py.utils.classes.collections_of_objects import SpatialConfiguration
+from src.SPI2Py.utils.classes.organizational import SpatialConfiguration
 from .utils.spatial_topologies.force_directed_layouts import generate_random_layout
 
 
@@ -102,7 +102,11 @@ class SPI2:
 
         # TODO implement different layout generation methods
 
-        if layout_generation_method == 'force directed':
+        if layout_generation_method == 'manual':
+            # TODO Implement functionality to manually define starting points
+            pass
+
+        elif layout_generation_method == 'force directed':
             initial_layout_design_vector = generate_random_layout(self.layout)
             self.layout.set_positions(initial_layout_design_vector)
 
