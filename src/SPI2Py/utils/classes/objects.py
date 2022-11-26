@@ -197,7 +197,11 @@ class Interconnect(InterconnectNode, InterconnectSegment):
     When an interconnect is initialized it does not contain spatial information.
 
     In the SPI2 class the user specifies which layout generation method to use, and that method tells
-    the Interconnect InterconnectNodes what their positions are
+    the Interconnect InterconnectNodes what their positions are.
+
+    For now, I will assume that interconnect nodes will start along a straight line between components A
+    and B. In the near future they may be included in the layout generation method. The to-do is tracked
+    in organizational.py.
     """
 
     def __init__(self, component_1, component_2, diameter, color):
@@ -209,19 +213,45 @@ class Interconnect(InterconnectNode, InterconnectSegment):
         self.color = color
 
         # Per configuration file
-        self.numbers_of_nodes = 2
+        # TODO connect this setting to the config file
+        self.number_of_nodes = 2
+        self.number_of_segments = self.number_of_nodes+1
 
-    def add_node(self):
+        self.edges = []
+        self.nodes = []
+
+        self.node_edge_pairs = None
+
+    def create_edge_node_pairs(self):
+
+        node_pairs = [(self.nodes[i], self.nodes[i + 1]) for i in range(len(self.nodes) - 1)]
+        corresponding_edges = self.edges
+
+        self.node_edge_pairs = list(zip(node_pairs,corresponding_edges))
+
+    def create_edges(self):
         pass
 
-    def add_nodes(self):
+    def create_nodes(self):
         pass
 
-    def add_segment(self):
+    def calculate_positions(self, positions_dict):
+        """
+
+        TODO Add functionality to check if interconnect_nodes are given a position from the dict
+
+        Parameters
+        ----------
+        positions_dict
+
+        Returns
+        -------
+
+        """
+
         pass
 
-    def add_segments(self):
-        pass
+
 
 
 
