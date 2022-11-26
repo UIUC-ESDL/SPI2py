@@ -99,35 +99,32 @@ class Component:
 
 
 class InterconnectNode:
-    def __init__(self, node, position=np.array([0., 0., 0.])):
-        self.node = node
-        self.position = position
+    def __init__(self):
+        self.node = None
+        self.position = None
 
     @property
-    def reference_position(self):
-        return self.positions[0]
-
-    # TODO Add get/set position
-
-    def update_position(self, design_vector, constraint=None):
-
-        if constraint is None:
-
-            new_reference_position = design_vector[0:3]
-
-            delta_position = new_reference_position - self.reference_position
-
-            translated_positions = translate(self.positions, delta_position)
-
-            # Update values
-            self.position = translated_positions
-
-        else:
-            print('Placeholder')
+    def reference_position(self): return self.position
 
     @property
-    def design_vector(self):
-        return self.position
+    def design_vector(self): return self.position
+
+    # def update_position(self, design_vector, constraint=None):
+    #
+    #     if constraint is None:
+    #
+    #         new_reference_position = design_vector[0:3]
+    #
+    #         delta_position = new_reference_position - self.reference_position
+    #
+    #         translated_positions = translate(self.positions, delta_position)
+    #
+    #         # Update values
+    #         self.position = translated_positions
+    #
+    #     else:
+    #         print('Placeholder')
+
 
 
 class InterconnectSegment:
@@ -226,6 +223,7 @@ class Interconnect(InterconnectNode, InterconnectSegment):
     @property
     def edges(self):
         pass
+        # self.nodes
 
 
 
@@ -239,5 +237,17 @@ class Structure:
         self.name = name
 
 
+class Volume:
+    """
+    A class that captures the 3D space that we place objects in and optimize
+    """
+    pass
+
+
+class Volumes(Volume):
+    """
+    A class that combines contiguous volumes together.
+    """
+    pass
 
 
