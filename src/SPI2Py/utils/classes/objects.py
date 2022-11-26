@@ -217,8 +217,9 @@ class Interconnect(InterconnectNode, InterconnectSegment):
         self.number_of_nodes = 2
         self.number_of_segments = self.number_of_nodes+1
 
-        self.edges = []
-        self.nodes = []
+        self.nodes = self.create_nodes()
+        self.edges = self.create_edges()
+
 
         self.node_edge_pairs = None
 
@@ -227,13 +228,29 @@ class Interconnect(InterconnectNode, InterconnectSegment):
         node_pairs = [(self.nodes[i], self.nodes[i + 1]) for i in range(len(self.nodes) - 1)]
         corresponding_edges = self.edges
 
-        self.node_edge_pairs = list(zip(node_pairs,corresponding_edges))
-
-    def create_edges(self):
-        pass
+        self.node_edge_pairs = list(zip(node_pairs, corresponding_edges))
 
     def create_nodes(self):
-        pass
+
+        # TODO Check...
+
+        self.nodes = []
+
+        for _ in range(self.number_of_nodes):
+            self.nodes.append(InterconnectNode())
+
+        return self.nodes
+
+    def create_edges(self):
+
+        self.edges = []
+
+        # TODO Implement
+        # TODO Check...
+
+        return self.edges
+
+
 
     def calculate_positions(self, positions_dict):
         """
