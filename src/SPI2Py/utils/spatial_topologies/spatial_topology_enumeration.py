@@ -91,25 +91,25 @@
 #         else:
 #             assert len(signs) == num_cross
 #
-#         objects = [Edge(i) for i in range(self.num_edges)]
+#         classes = [Edge(i) for i in range(self.num_edges)]
 #         for v, edges in enumerate(self.vertices):
 #             d = len(edges)
 #             V = Vertex(d, 'V%d' % v)
-#             objects.append(V)
+#             classes.append(V)
 #             for i, e in enumerate(edges):
-#                 E = objects[e]
+#                 E = classes[e]
 #                 e = 0 if E.adjacent[0] is None else 1
 #                 V[i] = E[e]
 #
 #         for c, edges in enumerate(self.crossings):
 #             C = Crossing('C%d' % c)
-#             objects.append(C)
+#             classes.append(C)
 #             for i, e in enumerate(edges):
-#                 E = objects[e]
+#                 E = classes[e]
 #                 e = 0 if E.adjacent[0] is None else 1
 #                 C[(i + signs[c]) % 4] = E[e]
 #
-#         return SpatialGraphDiagram(objects, check=check)
+#         return SpatialGraphDiagram(classes, check=check)
 
 
 # def spatial_graph_diagrams_from_shadow(shadow, signs):

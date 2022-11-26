@@ -10,7 +10,7 @@ TODO Look into replacing get/set methods with appropriate decorators...
 import numpy as np
 from scipy.spatial.distance import euclidean
 
-from .spatial_calculations.transformations import translate, rotate_about_point
+from ..spatial_calculations.transformations import translate, rotate_about_point
 
 
 class Component:

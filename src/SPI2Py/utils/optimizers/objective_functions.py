@@ -10,7 +10,7 @@ from scipy.spatial.distance import cdist
 
 def aggregate_pairwise_distance(x, layout):
     """
-    Aggregates the distance between each 2-pair of objects
+    Aggregates the distance between each 2-pair of classes
 
     :param x:
     :param layout:
