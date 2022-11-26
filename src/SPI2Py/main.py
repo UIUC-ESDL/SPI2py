@@ -4,7 +4,8 @@
 import yaml
 
 from .utils.spherical_decomposition.prismatic_shapes import generate_rectangular_prisms
-from .utils.objects import Component, InterconnectSegment, Structure, SpatialConfiguration
+from .utils.object_classes import Component, InterconnectSegment, Structure
+from .utils.system_classes import SpatialConfiguration
 from .utils.spatial_topologies.force_directed_layouts import generate_random_layout
 
 
