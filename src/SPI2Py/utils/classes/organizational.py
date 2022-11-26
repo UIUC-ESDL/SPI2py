@@ -204,8 +204,10 @@ class SpatialConfiguration(System):
 
         positions_dict = self.get_positions(new_design_vector)
 
+
         for obj, new_design_vector in zip(self.design_vector_objects, new_design_vectors):
             obj.update_positions(new_design_vector)
+
 
         # Is there some class-specific logic?
         # for obj in self.components:
