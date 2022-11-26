@@ -39,7 +39,7 @@ config_filepath = 'examples/demo_1/config.yaml'
 demo.add_configuration_file(config_filepath)
 
 
-# Generate objects from the inputs file
+# Generate classes from the inputs file
 layout_generation_method = 'force directed'
 demo.generate_layout(layout_generation_method)
 

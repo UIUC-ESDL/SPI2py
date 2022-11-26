@@ -27,7 +27,7 @@ def plot_sphere(position, radius, color, ax):
 
 def plot(plot_dict, savefig, directory):
     """
-    Plots objects...
+    Plots classes...
 
     {
     object1:    {

@@ -4,7 +4,7 @@
 
 import numpy as np
 from itertools import product, combinations
-from .visualization.visualization import plot
+from ..visualization.visualization import plot
 
 
 class Subsystem:
@@ -187,7 +187,7 @@ class SpatialConfiguration(System):
         else:
             design_vectors = self.slice_design_vector(design_vector)
 
-            # Get positions of design  objects
+            # Get positions of design  classes
             for obj, design_vector_row in zip(self.design_vector_objects, design_vectors):
                 positions_dict = {**positions_dict, **obj.get_positions(design_vector_row)}
 

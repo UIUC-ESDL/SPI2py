@@ -1,6 +1,6 @@
 """Distance calculations
 
-Provides functions to calculate the distance between objects in various ways...
+Provides functions to calculate the distance between classes in various ways...
 
 TODO I think it makes sense to get rid of the calculate gap function and to work it into the existing functions
     This will require adding the radii as an additional argument. It works now for uniform spheres, but MDBD will
@@ -52,7 +52,7 @@ def min_kdtree_distance(tree, positions):
     For static structures (e.g., a structure) we can construct a data structure (i.e., KD Tree)
     once and then use it to efficiently perform distance calculations. Since the cost of
     constructing a KD Tree is relatively high, and you must reconstruct it every time positions
-    change we do not use this for moving objects.
+    change we do not use this for moving classes.
 
     This function presumes the KD Tree is created when the object is initialized and thus
     takes the tree as an argument instead of trying to create a tree from points every
@@ -83,7 +83,7 @@ def min_spheres_linesegment_distance(points, a, b):
     """
     Finds the minimum distance between a set 3D point and a line segment [a,b].
 
-    With hierarchical collision detection we represent objects as recursive sphere trees.
+    With hierarchical collision detection we represent classes as recursive sphere trees.
     First,
 
     interference<0 means no overlap
