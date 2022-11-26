@@ -32,23 +32,23 @@ demo.generate_layout(layout_generation_method)
 # mint = Interconnect(demo.layout.components[0], demo.layout.components[1], 0.25, 'black')
 
 
-# # For development: Plot initial layout
-# demo.layout.plot_layout()
-#
-#
-# # Perform gradient-based optimization
-# demo.optimize_spatial_configuration()
-#
-#
-# # For development: Print Results
-# print('Result:', demo.result)
-#
-#
-# # For development: Plot the final layout to see the change
-# demo.layout.set_positions(demo.result.x)
-# demo.layout.plot_layout()
-#
-#
-# # Write output file
-# output_filepath = 'src/SPI2py/output/output.json'
-# demo.write_output(output_filepath)
+# For development: Plot initial layout
+demo.layout.plot_layout()
+
+
+# Perform gradient-based optimization
+demo.optimize_spatial_configuration()
+
+
+# For development: Print Results
+print('Result:', demo.result)
+
+
+# For development: Plot the final layout to see the change
+demo.layout.set_positions(demo.result.x)
+demo.layout.plot_layout()
+
+
+# Write output file
+output_filepath = 'src/SPI2py/output/output.json'
+demo.write_output(output_filepath)

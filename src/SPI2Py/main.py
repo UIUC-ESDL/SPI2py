@@ -74,7 +74,7 @@ class SPI2:
         for interconnect in inputs['interconnects']:
             component_1 = self.components[inputs['interconnects'][interconnect]['component 1']]
             component_2 = self.components[inputs['interconnects'][interconnect]['component 2']]
-            diameter = inputs['interconnects'][interconnect]['diameter'][0]
+            diameter = inputs['interconnects'][interconnect]['diameter']
             color = inputs['interconnects'][interconnect]['color']
 
             self.interconnects.append(InterconnectSegment(component_1, component_2, diameter, color))
