@@ -153,7 +153,7 @@ class InterconnectSegment:
 
         num_spheres = int(dist / self.diameter)
 
-        # Don't want zero-length interconnects
+        # We don't want zero-length interconnects or interconnect segments--they cause problems!
         if num_spheres == 0:
             num_spheres = 1
 
@@ -190,7 +190,14 @@ class InterconnectSegment:
 
 class Interconnect(InterconnectNode, InterconnectSegment):
     """
+    Interconnects are made of one or more non-zero-length segments and connect two components.
 
+    TODO Add a class of components for interconnect dividers (e.g., pipe tee for a three-way split)
+
+    When an interconnect is initialized it does not contain spatial information.
+
+    In the SPI2 class the user specifies which layout generation method to use, and that method tells
+    the Interconnect InterconnectNodes what their positions are
     """
 
     def __init__(self, component_1, component_2, diameter, color):

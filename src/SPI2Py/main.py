@@ -104,7 +104,26 @@ class SPI2:
 
 
 
-    def generate_layout(self, layout_generation_method):
+    def generate_layout(self, layout_generation_method, include_interconnect_nodes=False):
+        """
+
+        Parameters
+        ----------
+        layout_generation_method
+        include_interconnect_nodes: If False then initialize interconnects as straight lines between
+        the components after generating their layout. If True then include InterconnectNodes in the layout generation
+        method (i.e., interconnects won't necessarily connect components in a straight line).
+
+        Returns
+        -------
+
+        """
+
+        # TODO Implement ability to include or exclude interconnect nodes from layout generation methods
+        if include_interconnect_nodes:
+            pass
+        else:
+            pass
 
         self.create_objects_from_input(self.inputs)
 
