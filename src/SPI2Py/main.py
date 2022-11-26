@@ -1,11 +1,16 @@
 """
 
 """
-import yaml
 
+import yaml
+import json
+from datetime import datetime
+
+from .utils.optimizers.gradient_based_optimization import optimize
+from .utils.visualization.visualization import generate_gif
 from .utils.spherical_decomposition.prismatic_shapes import generate_rectangular_prisms
-from src.SPI2Py.utils.classes.objects import Component, InterconnectSegment, Structure
-from src.SPI2Py.utils.classes.organizational import SpatialConfiguration
+from .utils.classes.objects import Component, InterconnectSegment, Structure
+from .utils.classes.organizational import SpatialConfiguration
 from .utils.spatial_topologies.force_directed_layouts import generate_random_layout
 
 
@@ -24,6 +29,9 @@ class SPI2:
         self.structures = None
 
         self.layout = None
+
+        self.result = None
+        self.design_vector_log = None
 
     def add_input_file(self, input_filepath):
 
@@ -112,3 +120,6 @@ class SPI2:
 
         else:
             print('Sorry, no other layout generation methods are implemented yet')
+
+    def optimize_spatial_configuration(self):
+        self.result, self.design_vector_log = optimize(self.layout)
