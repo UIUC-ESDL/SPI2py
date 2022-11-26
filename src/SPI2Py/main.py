@@ -33,6 +33,8 @@ class SPI2:
         self.result = None
         self.design_vector_log = None
 
+        self.outputs = None
+
     def add_input_file(self, input_filepath):
 
         with open(input_filepath, 'r') as f:
@@ -123,3 +125,26 @@ class SPI2:
 
     def optimize_spatial_configuration(self):
         self.result, self.design_vector_log = optimize(self.layout)
+
+        # Generate GIF
+        if self.config['Visualization']['Output GIF'] is True:
+            generate_gif(self.layout, self.design_vector_log, 1, self.config['Outputs']['Folderpath'])
+
+    def write_output(self, output_filepath):
+
+        # Create a timestamp
+        now = datetime.now()
+        now_formatted = now.strftime("%d/%m/%Y %H:%M:%S")
+
+        # TODO Create a prompt to ask user for comments on the results
+
+        # Create the output dictionary
+        self.outputs = {'Placeholder': 1,
+                   '': 1,
+                   'Date and time': now_formatted,
+                   '': 1,
+                   'Comments': 'Placeholder'}
+
+
+        with open(output_filepath, 'w') as f:
+            json.dump(self.outputs, f)
