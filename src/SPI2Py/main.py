@@ -5,7 +5,7 @@ import yaml
 
 from .utils.spherical_decomposition.prismatic_shapes import generate_rectangular_prisms
 from src.SPI2Py.utils.classes.objects import Component, InterconnectSegment, Structure
-from src.SPI2Py.utils.classes.collections import SpatialConfiguration
+from src.SPI2Py.utils.classes.collections_of_objects import SpatialConfiguration
 from .utils.spatial_topologies.force_directed_layouts import generate_random_layout
 
 
