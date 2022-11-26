@@ -145,6 +145,7 @@ class InterconnectSegment:
         # Temporary
         self.num_spheres = len(self.radii)
 
+
     def set_positions(self):
         pos_1 = self.object_1.reference_position
         pos_2 = self.object_2.reference_position
@@ -218,37 +219,43 @@ class Interconnect(InterconnectNode, InterconnectSegment):
         self.number_of_segments = self.number_of_nodes+1
 
         self.nodes = self.create_nodes()
-        self.edges = self.create_edges()
 
+        self.node_pairs = self.create_node_pairs()
 
-        self.node_edge_pairs = None
-
-    def create_edge_node_pairs(self):
-
-        node_pairs = [(self.nodes[i], self.nodes[i + 1]) for i in range(len(self.nodes) - 1)]
-        corresponding_edges = self.edges
-
-        self.node_edge_pairs = list(zip(node_pairs, corresponding_edges))
+        self.segments = self.create_segments()
 
     def create_nodes(self):
 
         # TODO Check...
 
-        self.nodes = []
+        # Create the nodes list and add component 1
+        nodes = [self.component_1]
 
+        # Add the interconnect nodes
         for _ in range(self.number_of_nodes):
-            self.nodes.append(InterconnectNode())
+            nodes.append(InterconnectNode())
 
-        return self.nodes
+        # Add component 2
+        nodes.append(self.component_2)
 
-    def create_edges(self):
+        return nodes
 
-        self.edges = []
+    def create_node_pairs(self):
+
+        node_pairs = [(self.nodes[i], self.nodes[i + 1]) for i in range(len(self.nodes) - 1)]
+
+        return node_pairs
+
+    def create_segments(self):
+
+        segments = []
 
         # TODO Implement
         # TODO Check...
+        for object_1, object_2 in self.node_pairs:
+            segments.append(InterconnectSegment(object_1, object_2, self.diameter, self.color))
 
-        return self.edges
+        return segments
 
 
 
