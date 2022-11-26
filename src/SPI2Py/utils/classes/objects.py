@@ -204,14 +204,31 @@ class Interconnect(InterconnectNode, InterconnectSegment):
         self.radius = diameter / 2
         self.color = color
 
-        # Create edge tuple for NetworkX graphs
-        self.edge = (self.component_1.node, self.component_2.node)
+        # Per configuration file
+        self.numbers_of_nodes = 2
 
-        # Placeholder for plot test functionality, random positions
-        self.positions, self.radii = self.set_positions()
+    def add_node(self):
+        pass
 
-        # Temporary
-        self.num_spheres = len(self.radii)
+    def add_nodes(self):
+        pass
+
+    def add_segment(self):
+        pass
+
+    def add_segments(self):
+        pass
+
+
+
+
+
+    @property
+    def edges(self):
+        pass
+
+
+
 
 
 class Structure:
