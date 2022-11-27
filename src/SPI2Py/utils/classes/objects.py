@@ -16,28 +16,27 @@ from ..spatial_calculations.transformations import translate, rotate_about_point
 class MovableObject:
     # TODO Implement a single class to handle how objects move and update positions... let child classes mutate them
     def __init__(self):
+        self.positions = None
+        self.reference_positions = None
         self.movement = []
 
-    # def calculate_positions_demo(self, design_vector, positions_dict={}):
-    #
-    #     if '3D Translation' in self.movement:
-    #         new_reference_position = design_vector[0:3]
-    #         translated_positions = translate(self.positions, self.reference_position, new_reference_position)
-    #
-    #     if '3D Rotation' in self.movement:
-    #         new_rotation = design_vector[3:None]
-    #         delta_rotation = new_rotation - self.rotation
-    #         rotated_translated_positions = rotate_about_point(translated_positions, delta_rotation)
-    #
-    #
-    #
-    #     delta_rotation = new_rotation - self.rotation
-    #
-    #     translated_positions = translate(self.positions, self.reference_position, new_reference_position)
-    #
-    #     rotated_translated_positions = rotate_about_point(translated_positions, delta_rotation)
-    #
-    #     return 1
+    def calculate_positions(self, design_vector, positions_dict={}):
+
+        # TODO Add functionality to accept positions_dict and work for InterconnectSegments
+
+        new_positions = self.positions
+
+        if '3D Translation' in self.movement:
+            new_reference_position = design_vector[0:3]
+            new_positions = translate(new_positions, self.reference_position, new_reference_position)
+
+        if '3D Rotation' in self.movement:
+            rotation = design_vector[3:None]
+            new_positions = rotate_about_point(new_positions, rotation)
+
+        positions_dict[self]=new_positions
+
+        return positions_dict
 
 
 class Component(MovableObject):
@@ -58,57 +57,39 @@ class Component(MovableObject):
     def reference_position(self):
         return self.positions[0]
 
-    def calculate_positions(self, design_vector):
-        """
-        Update positions of object spheres given a design vector
-
-        Constraint refers to how if we constrain the object, it will have a different size design vector
-
-        :param design_vector:
-        :return:
-        """
-
-        positions_dict = {}
-
-        # Assumes (1,6) design vector... will need to expand in future
-        new_reference_position = design_vector[0:3]
-        new_rotation = design_vector[3:None]
-
-        delta_rotation = new_rotation - self.rotation
-
-        translated_positions = translate(self.positions, self.reference_position, new_reference_position)
-
-        rotated_translated_positions = rotate_about_point(translated_positions, delta_rotation)
-
-
-        positions_dict[self] = rotated_translated_positions
-
-        return positions_dict
+    # def calculate_positions(self, design_vector):
+    #     """
+    #     Update positions of object spheres given a design vector
+    #
+    #     Constraint refers to how if we constrain the object, it will have a different size design vector
+    #
+    #     :param design_vector:
+    #     :return:
+    #     """
+    #
+    #     positions_dict = {}
+    #
+    #     # Assumes (1,6) design vector... will need to expand in future
+    #     new_reference_position = design_vector[0:3]
+    #     new_rotation = design_vector[3:None]
+    #
+    #     delta_rotation = new_rotation - self.rotation
+    #
+    #     translated_positions = translate(self.positions, self.reference_position, new_reference_position)
+    #
+    #     rotated_translated_positions = rotate_about_point(translated_positions, delta_rotation)
+    #
+    #     positions_dict[self] = rotated_translated_positions
+    #
+    #     return positions_dict
 
     def update_positions(self, positions_dict):
         """
         Update positions of object spheres given a design vector
 
-        Constraint refers to how if we constrain the object, it will have a different size design vector
-
         :param positions_dict:
         :return:
         """
-
-        # # Assumes (1,6) design vector... will need to expand in future
-        #
-        # new_reference_position = design_vector[0:3]
-        # new_rotation = design_vector[3:None]
-        #
-        # delta_rotation = new_rotation - self.rotation
-        #
-        # translated_positions = translate(self.positions, self.reference_position, new_reference_position)
-        #
-        # rotated_translated_positions = rotate_about_point(translated_positions, delta_rotation)
-        #
-        # # Update values
-        # self.positions = rotated_translated_positions
-        # self.rotation = new_rotation
 
         self.positions = positions_dict[self]
 
