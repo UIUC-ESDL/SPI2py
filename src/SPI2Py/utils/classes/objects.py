@@ -13,7 +13,14 @@ from scipy.spatial.distance import euclidean
 from ..spatial_calculations.transformations import translate, rotate_about_point
 
 
-class Component:
+
+
+class MovableObject:
+    # TODO Implement a single class to handle how objects move and update positions... let child classes mutate them
+    pass
+
+
+class Component(MovableObject):
 
     def __init__(self, positions, radii, color, node, name, constraints=None):
 
@@ -98,7 +105,7 @@ class Component:
         return np.concatenate((self.reference_position, self.rotation))
 
 
-class InterconnectNode:
+class InterconnectNode(MovableObject):
     def __init__(self, node):
         self.position = None
 
@@ -108,25 +115,25 @@ class InterconnectNode:
     @property
     def design_vector(self): return self.position
 
-    # def update_position(self, design_vector, constraint=None):
-    #
-    #     if constraint is None:
-    #
-    #         new_reference_position = design_vector[0:3]
-    #
-    #         delta_position = new_reference_position - self.reference_position
-    #
-    #         translated_positions = translate(self.positions, delta_position)
-    #
-    #         # Update values
-    #         self.position = translated_positions
-    #
-    #     else:
-    #         print('Placeholder')
+    def update_position(self, design_vector, constraint=None):
+
+        if constraint is None:
+
+            new_reference_position = design_vector[0:3]
+
+            delta_position = new_reference_position - self.reference_position
+
+            translated_positions = translate(self.positions, delta_position)
+
+            # Update values
+            self.position = translated_positions
+
+        else:
+            print('Placeholder')
 
 
 
-class InterconnectSegment:
+class InterconnectSegment(MovableObject):
     def __init__(self, object_1, object_2, diameter, color):
         self.object_1 = object_1
         self.object_2 = object_2
