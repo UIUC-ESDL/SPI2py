@@ -139,10 +139,14 @@ class InterconnectSegment:
         self.edge = (self.object_1.node, self.object_2.node)
 
         # Placeholder for plot test functionality, random positions
-        self.positions, self.radii = self.set_positions()
+        # self.positions, self.radii = self.set_positions()
 
-        # Temporary
-        self.num_spheres = len(self.radii)
+        self.positions = None
+        self.radii = None
+
+
+        # TODO Change interconnects to not-fixed length
+        self.num_spheres = 20
 
 
     def set_positions(self):
@@ -186,6 +190,10 @@ class InterconnectSegment:
         positions = np.linspace(pos_1, pos_2, self.num_spheres)
 
         self.positions = positions
+
+        radii = np.repeat(self.radius, positions.shape[0])
+
+        self.radii = radii
 
 
 class Interconnect(InterconnectNode, InterconnectSegment):

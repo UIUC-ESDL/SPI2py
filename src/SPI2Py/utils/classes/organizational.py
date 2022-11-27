@@ -217,6 +217,7 @@ class SpatialConfiguration(System):
         #     pass
         #
         for interconnect in self.interconnects:
+
             interconnect.update_positions(positions_dict)
 
     def plot_layout(self, savefig=False, directory=None):
