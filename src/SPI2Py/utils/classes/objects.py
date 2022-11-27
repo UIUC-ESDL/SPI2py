@@ -139,35 +139,15 @@ class InterconnectSegment:
         self.edge = (self.object_1.node, self.object_2.node)
 
         # Placeholder for plot test functionality, random positions
-        # self.positions, self.radii = self.set_positions()
-
         self.positions = None
         self.radii = None
 
 
         # TODO Change interconnects to not-fixed length
-        self.num_spheres = 20
+        # self.num_spheres = 20
 
 
-    def set_positions(self):
-        pos_1 = self.object_1.reference_position
-        pos_2 = self.object_2.reference_position
 
-        dist = euclidean(pos_1, pos_2)
-
-        num_spheres = int(dist / self.diameter)
-
-        # We don't want zero-length interconnects or interconnect segments--they cause problems!
-        if num_spheres == 0:
-            num_spheres = 1
-
-        positions = np.linspace(pos_1, pos_2, num_spheres)
-
-        # Temporary value
-
-        radii = np.repeat(self.radius, positions.shape[0])
-
-        return positions, radii
 
     def calculate_positions(self, positions_dict):
         # TODO revise logic for getting the reference point
@@ -176,18 +156,31 @@ class InterconnectSegment:
         pos_1 = positions_dict[self.object_1][0]
         pos_2 = positions_dict[self.object_2][0]
 
-        positions = np.linspace(pos_1, pos_2, self.num_spheres)
+        dist = euclidean(pos_1, pos_2)
+
+        # We don't want zero-length interconnects or interconnect segments--they cause problems!
+        num_spheres = int(dist / self.diameter)
+        if num_spheres == 0:
+            num_spheres = 1
+
+        positions = np.linspace(pos_1, pos_2, num_spheres)
 
         return {self: positions}
 
     def update_positions(self, positions_dict):
-        # TODO revise logic for getting the reference point
-        # Address varying number of spheres
 
         pos_1 = positions_dict[self.object_1][0]
         pos_2 = positions_dict[self.object_2][0]
 
-        positions = np.linspace(pos_1, pos_2, self.num_spheres)
+        dist = euclidean(pos_1, pos_2)
+
+        # We don't want zero-length interconnects or interconnect segments--they cause problems!
+        num_spheres = int(dist / self.diameter)
+        if num_spheres == 0:
+            num_spheres = 1
+
+
+        positions = np.linspace(pos_1, pos_2, num_spheres)
 
         self.positions = positions
 
