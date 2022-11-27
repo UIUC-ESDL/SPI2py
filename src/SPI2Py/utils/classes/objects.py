@@ -13,23 +13,43 @@ from scipy.spatial.distance import euclidean
 from ..spatial_calculations.transformations import translate, rotate_about_point
 
 
-
-
 class MovableObject:
     # TODO Implement a single class to handle how objects move and update positions... let child classes mutate them
-    pass
+    def __init__(self):
+        self.movement = []
+
+    # def calculate_positions_demo(self, design_vector, positions_dict={}):
+    #
+    #     if '3D Translation' in self.movement:
+    #         new_reference_position = design_vector[0:3]
+    #         translated_positions = translate(self.positions, self.reference_position, new_reference_position)
+    #
+    #     if '3D Rotation' in self.movement:
+    #         new_rotation = design_vector[3:None]
+    #         delta_rotation = new_rotation - self.rotation
+    #         rotated_translated_positions = rotate_about_point(translated_positions, delta_rotation)
+    #
+    #
+    #
+    #     delta_rotation = new_rotation - self.rotation
+    #
+    #     translated_positions = translate(self.positions, self.reference_position, new_reference_position)
+    #
+    #     rotated_translated_positions = rotate_about_point(translated_positions, delta_rotation)
+    #
+    #     return 1
 
 
 class Component(MovableObject):
 
-    def __init__(self, positions, radii, color, node, name, constraints=None):
+    def __init__(self, positions, radii, color, node, name, movement=['3D Translation', '3D Rotation']):
 
         self.positions = positions
         self.radii = radii
         self.color = color
         self.node = node
         self.name = name
-        self.constraints = constraints
+        self.movement = movement
 
         # Initialize the rotation attribute
         self.rotation = np.array([0, 0, 0])
@@ -51,52 +71,49 @@ class Component(MovableObject):
         positions_dict = {}
 
         # Assumes (1,6) design vector... will need to expand in future
-        if self.constraints is None:
+        new_reference_position = design_vector[0:3]
+        new_rotation = design_vector[3:None]
 
-            new_reference_position = design_vector[0:3]
-            new_rotation = design_vector[3:None]
+        delta_rotation = new_rotation - self.rotation
 
-            delta_rotation = new_rotation - self.rotation
+        translated_positions = translate(self.positions, self.reference_position, new_reference_position)
 
-            translated_positions = translate(self.positions, self.reference_position, new_reference_position)
+        rotated_translated_positions = rotate_about_point(translated_positions, delta_rotation)
 
-            rotated_translated_positions = rotate_about_point(translated_positions, delta_rotation)
-
-        else:
-            print('Placeholder')
 
         positions_dict[self] = rotated_translated_positions
 
         return positions_dict
 
-    def update_positions(self, design_vector):
+    def update_positions(self, positions_dict):
         """
         Update positions of object spheres given a design vector
 
         Constraint refers to how if we constrain the object, it will have a different size design vector
 
-        :param design_vector:
+        :param positions_dict:
         :return:
         """
 
-        # Assumes (1,6) design vector... will need to expand in future
-        if self.constraints is None:
+        # # Assumes (1,6) design vector... will need to expand in future
+        #
+        # new_reference_position = design_vector[0:3]
+        # new_rotation = design_vector[3:None]
+        #
+        # delta_rotation = new_rotation - self.rotation
+        #
+        # translated_positions = translate(self.positions, self.reference_position, new_reference_position)
+        #
+        # rotated_translated_positions = rotate_about_point(translated_positions, delta_rotation)
+        #
+        # # Update values
+        # self.positions = rotated_translated_positions
+        # self.rotation = new_rotation
 
-            new_reference_position = design_vector[0:3]
-            new_rotation = design_vector[3:None]
+        self.positions = positions_dict[self]
 
-            delta_rotation = new_rotation - self.rotation
 
-            translated_positions = translate(self.positions, self.reference_position, new_reference_position)
 
-            rotated_translated_positions = rotate_about_point(translated_positions, delta_rotation)
-
-            # Update values
-            self.positions = rotated_translated_positions
-            self.rotation = new_rotation
-
-        else:
-            print('Placeholder')
 
     @property
     def design_vector(self):
@@ -104,14 +121,17 @@ class Component(MovableObject):
 
 
 class InterconnectNode(MovableObject):
-    def __init__(self, node):
+    def __init__(self, node, movement=['3D Translation']):
         self.position = None
+        self.movement = movement
 
     @property
-    def reference_position(self): return self.position
+    def reference_position(self):
+        return self.position
 
     @property
-    def design_vector(self): return self.position
+    def design_vector(self):
+        return self.position
 
     def update_position(self, design_vector, constraint=None):
 
@@ -130,7 +150,6 @@ class InterconnectNode(MovableObject):
             print('Placeholder')
 
 
-
 class InterconnectSegment(MovableObject):
     def __init__(self, object_1, object_2, diameter, color):
         self.object_1 = object_1
@@ -146,7 +165,6 @@ class InterconnectSegment(MovableObject):
         # Placeholder for plot test functionality, random positions
         self.positions = None
         self.radii = None
-
 
     def calculate_positions(self, positions_dict):
         # TODO revise logic for getting the reference point instead of object's first sphere
@@ -167,7 +185,6 @@ class InterconnectSegment(MovableObject):
         return {self: positions}
 
     def update_positions(self, positions_dict):
-
         self.positions = self.calculate_positions(positions_dict)[self]
 
         self.radii = np.repeat(self.radius, self.positions.shape[0])
@@ -200,7 +217,7 @@ class Interconnect(InterconnectNode, InterconnectSegment):
         # Per configuration file
         # TODO connect this setting to the config file
         self.number_of_nodes = 2
-        self.number_of_segments = self.number_of_nodes+1
+        self.number_of_segments = self.number_of_nodes + 1
 
         self.nodes = self.create_nodes()
 
@@ -217,7 +234,6 @@ class Interconnect(InterconnectNode, InterconnectSegment):
 
         # Add the interconnect nodes
         for i in range(self.number_of_nodes):
-
             # Each node should have unique identifier
             node_prefix = str(self.component_1.node) + '-' + str(self.component_2.node) + '_'
             node = node_prefix + str(i)
@@ -246,8 +262,6 @@ class Interconnect(InterconnectNode, InterconnectSegment):
 
         return segments
 
-
-
     def calculate_positions(self, positions_dict):
         """
 
@@ -264,19 +278,10 @@ class Interconnect(InterconnectNode, InterconnectSegment):
 
         pass
 
-
-
-
-
-
-
     @property
     def edges(self):
         pass
         # self.nodes
-
-
-
 
 
 class Structure:
@@ -299,5 +304,3 @@ class Volumes(Volume):
     A class that combines contiguous volumes together.
     """
     pass
-
-
