@@ -14,6 +14,8 @@ def translate(current_positions, delta_position):
 
     TODO Write unit tests for this function
     TODO Vectorize?
+    TODO Change function to take arguments: current_sphere_positions, current_reference_point, new_reference_point
+
 
     :param current_positions:
     :param delta_position:

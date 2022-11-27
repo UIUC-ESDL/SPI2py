@@ -119,7 +119,7 @@ class InterconnectNode(MovableObject):
 
         if constraint is None:
 
-            new_reference_position = design_vector[0:3]
+            new_reference_position = design_vector
 
             delta_position = new_reference_position - self.reference_position
 
