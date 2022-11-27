@@ -99,8 +99,7 @@ class Component:
 
 
 class InterconnectNode:
-    def __init__(self):
-        self.node = None
+    def __init__(self, node):
         self.position = None
 
     @property
@@ -232,8 +231,13 @@ class Interconnect(InterconnectNode, InterconnectSegment):
         nodes = [self.component_1]
 
         # Add the interconnect nodes
-        for _ in range(self.number_of_nodes):
-            nodes.append(InterconnectNode())
+        for i in range(self.number_of_nodes):
+
+            # Each node should have unique identifier
+            node_prefix = str(self.component_1.node) + '-' + str(self.component_2.node) + '_'
+            node = node_prefix + str(i)
+
+            nodes.append(InterconnectNode(node))
 
         # Add component 2
         nodes.append(self.component_2)
