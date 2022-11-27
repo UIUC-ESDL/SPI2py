@@ -56,10 +56,9 @@ class Component(MovableObject):
             new_reference_position = design_vector[0:3]
             new_rotation = design_vector[3:None]
 
-            delta_position = new_reference_position - self.reference_position
             delta_rotation = new_rotation - self.rotation
 
-            translated_positions = translate(self.positions, delta_position)
+            translated_positions = translate(self.positions, self.reference_position, new_reference_position)
 
             rotated_translated_positions = rotate_about_point(translated_positions, delta_rotation)
 
@@ -86,10 +85,9 @@ class Component(MovableObject):
             new_reference_position = design_vector[0:3]
             new_rotation = design_vector[3:None]
 
-            delta_position = new_reference_position - self.reference_position
             delta_rotation = new_rotation - self.rotation
 
-            translated_positions = translate(self.positions, delta_position)
+            translated_positions = translate(self.positions, self.reference_position, new_reference_position)
 
             rotated_translated_positions = rotate_about_point(translated_positions, delta_rotation)
 
@@ -121,9 +119,9 @@ class InterconnectNode(MovableObject):
 
             new_reference_position = design_vector
 
-            delta_position = new_reference_position - self.reference_position
+            # delta_position = new_reference_position - self.reference_position
 
-            translated_positions = translate(self.positions, delta_position)
+            translated_positions = translate(self.positions, self.reference_position, new_reference_position)
 
             # Update values
             self.position = translated_positions

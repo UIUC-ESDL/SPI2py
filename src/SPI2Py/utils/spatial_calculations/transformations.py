@@ -8,7 +8,7 @@ from numba import njit
 
 
 @njit(cache=True)
-def translate(current_positions, delta_position):
+def translate(current_sphere_positions, current_reference_point_position, new_reference_point_position):
     """
     Translates a set of points based on the change in position of a reference point
 
@@ -17,16 +17,19 @@ def translate(current_positions, delta_position):
     TODO Change function to take arguments: current_sphere_positions, current_reference_point, new_reference_point
 
 
-    :param current_positions:
-    :param delta_position:
+    :param current_sphere_positions:
+    :param current_reference_point_position:
+    :param new_reference_point_position:
     :return:
     """
 
+    delta_position = new_reference_point_position - current_reference_point_position
+
     delta_x, delta_y, delta_z = delta_position
 
-    new_positions = current_positions + np.array([delta_x, delta_y, delta_z])
+    new_sphere_positions = current_sphere_positions + delta_position
 
-    return new_positions
+    return new_sphere_positions
 
 
 @njit(cache=True)
