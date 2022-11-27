@@ -206,7 +206,7 @@ class SpatialConfiguration(System):
 
 
         for obj, new_design_vector in zip(self.design_vector_objects, new_design_vectors):
-            obj.update_positions(new_design_vector)
+            obj.update_positions(positions_dict)
 
 
         # Is there some class-specific logic?
