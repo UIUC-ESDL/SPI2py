@@ -38,6 +38,15 @@ class MovableObject:
 
         return positions_dict
 
+    def update_positions(self, positions_dict):
+        """
+        Update positions of object spheres given a design vector
+
+        :param positions_dict:
+        :return:
+        """
+        self.positions = positions_dict[self]
+
 
 class Component(MovableObject):
 
@@ -57,47 +66,12 @@ class Component(MovableObject):
     def reference_position(self):
         return self.positions[0]
 
-    # def calculate_positions(self, design_vector):
-    #     """
-    #     Update positions of object spheres given a design vector
-    #
-    #     Constraint refers to how if we constrain the object, it will have a different size design vector
-    #
-    #     :param design_vector:
-    #     :return:
-    #     """
-    #
-    #     positions_dict = {}
-    #
-    #     # Assumes (1,6) design vector... will need to expand in future
-    #     new_reference_position = design_vector[0:3]
-    #     new_rotation = design_vector[3:None]
-    #
-    #     delta_rotation = new_rotation - self.rotation
-    #
-    #     translated_positions = translate(self.positions, self.reference_position, new_reference_position)
-    #
-    #     rotated_translated_positions = rotate_about_point(translated_positions, delta_rotation)
-    #
-    #     positions_dict[self] = rotated_translated_positions
-    #
-    #     return positions_dict
-
-    def update_positions(self, positions_dict):
-        """
-        Update positions of object spheres given a design vector
-
-        :param positions_dict:
-        :return:
-        """
-
-        self.positions = positions_dict[self]
-
-
-
-
     @property
     def design_vector(self):
+        """
+        TODO Provide a method to reduce the design vector (e.g., not translation along z axis)
+        :return:
+        """
         return np.concatenate((self.reference_position, self.rotation))
 
 
@@ -113,22 +87,6 @@ class InterconnectNode(MovableObject):
     @property
     def design_vector(self):
         return self.position
-
-    def update_position(self, design_vector, constraint=None):
-
-        if constraint is None:
-
-            new_reference_position = design_vector
-
-            # delta_position = new_reference_position - self.reference_position
-
-            translated_positions = translate(self.positions, self.reference_position, new_reference_position)
-
-            # Update values
-            self.position = translated_positions
-
-        else:
-            print('Placeholder')
 
 
 class InterconnectSegment(MovableObject):
