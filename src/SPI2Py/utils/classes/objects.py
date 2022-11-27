@@ -169,9 +169,7 @@ class InterconnectSegment:
 
         self.positions = self.calculate_positions(positions_dict)[self]
 
-        radii = np.repeat(self.radius, self.positions.shape[0])
-
-        self.radii = radii
+        self.radii = np.repeat(self.radius, self.positions.shape[0])
 
 
 class Interconnect(InterconnectNode, InterconnectSegment):
