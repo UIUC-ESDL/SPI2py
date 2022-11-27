@@ -31,7 +31,7 @@ class Component:
     def reference_position(self):
         return self.positions[0]
 
-    def get_positions(self, design_vector):
+    def calculate_positions(self, design_vector):
         """
         Update positions of object spheres given a design vector
 
@@ -143,12 +143,8 @@ class InterconnectSegment:
         self.radii = None
 
 
-        # TODO Change interconnects to not-fixed length
-        # self.num_spheres = 20
-
-
     def calculate_positions(self, positions_dict):
-        # TODO revise logic for getting the reference point
+        # TODO revise logic for getting the reference point instead of object's first sphere
         # Address varying number of spheres
 
         pos_1 = positions_dict[self.object_1][0]

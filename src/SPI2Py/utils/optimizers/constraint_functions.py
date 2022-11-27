@@ -18,7 +18,7 @@ def interference_component_component(x, layout):
     """
 
     # Calculate the positions of all spheres in layout given design vector x
-    positions_dict = layout.get_positions(x)
+    positions_dict = layout.calculate_positions(x)
 
     # Calculate the interferences between each sphere of each object pair
     interferences = []
@@ -42,7 +42,7 @@ def interference_component_component(x, layout):
 def interference_component_interconnect(x, layout):
 
     # Calculate the positions of all spheres in layout given design vector x
-    positions_dict = layout.get_positions(x)
+    positions_dict = layout.calculate_positions(x)
 
     # Calculate the interferences between each sphere of each object pair
     interferences = []
@@ -65,7 +65,7 @@ def interference_component_interconnect(x, layout):
 def interference_interconnect_interconnect(x, layout):
 
     # Calculate the positions of all spheres in layout given design vector x
-    positions_dict = layout.get_positions(x)
+    positions_dict = layout.calculate_positions(x)
 
     # Calculate the interferences between each sphere of each object pair
     interferences = []
@@ -87,7 +87,7 @@ def interference_interconnect_interconnect(x, layout):
 
 def interference_structure_all(x, layout):
     # Calculate the positions of all spheres in layout given design vector x
-    positions_dict = layout.get_positions(x)
+    positions_dict = layout.calculate_positions(x)
 
     # Calculate the interferences between each sphere of each object pair
     interferences = []

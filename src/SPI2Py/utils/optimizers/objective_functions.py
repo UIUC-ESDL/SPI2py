@@ -18,7 +18,7 @@ def aggregate_pairwise_distance(x, layout):
     """
 
     # Calculate the position of every sphere based on design vector x
-    positions_dict = layout.get_positions(x)
+    positions_dict = layout.calculate_positions(x)
 
     # Create a list of object pairs
     object_pairs = list(combinations(positions_dict.keys(), 2))

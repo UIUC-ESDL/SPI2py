@@ -170,7 +170,7 @@ class SpatialConfiguration(System):
 
         return design_vectors
 
-    def get_positions(self, design_vector=None):
+    def calculate_positions(self, design_vector=None):
         """
         TODO get positions for interconnects, structures, etc
         :param design_vector:
@@ -189,7 +189,7 @@ class SpatialConfiguration(System):
 
             # Get positions of design  classes
             for obj, design_vector_row in zip(self.design_vector_objects, design_vectors):
-                positions_dict = {**positions_dict, **obj.get_positions(design_vector_row)}
+                positions_dict = {**positions_dict, **obj.calculate_positions(design_vector_row)}
 
             for interconnect in self.interconnects:
                 positions_dict = {**positions_dict, **interconnect.calculate_positions(positions_dict)}
@@ -202,7 +202,7 @@ class SpatialConfiguration(System):
 
         new_design_vectors = self.slice_design_vector(new_design_vector)
 
-        positions_dict = self.get_positions(new_design_vector)
+        positions_dict = self.calculate_positions(new_design_vector)
 
 
         for obj, new_design_vector in zip(self.design_vector_objects, new_design_vectors):
