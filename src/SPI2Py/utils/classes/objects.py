@@ -147,8 +147,6 @@ class InterconnectSegment:
         # self.num_spheres = 20
 
 
-
-
     def calculate_positions(self, positions_dict):
         # TODO revise logic for getting the reference point
         # Address varying number of spheres
@@ -169,22 +167,9 @@ class InterconnectSegment:
 
     def update_positions(self, positions_dict):
 
-        pos_1 = positions_dict[self.object_1][0]
-        pos_2 = positions_dict[self.object_2][0]
+        self.positions = self.calculate_positions(positions_dict)[self]
 
-        dist = euclidean(pos_1, pos_2)
-
-        # We don't want zero-length interconnects or interconnect segments--they cause problems!
-        num_spheres = int(dist / self.diameter)
-        if num_spheres == 0:
-            num_spheres = 1
-
-
-        positions = np.linspace(pos_1, pos_2, num_spheres)
-
-        self.positions = positions
-
-        radii = np.repeat(self.radius, positions.shape[0])
+        radii = np.repeat(self.radius, self.positions.shape[0])
 
         self.radii = radii
 
