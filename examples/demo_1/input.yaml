@@ -15,14 +15,16 @@ components:
         dimensions: [ [ 1,1,4 ], [4,1,1] ]
 
 interconnects:
+
     0:
         name: hp_cv_to_actuator
         color: black
-        component 1: 1
-        component 2: 0
+        component 1: 0
+        component 2: 1
         diameter: 0.25
 
 structures:
+
     0:
         name: bedplate
         color: gray
