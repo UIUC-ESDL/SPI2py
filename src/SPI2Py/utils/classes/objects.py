@@ -17,8 +17,9 @@ class MovableObject:
     # TODO Implement a single class to handle how objects move and update positions... let child classes mutate them
     def __init__(self):
         self.positions = None
-        self.reference_positions = None
+        self.reference_position = None
         self.movement = []
+        # self.constrained
 
     def calculate_positions(self, design_vector, positions_dict={}):
 
@@ -34,7 +35,7 @@ class MovableObject:
             rotation = design_vector[3:None]
             new_positions = rotate_about_point(new_positions, rotation)
 
-        positions_dict[self]=new_positions
+        positions_dict[self] = new_positions
 
         return positions_dict
 
@@ -108,6 +109,8 @@ class InterconnectSegment(MovableObject):
     def calculate_positions(self, positions_dict):
         # TODO revise logic for getting the reference point instead of object's first sphere
         # Address varying number of spheres
+
+        # Design vector not used
 
         pos_1 = positions_dict[self.object_1][0]
         pos_2 = positions_dict[self.object_2][0]
@@ -201,21 +204,22 @@ class Interconnect(InterconnectNode, InterconnectSegment):
 
         return segments
 
-    def calculate_positions(self, positions_dict):
-        """
-
-        TODO Add functionality to check if interconnect_nodes are given a position from the dict
-
-        Parameters
-        ----------
-        positions_dict
-
-        Returns
-        -------
-
-        """
-
-        pass
+    # def calculate_positions(self, positions_dict):
+    #     """
+    #
+    #     TODO Add functionality to check if interconnect_nodes are given a position from the dict
+    #
+    #     Parameters
+    #     ----------
+    #     positions_dict
+    #
+    #     Returns
+    #     -------
+    #
+    #     """
+    #
+    #     for node in self.nodes:
+    #         node.calculate_positions(design_vector)
 
     @property
     def edges(self):

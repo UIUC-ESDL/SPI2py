@@ -122,6 +122,7 @@ class System(Subsystem):
 class SpatialConfiguration(System):
     """
 
+    TODO Add an update order...
     """
 
     @property
