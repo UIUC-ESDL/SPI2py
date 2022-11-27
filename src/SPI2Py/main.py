@@ -58,7 +58,7 @@ class SPI2:
         # Create Components
         self.components = []
         for component in inputs['components']:
-            node = component
+            node = inputs['components'][component]['name']
             name = inputs['components'][component]['name']
             color = inputs['components'][component]['color']
             origins = inputs['components'][component]['origins']
@@ -70,10 +70,13 @@ class SPI2:
 
 
         # Create Interconnects
+        # TODO add a case for if names don't match
         self.interconnects = []
         for interconnect in inputs['interconnects']:
+
             component_1 = self.components[inputs['interconnects'][interconnect]['component 1']]
             component_2 = self.components[inputs['interconnects'][interconnect]['component 2']]
+
             diameter = inputs['interconnects'][interconnect]['diameter']
             color = inputs['interconnects'][interconnect]['color']
 

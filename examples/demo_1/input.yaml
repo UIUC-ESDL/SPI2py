@@ -1,6 +1,7 @@
 # Service names must be unique
 
 components:
+
     0:
         name: control_valve
         color: blue
@@ -17,8 +18,8 @@ interconnects:
     0:
         name: hp_cv_to_actuator
         color: black
-        component 1: 0
-        component 2: 1
+        component 1: 1
+        component 2: 0
         diameter: 0.25
 
 structures:
