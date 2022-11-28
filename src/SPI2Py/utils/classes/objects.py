@@ -19,7 +19,7 @@ class MovableObject:
         self.positions = None
         self.reference_position = None
         self.movement = []
-        # self.constrained
+        self.movement_depends_on = []
 
     def calculate_positions(self, design_vector, positions_dict={}):
 
@@ -204,27 +204,10 @@ class Interconnect(InterconnectNode, InterconnectSegment):
 
         return segments
 
-    # def calculate_positions(self, positions_dict):
-    #     """
-    #
-    #     TODO Add functionality to check if interconnect_nodes are given a position from the dict
-    #
-    #     Parameters
-    #     ----------
-    #     positions_dict
-    #
-    #     Returns
-    #     -------
-    #
-    #     """
-    #
-    #     for node in self.nodes:
-    #         node.calculate_positions(design_vector)
 
     @property
     def edges(self):
-        pass
-        # self.nodes
+        return [segment.edge for segment in self.segments]
 
 
 class Structure:
