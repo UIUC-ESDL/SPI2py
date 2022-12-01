@@ -89,18 +89,6 @@ def remove_valence_two_vertices(graph):
     return G
 
 
-def graph_hash_basic(graph):
-    counts = collections.Counter(d for v, d in graph.degree)
-    return tuple(sorted(counts.items()))
-
-
-def graph_hash_mid(graph):
-    deg = graph.degree()
-    cliq = nx.number_of_cliques(graph)
-    props = [(d, cliq[v]) for v, d in deg]
-    return tuple(sorted(props))
-
-
 def graph_hash(graph):
     return nx.weisfeiler_lehman_graph_hash(graph, iterations=3)
 
