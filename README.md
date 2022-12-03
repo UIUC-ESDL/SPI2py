@@ -1,3 +1,5 @@
+
+
 ![](logo.png)
 
 [![Site](https://img.shields.io/badge/Project%20URL-spi2.illinois.edu%2F-orange)](https://spi2.illinois.edu/)
@@ -10,7 +12,7 @@ SPI2 stands for the Spatial Packaging of Interconnected Systems with Physical In
 The SPI2 framework packages components, routes interconnects, and performs multiphysics simulations simultaneously.
 
 At this point in time, we are working on the initial release so many features are missing/untested. We plan to 
-demonstrate an early working version in mid-November of 2022.
+demonstrate an early working version by Fall 2023.
 
 ## Publications
 

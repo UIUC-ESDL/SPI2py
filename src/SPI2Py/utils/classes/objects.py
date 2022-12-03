@@ -78,6 +78,7 @@ class Component(MovableObject):
 
 class InterconnectNode(MovableObject):
     def __init__(self, node, movement=['3D Translation']):
+        self.node = node
         self.position = None
         self.movement = movement
 
@@ -129,6 +130,7 @@ class InterconnectSegment(MovableObject):
     def update_positions(self, positions_dict):
         self.positions = self.calculate_positions(positions_dict)[self]
 
+        # TODO Separate this into a different function?
         self.radii = np.repeat(self.radius, self.positions.shape[0])
 
 
@@ -208,6 +210,12 @@ class Interconnect(InterconnectNode, InterconnectSegment):
     @property
     def edges(self):
         return [segment.edge for segment in self.segments]
+
+    def calculate_positions(self, positions_dict):
+        pass
+
+    def update_positions(self, positions_dict):
+        pass
 
 
 class Structure:
