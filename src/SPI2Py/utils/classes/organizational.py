@@ -1,5 +1,5 @@
 """
-
+TODO Make sure that migrating from InterconnectSegment to Interconnect does not mess with collision pairs
 """
 
 import numpy as np
@@ -182,16 +182,19 @@ class SpatialConfiguration(System):
         positions_dict = {}
 
         if design_vector is None:
+
             for obj in self.objects:
                 positions_dict[obj] = obj.positions
 
         else:
+
             design_vectors = self.slice_design_vector(design_vector)
 
             # Get positions of design  classes
             for obj, design_vector_row in zip(self.design_vector_objects, design_vectors):
                 positions_dict = {**positions_dict, **obj.calculate_positions(design_vector_row)}
 
+            # For interconnect nodes and segments...
             for interconnect in self.interconnects:
                 positions_dict = {**positions_dict, **interconnect.calculate_positions(positions_dict)}
 
