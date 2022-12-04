@@ -147,51 +147,10 @@
 #                                 yield D
 
 
-# def get_coefficients_and_exponents(poly):
-#     # Assumes all denominators are only A**n with no coefficient
-#     coefficients = poly.numerator().Vec()
-#     coeff_len = len(coefficients)
-#
-#     exponents = []
-#     degree = poly.poldegree()
-#
-#     for _ in range(coeff_len):
-#         exponents.append(degree)
-#         degree -= 1
-#
-#     return coefficients, exponents
 
 
-# def reverse_poly(poly):
-#     """
-#     >>> reverse_poly(A**-1 + 2)
-#     A + 2
-#     """
-#
-#     A = pari('A')
-#
-#     coeffs, exps = get_coefficients_and_exponents(poly)
-#
-#     ans = pari(0)
-#
-#     for c, e in zip(coeffs, exps):
-#         ans += c * A ** (-e)
-#
-#     return ans
 
 
-# def normalize_poly(poly):
-#     """
-#     The Yamada polynomial is only defined up to a power of (-A)^n.
-#
-#     Also, we don't want to distinguish between a spatial graph and its
-#     mirror image, which corresponds to interchanging A <-> A^(-1).
-#     """
-#     _, exps = get_coefficients_and_exponents(poly)
-#     a, b = min(exps), max(exps)
-#     ans1 = (-A) ** (-a) * poly
-#     ans2 = (-A) ** b * reverse_poly(poly)
-#     return min([ans1, ans2], key=list)
 
 
 # def enumerate_yamada_classes(G, max_crossings):
