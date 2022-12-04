@@ -1,6 +1,6 @@
 import networkx as nx
 from cypari import pari
-from src.SPI2Py.utils.spatial_topologies.yamada_polynomials import has_cut_edge, remove_valence_two_vertices, h_poly, SpatialGraphDiagram, Vertex, Edge, Crossing
+from src.SPI2Py.utils.spatial_topologies.yamada_polynomials import has_cut_edge, remove_valence_two_vertices, h_poly, SpatialGraphDiagram, Vertex, Edge, Crossing, reverse_poly
 
 
 
@@ -160,3 +160,19 @@ def test_yamada_polynomial_omega_2_graph():
     assert nx.is_isomorphic(G, nx.complete_graph(4))
 
     assert D.yamada_polynomial() == (A**13 + A**11 + A**10 - A**9 + A**8 - 2*A**7 + A**6 - A**5 + A**4 + A**3 + A**2 + A + 1)/A**5
+
+# TODO Implement tests for get_coefficients_and_exponents
+
+def test_reverse_poly():
+    """
+
+    """
+
+    A = pari('A')
+
+    assert reverse_poly(A**-1 + 2) == A + 2
+
+# TODO Implement tests for normalize_poly
+# def test_normalize_poly():
+
+
