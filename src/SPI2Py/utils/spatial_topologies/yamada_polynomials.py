@@ -513,6 +513,9 @@ def normalize_poly(poly):
     Also, we don't want to distinguish between a spatial graph and its
     mirror image, which corresponds to interchanging A <-> A^(-1).
     """
+
+    A = pari('A')
+
     _, exps = get_coefficients_and_exponents(poly)
     a, b = min(exps), max(exps)
     ans1 = (-A) ** (-a) * poly
