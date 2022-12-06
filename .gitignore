@@ -1,6 +1,6 @@
 dist/
-src/SPI2Py/output/*
-!src/SPI2Py/output/.gitkeep
+src/SPI2Py/result/output/*
+!src/SPI2Py/result/output/.gitkeep
 tests/.pytest_cache/
 venv/
 .idea/

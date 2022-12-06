@@ -7,8 +7,6 @@ Note: Make sure to run this from the top-level SPI2Py directory
 
 
 from src.SPI2Py.main import SPI2
-from src.SPI2Py.utils.classes.objects import Interconnect
-
 
 # Initialize the class
 demo = SPI2()
@@ -50,5 +48,5 @@ demo.layout.plot_layout()
 
 
 # Write output file
-output_filepath = 'src/SPI2py/output/output.json'
+output_filepath = 'src/SPI2py/result/output/output.json'
 demo.write_output(output_filepath)
