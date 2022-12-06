@@ -7,7 +7,7 @@ from numpy import sin, cos
 from numba import njit
 
 
-@njit(cache=True)
+# @njit(cache=True)
 def translate(current_sphere_positions, current_reference_point_position, new_reference_point_position):
     """
     Translates a set of points based on the change in position of a reference point
@@ -32,7 +32,7 @@ def translate(current_sphere_positions, current_reference_point_position, new_re
     return new_sphere_positions
 
 
-@njit(cache=True)
+# @njit(cache=True)
 def rotate_about_point(positions, rotation):
     """
     Rotates a set of points about the first 3D point in the array.

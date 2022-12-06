@@ -6,12 +6,12 @@ import yaml
 import json
 from datetime import datetime
 
-from .utils.optimizers.gradient_based_optimization import optimize
-from .utils.visualization.visualization import generate_gif
-from .utils.spherical_decomposition.prismatic_shapes import generate_rectangular_prisms
-from .utils.classes.objects import Component, InterconnectSegment, Structure
-from .utils.classes.organizational import SpatialConfiguration
-from .utils.spatial_topologies.force_directed_layouts import generate_random_layout
+from src.SPI2Py.optimization.optimizers.gradient_based_method import optimize
+from src.SPI2Py.result.visualization.visualization import generate_gif
+from src.SPI2Py.data.spherical_decomposition.prismatic_shapes import generate_rectangular_prisms
+from src.SPI2Py.data.classes.objects import Component, InterconnectSegment, Structure
+from src.SPI2Py.data.classes.organizational import SpatialConfiguration
+from src.SPI2Py.layout.spatial_topologies.force_directed_layouts import generate_random_layout
 
 
 class SPI2:
