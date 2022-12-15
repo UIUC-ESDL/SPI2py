@@ -48,7 +48,7 @@ class SPI2:
             self.config = yaml.safe_load(f)
 
 
-    def create_objects_from_input(self, inputs):
+    def create_objects_from_input(self):
         """
 
         :param inputs:
@@ -57,12 +57,12 @@ class SPI2:
 
         # Create Components
         self.components = []
-        for component in inputs['components']:
+        for component in self.inputs['components']:
             node = component
-            name = inputs['components'][component]['name']
-            color = inputs['components'][component]['color']
-            origins = inputs['components'][component]['origins']
-            dimensions = inputs['components'][component]['dimensions']
+            name = self.inputs['components'][component]['name']
+            color = self.inputs['components'][component]['color']
+            origins = self.inputs['components'][component]['origins']
+            dimensions = self.inputs['components'][component]['dimensions']
 
             positions, radii = generate_rectangular_prisms(origins, dimensions)
             self.components.append(Component(positions, radii, color, node, name))
@@ -76,16 +76,16 @@ class SPI2:
         self.interconnect_segments = []
 
 
-        for interconnect in inputs['interconnects']:
+        for interconnect in self.inputs['interconnects']:
 
-            component_1 = self.components[inputs['interconnects'][interconnect]['component 1']]
-            component_2 = self.components[inputs['interconnects'][interconnect]['component 2']]
+            component_1 = self.components[self.inputs['interconnects'][interconnect]['component 1']]
+            component_2 = self.components[self.inputs['interconnects'][interconnect]['component 2']]
 
-            diameter = inputs['interconnects'][interconnect]['diameter']
-            color = inputs['interconnects'][interconnect]['color']
+            diameter = self.inputs['interconnects'][interconnect]['diameter']
+            color = self.inputs['interconnects'][interconnect]['color']
 
-            self.interconnect_segments.append(InterconnectSegment(component_1, component_2, diameter, color))
-            # self.interconnects.append(Interconnect(component_1, component_2, diameter, color))
+            # self.interconnect_segments.append(InterconnectSegment(component_1, component_2, diameter, color))
+            self.interconnects.append(Interconnect(component_1, component_2, diameter, color))
 
         for interconnect in self.interconnects:
             print('segments:', interconnect)
@@ -109,11 +109,11 @@ class SPI2:
 
         # Create Structures
         self.structures = []
-        for structure in inputs['structures']:
-            name = inputs['structures'][structure]['name']
-            color = inputs['structures'][structure]['color']
-            origins = inputs['structures'][structure]['origins']
-            dimensions = inputs['structures'][structure]['dimensions']
+        for structure in self.inputs['structures']:
+            name = self.inputs['structures'][structure]['name']
+            color = self.inputs['structures'][structure]['color']
+            origins = self.inputs['structures'][structure]['origins']
+            dimensions = self.inputs['structures'][structure]['dimensions']
 
             positions, radii = generate_rectangular_prisms(origins, dimensions)
             self.structures.append(Structure(positions, radii, color, name))
@@ -141,8 +141,6 @@ class SPI2:
             pass
         else:
             pass
-
-        self.create_objects_from_input(self.inputs)
 
         self.layout = SpatialConfiguration(self.components, self.interconnect_nodes, self.interconnect_segments, self.structures)
 
