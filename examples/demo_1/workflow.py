@@ -30,15 +30,19 @@ demo.add_configuration_file(config_filepath)
 demo.create_objects_from_input()
 
 # Map the objects to a 3D layout
+layout_generation_method = 'manual'
+locations = [0, 0, 0, 0, 0, 0, 1, 4, 1, 0, 0, 0]
+# [-6. , -4.414408 , -0.24464876, 0.,  0., 0.,  6., 4.414408, 0.24464876, 0., 0., 0.]
+
 # layout_generation_method = 'force directed'
-# demo.generate_layout(layout_generation_method)
+demo.generate_layout(layout_generation_method, inputs=locations)
 
 
 # mint = Interconnect(demo.layout.components[0], demo.layout.components[1], 0.25, 'black')
 
 
 # For development: Plot initial layout
-# demo.layout.plot_layout()
+demo.layout.plot_layout()
 
 
 # # Perform gradient-based optimization

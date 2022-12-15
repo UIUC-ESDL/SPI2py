@@ -84,8 +84,8 @@ class SPI2:
             diameter = self.inputs['interconnects'][interconnect]['diameter']
             color = self.inputs['interconnects'][interconnect]['color']
 
-            # self.interconnect_segments.append(InterconnectSegment(component_1, component_2, diameter, color))
-            self.interconnects.append(Interconnect(component_1, component_2, diameter, color))
+            self.interconnect_segments.append(InterconnectSegment(component_1, component_2, diameter, color))
+            # self.interconnects.append(Interconnect(component_1, component_2, diameter, color))
 
         for interconnect in self.interconnects:
             print('segments:', interconnect)
@@ -121,7 +121,7 @@ class SPI2:
 
 
 
-    def generate_layout(self, layout_generation_method, include_interconnect_nodes=False):
+    def generate_layout(self, layout_generation_method, inputs=None, include_interconnect_nodes=False):
         """
 
         Parameters
@@ -148,7 +148,8 @@ class SPI2:
 
         if layout_generation_method == 'manual':
             # TODO Implement functionality to manually define starting points
-            pass
+            self.layout.set_positions(inputs)
+
 
         elif layout_generation_method == 'force directed':
             initial_layout_design_vector = generate_random_layout(self.layout)
