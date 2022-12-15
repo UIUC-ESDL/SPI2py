@@ -15,6 +15,7 @@ from src.SPI2Py.data.classes.objects import Interconnect
 demo = SPI2()
 
 
+
 # Specify the input file
 input_filepath = 'examples/demo_1/input.yaml'
 demo.add_input_file(input_filepath)
@@ -26,11 +27,11 @@ demo.add_configuration_file(config_filepath)
 
 
 # Generate classes from the inputs file
-demo.create_objects()
+demo.create_objects_from_input()
 
 # Map the objects to a 3D layout
-layout_generation_method = 'force directed'
-demo.generate_layout(layout_generation_method)
+# layout_generation_method = 'force directed'
+# demo.generate_layout(layout_generation_method)
 
 
 # mint = Interconnect(demo.layout.components[0], demo.layout.components[1], 0.25, 'black')
