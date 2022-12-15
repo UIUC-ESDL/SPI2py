@@ -48,7 +48,7 @@ class MovableObject:
         """
         self.positions = positions_dict[self]
 
-
+# TODO Add port object
 class Component(MovableObject):
 
     def __init__(self, positions, radii, color, node, name, movement=['3D Translation', '3D Rotation']):
@@ -160,17 +160,22 @@ class Interconnect(InterconnectNode, InterconnectSegment):
 
         # Per configuration file
         # TODO connect this setting to the config file
-        self.number_of_nodes = 2
+        self.number_of_nodes = 0
         self.number_of_segments = self.number_of_nodes + 1
 
+        # Create InterconnectNode objects
         self.nodes = self.create_nodes()
 
+        # Create InterconnectSegment objects
         self.node_pairs = self.create_node_pairs()
-
         self.segments = self.create_segments()
 
     def create_nodes(self):
+        """
+        Consideration: if I include the component nodes then... ?
 
+        :return:
+        """
         # TODO Check...
 
         # Create the nodes list and add component 1

@@ -9,7 +9,7 @@ from datetime import datetime
 from src.SPI2Py.optimization.optimizers.gradient_based_method import optimize
 from src.SPI2Py.result.visualization.visualization import generate_gif
 from src.SPI2Py.data.spherical_decomposition.prismatic_shapes import generate_rectangular_prisms
-from src.SPI2Py.data.classes.objects import Component, InterconnectSegment, Structure
+from src.SPI2Py.data.classes.objects import Component, InterconnectSegment, Interconnect, Structure
 from src.SPI2Py.data.classes.organizational import SpatialConfiguration
 from src.SPI2Py.layout.spatial_topologies.force_directed_layouts import generate_random_layout
 
@@ -24,8 +24,9 @@ class SPI2:
         self.inputs = None
 
         self.components = None
-        self.interconnect_nodes = None
         self.interconnects = None
+        self.interconnect_nodes = None
+        self.interconnect_segments = None
         self.structures = None
 
         self.layout = None
@@ -54,7 +55,6 @@ class SPI2:
         :return:
         """
 
-
         # Create Components
         self.components = []
         for component in inputs['components']:
@@ -72,6 +72,10 @@ class SPI2:
         # Create Interconnects
 
         self.interconnects = []
+        self.interconnect_nodes = []
+        self.interconnect_segments = []
+
+
         for interconnect in inputs['interconnects']:
 
             component_1 = self.components[inputs['interconnects'][interconnect]['component 1']]
@@ -80,13 +84,23 @@ class SPI2:
             diameter = inputs['interconnects'][interconnect]['diameter']
             color = inputs['interconnects'][interconnect]['color']
 
-            self.interconnects.append(InterconnectSegment(component_1, component_2, diameter, color))
+            self.interconnect_segments.append(InterconnectSegment(component_1, component_2, diameter, color))
+            # self.interconnects.append(Interconnect(component_1, component_2, diameter, color))
+
+        for interconnect in self.interconnects:
+            print('segments:', interconnect)
+            print('segments:', interconnect.segments)
+
+            print('ext')
+            self.interconnect_segments.extend(interconnect.segments)
+
+            # TODO Remove component nodes???
+            # self.interconnect_nodes.extend(interconnect.nodes)
 
 
 
-        # Create Interconnect Nodes
-        self.interconnect_nodes = []
-        # for interconnect
+
+
 
 
 
@@ -130,7 +144,7 @@ class SPI2:
 
         self.create_objects_from_input(self.inputs)
 
-        self.layout = SpatialConfiguration(self.components, self.interconnect_nodes, self.interconnects, self.structures)
+        self.layout = SpatialConfiguration(self.components, self.interconnect_nodes, self.interconnect_segments, self.structures)
 
         # TODO implement different layout generation methods
 
