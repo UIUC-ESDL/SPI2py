@@ -90,14 +90,11 @@ class SPI2:
             self.interconnects.append(Interconnect(component_1, component_2, diameter, color))
 
         for interconnect in self.interconnects:
-            print('segments:', interconnect)
-            print('segments:', interconnect.segments)
 
-            print('ext')
             self.interconnect_segments.extend(interconnect.segments)
 
             # TODO Remove component nodes???
-            # self.interconnect_nodes.extend(interconnect.nodes)
+            self.interconnect_nodes.extend(interconnect.nodes)
 
 
 
@@ -121,7 +118,8 @@ class SPI2:
             self.structures.append(Structure(positions, radii, color, name))
 
         # Generate SpatialConfiguration
-        self.layout = SpatialConfiguration(self.components, self.interconnect_nodes, self.interconnect_segments,
+        # slicing nodes for temp fix
+        self.layout = SpatialConfiguration(self.components, self.interconnect_nodes[1:-1], self.interconnect_segments,
                                            self.structures)
 
     def generate_layout(self, layout_generation_method, inputs=None, include_interconnect_nodes=False):
@@ -149,7 +147,6 @@ class SPI2:
         # TODO implement different layout generation methods
 
         if layout_generation_method == 'manual':
-            # TODO Implement functionality to manually define starting points
             self.layout.set_positions(inputs)
 
 
@@ -159,6 +156,12 @@ class SPI2:
 
         else:
             print('Sorry, no other layout generation methods are implemented yet')
+
+
+
+
+
+
 
     def optimize_spatial_configuration(self):
         self.result, self.design_vector_log = optimize(self.layout)

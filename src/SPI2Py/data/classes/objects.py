@@ -79,16 +79,16 @@ class Component(MovableObject):
 class InterconnectNode(MovableObject):
     def __init__(self, node, movement=['3D Translation']):
         self.node = node
-        self.position = None
+        self.positions = np.array([0., 0., 0.])  # Initialize a dummy value
         self.movement = movement
 
     @property
     def reference_position(self):
-        return self.position
+        return self.positions
 
     @property
     def design_vector(self):
-        return self.position
+        return self.positions
 
 
 class InterconnectSegment(MovableObject):
@@ -160,11 +160,12 @@ class Interconnect(InterconnectNode, InterconnectSegment):
 
         # Per configuration file
         # TODO connect this setting to the config file
-        self.number_of_nodes = 0
+        self.number_of_nodes = 1
         self.number_of_segments = self.number_of_nodes + 1
 
         # Create InterconnectNode objects
         self.nodes = self.create_nodes()
+        self.interconnect_nodes = self.nodes[1:-1] # trims off components 1 and 2
 
         # Create InterconnectSegment objects
         self.node_pairs = self.create_node_pairs()
