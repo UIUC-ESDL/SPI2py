@@ -31,10 +31,7 @@ demo.create_objects_from_input()
 
 # Map the objects to a 3D layout
 layout_generation_method = 'manual'
-locations = [0, 0, 0, 0, 0, 0, 1, 4, 1, 0, 0, 0]
-# [-6. , -4.414408 , -0.24464876, 0.,  0., 0.,  6., 4.414408, 0.24464876, 0., 0., 0.]
-
-# layout_generation_method = 'force directed'
+locations = [-3., -4.41, -0.24, 0.,  0., 0.,  2., 4.41, 0.24, 0., 0., 0.]
 demo.generate_layout(layout_generation_method, inputs=locations)
 
 
@@ -45,17 +42,17 @@ demo.generate_layout(layout_generation_method, inputs=locations)
 demo.layout.plot_layout()
 
 
-# # Perform gradient-based optimization
-# demo.optimize_spatial_configuration()
-#
-#
-# # For development: Print Results
-# print('Result:', demo.result)
-#
-#
-# # For development: Plot the final layout to see the change
-# demo.layout.set_positions(demo.result.x)
-# demo.layout.plot_layout()
+# Perform gradient-based optimization
+demo.optimize_spatial_configuration()
+
+
+# For development: Print Results
+print('Result:', demo.result)
+
+
+# For development: Plot the final layout to see the change
+demo.layout.set_positions(demo.result.x)
+demo.layout.plot_layout()
 #
 #
 # # Write output file
