@@ -8,7 +8,7 @@ TODO write tests to ensure negative values are same e.g., 90 degrees ccw (-90) =
 """
 
 import numpy as np
-from src.SPI2Py.analysis.spatial_calculations import rotate_about_point
+from src.SPI2Py.analysis.spatial_calculations.transformations import rotate_about_point
 
 
 positions = np.array([[2., 2., 0.], [4., 2., 0.], [4., 0., 0.]])
