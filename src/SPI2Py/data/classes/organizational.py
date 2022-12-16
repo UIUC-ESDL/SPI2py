@@ -13,15 +13,15 @@ class Subsystem:
 
     """
 
-    def __init__(self, components, interconnect_nodes, interconnects, structures):
+    def __init__(self, components, interconnect_nodes, interconnect_segments, structures):
         self.components = components
         self.interconnect_nodes = interconnect_nodes
-        self.interconnects = interconnects
+        self.interconnect_segments = interconnect_segments
         self.structures = structures
 
     @property
     def objects(self):
-        return self.components + self.interconnect_nodes + self.interconnects + self.structures
+        return self.components + self.interconnect_nodes + self.interconnect_segments + self.structures
 
     @property
     def design_vector_objects(self):
@@ -29,7 +29,7 @@ class Subsystem:
 
     @property
     def moving_objects(self):
-        return self.components + self.interconnect_nodes + self.interconnects
+        return self.components + self.interconnect_nodes + self.interconnect_segments
 
     @property
     def nodes(self):
@@ -37,7 +37,7 @@ class Subsystem:
 
     @property
     def edges(self):
-        return [interconnect.edge for interconnect in self.interconnects]
+        return [interconnect.edge for interconnect in self.interconnect_segments]
 
     def add_object(self):
         # TODO Implement this function
@@ -67,7 +67,7 @@ class Subsystem:
         :return:
         """
 
-        component_interconnect_pairs = list(product(self.components, self.interconnects))
+        component_interconnect_pairs = list(product(self.components, self.interconnect_segments))
 
         # Remove interconnects attached to components b/c ...
         for component, interconnect in component_interconnect_pairs:
@@ -86,7 +86,7 @@ class Subsystem:
         """
 
         # Create a list of all interconnect pairs
-        interconnect_interconnect_pairs = list(combinations(self.interconnects, 2))
+        interconnect_interconnect_pairs = list(combinations(self.interconnect_segments, 2))
 
         # Remove segments that share the same component
         # This is a temporary feature b/c the ends of those two interconnects will share a point
@@ -195,7 +195,7 @@ class SpatialConfiguration(System):
                 positions_dict = {**positions_dict, **obj.calculate_positions(design_vector_row)}
 
             # For interconnect nodes and segments...
-            for interconnect in self.interconnects:
+            for interconnect in self.interconnect_segments:
                 positions_dict = {**positions_dict, **interconnect.calculate_positions(positions_dict)}
 
             # Get positions of interconnect nodes and structures...
@@ -220,7 +220,7 @@ class SpatialConfiguration(System):
         # for obj in self.interconnect_nodes:
         #     pass
         #
-        for interconnect in self.interconnects:
+        for interconnect in self.interconnect_segments:
 
             interconnect.update_positions(positions_dict)
 

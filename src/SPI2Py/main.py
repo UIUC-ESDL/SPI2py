@@ -84,8 +84,10 @@ class SPI2:
             diameter = self.inputs['interconnects'][interconnect]['diameter']
             color = self.inputs['interconnects'][interconnect]['color']
 
-            self.interconnect_segments.append(InterconnectSegment(component_1, component_2, diameter, color))
-            # self.interconnects.append(Interconnect(component_1, component_2, diameter, color))
+            # Keep this line, if swapped then it works with force-directed layout
+            # self.interconnect_segments.append(InterconnectSegment(component_1, component_2, diameter, color))
+
+            self.interconnects.append(Interconnect(component_1, component_2, diameter, color))
 
         for interconnect in self.interconnects:
             print('segments:', interconnect)
@@ -118,8 +120,9 @@ class SPI2:
             positions, radii = generate_rectangular_prisms(origins, dimensions)
             self.structures.append(Structure(positions, radii, color, name))
 
-
-
+        # Generate SpatialConfiguration
+        self.layout = SpatialConfiguration(self.components, self.interconnect_nodes, self.interconnect_segments,
+                                           self.structures)
 
     def generate_layout(self, layout_generation_method, inputs=None, include_interconnect_nodes=False):
         """
@@ -142,7 +145,6 @@ class SPI2:
         else:
             pass
 
-        self.layout = SpatialConfiguration(self.components, self.interconnect_nodes, self.interconnect_segments, self.structures)
 
         # TODO implement different layout generation methods
 
