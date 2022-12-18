@@ -79,6 +79,7 @@ class Component(MovableObject):
 class InterconnectNode(MovableObject):
     def __init__(self, node, movement=['3D Translation']):
         self.node = node
+        # TODO Sort out None value vs dummy values
         self.positions = np.array([0., 0., 0.])  # Initialize a dummy value
         self.movement = movement
 
