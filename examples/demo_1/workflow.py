@@ -34,10 +34,10 @@ demo.create_objects_from_input()
 layout_generation_method = 'manual'
 locations = np.array([-3., -4.41, -0.24, 0.,  0., 0.,  2., 4.41, 0.24, 0., 0., 0., 2., 2., 2.])
 
-pos_dict = demo.interconnect_nodes[1].calculate_positions(np.array([0,0,0]))
-demo.interconnect_nodes[1].update_positions(pos_dict)
+# pos_dict = demo.interconnect_nodes[1].calculate_positions(np.array([0,0,0]))
+# demo.interconnect_nodes[1].update_positions(pos_dict)
 
-# demo.layout.set_positions(locations)
+demo.layout.set_positions(locations)
 
 # demo.generate_layout(layout_generation_method, inputs=locations)
 
