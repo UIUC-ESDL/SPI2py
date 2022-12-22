@@ -48,6 +48,7 @@ class MovableObject:
         """
         self.positions = positions_dict[self]
 
+
 # TODO Add port object
 class Component(MovableObject):
 
