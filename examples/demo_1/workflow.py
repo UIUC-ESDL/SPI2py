@@ -34,22 +34,14 @@ demo.create_objects_from_input()
 layout_generation_method = 'manual'
 locations = np.array([-3., -4.41, -0.24, 0.,  0., 0.,  2., 4.41, 0.24, 0., 0., 0., 2., 2., 2.])
 
-
-# pos_dict = demo.layout.components[0].calculate_positions(np.array([0,0,0,0,0,0]))
-# pos_dict = demo.layout.components[1].calculate_positions(np.array([0,0,0,0,0,0]))
-# pos_dict = demo.layout.interconnect_nodes[0].calculate_positions(np.array([0,0,0]))
-# demo.layout.interconnect_nodes[0].update_positions(pos_dict)
-
-demo.layout.set_positions(locations)
-
-# demo.generate_layout(layout_generation_method, inputs=locations)
+demo.generate_layout(layout_generation_method, inputs=locations)
 
 
 # mint = Interconnect(demo.layout.components[0], demo.layout.components[1], 0.25, 'black')
 
 
 # For development: Plot initial layout
-# demo.layout.plot_layout()
+demo.layout.plot_layout()
 
 
 # # Perform gradient-based optimization
