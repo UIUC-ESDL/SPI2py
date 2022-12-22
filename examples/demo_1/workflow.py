@@ -5,6 +5,8 @@ TODO Add a logger
 Note: Make sure to run this from the top-level SPI2Py directory
 """
 
+import logging
+logging.basicConfig(filename='example/demo_1/example.log', encoding='utf-8', level=logging.DEBUG)
 
 from src.SPI2Py.main import SPI2
 
@@ -14,7 +16,7 @@ import numpy as np
 # Initialize the class
 demo = SPI2()
 
-
+logging.debug('test')
 
 # Specify the input file
 input_filepath = 'examples/demo_1/input.yaml'
