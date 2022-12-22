@@ -23,12 +23,6 @@ class SPI2:
         self.config = None
         self.inputs = None
 
-        self.components = None
-        self.interconnects = None
-        self.interconnect_nodes = None
-        self.interconnect_segments = None
-        self.structures = None
-
         self.layout = None
 
         self.result = None
@@ -56,7 +50,7 @@ class SPI2:
         """
 
         # Create Components
-        self.components = []
+        components = []
         for component in self.inputs['components']:
             node = component
             name = self.inputs['components'][component]['name']
@@ -65,21 +59,21 @@ class SPI2:
             dimensions = self.inputs['components'][component]['dimensions']
 
             positions, radii = generate_rectangular_prisms(origins, dimensions)
-            self.components.append(Component(positions, radii, color, node, name))
+            components.append(Component(positions, radii, color, node, name))
 
 
 
         # Create Interconnects
 
-        self.interconnects = []
-        self.interconnect_nodes = []
-        self.interconnect_segments = []
+        interconnects = []
+        interconnect_nodes = []
+        interconnect_segments = []
 
 
         for interconnect in self.inputs['interconnects']:
 
-            component_1 = self.components[self.inputs['interconnects'][interconnect]['component 1']]
-            component_2 = self.components[self.inputs['interconnects'][interconnect]['component 2']]
+            component_1 = components[self.inputs['interconnects'][interconnect]['component 1']]
+            component_2 = components[self.inputs['interconnects'][interconnect]['component 2']]
 
             diameter = self.inputs['interconnects'][interconnect]['diameter']
             color = self.inputs['interconnects'][interconnect]['color']
@@ -87,14 +81,14 @@ class SPI2:
             # Keep this line, if swapped then it works with force-directed layout
             # self.interconnect_segments.append(InterconnectSegment(component_1, component_2, diameter, color))
 
-            self.interconnects.append(Interconnect(component_1, component_2, diameter, color))
+            interconnects.append(Interconnect(component_1, component_2, diameter, color))
 
-        for interconnect in self.interconnects:
+        for interconnect in interconnects:
 
-            self.interconnect_segments.extend(interconnect.segments)
+            interconnect_segments.extend(interconnect.segments)
 
             # TODO Remove component nodes???
-            self.interconnect_nodes.extend(interconnect.nodes)
+            interconnect_nodes.extend(interconnect.nodes)
 
 
 
@@ -107,7 +101,7 @@ class SPI2:
 
 
         # Create Structures
-        self.structures = []
+        structures = []
         for structure in self.inputs['structures']:
             name = self.inputs['structures'][structure]['name']
             color = self.inputs['structures'][structure]['color']
@@ -115,12 +109,11 @@ class SPI2:
             dimensions = self.inputs['structures'][structure]['dimensions']
 
             positions, radii = generate_rectangular_prisms(origins, dimensions)
-            self.structures.append(Structure(positions, radii, color, name))
+            structures.append(Structure(positions, radii, color, name))
 
         # Generate SpatialConfiguration
         # slicing nodes for temp fix
-        self.layout = SpatialConfiguration(self.components, self.interconnect_nodes[1:-1], self.interconnect_segments,
-                                           self.structures)
+        self.layout = SpatialConfiguration(components, interconnect_nodes[1:-1], interconnect_segments, structures)
 
     def generate_layout(self, layout_generation_method, inputs=None, include_interconnect_nodes=False):
         """
