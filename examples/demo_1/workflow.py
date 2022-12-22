@@ -48,7 +48,7 @@ demo.optimize_spatial_configuration()
 print('Result:', demo.result)
 
 
-# # For development: Plot the final layout to see the change
+# For development: Plot the final layout to see the change
 demo.layout.set_positions(demo.result.x)
 demo.layout.plot_layout()
 
