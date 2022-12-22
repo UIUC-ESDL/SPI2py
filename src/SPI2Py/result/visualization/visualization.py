@@ -25,20 +25,13 @@ def plot_sphere(position, radius, color, ax):
     ax.plot_surface(x, y, z, linewidth=0.0, color=color)
 
 
-def plot(plot_dict, savefig, directory):
+def plot(plot_array, savefig, directory):
     """
     Plots classes...
 
-    {
-    object1:    {
-                positions:
-                radii:
-                color
-                }
-    object2: ...
-    }
+    [[positions_1, radii_1, color_1],[],... ]
 
-    :param plot_dict:
+    :param plot_array:
     :param savefig:
     :param directory:
     :return:
@@ -47,11 +40,8 @@ def plot(plot_dict, savefig, directory):
     fig = plt.figure()
     ax = fig.add_subplot(projection='3d')
 
-    objects = list(plot_dict.keys())
-    for obj in objects:
-        positions = plot_dict[obj]['positions']
-        radii = plot_dict[obj]['radii']
-        color = plot_dict[obj]['color']
+    for array in plot_array:
+        positions, radii, color = array
 
         for position, radius in zip(positions, radii):
             plot_sphere(position, radius, color, ax)

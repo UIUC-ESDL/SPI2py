@@ -226,20 +226,15 @@ class SpatialConfiguration(System):
 
     def plot_layout(self, savefig=False, directory=None):
 
-        layout_plot_dict = {}
+        layout_plot_array = []
 
         for obj in self.objects:
-            object_plot_dict = {}
 
             positions = obj.positions
             radii = obj.radii
             color = obj.color
 
-            object_plot_dict['positions'] = positions
-            object_plot_dict['radii'] = radii
-            object_plot_dict['color'] = color
+            layout_plot_array.append([positions, radii, color])
 
-            layout_plot_dict[obj] = object_plot_dict
-
-        plot(layout_plot_dict, savefig, directory)
+        plot(layout_plot_array, savefig, directory)
 
