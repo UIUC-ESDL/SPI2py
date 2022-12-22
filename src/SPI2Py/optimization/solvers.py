@@ -46,7 +46,7 @@ def log_design_vector(xk, state):
     design_vector_log.append(xk)
 
 
-def optimize(layout):
+def gradient_based_optimization(layout):
     """
     Constrained optimization...
 

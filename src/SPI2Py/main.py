@@ -6,7 +6,7 @@ import yaml
 import json
 from datetime import datetime
 
-from src.SPI2Py.optimization.solvers import optimize
+from src.SPI2Py.optimization.solvers import gradient_based_optimization
 from src.SPI2Py.result.visualization.visualization import generate_gif
 from src.SPI2Py.data.spherical_decomposition import generate_rectangular_prisms
 from src.SPI2Py.data.data import Component, Interconnect, Structure
@@ -157,7 +157,7 @@ class SPI2:
 
 
     def optimize_spatial_configuration(self):
-        self.result, self.design_vector_log = optimize(self.layout)
+        self.result, self.design_vector_log = gradient_based_optimization(self.layout)
 
         # Generate GIF
         if self.config['Visualization']['Output GIF'] is True:
