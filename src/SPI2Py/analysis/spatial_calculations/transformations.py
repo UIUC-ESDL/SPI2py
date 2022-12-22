@@ -25,7 +25,7 @@ def translate(current_sphere_positions, current_reference_point_position, new_re
 
     delta_position = new_reference_point_position - current_reference_point_position
 
-    delta_x, delta_y, delta_z = delta_position
+    # delta_x, delta_y, delta_z = delta_position
 
     new_sphere_positions = current_sphere_positions + delta_position
 

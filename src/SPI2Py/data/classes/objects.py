@@ -77,10 +77,15 @@ class Component(MovableObject):
 
 
 class InterconnectNode(MovableObject):
-    def __init__(self, node, movement=['3D Translation']):
+    def __init__(self, node, radius, color, movement=['3D Translation']):
         self.node = node
+        self.radius = radius
+        self.color = color
+
+        # delete this redundant (used for plotting)
+        self.radii = np.array([radius])
         # TODO Sort out None value vs dummy values
-        self.positions = np.array([0., 0., 0.])  # Initialize a dummy value
+        self.positions = np.array([[0., 0., 0.]])  # Initialize a dummy value
         self.movement = movement
 
     @property
@@ -90,6 +95,7 @@ class InterconnectNode(MovableObject):
     @property
     def design_vector(self):
         return self.positions
+
 
 
 class InterconnectSegment(MovableObject):
@@ -113,17 +119,8 @@ class InterconnectSegment(MovableObject):
         # Address varying number of spheres
 
         # Design vector not used
-
-        # Check if one or multiple positions so we don't index only a scalar value
-        if positions_dict[self.object_1].size == 3:
-            pos_1 = positions_dict[self.object_1]
-        else:
-            pos_1 = positions_dict[self.object_1][0]
-
-        if positions_dict[self.object_2].size == 3:
-            pos_2 = positions_dict[self.object_2]
-        else:
-            pos_2 = positions_dict[self.object_2][0]
+        pos_1 = positions_dict[self.object_1][0]
+        pos_2 = positions_dict[self.object_2][0]
 
 
         dist = euclidean(pos_1, pos_2)
@@ -187,7 +184,7 @@ class Interconnect(InterconnectNode, InterconnectSegment):
 
         :return:
         """
-        # TODO Check...
+        # TODO Make sure nodes are 2D and not 1D!
 
         # Create the nodes list and add component 1
         nodes = [self.component_1]
@@ -198,7 +195,7 @@ class Interconnect(InterconnectNode, InterconnectSegment):
             node_prefix = str(self.component_1.node) + '-' + str(self.component_2.node) + '_'
             node = node_prefix + str(i)
 
-            nodes.append(InterconnectNode(node))
+            nodes.append(InterconnectNode(node,self.diameter/2, self.color))
 
         # Add component 2
         nodes.append(self.component_2)
@@ -206,6 +203,7 @@ class Interconnect(InterconnectNode, InterconnectSegment):
         return nodes
 
     def create_node_pairs(self):
+
 
         node_pairs = [(self.nodes[i], self.nodes[i + 1]) for i in range(len(self.nodes) - 1)]
 
