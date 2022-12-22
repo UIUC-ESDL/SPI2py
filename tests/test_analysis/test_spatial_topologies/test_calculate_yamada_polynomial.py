@@ -1,6 +1,6 @@
 import networkx as nx
 from cypari import pari
-from src.SPI2Py.layout.spatial_topologies.yamada_polynomials import has_cut_edge, remove_valence_two_vertices, h_poly, SpatialGraphDiagram, Vertex, Edge, Crossing, reverse_poly
+from src.SPI2Py.layout.yamada_polynomials import has_cut_edge, remove_valence_two_vertices, h_poly, SpatialGraphDiagram, Vertex, Edge, Crossing, reverse_poly
 
 
 

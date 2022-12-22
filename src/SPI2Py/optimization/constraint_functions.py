@@ -8,6 +8,28 @@
 from src.SPI2Py.analysis.spatial_calculations.distance import min_spheres_spheres_interference
 
 
+# def interference(positions_1, radii_1, positions_2, radii_2):
+#     """
+#     Checks for the maximum collision between two ojects
+#
+#     :param x:
+#     :param layout:
+#     :return:
+#     """
+#
+#     # Calculate the interferences between each sphere of each object pair
+#     interferences = []
+#     for (positions_1, radius_1, position_2, radius_2) in zip(positions_1, radii_1, positions_2, radii_2):
+#
+#         dist = min_spheres_spheres_interference(positions_a, radii_a, positions_b, radii_b)
+#
+#         interferences.append(dist)
+#
+#         max_interference = max(interferences)
+#
+#     return max_interference
+
+
 def interference_component_component(x, layout):
     """
     Checks for the maximum collision between two ojects
