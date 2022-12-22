@@ -40,18 +40,11 @@ demo.generate_layout(layout_generation_method, inputs=locations)
 # For development: Plot initial layout
 demo.layout.plot_layout()
 
-# print(demo.layout.objects[0].design_vector)
-# print(demo.layout.objects[1].design_vector)
-# print(demo.layout.objects[2].design_vector)
-# print(demo.layout.objects[3].design_vector)
-# print(demo.layout.objects[4].design_vector)
-# print(demo.layout.objects[5].design_vector)
-
 # Perform gradient-based optimization
 demo.optimize_spatial_configuration()
 
 
-# # For development: Print Results
+# For development: Print Results
 print('Result:', demo.result)
 
 
@@ -61,5 +54,5 @@ demo.layout.plot_layout()
 
 
 # Write output file
-# output_filepath = 'output.json'
-# demo.write_output(output_filepath)
+output_filepath = 'examples/demo_1/output.json'
+demo.write_output(output_filepath)
