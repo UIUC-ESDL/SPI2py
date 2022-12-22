@@ -94,7 +94,7 @@ class InterconnectNode(MovableObject):
 
     @property
     def design_vector(self):
-        return self.positions
+        return self.positions.flatten()
 
 
 
