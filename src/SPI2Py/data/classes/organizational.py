@@ -220,9 +220,9 @@ class SpatialConfiguration(System):
         # for obj in self.interconnect_nodes:
         #     pass
         #
-        # for interconnect in self.interconnect_segments:
-        #
-        #     interconnect.update_positions(positions_dict)
+        for interconnect in self.interconnect_segments:
+
+            interconnect.update_positions(positions_dict)
 
     def plot_layout(self, savefig=False, directory=None):
 

@@ -33,12 +33,9 @@ demo.create_objects_from_input()
 # Map the objects to a 3D layout
 layout_generation_method = 'manual'
 locations = np.array([-3., -4.41, -0.24, 0.,  0., 0.,  2., 4.41, 0.24, 0., 0., 0., 2., 2., 2.])
-
 demo.generate_layout(layout_generation_method, inputs=locations)
 
-
-# mint = Interconnect(demo.layout.components[0], demo.layout.components[1], 0.25, 'black')
-
+# Generate initial layout plot
 
 # For development: Plot initial layout
 demo.layout.plot_layout()
