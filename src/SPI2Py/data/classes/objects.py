@@ -114,8 +114,17 @@ class InterconnectSegment(MovableObject):
 
         # Design vector not used
 
-        pos_1 = positions_dict[self.object_1][0]
-        pos_2 = positions_dict[self.object_2][0]
+        # Check if one or multiple positions so we don't index only a scalar value
+        if positions_dict[self.object_1].size == 3:
+            pos_1 = positions_dict[self.object_1]
+        else:
+            pos_1 = positions_dict[self.object_1][0]
+
+        if positions_dict[self.object_2].size == 3:
+            pos_2 = positions_dict[self.object_2]
+        else:
+            pos_2 = positions_dict[self.object_2][0]
+
 
         dist = euclidean(pos_1, pos_2)
 

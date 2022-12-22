@@ -34,8 +34,8 @@ Visualization:
 
 Outputs:
 
-  Folderpath: src/SPI2py/output/
-  Report Filename: output.json
+  Filepath: output.json
+
 
 
 
