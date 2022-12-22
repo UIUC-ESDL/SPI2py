@@ -32,7 +32,7 @@ demo.create_objects_from_input()
 
 # Map the objects to a 3D layout
 layout_generation_method = 'manual'
-locations = np.array([-3., -4.41, -0.24, 0.,  0., 0.,  2., 4.41, 0.24, 0., 0., 0., 2., 2., 2.])
+locations = np.array([-3., -4.41, -0.24, 0.,  0., 0.,  2., 4.41, 0.24, 0., 0., 0., -1., 2., 2.])
 demo.generate_layout(layout_generation_method, inputs=locations)
 
 # Generate initial layout plot
@@ -40,18 +40,24 @@ demo.generate_layout(layout_generation_method, inputs=locations)
 # For development: Plot initial layout
 demo.layout.plot_layout()
 
+# print(demo.layout.objects[0].design_vector)
+# print(demo.layout.objects[1].design_vector)
+# print(demo.layout.objects[2].design_vector)
+# print(demo.layout.objects[3].design_vector)
+# print(demo.layout.objects[4].design_vector)
+# print(demo.layout.objects[5].design_vector)
 
-# # Perform gradient-based optimization
-# demo.optimize_spatial_configuration()
-#
-#
+# Perform gradient-based optimization
+demo.optimize_spatial_configuration()
+
+
 # # For development: Print Results
-# print('Result:', demo.result)
-#
-#
+print('Result:', demo.result)
+
+
 # # For development: Plot the final layout to see the change
-# demo.layout.set_positions(demo.result.x)
-# demo.layout.plot_layout()
+demo.layout.set_positions(demo.result.x)
+demo.layout.plot_layout()
 
 
 # Write output file

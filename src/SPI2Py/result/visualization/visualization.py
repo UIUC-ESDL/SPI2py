@@ -40,12 +40,12 @@ def plot(plot_array, savefig, directory):
     fig = plt.figure()
     ax = fig.add_subplot(projection='3d')
 
-    for array in plot_array:
-        positions, radii, color = array
+    for positions, radii, color in plot_array:
 
         for position, radius in zip(positions, radii):
             plot_sphere(position, radius, color, ax)
 
+    # Format Plot
     ax.set_xlabel('X Label')
     ax.set_ylabel('Y Label')
     ax.set_zlabel('Z Label')
@@ -53,8 +53,10 @@ def plot(plot_array, savefig, directory):
     ax.set_xlim(-5, 5)
     ax.set_ylim(-5, 5)
     ax.set_zlim(-5, 5)
+
     plt.show()
 
+    # Save Figure for GIF generation
     if savefig is True:
         fig.savefig(directory)
 
