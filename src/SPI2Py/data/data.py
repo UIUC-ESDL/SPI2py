@@ -155,7 +155,7 @@ class Interconnect(InterconnectNode, InterconnectSegment):
 
     For now, I will assume that interconnect nodes will start along a straight line between components A
     and B. In the near future they may be included in the layout generation method. The to-do is tracked
-    in organizational.py.
+    in layout.py.
     """
 
     def __init__(self, component_1, component_2, diameter, color):

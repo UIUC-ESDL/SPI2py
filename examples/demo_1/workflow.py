@@ -10,7 +10,6 @@ from src.SPI2Py.main import SPI2
 
 # For troubleshooting
 import numpy as np
-from src.SPI2Py.data.classes.objects import Interconnect
 
 # Initialize the class
 demo = SPI2()
