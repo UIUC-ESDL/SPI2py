@@ -5,7 +5,7 @@
 """
 
 
-from src.SPI2Py.analysis.spatial_calculations.distance import min_spheres_spheres_interference
+from src.SPI2Py.analysis.distance import min_spheres_spheres_interference
 
 
 # def interference(positions_1, radii_1, positions_2, radii_2):
