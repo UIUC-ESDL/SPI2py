@@ -34,20 +34,24 @@ from src.SPI2Py.analysis.constraint_functions import interference_component_comp
 
 import logging
 # TODO Set filename...
-logging.basicConfig(filename='examples/demo_1/design_vectors.log', encoding='utf-8', level=logging.INFO)
+logging.basicConfig(filename='examples/demo_1/design_vector.log', filemode='w', encoding='utf-8', level=logging.INFO, format='')
+handler = logging.StreamHandler()
+handler.terminator = ""
 
-
-def log_design_vector(xk, state):
+def log_design_vector(xk, *argv):
     """
     Logs the design vector...
 
+    argv is since difference solvers pass diff arguments but we only want to capture xk
     Note: callback function args for trust-const method
     :return:
     """
 
-    # global design_vector_log
+    # Convert the NumPy array to a string for the logger
+    xk_str = np.array2string(xk)
 
-    logging.info(xk)
+    # Log the design vector
+    logging.info(xk_str)
 
     design_vector_log.append(xk)
 

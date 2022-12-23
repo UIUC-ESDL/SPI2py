@@ -16,7 +16,7 @@ import numpy as np
 # Initialize the class
 demo = SPI2()
 
-
+# TODO Get system location!
 
 # Specify the input file
 input_filepath = 'examples/demo_1/input.yaml'
