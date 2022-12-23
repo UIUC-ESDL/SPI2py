@@ -27,9 +27,9 @@ import numpy as np
 
 from scipy.optimize import minimize, NonlinearConstraint
 
-from .objective_functions import aggregate_pairwise_distance
+from src.SPI2Py.analysis.objective_functions import aggregate_pairwise_distance
 
-from .constraint_functions import interference_component_component, interference_component_interconnect, \
+from src.SPI2Py.analysis.constraint_functions import interference_component_component, interference_component_interconnect, \
     interference_interconnect_interconnect, interference_structure_all
 
 
@@ -41,7 +41,7 @@ def log_design_vector(xk, state):
     :return:
     """
 
-    global design_vector_log
+    # global design_vector_log
 
     design_vector_log.append(xk)
 
@@ -52,6 +52,8 @@ def gradient_based_optimization(layout):
 
     There are plans to use the JAX-wrapped implementation of scipy.optimize.minimize;
     however, it currently only supports the BFGS method for unconstrained optimization.
+
+    Bounds are not implemented.
 
     For now objective function and constraints are hard-coded into this solver. Future versions
     may seek more flexibility.
@@ -64,10 +66,10 @@ def gradient_based_optimization(layout):
     global design_vector_log
 
     fun = aggregate_pairwise_distance
+
     x0 = layout.design_vector
 
-    # TODO Implement bounds
-    # bounds = Bounds()
+
 
     # NonlinearConstraint object for trust-constr method does not take kwargs
     # Use lambda functions to format constraint functions as needed with kwargs

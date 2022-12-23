@@ -5,8 +5,8 @@ TODO Add a logger
 Note: Make sure to run this from the top-level SPI2Py directory
 """
 
-import logging
-logging.basicConfig(filename='example/demo_1/example.log', encoding='utf-8', level=logging.DEBUG)
+# import logging
+# logging.basicConfig(filename='examples/demo_1/output.log', encoding='utf-8', level=logging.DEBUG)
 
 from src.SPI2Py.main import SPI2
 
@@ -16,7 +16,7 @@ import numpy as np
 # Initialize the class
 demo = SPI2()
 
-logging.debug('test')
+
 
 # Specify the input file
 input_filepath = 'examples/demo_1/input.yaml'
@@ -35,8 +35,6 @@ demo.create_objects_from_input()
 layout_generation_method = 'manual'
 locations = np.array([-3., -4.41, -0.24, 0.,  0., 0.,  2., 4.41, 0.24, 0., 0., 0., -1., 2., 2.])
 demo.generate_layout(layout_generation_method, inputs=locations)
-
-# Generate initial layout plot
 
 # For development: Plot initial layout
 demo.layout.plot_layout()

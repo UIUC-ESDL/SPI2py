@@ -10,7 +10,6 @@ import imageio.v2 as imageio
 import tempfile
 
 
-
 def plot_sphere(position, radius, color, ax):
     # The effective resolution of the sphere
     num_points = 12
