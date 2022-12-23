@@ -32,11 +32,6 @@ from src.SPI2Py.analysis.objective_functions import aggregate_pairwise_distance
 from src.SPI2Py.analysis.constraint_functions import interference_component_component, interference_component_interconnect, \
     interference_interconnect_interconnect, interference_structure_all
 
-import logging
-# TODO Set filename...
-logging.basicConfig(filename='examples/demo_1/design_vector.log', filemode='w', encoding='utf-8', level=logging.INFO, format='')
-handler = logging.StreamHandler()
-handler.terminator = ""
 
 def log_design_vector(xk, *argv):
     """
@@ -46,12 +41,6 @@ def log_design_vector(xk, *argv):
     Note: callback function args for trust-const method
     :return:
     """
-
-    # Convert the NumPy array to a string for the logger
-    xk_str = np.array2string(xk)
-
-    # Log the design vector
-    logging.info(xk_str)
 
     design_vector_log.append(xk)
 
