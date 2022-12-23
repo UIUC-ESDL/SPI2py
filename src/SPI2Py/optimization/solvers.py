@@ -65,6 +65,8 @@ def gradient_based_optimization(layout):
     # Declare design vector log as global to read/write it
     global design_vector_log
 
+    design_vector_log = []
+
     fun = aggregate_pairwise_distance
 
     x0 = layout.design_vector
@@ -102,4 +104,4 @@ def gradient_based_optimization(layout):
 
 # Define the log outside the functions so functions can declare it as a global variable and read/write to it
 # without the callback function needing to take an argument
-design_vector_log = []
+# design_vector_log = []
