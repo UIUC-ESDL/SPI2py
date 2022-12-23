@@ -32,6 +32,10 @@ from src.SPI2Py.analysis.objective_functions import aggregate_pairwise_distance
 from src.SPI2Py.analysis.constraint_functions import interference_component_component, interference_component_interconnect, \
     interference_interconnect_interconnect, interference_structure_all
 
+import logging
+# TODO Set filename...
+logging.basicConfig(filename='examples/demo_1/design_vectors.log', encoding='utf-8', level=logging.INFO)
+
 
 def log_design_vector(xk, state):
     """
@@ -42,6 +46,8 @@ def log_design_vector(xk, state):
     """
 
     # global design_vector_log
+
+    logging.info(xk)
 
     design_vector_log.append(xk)
 
@@ -64,8 +70,6 @@ def gradient_based_optimization(layout):
 
     # Declare design vector log as global to read/write it
     global design_vector_log
-
-    design_vector_log = []
 
     fun = aggregate_pairwise_distance
 
@@ -102,6 +106,7 @@ def gradient_based_optimization(layout):
 
     return res, design_vector_log
 
+
 # Define the log outside the functions so functions can declare it as a global variable and read/write to it
 # without the callback function needing to take an argument
-# design_vector_log = []
+design_vector_log = []
