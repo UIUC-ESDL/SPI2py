@@ -5,10 +5,23 @@ TODO Add a logger
 Note: Make sure to run this from the top-level SPI2Py directory
 """
 
-# import logging
-# logging.basicConfig(filename='examples/demo_1/output.log', encoding='utf-8', level=logging.DEBUG)
+
+# Import the Application
+# First, we must import the application. When the application is done it will be hosted privately or publicly
+# and you'll be able to do some sort of "pip install" command. However, for the time being we must manually import it.
+# This requires us to add the project's filepath...
+
+from pathlib import Path
+import sys
+
+# Add the top-level project directory to the system path
+mypath = str(Path(__file__).parent.parent.parent)
+sys.path.append(mypath)
 
 from src.SPI2Py.main import SPI2
+
+# import logging
+# logging.basicConfig(filename='examples/demo_1/output.log', encoding='utf-8', level=logging.DEBUG)
 
 # For troubleshooting
 import numpy as np
