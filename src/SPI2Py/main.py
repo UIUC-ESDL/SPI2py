@@ -9,8 +9,8 @@ from datetime import datetime
 from .optimization.solvers import gradient_based_optimization
 from .result.visualization.visualization import generate_gif
 from .data.spherical_decomposition import generate_rectangular_prisms
-from .data.objects.static_bodies import Structure
-from .data.objects.dynamic_bodies import Component, Interconnect
+from .data.objects.static_objects import Structure
+from .data.objects.dynamic_objects import Component, Interconnect
 from .layout.spatial_configuration import SpatialConfiguration
 from .layout.generation_methods import generate_random_layout
 

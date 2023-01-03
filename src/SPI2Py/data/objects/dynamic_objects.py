@@ -7,7 +7,7 @@ from ...analysis.transformations import translate, rotate_about_point
 
 # TODO Add port object
 
-class DynamicBody:
+class DynamicObject:
     # TODO Implement a single class to handle how objects move and update positions... let child classes mutate them
     def __init__(self):
         self.positions = None
@@ -44,9 +44,10 @@ class DynamicBody:
 
 
 
-class Component(DynamicBody):
+class Component(DynamicObject):
 
-    def __init__(self, positions, radii, color, node, name, movement=('3D Translation', '3D Rotation')):
+    def __init__(self, positions, radii, color, node, name, movement=('3D Translation', '3D Rotation'),
+                 port_names=None, port_colors=None, port_locations=None, port_num_connections=None):
         self.positions = positions
         self.radii = radii
         self.color = color
@@ -58,11 +59,12 @@ class Component(DynamicBody):
         self.rotation = np.array([0, 0, 0])
 
         # Ports
-        self.port_names = None
-        self.port_colors = None
-        self.port_locations = None
-        self.port_num_connections = None
-        self.ports = self.create_ports()
+        port_inputs = [port_names,port_colors,port_locations,port_num_connections]
+
+        if all(input is None for input in port_inputs):
+            self.ports = self.create_ports()
+        else:
+            self.ports = None
 
     def create_ports(self):
         pass
@@ -80,7 +82,7 @@ class Component(DynamicBody):
         return np.concatenate((self.reference_position, self.rotation))
 
 
-class InterconnectNode(DynamicBody):
+class InterconnectNode(DynamicObject):
     def __init__(self, node, radius, color, movement=['3D Translation']):
         self.node = node
         self.radius = radius
@@ -101,7 +103,7 @@ class InterconnectNode(DynamicBody):
         return self.positions.flatten()
 
 
-class InterconnectSegment(DynamicBody):
+class InterconnectSegment(DynamicObject):
     def __init__(self, object_1, object_2, diameter, color):
         self.object_1 = object_1
         self.object_2 = object_2
