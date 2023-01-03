@@ -10,7 +10,7 @@ TODO Look into replacing get/set methods with appropriate decorators...
 import numpy as np
 from scipy.spatial.distance import euclidean
 
-from src.SPI2Py.analysis.transformations import translate, rotate_about_point
+from ..analysis.transformations import translate, rotate_about_point
 
 
 class MovableObject:

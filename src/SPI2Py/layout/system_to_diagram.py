@@ -3,8 +3,8 @@ from cypari import pari
 
 import string
 # Warning snappy
-from yamada_polynomials import Edge, Vertex, Crossing, SpatialGraphDiagram, normalize_poly
-from snappy.exterior_to_link.link_projection import fig8_points, project_to_diagram
+from .yamada_polynomials import Edge, Vertex, Crossing, SpatialGraphDiagram, normalize_poly
+# from snappy.exterior_to_link.link_projection import fig8_points, project_to_diagram
 from collections import OrderedDict
 
 alphabet = list(string.ascii_uppercase)
