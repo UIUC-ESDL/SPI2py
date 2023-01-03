@@ -1,6 +1,7 @@
 import numpy as np
 from scipy.spatial.distance import euclidean
 
+from .common import Port
 from ...analysis.transformations import translate, rotate_about_point
 
 
@@ -42,9 +43,10 @@ class DynamicBody:
         self.positions = positions_dict[self]
 
 
+
 class Component(DynamicBody):
 
-    def __init__(self, positions, radii, color, node, name, movement=['3D Translation', '3D Rotation']):
+    def __init__(self, positions, radii, color, node, name, movement=('3D Translation', '3D Rotation')):
         self.positions = positions
         self.radii = radii
         self.color = color
@@ -54,6 +56,16 @@ class Component(DynamicBody):
 
         # Initialize the rotation attribute
         self.rotation = np.array([0, 0, 0])
+
+        # Ports
+        self.port_names = None
+        self.port_colors = None
+        self.port_locations = None
+        self.port_num_connections = None
+        self.ports = self.create_ports()
+
+    def create_ports(self):
+        pass
 
     @property
     def reference_position(self):

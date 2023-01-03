@@ -8,6 +8,18 @@ components:
         origins: [ [ 1, 1, 1 ], [2, 1, 1], [3, 1, 1], ]
         dimensions: [ [ 2, 2, 2 ], [2, 2, 2], [2, 2, 2] ]
 
+        ports:
+            1:
+                name: supply
+                color: red
+                location: [1,1,1]
+                number of connections: 1
+            2:
+                name: return
+                color: blue
+                location: [1,1,1]
+                number of connections: 1
+
     1:
         name: actuator
         color: orange
