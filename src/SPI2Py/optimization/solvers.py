@@ -33,6 +33,10 @@ from src.SPI2Py.analysis.constraint_functions import interference_component_comp
     interference_interconnect_interconnect, interference_structure_all
 
 
+def wrap_constraint_functions():
+    pass
+
+
 def log_design_vector(xk, *argv):
     """
     Logs the design vector...
