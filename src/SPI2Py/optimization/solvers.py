@@ -27,9 +27,9 @@ import numpy as np
 
 from scipy.optimize import minimize, NonlinearConstraint
 
-from src.SPI2Py.analysis.objective_functions import aggregate_pairwise_distance
+from ..analysis.objective_functions import aggregate_pairwise_distance
 
-from src.SPI2Py.analysis.constraint_functions import interference_component_component, interference_component_interconnect, \
+from ..analysis.constraint_functions import interference_component_component, interference_component_interconnect, \
     interference_interconnect_interconnect, interference_structure_all
 
 

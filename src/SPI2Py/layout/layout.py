@@ -4,7 +4,7 @@ TODO Make sure that migrating from InterconnectSegment to Interconnect does not 
 
 import numpy as np
 from itertools import product, combinations
-from src.SPI2Py.result.visualization.visualization import plot
+from ..result.visualization.visualization import plot
 
 
 class Subsystem:
