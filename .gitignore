@@ -1,10 +1,11 @@
 dist/
 src/SPI2Py/result/output/*
 !src/SPI2Py/result/output/.gitkeep
-tests/.pytest_cache/
 venv/
-.idea/
-.vscode/
+.idea
+.vscode
 **/.DS_Store
 **/output.log
 **/output.json
+**/.pytest_cache
+**/__pycache__
