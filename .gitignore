@@ -1,7 +1,7 @@
-dist/
+dist/*
 src/SPI2Py/result/output/*
 !src/SPI2Py/result/output/.gitkeep
-venv/
+venv/*
 .idea
 .vscode
 **/.DS_Store
