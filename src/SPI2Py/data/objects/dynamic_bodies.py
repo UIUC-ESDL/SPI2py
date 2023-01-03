@@ -1,19 +1,12 @@
-"""Module...
-Docstring
-
-TODO Fill out all the blank functions and write tests for them...
-TODO Look into replacing get/set methods with appropriate decorators...
-
-
-"""
-
 import numpy as np
 from scipy.spatial.distance import euclidean
 
-from ..analysis.transformations import translate, rotate_about_point
+from ...analysis.transformations import translate, rotate_about_point
 
 
-class MovableObject:
+# TODO Add port object
+
+class DynamicBody:
     # TODO Implement a single class to handle how objects move and update positions... let child classes mutate them
     def __init__(self):
         self.positions = None
@@ -49,11 +42,9 @@ class MovableObject:
         self.positions = positions_dict[self]
 
 
-# TODO Add port object
-class Component(MovableObject):
+class Component(DynamicBody):
 
     def __init__(self, positions, radii, color, node, name, movement=['3D Translation', '3D Rotation']):
-
         self.positions = positions
         self.radii = radii
         self.color = color
@@ -77,7 +68,7 @@ class Component(MovableObject):
         return np.concatenate((self.reference_position, self.rotation))
 
 
-class InterconnectNode(MovableObject):
+class InterconnectNode(DynamicBody):
     def __init__(self, node, radius, color, movement=['3D Translation']):
         self.node = node
         self.radius = radius
@@ -98,8 +89,7 @@ class InterconnectNode(MovableObject):
         return self.positions.flatten()
 
 
-
-class InterconnectSegment(MovableObject):
+class InterconnectSegment(DynamicBody):
     def __init__(self, object_1, object_2, diameter, color):
         self.object_1 = object_1
         self.object_2 = object_2
@@ -122,7 +112,6 @@ class InterconnectSegment(MovableObject):
         # Design vector not used
         pos_1 = positions_dict[self.object_1][0]
         pos_2 = positions_dict[self.object_2][0]
-
 
         dist = euclidean(pos_1, pos_2)
 
@@ -155,7 +144,7 @@ class Interconnect(InterconnectNode, InterconnectSegment):
 
     For now, I will assume that interconnect nodes will start along a straight line between components A
     and B. In the near future they may be included in the layout generation method. The to-do is tracked
-    in layout.py.
+    in spatial_configuration.py.
     """
 
     def __init__(self, component_1, component_2, diameter, color):
@@ -173,7 +162,7 @@ class Interconnect(InterconnectNode, InterconnectSegment):
 
         # Create InterconnectNode objects
         self.nodes = self.create_nodes()
-        self.interconnect_nodes = self.nodes[1:-1] # trims off components 1 and 2
+        self.interconnect_nodes = self.nodes[1:-1]  # trims off components 1 and 2
 
         # Create InterconnectSegment objects
         self.node_pairs = self.create_node_pairs()
@@ -196,7 +185,7 @@ class Interconnect(InterconnectNode, InterconnectSegment):
             node_prefix = str(self.component_1.node) + '-' + str(self.component_2.node) + '_'
             node = node_prefix + str(i)
 
-            nodes.append(InterconnectNode(node,self.diameter/2, self.color))
+            nodes.append(InterconnectNode(node, self.diameter / 2, self.color))
 
         # Add component 2
         nodes.append(self.component_2)
@@ -204,7 +193,6 @@ class Interconnect(InterconnectNode, InterconnectSegment):
         return nodes
 
     def create_node_pairs(self):
-
 
         node_pairs = [(self.nodes[i], self.nodes[i + 1]) for i in range(len(self.nodes) - 1)]
 
@@ -221,7 +209,6 @@ class Interconnect(InterconnectNode, InterconnectSegment):
 
         return segments
 
-
     @property
     def edges(self):
         return [segment.edge for segment in self.segments]
@@ -231,25 +218,3 @@ class Interconnect(InterconnectNode, InterconnectSegment):
 
     def update_positions(self, positions_dict):
         pass
-
-
-class Structure:
-    def __init__(self, positions, radii, color, name):
-        self.positions = positions
-        self.radii = radii
-        self.color = color
-        self.name = name
-
-
-class Volume:
-    """
-    A class that captures the 3D space that we place objects in and optimize
-    """
-    pass
-
-
-class Volumes(Volume):
-    """
-    A class that combines contiguous volumes together.
-    """
-    pass
