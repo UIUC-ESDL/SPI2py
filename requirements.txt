@@ -7,6 +7,6 @@ numpy<=1.22.4
 numba>=0.56.0
 imageio>=2.21.1
 pytest
+sphinx
 
 cypari~=2.4.1
-snappy~=3.1b1
