@@ -103,7 +103,7 @@ class InterconnectNode(DynamicObject):
         return self.positions.flatten()
 
 
-class InterconnectSegment(DynamicObject):
+class InterconnectEdge(DynamicObject):
     def __init__(self, object_1, object_2, diameter, color):
         self.object_1 = object_1
         self.object_2 = object_2
@@ -145,7 +145,7 @@ class InterconnectSegment(DynamicObject):
         self.radii = np.repeat(self.radius, self.positions.shape[0])
 
 
-class Interconnect(InterconnectNode, InterconnectSegment):
+class Interconnect(InterconnectNode, InterconnectEdge):
     """
     Interconnects are made of one or more non-zero-length segments and connect two components.
 
@@ -172,7 +172,7 @@ class Interconnect(InterconnectNode, InterconnectSegment):
         # Per configuration file
         # TODO connect this setting to the config file
         self.number_of_nodes = 1
-        self.number_of_segments = self.number_of_nodes + 1
+        self.number_of_edges = self.number_of_nodes + 1
 
         # Create InterconnectNode objects
         self.nodes = self.create_nodes()
@@ -219,7 +219,7 @@ class Interconnect(InterconnectNode, InterconnectSegment):
         # TODO Implement
         # TODO Check...
         for object_1, object_2 in self.node_pairs:
-            segments.append(InterconnectSegment(object_1, object_2, self.diameter, self.color))
+            segments.append(InterconnectEdge(object_1, object_2, self.diameter, self.color))
 
         return segments
 
