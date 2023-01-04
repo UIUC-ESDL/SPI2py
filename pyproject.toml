@@ -19,7 +19,7 @@ classifiers = [
 
 [tool.pytest.ini_options]
 pythonpath = [
-  ".","src/SPI2Py/","src/SPI2Py/utils/",
+  ".","src/","src/SPI2Py/","src/SPI2Py/utils/",
 ]
 
 [project.urls]
