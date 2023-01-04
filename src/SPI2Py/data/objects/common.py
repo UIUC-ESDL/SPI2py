@@ -5,7 +5,8 @@
 
 class Port:
 
-    def __init__(self, name, color, location, num_connections):
+    def __init__(self, node, name, color, location, num_connections):
+        self.node = node
         self.name = name
         self.color = color
         self.location = location
