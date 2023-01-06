@@ -1,19 +1,12 @@
 [build-system]
 
 requires = 
-["hatchling", 
-"scipy~=1.9.0", 
-"networkx~=2.8.5", 
-"matplotlib==3.5.3", 
-"PyYAML~=6.0",
-"numpy<=1.22.4",
-"numba>=0.56.0",
-"imageio>=2.21.1",
-"pytest",
-"sphinx",
-"cypari~=2.4.1"]
+["setuptools>=61.0"] 
 
-build-backend = "hatchling.build"
+
+
+
+build-backend = "setuptools.build_meta"
 
 [project]
 name = "SPI2Py"
@@ -28,6 +21,19 @@ classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
+]
+
+dependencies = [
+"scipy~=1.9.0", 
+"networkx~=2.8.5", 
+"matplotlib==3.5.3", 
+"PyYAML~=6.0",
+"numpy<=1.22.4",
+"numba>=0.56.0",
+"imageio>=2.21.1",
+"pytest",
+"sphinx",
+"cypari~=2.4.1"
 ]
 
 [tool.pytest.ini_options]
