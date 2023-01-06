@@ -7,7 +7,7 @@ from numpy import sin, cos
 from numba import njit
 
 
-@njit(cache=True)
+# @njit(cache=True)
 def translate(current_sphere_positions, current_reference_point, new_reference_point):
     """
     Translates a set of points based on the change in position of a reference point

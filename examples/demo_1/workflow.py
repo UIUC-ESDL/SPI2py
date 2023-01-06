@@ -1,38 +1,34 @@
 """
+Example 1:  Simple optimization of a 3D layout
+Author:     Chad Peterson
 
-TODO Add a logger
-
-Note: Make sure to run this from the top-level SPI2Py directory
 """
 
-# Import the Application
-from pathlib import Path
-import sys
-
+# Import packages
+import os
+import logging
 import numpy as np
+from SPI2Py.main import SPI2
 
-SPI2py_path = str(Path(__file__).parent.parent.parent)
-sys.path.append(SPI2py_path)
+# Set up logging
+logging.basicConfig(filename='examples/demo_1/output.log', encoding='utf-8', level=logging.DEBUG)
 
-from src.SPI2Py.main import SPI2
+# Get the system path for reading/writing example files
+cwd = os.getcwd() + '/examples/demo_1/'
 
-# import logging
-# logging.basicConfig(filename='examples/demo_1/output.log', encoding='utf-8', level=logging.DEBUG)
-
-# For troubleshooting
-
+# SPI2 Workflow
 
 # Initialize the class
 demo = SPI2()
 
-# TODO Get system location!
 
 # Specify the input file
-input_filepath = 'examples/demo_1/input.yaml'
+input_filepath = cwd + 'input.yaml'
+
 demo.add_input_file(input_filepath)
 
 # Specify the config file
-config_filepath = 'examples/demo_1/config.yaml'
+config_filepath = cwd + 'config.yaml'
 demo.add_configuration_file(config_filepath)
 
 # Generate classes from the inputs file
@@ -57,5 +53,6 @@ demo.layout.set_positions(demo.result.x)
 demo.layout.plot_layout()
 
 # Write output file
-output_filepath = 'examples/demo_1/output.json'
+output_filepath = cwd + 'output.json'
 demo.write_output(output_filepath)
+

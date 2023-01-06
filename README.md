@@ -17,7 +17,14 @@ Website:
 
 https://spi2.illinois.edu/
 
-A quick note on the setup:
+## How to install
+1. Clone Github repository
+2. Set up venv...
+3. Command...
+    pip install -e .
+
+
+## A quick note on the setup:
 
 SnapPy version 3.1b1 (not released) is required to calculate the Yamada polynomials of a given spatial topology. 
 SnapPy version 3.0.3 is the latest pip-installable release on PyPI. Version 3.1b1 is planned for release around January

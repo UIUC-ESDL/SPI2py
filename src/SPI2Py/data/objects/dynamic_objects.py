@@ -59,7 +59,8 @@ class Component(DynamicObject):
         self.rotation = np.array([0, 0, 0])
 
         # Ports
-        port_inputs = [port_names,port_colors,port_locations,port_num_connections]
+        port_nodes = []
+        port_inputs = [port_nodes, port_names, port_colors, port_locations, port_num_connections]
 
         if all(input is None for input in port_inputs):
             self.ports = self.create_ports()
