@@ -9,20 +9,20 @@ components:
     1:
         name: component1
         color: orange
-        origins: [ [ -3,0,0 ], [-3, 0, 0] ]
-        dimensions: [ [ 1,1,4 ], [4,1,1] ]
+        origins: [ [ -3, 0, 0 ], [-3, 0, 0] ]
+        dimensions: [ [ 1, 1, 4 ], [4, 1, 1] ]
 
     2:
         name: component2
         color: cyan
-        origins: [ [0,0,0] ]
-        dimensions: [ [ 1,3,3 ] ]  
+        origins: [ [0, 0, 0] ]
+        dimensions: [ [ 1, 3, 3 ] ]  
 
     3:
         name: component3
         color: green
-        origins: [ [ 0,0,0 ], [1,0,0], [1,1,0], [1,1,3]]
-        dimensions: [ [ 1,1,1 ],[1,2,1], [1,1,4], [2,1,1]]
+        origins: [ [ 0, 0, 0 ], [1, 0, 0], [1, 1, 0], [1, 1, 3]]
+        dimensions: [ [ 1, 1, 1 ], [1, 2, 1], [1, 1, 4], [2, 1, 1]]
 
 interconnects:
 
