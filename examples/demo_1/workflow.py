@@ -31,6 +31,7 @@ demo.initialize_logger()
 
 # Specify the input file
 demo.add_input_file('input_1.yaml')
+# demo.add_input_file('input_2.yaml')
 
 # Specify the config file
 demo.add_configuration_file('config.yaml')
@@ -40,17 +41,26 @@ demo.create_objects_from_input()
 
 # Map the objects to a 3D layout
 layout_generation_method = 'manual'
-# locations = np.array([-3., -4.41, -0.24, 0., 0., 0., 2., 4.41, 0.24, 0., 0., 0., -1., 2., 2.])
-# locations = np.array([  -3., -4.41, -0.24, 0., 0., 0., 
-#                         2., 4.41, 0.24, 0., 0., 0.,
-#                         5,-3,-1,0,0,0,
-#                         3,5,3,0,0,0, 
-#                         -1., 2., 2,
-#                         1.,2.,3.])
-# demo.generate_layout(layout_generation_method, inputs=locations)
 
-# # For development: Plot initial layout
-# demo.layout.plot_layout()
+pos_comp0 = np.array([-3., -4.41, -0.24, 0., 0., 0.])
+pos_comp1 = np.array([2., 4.41, 0.24, 0., 0., 0.])
+pos_comp2 = np.array([5,-3,-1, 0., 0., 0.])
+pos_comp3 = np.array([3., 5., 3., 0., 0., 0.])
+
+pos_int0node0 = np.array([-1., 2., 2.])
+pos_int1node0 = np.array([1., 2., 3.])
+
+
+
+locations = np.concatenate((pos_comp0, pos_comp1, pos_int0node0))
+# locations = np.concatenate((pos_comp0, pos_comp1, pos_comp2, pos_comp3, pos_int0node0, pos_int1node0))
+
+
+
+demo.generate_layout(layout_generation_method, inputs=locations)
+
+# For development: Plot initial layout
+demo.layout.plot_layout()
 
 # # Perform gradient-based optimization
 # demo.optimize_spatial_configuration()

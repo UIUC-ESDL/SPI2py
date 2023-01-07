@@ -28,6 +28,8 @@ class SPI2:
         self.config = None
         self.inputs = None
 
+        self.components = None
+        self.interconnects = None
         self.layout = None
 
         self.result = None
@@ -51,14 +53,7 @@ class SPI2:
         with open(config_filepath, 'r') as f:
             self.config = yaml.safe_load(f)
 
-    def create_objects_from_input(self):
-        """
-
-        :param inputs:
-        :return:
-        """
-
-        # Create Components
+    def create_components(self):
         components = []
         for component in self.inputs['components']:
             node = component
@@ -70,19 +65,17 @@ class SPI2:
             positions, radii = generate_rectangular_prisms(origins, dimensions)
             components.append(Component(positions, radii, color, node, name))
 
+        self.components = components
 
-
-        # Create Interconnects
-
+    def create_interconnects(self):
         interconnects = []
         interconnect_nodes = []
         interconnect_segments = []
 
-
         for interconnect in self.inputs['interconnects']:
 
-            component_1 = components[self.inputs['interconnects'][interconnect]['component 1']]
-            component_2 = components[self.inputs['interconnects'][interconnect]['component 2']]
+            component_1 = self.components[self.inputs['interconnects'][interconnect]['component 1']]
+            component_2 = self.components[self.inputs['interconnects'][interconnect]['component 2']]
 
             diameter = self.inputs['interconnects'][interconnect]['diameter']
             color = self.inputs['interconnects'][interconnect]['color']
@@ -99,17 +92,11 @@ class SPI2:
             # TODO Remove component nodes???
             interconnect_nodes.extend(interconnect.nodes)
 
+        self.interconnects = interconnects
+        self.interconnect_nodes = interconnect_nodes
+        self.interconnect_segments = interconnect_segments
 
-
-
-
-
-
-
-
-
-
-        # Create Structures
+    def create_structures(self):
         structures = []
         for structure in self.inputs['structures']:
             name = self.inputs['structures'][structure]['name']
@@ -120,9 +107,27 @@ class SPI2:
             positions, radii = generate_rectangular_prisms(origins, dimensions)
             structures.append(Structure(positions, radii, color, name))
 
+        self.structures = structures
+
+    def create_objects_from_input(self):
+        """
+
+        :param inputs:
+        :return:
+        """
+
+        # Create Components
+        self.create_components()
+
+        # Create Interconnects
+        self.create_interconnects()
+
+        # Create Structures
+        self.create_structures()
+
         # Generate SpatialConfiguration
         # slicing nodes for temp fix
-        self.layout = SpatialConfiguration(components, interconnect_nodes[1:-1], interconnect_segments, structures)
+        self.layout = SpatialConfiguration(self.components, self.interconnect_nodes[1:-1], self.interconnect_segments, self.structures)
 
     def generate_layout(self, layout_generation_method, inputs=None, include_interconnect_nodes=False):
         """
