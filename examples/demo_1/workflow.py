@@ -40,27 +40,50 @@ demo.add_configuration_file('config.yaml')
 demo.create_objects_from_input()
 
 # Map the objects to a 3D layout
-layout_generation_method = 'manual'
+# layout_generation_method = 'manual'
 
-pos_comp0 = np.array([-3., -4.41, -0.24, 0., 0., 0.])
-pos_comp1 = np.array([2., 4.41, 0.24, 0., 0., 0.])
-pos_comp2 = np.array([5,-3,-1, 0., 0., 0.])
-pos_comp3 = np.array([3., 5., 3., 0., 0., 0.])
+# pos_comp0 = np.array([-3., -4.41, -0.24, 0., 0., 0.])
+# pos_comp1 = np.array([2., 4.41, 0.24, 0., 0., 0.])
+# pos_comp2 = np.array([5,-3,-1, 0., 0., 0.])
+# pos_comp3 = np.array([3., 5., 3., 0., 0., 0.])
 
-pos_int0node0 = np.array([-1., 2., 2.])
-pos_int1node0 = np.array([1., 2., 3.])
+# pos_int0node0 = np.array([-1., 2., 2.])
+# pos_int1node0 = np.array([1., 2., 3.])
 
 
 
-locations = np.concatenate((pos_comp0, pos_comp1, pos_int0node0))
+# locations = np.concatenate((pos_comp0, pos_comp1, pos_int0node0))
 # locations = np.concatenate((pos_comp0, pos_comp1, pos_comp2, pos_comp3, pos_int0node0, pos_int1node0))
 
 
+from SPI2Py.data.objects.dynamic_objects import Component
 
-demo.generate_layout(layout_generation_method, inputs=locations)
+# Define component inputs
+positions = [[1, 1, 1]]
+radii = [1]
+color = 'blue'
+node = 1
+name = 'test component'
+
+# Define single port information
+port_nodes_single = [0]
+port_names_single = ['supply']
+port_colors_single = ['blue']
+port_locations_single = [[1, 2, 1]] 
+port_number_of_connections_single = [1]
+
+test_component = Component(positions, radii, color, node, name,
+                                port_nodes = port_nodes_single,
+                                port_names = port_names_single, 
+                                port_colors = port_colors_single,
+                                port_locations = port_locations_single, 
+                                port_num_connections = port_number_of_connections_single)
+
+print('next')
+# demo.generate_layout(layout_generation_method, inputs=locations)
 
 # For development: Plot initial layout
-demo.layout.plot_layout()
+# demo.layout.plot_layout()
 
 # # Perform gradient-based optimization
 # demo.optimize_spatial_configuration()

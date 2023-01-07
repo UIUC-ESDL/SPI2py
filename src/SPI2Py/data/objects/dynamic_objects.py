@@ -47,7 +47,12 @@ class DynamicObject:
 class Component(DynamicObject):
 
     def __init__(self, positions, radii, color, node, name, movement=('3D Translation', '3D Rotation'),
-                 port_names=None, port_colors=None, port_locations=None, port_num_connections=None):
+                 port_nodes=None,
+                 port_names=None, 
+                 port_colors=None, 
+                 port_locations=None, 
+                 port_num_connections=None):
+
         self.positions = positions
         self.radii = radii
         self.color = color
@@ -55,20 +60,35 @@ class Component(DynamicObject):
         self.name = name
         self.movement = movement
 
+        # TODO append ports vs not None
+        self.ports = []
+
         # Initialize the rotation attribute
         self.rotation = np.array([0, 0, 0])
 
         # Ports
-        port_nodes = []
+        self.port_nodes = port_nodes
+        self.port_names = port_names
+        self.port_colors = port_colors
+        self.port_locations = port_locations
+        self.port_num_connections = port_num_connections
         port_inputs = [port_nodes, port_names, port_colors, port_locations, port_num_connections]
 
-        if all(input is None for input in port_inputs):
-            self.ports = self.create_ports()
-        else:
-            self.ports = None
+        if all(input is not None for input in port_inputs):
+            self.ports += self.create_ports()
 
     def create_ports(self):
-        pass
+        ports = []
+
+
+        # i = 1
+        for node, name, color, location, num_connections in zip(self.port_nodes, self.port_names, self.port_colors,self.port_locations, self.port_num_connections):
+            # print('inputs: ', node, name, color, location, num_connections)
+            ports.append(Port(node, name, color, location, num_connections))
+            # ports.append(i)
+            # i+=1
+
+        return ports
 
     @property
     def reference_position(self):
@@ -233,3 +253,4 @@ class Interconnect(InterconnectNode, InterconnectEdge):
 
     def update_positions(self, positions_dict):
         pass
+
