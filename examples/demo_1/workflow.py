@@ -45,7 +45,13 @@ demo.create_objects_from_input()
 
 # Map the objects to a 3D layout
 layout_generation_method = 'manual'
-locations = np.array([-3., -4.41, -0.24, 0., 0., 0., 2., 4.41, 0.24, 0., 0., 0., -1., 2., 2.])
+# locations = np.array([-3., -4.41, -0.24, 0., 0., 0., 2., 4.41, 0.24, 0., 0., 0., -1., 2., 2.])
+locations = np.array([  -3., -4.41, -0.24, 0., 0., 0., 
+                        2., 4.41, 0.24, 0., 0., 0.,
+                        5,-3,-1,0,0,0,
+                        3,5,3,0,0,0, 
+                        -1., 2., 2,
+                        1.,2.,3.])
 demo.generate_layout(layout_generation_method, inputs=locations)
 
 # For development: Plot initial layout
