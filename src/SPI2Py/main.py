@@ -41,7 +41,7 @@ class SPI2:
         self.directory = directory
 
     def initialize_logger(self):
-        self.logger = logging.basicConfig(filename= self.directory + 'output.log', encoding='utf-8', level=logging.DEBUG)
+        logging.basicConfig(filename= self.directory + 'output.log', encoding='utf-8', level=logging.INFO, filemode='w')
 
     def add_input_file(self, input_filename):
         input_filepath = self.directory + input_filename
@@ -63,7 +63,11 @@ class SPI2:
             dimensions = self.inputs['components'][component]['dimensions']
 
             positions, radii = generate_rectangular_prisms(origins, dimensions)
-            components.append(Component(positions, radii, color, node, name))
+
+            component= Component(positions, radii, color, node, name)
+            logging.info(' Component: ' + str(component) + ' created.')
+
+            components.append(component)
 
         self.components = components
 
@@ -83,7 +87,10 @@ class SPI2:
             # Keep this line, if swapped then it works with force-directed layout
             # self.interconnect_segments.append(InterconnectSegment(component_1, component_2, diameter, color))
 
-            interconnects.append(Interconnect(component_1, component_2, diameter, color))
+            interconnect = Interconnect(component_1, component_2, diameter, color)
+            logging.info(' Interconnect: ' + str(interconnect) + ' created.')
+
+            interconnects.append(interconnect)
 
         for interconnect in interconnects:
 
@@ -93,7 +100,8 @@ class SPI2:
             interconnect_nodes.extend(interconnect.nodes)
 
         self.interconnects = interconnects
-        self.interconnect_nodes = interconnect_nodes[1:-1]
+        # TODO Unstrip port nodes?
+        self.interconnect_nodes = interconnect_nodes[1:-1] # Strip port nodes?
         self.interconnect_segments = interconnect_segments
 
     def create_structures(self):
@@ -105,7 +113,12 @@ class SPI2:
             dimensions = self.inputs['structures'][structure]['dimensions']
 
             positions, radii = generate_rectangular_prisms(origins, dimensions)
-            structures.append(Structure(positions, radii, color, name))
+
+            structure = Structure(positions, radii, color, name)
+
+            logging.info(' Structure: ' + str(structure) + ' created.')
+
+            structures.append(structure)
 
         self.structures = structures
 
