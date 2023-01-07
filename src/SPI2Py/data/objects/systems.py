@@ -21,6 +21,8 @@ class Subsystem:
         self.interconnect_segments = interconnect_segments
         self.structures = structures
 
+        
+
     @property
     def objects(self):
         return self.components + self.interconnect_nodes + self.interconnect_segments + self.structures

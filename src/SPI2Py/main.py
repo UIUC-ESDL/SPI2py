@@ -93,7 +93,7 @@ class SPI2:
             interconnect_nodes.extend(interconnect.nodes)
 
         self.interconnects = interconnects
-        self.interconnect_nodes = interconnect_nodes
+        self.interconnect_nodes = interconnect_nodes[1:-1]
         self.interconnect_segments = interconnect_segments
 
     def create_structures(self):
@@ -127,7 +127,7 @@ class SPI2:
 
         # Generate SpatialConfiguration
         # slicing nodes for temp fix
-        self.layout = SpatialConfiguration(self.components, self.interconnect_nodes[1:-1], self.interconnect_segments, self.structures)
+        self.layout = SpatialConfiguration(self.components, self.interconnect_nodes, self.interconnect_segments, self.structures)
 
     def generate_layout(self, layout_generation_method, inputs=None, include_interconnect_nodes=False):
         """
