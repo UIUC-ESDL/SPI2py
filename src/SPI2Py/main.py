@@ -2,9 +2,11 @@
 
 """
 
-import yaml
 import json
+import logging
 from datetime import datetime
+
+import yaml
 
 from .optimization.solvers import gradient_based_optimization
 from .result.visualization.visualization import generate_gif
@@ -21,6 +23,8 @@ class SPI2:
     """
 
     def __init__(self):
+        self.directory = None
+        self.logger = None
         self.config = None
         self.inputs = None
 
@@ -31,17 +35,21 @@ class SPI2:
 
         self.outputs = None
 
-    def add_input_file(self, input_filepath):
+    def add_directory(self, directory):
+        self.directory = directory
 
+    def initialize_logger(self):
+        self.logger = logging.basicConfig(filename= self.directory + 'output.log', encoding='utf-8', level=logging.DEBUG)
+
+    def add_input_file(self, input_filename):
+        input_filepath = self.directory + input_filename
         with open(input_filepath, 'r') as f:
             self.inputs = yaml.safe_load(f)
 
-
-    def add_configuration_file(self, config_filepath):
-
+    def add_configuration_file(self, config_filename):
+        config_filepath = self.directory + config_filename
         with open(config_filepath, 'r') as f:
             self.config = yaml.safe_load(f)
-
 
     def create_objects_from_input(self):
         """
