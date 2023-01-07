@@ -24,7 +24,6 @@ class SPI2:
 
     def __init__(self):
         self.directory = None
-        self.logger = None
         self.config = None
         self.inputs = None
 
