@@ -18,6 +18,7 @@ Notes:
 import os
 
 import numpy as np
+
 from SPI2Py.main import SPI2
 
 # Initialize the class
