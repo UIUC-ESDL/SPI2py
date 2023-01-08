@@ -60,7 +60,6 @@ class Component(DynamicObject):
         self.name = name
         self.movement = movement
 
-        # TODO append ports vs not None
         self.ports = []
 
         # Initialize the rotation attribute
@@ -80,13 +79,8 @@ class Component(DynamicObject):
     def create_ports(self):
         ports = []
 
-
-        # i = 1
         for node, name, color, location, num_connections in zip(self.port_nodes, self.port_names, self.port_colors,self.port_locations, self.port_num_connections):
-            # print('inputs: ', node, name, color, location, num_connections)
             ports.append(Port(node, name, color, location, num_connections))
-            # ports.append(i)
-            # i+=1
 
         return ports
 
