@@ -1,8 +1,20 @@
 
+<img src="logo.png" width="200" class="center">
 
-![](logo.png)
+<style>
+.center {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+  width: 50%;
+}
+</style>
 
-# Welcome to SPI2Py
+---
+
+[![Site](https://img.shields.io/badge/Project%20URL-spi2.illinois.edu%2F-orange)](https://spi2.illinois.edu/)
+
+[![PyTest](https://github.com/SPI2Py/SPI2Py/actions/workflows/tests.yml/badge.svg?branch=master)](https://github.com/SPI2Py/SPI2Py/actions/workflows/tests.yml)
 
 SPI2 stands for the Spatial Packaging of Interconnected Systems with Physical Interactions.
 
@@ -10,32 +22,6 @@ The SPI2 framework packages components, routes interconnects, and performs multi
 
 At this point in time, we are working on the initial release so many features are missing/untested. We plan to 
 demonstrate an early working version in mid-November of 2022.
-
-For more information regarding the SPI2 Strategic Research Initiative see the following.
-
-Website: 
-
-https://spi2.illinois.edu/
-
-## How to install
-1. Clone Github repository
-2. Set up venv...
-3. Command...
-    pip install -e .
-
-
-## A quick note on the setup:
-
-SnapPy version 3.1b1 (not released) is required to calculate the Yamada polynomials of a given spatial topology. 
-SnapPy version 3.0.3 is the latest pip-installable release on PyPI. Version 3.1b1 is planned for release around January
-of 2023. In the meantime, most people can likely omit this dependency. If you need it, then you must build it from the 
-source. Chad can give better details if needed.
-1. Setup and activate your virtual environment. With the activated venv do the following.
-2. Install cython with "pip install cython"
-3. Choose a directory to install snappy
-4. Command "git clone https://github.com/3-manifolds/SnapPy.git"
-5. Command "cd SnapPy" to into the SnapPy directory.
-6. Command "pip install --upgrade ." (space and period included)
 
 ## Publications
 
@@ -55,4 +41,25 @@ DOI: [10.1115/1.4048817](https://dx.doi.org/10.1115/1.4048817)
 }
 ```
 
-TODO Add the new SPI2 JMD article once published.
+# How to Install
+
+## Notice
+
+SPI2Py is still early in development and steps to install and contribute are still being worked out. We will update this section as we make progress. 
+
+The instructions below cover setting SPI2Py up on your local machine for development.
+
+## Requirements
+
+SPI2Py is primarily developed in Python 3.10. We recommend using the base Python installation and pip as opposed to environments like Anaconda and SageMath. We also recommend setting up a virtual environment.
+
+## Steps
+
+1. Clone the SPI2Py GitHub repository
+2. **Switch from the master branch** to the develop branch (or a feature branch if you are working on a specific feature).
+3. Create a virtual environment in the directory
+4. Navigate to the top-level directory (e.g., "SPI2Py/") and run 
+   
+   `>>> pip install -e .`
+
+5. Code!
