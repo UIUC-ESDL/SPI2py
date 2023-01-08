@@ -24,6 +24,18 @@ components:
         origins: [ [ -3,0,0 ], [-3, 0, 0] ]
         dimensions: [ [ 1,1,4 ], [4,1,1] ]
 
+        ports:
+            1:
+                name: supply
+                color: red
+                location: [1,1,1]
+                number of connections: 1
+            2:
+                name: return
+                color: blue
+                location: [1,1,1]
+                number of connections: 1
+
 interconnects:
 
     0:
