@@ -56,3 +56,6 @@ def generate_rectangular_prisms(origins, dimensions):
         radii = np.append(radii, sphere_radius)
 
     return positions, radii
+
+# TODO Implement a uniformly thick line between two points
+# TODO Implement a variably thick line between two points
