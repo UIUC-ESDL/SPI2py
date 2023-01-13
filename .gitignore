@@ -11,3 +11,4 @@ venv/*
 **/__pycache__
 SPI2Py.egg-info/
 .gif
+.vscodecounter/
