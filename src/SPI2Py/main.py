@@ -8,13 +8,16 @@ from datetime import datetime
 
 import yaml
 
-from .optimization.solvers import gradient_based_optimization
-from .result.visualization.visualization import generate_gif
 from .data.spherical_decomposition import generate_rectangular_prisms
 from .data.objects.static_objects import Structure
 from .data.objects.dynamic_objects import Component, Interconnect
+
 from .layout.spatial_configuration import SpatialConfiguration
 from .layout.generation_methods import generate_random_layout
+
+from .optimization.solvers import gradient_based_optimization
+
+from .result.visualization.visualization import generate_gif
 
 
 class SPI2:
@@ -71,38 +74,32 @@ class SPI2:
         self.components = components
 
     def create_interconnects(self):
-        interconnects = []
-        interconnect_nodes = []
-        interconnect_segments = []
+        self.interconnects = []
+        self.nodes = []
+        self.interconnect_nodes = []
+        self.interconnect_segments = []
 
         for interconnect in self.inputs['interconnects']:
 
             component_1 = self.components[self.inputs['interconnects'][interconnect]['component 1']]
             component_2 = self.components[self.inputs['interconnects'][interconnect]['component 2']]
 
-            diameter = self.inputs['interconnects'][interconnect]['diameter']
+            radius = self.inputs['interconnects'][interconnect]['radius']
             color = self.inputs['interconnects'][interconnect]['color']
 
-            # Keep this line, if swapped then it works with force-directed layout
-            # self.interconnect_segments.append(InterconnectSegment(component_1, component_2, diameter, color))
-
-            interconnect = Interconnect(component_1, component_2, diameter, color)
+            interconnect = Interconnect(component_1, component_2, radius, color)
             logging.info(' Interconnect: ' + str(interconnect) + ' created.')
 
-            interconnects.append(interconnect)
-
-        for interconnect in interconnects:
-
-            interconnect_segments.extend(interconnect.segments)
-
-            # TODO Remove component nodes???
-            interconnect_nodes.extend(interconnect.nodes)
-
-        self.interconnects = interconnects
+            # Add Interconnect, InterconnectNodes, and InterconnectSegments to lists
+            # Use append for single objects and extend for lists of objects
+            self.interconnects.append(interconnect)
+            self.interconnect_segments.extend(interconnect.segments)
+            self.nodes.extend(interconnect.nodes)
+       
         # TODO Unstrip port nodes?
-        self.interconnect_nodes = interconnect_nodes[1:-1] # Strip port nodes?
-        self.interconnect_segments = interconnect_segments
+        self.interconnect_nodes = self.nodes[1:-1] # Strip the first and last nodes (port nodes)
 
+    
     def create_structures(self):
         structures = []
         for structure in self.inputs['structures']:
