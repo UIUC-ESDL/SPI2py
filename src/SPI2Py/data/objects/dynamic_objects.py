@@ -11,6 +11,7 @@ class DynamicObject:
     # TODO Implement a single class to handle how objects move and update positions... let child classes mutate them
     def __init__(self):
         self.positions = None
+        self.radii = None
         self.reference_position = None
         self.movement = []
         self.movement_depends_on = []
@@ -29,7 +30,7 @@ class DynamicObject:
             rotation = design_vector[3:None]
             new_positions = rotate_about_point(new_positions, rotation)
 
-        positions_dict[self] = new_positions
+        positions_dict[self] = (new_positions, self.radii)
 
         return positions_dict
 
@@ -40,7 +41,7 @@ class DynamicObject:
         :param positions_dict:
         :return:
         """
-        self.positions = positions_dict[self]
+        self.positions, self.radii = positions_dict[self]
 
 
 
@@ -138,8 +139,8 @@ class InterconnectEdge(DynamicObject):
         # Address varying number of spheres
 
         # Design vector not used
-        pos_1 = positions_dict[self.object_1][0]
-        pos_2 = positions_dict[self.object_2][0]
+        pos_1 = positions_dict[self.object_1][0][0]
+        pos_2 = positions_dict[self.object_2][0][0]
 
         dist = euclidean(pos_1, pos_2)
 

@@ -135,7 +135,6 @@ class SPI2:
         self.create_structures()
 
         # Generate SpatialConfiguration
-        # slicing nodes for temp fix
         self.layout = SpatialConfiguration(self.components, self.interconnect_nodes, self.interconnect_segments, self.structures)
 
     def generate_layout(self, layout_generation_method, inputs=None, include_interconnect_nodes=False):

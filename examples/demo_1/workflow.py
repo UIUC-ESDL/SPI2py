@@ -45,7 +45,7 @@ layout_generation_method = 'manual'
 
 pos_comp0 = np.array([-3., -4.41, -0.24, 0., 0., 0.])
 pos_comp1 = np.array([2., 4.41, 0.24, 0., 0., 0.])
-pos_comp2 = np.array([5,-3,-1, 0., 0., 0.])
+pos_comp2 = np.array([5, -3, -1, 0., 0., 0.])
 pos_comp3 = np.array([3., 5., 3., 0., 0., 0.])
 
 pos_int0node0 = np.array([-1., 2., 2.])
@@ -60,14 +60,14 @@ demo.generate_layout(layout_generation_method, inputs=locations)
 demo.layout.plot_layout()
 
 # # Perform gradient-based optimization
-# demo.optimize_spatial_configuration()
+demo.optimize_spatial_configuration()
 
 # # For development: Print Results
-# print('Result:', demo.result)
+print('Result:', demo.result)
 
 # # For development: Plot the final layout to see the change
-# demo.layout.set_positions(demo.result.x)
-# demo.layout.plot_layout()
+demo.layout.set_positions(demo.result.x)
+demo.layout.plot_layout()
 
 # # Write output file
 # output_filepath = folderpath + 'output.json'
