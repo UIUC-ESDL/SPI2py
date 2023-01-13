@@ -43,7 +43,7 @@ interconnects:
         color: black
         component 1: 0
         component 2: 1
-        diameter: 0.25
+        radius: 0.25
 
 structures:
 
