@@ -59,3 +59,6 @@ def generate_rectangular_prisms(origins, dimensions):
 
 # TODO Implement a uniformly thick line between two points
 # TODO Implement a variably thick line between two points
+# TODO Implement MDBD for geometric primitives
+# TODO Implement MDBD for convex hulls
+# TODO Implement MDBD for STL files
