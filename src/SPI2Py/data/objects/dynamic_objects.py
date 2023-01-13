@@ -119,12 +119,11 @@ class InterconnectNode(DynamicObject):
 
 
 class InterconnectEdge(DynamicObject):
-    def __init__(self, object_1, object_2, diameter, color):
+    def __init__(self, object_1, object_2, radius, color):
         self.object_1 = object_1
         self.object_2 = object_2
 
-        self.diameter = diameter
-        self.radius = diameter / 2
+        self.radius = radius
         self.color = color
 
         # Create edge tuple for NetworkX graphs
@@ -145,7 +144,7 @@ class InterconnectEdge(DynamicObject):
         dist = euclidean(pos_1, pos_2)
 
         # We don't want zero-length interconnects or interconnect segments--they cause problems!
-        num_spheres = int(dist / self.diameter)
+        num_spheres = int(dist / (self.radius * 2))
         if num_spheres == 0:
             num_spheres = 1
 
@@ -176,12 +175,11 @@ class Interconnect(InterconnectNode, InterconnectEdge):
     in spatial_configuration.py.
     """
 
-    def __init__(self, component_1, component_2, diameter, color):
+    def __init__(self, component_1, component_2, radius, color):
         self.component_1 = component_1
         self.component_2 = component_2
 
-        self.diameter = diameter
-        self.radius = diameter / 2
+        self.radius = radius
         self.color = color
 
         # Per configuration file
@@ -214,7 +212,7 @@ class Interconnect(InterconnectNode, InterconnectEdge):
             node_prefix = str(self.component_1.node) + '-' + str(self.component_2.node) + '_'
             node = node_prefix + str(i)
 
-            nodes.append(InterconnectNode(node, self.diameter / 2, self.color))
+            nodes.append(InterconnectNode(node, self.radius, self.color))
 
         # Add component 2
         nodes.append(self.component_2)
@@ -234,7 +232,7 @@ class Interconnect(InterconnectNode, InterconnectEdge):
         # TODO Implement
         # TODO Check...
         for object_1, object_2 in self.node_pairs:
-            segments.append(InterconnectEdge(object_1, object_2, self.diameter, self.color))
+            segments.append(InterconnectEdge(object_1, object_2, self.radius, self.color))
 
         return segments
 
