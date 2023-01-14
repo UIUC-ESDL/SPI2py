@@ -4,7 +4,7 @@ TODO Make sure that migrating from InterconnectSegment to Interconnect does not 
 
 import numpy as np
 
-from .. import System
+from .systems import System
 from ...result.visualization.visualization import plot
 
 
