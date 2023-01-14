@@ -4,8 +4,8 @@ TODO Make sure that migrating from InterconnectSegment to Interconnect does not 
 
 import numpy as np
 
-from . import System
-from ..result.visualization.visualization import plot
+from .. import System
+from ...result.visualization.visualization import plot
 
 
 class SpatialConfiguration(System):
