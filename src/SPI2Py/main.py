@@ -9,10 +9,10 @@ from datetime import datetime
 import yaml
 
 from .data.spherical_decomposition import generate_rectangular_prisms
-from .data.objects.static_objects import Structure
-from .data.objects.dynamic_objects import Component, Interconnect
+from .data.classes.static_objects import Structure
+from .data.classes.objects import Component, Interconnect
 
-from .layout.spatial_configuration import SpatialConfiguration
+from .data.classes.spatial import SpatialConfiguration
 from .layout.generation_methods import generate_random_layout
 
 from .optimization.solvers import gradient_based_optimization

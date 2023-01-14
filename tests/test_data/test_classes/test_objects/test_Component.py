@@ -1,5 +1,4 @@
-from SPI2Py.data.classes.objects import Component
-from src.SPI2Py.data.classes.common import Port
+from SPI2Py.data.classes.objects import Component, Port
 
 # Define component inputs
 positions = [[1, 1, 1]]
