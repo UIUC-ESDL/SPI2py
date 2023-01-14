@@ -1,7 +1,6 @@
 import numpy as np
 from scipy.spatial.distance import euclidean
 
-from .common import Port
 from ...analysis.transformations import translate, rotate_about_point
 
 
