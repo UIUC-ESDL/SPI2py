@@ -9,10 +9,9 @@ from datetime import datetime
 import yaml
 
 from .data.spherical_decomposition import generate_rectangular_prisms
-from .data.classes.static_objects import Structure
-from .data.classes.objects import Component, Interconnect
-
+from .data.classes.create_objects import create_components, create_interconnects, create_structures
 from .data.classes.spatial import SpatialConfiguration
+
 from .layout.generation_methods import generate_random_layout
 
 from .optimization.solvers import gradient_based_optimization
@@ -30,8 +29,9 @@ class SPI2:
         self.config = None
         self.inputs = None
 
-        self.components = None
-        self.interconnects = None
+        self.components = []
+        self.interconnects = []
+        self.structures = []
         self.layout = None
 
         self.result = None
@@ -55,68 +55,13 @@ class SPI2:
         with open(config_filepath, 'r') as f:
             self.config = yaml.safe_load(f)
 
-    def create_components(self):
-        components = []
-        for component in self.inputs['components']:
-            node = component
-            name = self.inputs['components'][component]['name']
-            color = self.inputs['components'][component]['color']
-            origins = self.inputs['components'][component]['origins']
-            dimensions = self.inputs['components'][component]['dimensions']
 
-            positions, radii = generate_rectangular_prisms(origins, dimensions)
 
-            component= Component(positions, radii, color, node, name)
-            logging.info(' Component: ' + str(component) + ' created.')
 
-            components.append(component)
 
-        self.components = components
-
-    def create_interconnects(self):
-        self.interconnects = []
-        self.nodes = []
-        self.interconnect_nodes = []
-        self.interconnect_segments = []
-
-        for interconnect in self.inputs['interconnects']:
-
-            component_1 = self.components[self.inputs['interconnects'][interconnect]['component 1']]
-            component_2 = self.components[self.inputs['interconnects'][interconnect]['component 2']]
-
-            radius = self.inputs['interconnects'][interconnect]['radius']
-            color = self.inputs['interconnects'][interconnect]['color']
-
-            interconnect = Interconnect(component_1, component_2, radius, color)
-            logging.info(' Interconnect: ' + str(interconnect) + ' created.')
-
-            # Add Interconnect, InterconnectNodes, and InterconnectSegments to lists
-            # Use append for single objects and extend for lists of objects
-            self.interconnects.append(interconnect)
-            self.interconnect_segments.extend(interconnect.segments)
-            self.nodes.extend(interconnect.nodes)
-       
-        # TODO Unstrip port nodes?
-        self.interconnect_nodes = self.nodes[1:-1] # Strip the first and last nodes (port nodes)
 
     
-    def create_structures(self):
-        structures = []
-        for structure in self.inputs['structures']:
-            name = self.inputs['structures'][structure]['name']
-            color = self.inputs['structures'][structure]['color']
-            origins = self.inputs['structures'][structure]['origins']
-            dimensions = self.inputs['structures'][structure]['dimensions']
-
-            positions, radii = generate_rectangular_prisms(origins, dimensions)
-
-            structure = Structure(positions, radii, color, name)
-
-            logging.info(' Structure: ' + str(structure) + ' created.')
-
-            structures.append(structure)
-
-        self.structures = structures
+    
 
     def create_objects_from_input(self):
         """
@@ -126,13 +71,13 @@ class SPI2:
         """
 
         # Create Components
-        self.create_components()
+        self.components = create_components(self.inputs)
 
         # Create Interconnects
-        self.create_interconnects()
+        self.interconnects = create_interconnects(self.inputs)
 
         # Create Structures
-        self.create_structures()
+        self.structures = create_structures(self.inputs)
 
         # Generate SpatialConfiguration
         self.layout = SpatialConfiguration(self.components, self.interconnect_nodes, self.interconnect_segments, self.structures)

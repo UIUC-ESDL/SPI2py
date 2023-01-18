@@ -10,9 +10,9 @@ Notes:
 
 2. ...
 
-"""
+TODO Move design vector global statement from optimization to main?
 
-# %% Optional: Run in Python Interactive
+"""
 
 # Import packages
 import os
@@ -31,7 +31,7 @@ demo.add_directory(os.path.dirname(__file__) + '/')
 demo.initialize_logger()
 
 # Specify the input file
-demo.add_input_file('input_1.yaml')
+demo.add_input_file('input_3.yaml')
 # demo.add_input_file('input_2.yaml')
 
 # Specify the config file
@@ -51,7 +51,8 @@ pos_comp3 = np.array([3., 5., 3., 0., 0., 0.])
 pos_int0node0 = np.array([-1., 2., 2.])
 pos_int1node0 = np.array([1., 2., 3.])
 
-locations = np.concatenate((pos_comp0, pos_comp1, pos_int0node0))
+# locations = np.concatenate((pos_comp0, pos_comp1, pos_int0node0))
+locations = np.concatenate((pos_comp0, pos_comp1, pos_comp2, pos_int0node0))
 # locations = np.concatenate((pos_comp0, pos_comp1, pos_comp2, pos_comp3, pos_int0node0, pos_int1node0))
 
 demo.generate_layout(layout_generation_method, inputs=locations)
@@ -60,16 +61,17 @@ demo.generate_layout(layout_generation_method, inputs=locations)
 demo.layout.plot_layout()
 
 # # Perform gradient-based optimization
-demo.optimize_spatial_configuration()
+# demo.optimize_spatial_configuration()
 
 # # For development: Print Results
-print('Result:', demo.result)
+# print('Result:', demo.result)
 
 # # For development: Plot the final layout to see the change
-demo.layout.set_positions(demo.result.x)
-demo.layout.plot_layout()
+# demo.layout.set_positions(demo.result.x)
+# demo.layout.plot_layout()
 
 # # Write output file
 # output_filepath = folderpath + 'output.json'
 # demo.write_output(output_filepath)
 
+print('Done')
