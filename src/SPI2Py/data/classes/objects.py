@@ -83,6 +83,9 @@ class Component(DynamicObject):
         if all(input is not None for input in port_inputs):
             self.ports += self.create_ports()
 
+    def __repr__(self):
+        return self.name
+
     def create_ports(self):
         ports = []
 
