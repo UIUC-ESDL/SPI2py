@@ -6,42 +6,31 @@ components:
         origins: [ [ 1, 1, 1 ], [2, 1, 1], [3, 1, 1], ]
         dimensions: [ [ 2, 2, 2 ], [2, 2, 2], [2, 2, 2] ]
 
-        ports:
-            1:
-                name: supply
-                color: red
-                location: [1,1,1]
-                number of connections: 1
-            2:
-                name: return
-                color: blue
-                location: [1,1,1]
-                number of connections: 1
+        port names: [supply, return]
+        port origins: [[1,1,1], [1,1,2]]
+        port radii: [0.25, 0.25]
+
 
     1:
         name: actuator_1
         color: orange
         origins: [ [ -3,0,0 ], [-3, 0, 0] ]
         dimensions: [ [ 1,1,4 ], [4,1,1] ]
+        
+        port names: [supply, return]
+        port origins: [[1,1,1], [1,1,2]]
+        port radii: [0.5, 0.5]
 
-        ports:
-            1:
-                name: supply
-                color: red
-                location: [1,1,1]
-                number of connections: 1
-            2:
-                name: return
-                color: blue
-                location: [1,1,1]
-                number of connections: 1
 
     2:
         name: component_2
         color: green
         origins: [ [0, 0, 0] ]
         dimensions: [ [ 1, 3, 3 ] ]  
-        ports:
+
+        port names:
+        port origins:
+        port radii:
 
 interconnects:
 
