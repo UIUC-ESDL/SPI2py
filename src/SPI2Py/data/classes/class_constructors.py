@@ -2,8 +2,23 @@
 
 """
 
+import numpy as np
+
 from ..spherical_decomposition import generate_rectangular_prisms
-from .objects import Component, Interconnect, Structure, Port
+from .objects import Component, Interconnect, Structure
+
+def extract_inputs(): 
+    
+    def extract_components():
+        pass
+
+    def extract_interconnects():
+        pass
+
+    def extract_structures():
+        pass
+    
+    pass
 
 def create_components(inputs):
 
@@ -17,25 +32,17 @@ def create_components(inputs):
         origins = component['origins']
         dimensions = component['dimensions']
 
+        # Extract the port information
+        port_names = component['port names']
+        port_origins = np.array([component['port origins']]) # TODO Make array creation cleaner
+        port_radii = component['port radii']
+
+        # Generate the component's positions and radii
+
         positions, radii = generate_rectangular_prisms(origins, dimensions)
 
-        # Extract the ports
-        # if inputs['components'][component]['ports'] is not None:
-        #     ports = inputs['components'][component]['ports']
-        #     for port in ports:
-        #         port_node = port
-        #         port_name = ports[port]['name']
-        #         port_color = ports[port]['color']
-        #         port_location = ports[port]['location']
-        #         port_num_connections = ports[port]['num_connections']
-
-        #         # Add the port to the component
-        #         positions.append(port_location)
-        #         radii.append(0.01)
-
-
         # Create the component
-        component = Component(name, positions, radii, color)
+        component = Component(name, positions, radii, color, port_names, port_origins, port_radii)
         # logging.info(' Component: ' + str(component) + ' created.')
         components.append(component)
 

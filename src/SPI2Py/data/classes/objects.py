@@ -45,10 +45,8 @@ class DynamicObject:
 class Component(DynamicObject):
 
     def __init__(self, name, positions, radii, color, 
-                    movement=('3D Translation', '3D Rotation'),
-                    port_names=[],  
-                    port_positions=[],
-                    port_radii=[]):
+                    port_names, port_positions, port_radii, 
+                    movement=('3D Translation', '3D Rotation')):
 
         self.name = name
         self.positions = positions
@@ -68,14 +66,19 @@ class Component(DynamicObject):
         self.port_positions = port_positions
         self.port_radii = port_radii
 
-        for name, position, radius in zip(self.port_names, self.port_positions, self.port_radii):
-            self.positions.append(position)
-            self.radii.append(radius)
+        for position, radius in zip(self.port_positions, self.port_radii):
 
-            self.port_indices.append(self.positions.index(position))
+            if position is not None and radius is not None:
+                self.positions = np.vstack((self.positions, position)) # TODO Make this cleaner
+                self.radii = np.append(self.radii, radius) # TODO Make this cleaner
+
+                port_index = self.positions.shape[0]-1 # Nabs the final row index
+                self.port_indices.append(port_index)
+            else:
+                pass
 
     def __repr__(self):
-        return "Component:" + self.name
+        return "Component: " + self.name
 
     @property
     def reference_position(self):
