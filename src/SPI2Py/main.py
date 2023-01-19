@@ -71,13 +71,13 @@ class SPI2:
         """
 
         # Create Components
-        self.components = create_components(self.inputs)
+        self.components = create_components(self.inputs['components'])
 
         # Create Interconnects
-        self.interconnects = create_interconnects(self.inputs)
+        self.interconnects = create_interconnects(self.inputs['interconnects'])
 
         # Create Structures
-        self.structures = create_structures(self.inputs)
+        self.structures = create_structures(self.inputs['structures'])
 
         # Generate SpatialConfiguration
         self.layout = SpatialConfiguration(self.components, self.interconnect_nodes, self.interconnect_segments, self.structures)

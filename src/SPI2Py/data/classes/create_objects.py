@@ -9,14 +9,13 @@ def create_components(inputs):
 
     components = []
 
-    for component in inputs['components']:
+    for component in inputs.values():
 
         # Extract the component's attributes
-        node = component
-        name = inputs['components'][component]['name']
-        color = inputs['components'][component]['color']
-        origins = inputs['components'][component]['origins']
-        dimensions = inputs['components'][component]['dimensions']
+        name = component['name']
+        color = component['color']
+        origins = component['origins']
+        dimensions = component['dimensions']
 
         positions, radii = generate_rectangular_prisms(origins, dimensions)
 
@@ -36,7 +35,7 @@ def create_components(inputs):
 
 
         # Create the component
-        component = Component(positions, radii, color, node, name)
+        component = Component(name, positions, radii, color)
         # logging.info(' Component: ' + str(component) + ' created.')
         components.append(component)
 
@@ -51,6 +50,8 @@ def create_interconnects(inputs):
     interconnect_segments = []
 
     for interconnect in inputs['interconnects']:
+
+        # name = inputs
 
         component_1 = components[inputs['interconnects'][interconnect]['component 1']]
         component_2 = components[inputs['interconnects'][interconnect]['component 2']]
