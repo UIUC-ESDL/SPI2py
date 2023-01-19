@@ -36,6 +36,13 @@ components:
                 location: [1,1,1]
                 number of connections: 1
 
+    2:
+        name: component2
+        color: green
+        origins: [ [0, 0, 0] ]
+        dimensions: [ [ 1, 3, 3 ] ]  
+        ports:
+
 interconnects:
 
     0:

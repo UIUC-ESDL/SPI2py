@@ -4,8 +4,8 @@ TODO Make sure that migrating from InterconnectSegment to Interconnect does not 
 
 import numpy as np
 
-from ..data.objects.systems import System
-from ..result.visualization.visualization import plot
+from .systems import System
+from ...result.visualization.visualization import plot
 
 
 class SpatialConfiguration(System):
@@ -73,7 +73,7 @@ class SpatialConfiguration(System):
         if design_vector is None:
 
             for obj in self.objects:
-                positions_dict[obj] = obj.positions
+                positions_dict[obj] = (obj.positions, obj.radii)
 
         else:
 
@@ -92,6 +92,13 @@ class SpatialConfiguration(System):
         return positions_dict
 
     def set_positions(self, new_design_vector):
+        """set_positions Sets the positions of the objects in the layout.
+
+        Takes a flattened design vector and sets the positions of the objects in the layout.
+
+        :param new_design_vector: Desired design vector
+        :type new_design_vector: np.ndarray
+        """
 
         new_design_vectors = self.slice_design_vector(new_design_vector)
 

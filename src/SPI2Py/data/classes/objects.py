@@ -1,7 +1,6 @@
 import numpy as np
 from scipy.spatial.distance import euclidean
 
-from .common import Port
 from ...analysis.transformations import translate, rotate_about_point
 
 
@@ -11,6 +10,7 @@ class DynamicObject:
     # TODO Implement a single class to handle how objects move and update positions... let child classes mutate them
     def __init__(self):
         self.positions = None
+        self.radii = None
         self.reference_position = None
         self.movement = []
         self.movement_depends_on = []
@@ -29,7 +29,7 @@ class DynamicObject:
             rotation = design_vector[3:None]
             new_positions = rotate_about_point(new_positions, rotation)
 
-        positions_dict[self] = new_positions
+        positions_dict[self] = (new_positions, self.radii)
 
         return positions_dict
 
@@ -40,24 +40,31 @@ class DynamicObject:
         :param positions_dict:
         :return:
         """
-        self.positions = positions_dict[self]
+        self.positions, self.radii = positions_dict[self]
 
+class Port:
 
+    def __init__(self, node, name, color, location, num_connections):
+        self.node = node
+        self.name = name
+        self.color = color
+        self.location = location
+        self.num_connections = num_connections
 
 class Component(DynamicObject):
 
-    def __init__(self, positions, radii, color, node, name, movement=('3D Translation', '3D Rotation'),
+    def __init__(self, name, positions, radii, color, movement=('3D Translation', '3D Rotation'),
                  port_nodes=None,
                  port_names=None, 
                  port_colors=None, 
                  port_locations=None, 
                  port_num_connections=None):
 
+        self.name = name
         self.positions = positions
         self.radii = radii
         self.color = color
-        self.node = node
-        self.name = name
+        
         self.movement = movement
 
         self.ports = []
@@ -75,6 +82,9 @@ class Component(DynamicObject):
 
         if all(input is not None for input in port_inputs):
             self.ports += self.create_ports()
+
+    def __repr__(self):
+        return self.name
 
     def create_ports(self):
         ports = []
@@ -119,12 +129,11 @@ class InterconnectNode(DynamicObject):
 
 
 class InterconnectEdge(DynamicObject):
-    def __init__(self, object_1, object_2, diameter, color):
+    def __init__(self, object_1, object_2, radius, color):
         self.object_1 = object_1
         self.object_2 = object_2
 
-        self.diameter = diameter
-        self.radius = diameter / 2
+        self.radius = radius
         self.color = color
 
         # Create edge tuple for NetworkX graphs
@@ -139,13 +148,13 @@ class InterconnectEdge(DynamicObject):
         # Address varying number of spheres
 
         # Design vector not used
-        pos_1 = positions_dict[self.object_1][0]
-        pos_2 = positions_dict[self.object_2][0]
+        pos_1 = positions_dict[self.object_1][0][0]
+        pos_2 = positions_dict[self.object_2][0][0]
 
         dist = euclidean(pos_1, pos_2)
 
         # We don't want zero-length interconnects or interconnect segments--they cause problems!
-        num_spheres = int(dist / self.diameter)
+        num_spheres = int(dist / (self.radius * 2))
         if num_spheres == 0:
             num_spheres = 1
 
@@ -176,12 +185,11 @@ class Interconnect(InterconnectNode, InterconnectEdge):
     in spatial_configuration.py.
     """
 
-    def __init__(self, component_1, component_2, diameter, color):
+    def __init__(self, component_1, component_2, radius, color):
         self.component_1 = component_1
         self.component_2 = component_2
 
-        self.diameter = diameter
-        self.radius = diameter / 2
+        self.radius = radius
         self.color = color
 
         # Per configuration file
@@ -214,7 +222,7 @@ class Interconnect(InterconnectNode, InterconnectEdge):
             node_prefix = str(self.component_1.node) + '-' + str(self.component_2.node) + '_'
             node = node_prefix + str(i)
 
-            nodes.append(InterconnectNode(node, self.diameter / 2, self.color))
+            nodes.append(InterconnectNode(node, self.radius, self.color))
 
         # Add component 2
         nodes.append(self.component_2)
@@ -234,7 +242,7 @@ class Interconnect(InterconnectNode, InterconnectEdge):
         # TODO Implement
         # TODO Check...
         for object_1, object_2 in self.node_pairs:
-            segments.append(InterconnectEdge(object_1, object_2, self.diameter, self.color))
+            segments.append(InterconnectEdge(object_1, object_2, self.radius, self.color))
 
         return segments
 
@@ -248,3 +256,9 @@ class Interconnect(InterconnectNode, InterconnectEdge):
     def update_positions(self, positions_dict):
         pass
 
+class Structure:
+    def __init__(self, positions, radii, color, name):
+        self.positions = positions
+        self.radii = radii
+        self.color = color
+        self.name = name
