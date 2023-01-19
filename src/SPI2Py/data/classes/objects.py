@@ -53,18 +53,18 @@ class Port:
 
 class Component(DynamicObject):
 
-    def __init__(self, positions, radii, color, node, name, movement=('3D Translation', '3D Rotation'),
+    def __init__(self, name, positions, radii, color, movement=('3D Translation', '3D Rotation'),
                  port_nodes=None,
                  port_names=None, 
                  port_colors=None, 
                  port_locations=None, 
                  port_num_connections=None):
 
+        self.name = name
         self.positions = positions
         self.radii = radii
         self.color = color
-        self.node = node
-        self.name = name
+        
         self.movement = movement
 
         self.ports = []
