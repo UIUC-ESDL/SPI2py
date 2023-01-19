@@ -66,16 +66,16 @@ class Component(DynamicObject):
         self.port_positions = port_positions
         self.port_radii = port_radii
 
-        for position, radius in zip(self.port_positions, self.port_radii):
+        if port_positions is not None and port_radii is not None:
 
-            if position is not None and radius is not None:
+            for position, radius in zip(self.port_positions, self.port_radii):
+                
                 self.positions = np.vstack((self.positions, position)) # TODO Make this cleaner
                 self.radii = np.append(self.radii, radius) # TODO Make this cleaner
 
                 port_index = self.positions.shape[0]-1 # Nabs the final row index
                 self.port_indices.append(port_index)
-            else:
-                pass
+
 
     def __repr__(self):
         return "Component: " + self.name
