@@ -42,23 +42,13 @@ class DynamicObject:
         """
         self.positions, self.radii = positions_dict[self]
 
-class Port:
-
-    def __init__(self, node, name, color, location, num_connections):
-        self.node = node
-        self.name = name
-        self.color = color
-        self.location = location
-        self.num_connections = num_connections
-
 class Component(DynamicObject):
 
-    def __init__(self, name, positions, radii, color, movement=('3D Translation', '3D Rotation'),
-                 port_nodes=None,
-                 port_names=None, 
-                 port_colors=None, 
-                 port_locations=None, 
-                 port_num_connections=None):
+    def __init__(self, name, positions, radii, color, 
+                    movement=('3D Translation', '3D Rotation'),
+                    port_names=[],  
+                    port_positions=[],
+                    port_radii=[]):
 
         self.name = name
         self.positions = positions
@@ -73,26 +63,19 @@ class Component(DynamicObject):
         self.rotation = np.array([0, 0, 0])
 
         # Ports
-        self.port_nodes = port_nodes
+        self.port_indices = [] # Tracks the index wihtin positions and radii that the port is located
         self.port_names = port_names
-        self.port_colors = port_colors
-        self.port_locations = port_locations
-        self.port_num_connections = port_num_connections
-        port_inputs = [port_nodes, port_names, port_colors, port_locations, port_num_connections]
+        self.port_positions = port_positions
+        self.port_radii = port_radii
 
-        if all(input is not None for input in port_inputs):
-            self.ports += self.create_ports()
+        for name, position, radius in zip(self.port_names, self.port_positions, self.port_radii):
+            self.positions.append(position)
+            self.radii.append(radius)
+
+            self.port_indices.append(self.positions.index(position))
 
     def __repr__(self):
-        return self.name
-
-    def create_ports(self):
-        ports = []
-
-        for node, name, color, location, num_connections in zip(self.port_nodes, self.port_names, self.port_colors,self.port_locations, self.port_num_connections):
-            ports.append(Port(node, name, color, location, num_connections))
-
-        return ports
+        return "Component:" + self.name
 
     @property
     def reference_position(self):
