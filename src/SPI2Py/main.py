@@ -9,7 +9,7 @@ from datetime import datetime
 import yaml
 
 from .data.spherical_decomposition import generate_rectangular_prisms
-from .data.classes.create_objects import create_components, create_interconnects, create_structures
+from .data.classes.class_constructors import create_components, create_interconnects, create_structures
 from .data.classes.spatial import SpatialConfiguration
 
 from .layout.generation_methods import generate_random_layout
