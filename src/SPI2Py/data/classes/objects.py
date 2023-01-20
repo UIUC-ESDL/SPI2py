@@ -29,7 +29,8 @@ class DynamicObject:
             rotation = design_vector[3:None]
             new_positions = rotate_about_point(new_positions, rotation)
 
-        positions_dict[self] = (new_positions, self.radii)
+        # TODO Should we
+        positions_dict[str(self)] = (new_positions, self.radii)
 
         return positions_dict
 
@@ -40,7 +41,7 @@ class DynamicObject:
         :param positions_dict:
         :return:
         """
-        self.positions, self.radii = positions_dict[self]
+        self.positions, self.radii = positions_dict[str(self)]
 
 class Component(DynamicObject):
 
@@ -80,6 +81,9 @@ class Component(DynamicObject):
     def __repr__(self):
         return self.name
 
+    def __str__(self):
+        return self.name
+
     @property
     def reference_position(self):
         return self.positions[0]
@@ -95,6 +99,7 @@ class Component(DynamicObject):
 
 class InterconnectNode(DynamicObject):
     def __init__(self, node, radius, color, movement=['3D Translation']):
+        self.name = node
         self.node = node
         self.radius = radius
         self.color = color
@@ -104,6 +109,12 @@ class InterconnectNode(DynamicObject):
         # TODO Sort out None value vs dummy values
         self.positions = np.array([[0., 0., 0.]])  # Initialize a dummy value
         self.movement = movement
+
+    def __repr__(self):
+        return self.name
+
+    def __str__(self):
+        return self.name
 
     @property
     def reference_position(self):
@@ -123,16 +134,23 @@ class InterconnectEdge(DynamicObject):
         self.color = color
 
         # Create edge tuple for NetworkX graphs
-        self.edge = (self.object_1.node, self.object_2.node)
+        self.edge = (self.object_1, self.object_2)
 
         # Placeholder for plot test functionality, random positions
         self.positions = None
         self.radii = None
 
+    def __repr__(self):
+        return self.name
+
+    def __str__(self):
+        return self.name
+
     def calculate_positions(self, positions_dict):
         # TODO revise logic for getting the reference point instead of object's first sphere
         # Address varying number of spheres
 
+        # TODO FIX THIS?
         # Design vector not used
         pos_1 = positions_dict[self.object_1][0][0]
         pos_2 = positions_dict[self.object_2][0][0]
@@ -146,10 +164,11 @@ class InterconnectEdge(DynamicObject):
 
         positions = np.linspace(pos_1, pos_2, num_spheres)
 
-        return {self: positions}
+        # TODO Change positions_dict to include kwarg and return addition?
+        return {str(self): positions}
 
     def update_positions(self, positions_dict):
-        self.positions = self.calculate_positions(positions_dict)[self]
+        self.positions = self.calculate_positions(positions_dict)[str(self)]
 
         # TODO Separate this into a different function?
         self.radii = np.repeat(self.radius, self.positions.shape[0])
@@ -193,12 +212,18 @@ class Interconnect(InterconnectNode, InterconnectEdge):
         self.number_of_edges = self.number_of_nodes + 1
 
         # Create InterconnectNode objects
-        self.nodes = self.create_nodes()
+        self.nodes, self.node_names = self.create_nodes()
         self.interconnect_nodes = self.nodes[1:-1]  # trims off components 1 and 2
 
         # Create InterconnectSegment objects
         self.node_pairs = self.create_node_pairs()
         self.segments = self.create_segments()
+
+    def __repr__(self):
+        return self.name
+
+    def __str__(self):
+        return self.name
 
     def create_nodes(self):
         """
@@ -210,23 +235,28 @@ class Interconnect(InterconnectNode, InterconnectEdge):
 
         # Create the nodes list and add component 1
         nodes = [self.component_1]
+        node_names = [self.component_1]
 
         # Add the interconnect nodes
         for i in range(self.number_of_nodes):
             # Each node should have unique identifier
-            node_prefix = str(self.component_1.node) + '-' + str(self.component_2.node) + '_'
+            node_prefix = self.component_1 + '-' + self.component_2 + '_'
             node = node_prefix + str(i)
 
-            nodes.append(InterconnectNode(node, self.radius, self.color))
+            interconnect_node = InterconnectNode(node, self.radius, self.color)
+            nodes.append(interconnect_node)
+            node_names.append(interconnect_node)
+
 
         # Add component 2
         nodes.append(self.component_2)
+        node_names.append(self.component_2)
 
-        return nodes
+        return nodes, node_names
 
     def create_node_pairs(self):
 
-        node_pairs = [(self.nodes[i], self.nodes[i + 1]) for i in range(len(self.nodes) - 1)]
+        node_pairs = [(self.node_names[i], self.node_names[i + 1]) for i in range(len(self.node_names) - 1)]
 
         return node_pairs
 
@@ -258,3 +288,9 @@ class Structure:
         self.positions = positions
         self.radii = radii
         self.color = color
+
+    def __repr__(self):
+        return self.name
+
+    def __str__(self):
+        return self.name

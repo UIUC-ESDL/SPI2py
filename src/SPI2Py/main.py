@@ -31,6 +31,8 @@ class SPI2:
 
         self.components = []
         self.interconnects = []
+        self.interconnect_nodes = []
+        self.interconnect_segments = []
         self.structures = []
         self.layout = None
 
@@ -74,7 +76,7 @@ class SPI2:
         self.components = create_components(self.inputs['components'])
 
         # Create Interconnects
-        self.interconnects = create_interconnects(self.inputs['interconnects'])
+        self.interconnects, self.interconnect_nodes, self.interconnect_segments = create_interconnects(self.inputs['interconnects'])
 
         # Create Structures
         self.structures = create_structures(self.inputs['structures'])
