@@ -43,6 +43,7 @@ interconnects:
 
         component 2: actuator_1
         component 2 port: supply
+
         radius: 0.25
 
 structures:

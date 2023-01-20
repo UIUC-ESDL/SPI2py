@@ -169,16 +169,20 @@ class Interconnect(InterconnectNode, InterconnectEdge):
     For now, I will assume that interconnect nodes will start along a straight line between components A
     and B. In the near future they may be included in the layout generation method. The to-do is tracked
     in spatial_configuration.py.
+
+    # placeholder
+        component_1 = [i for i in self.components if repr(i) == self.component_1][0]
+        component_2 = [i for i in self.components if repr(i) == self.component_2][0]
     """
 
-    def __init__(self, name, component_1_index, component_2_index, radius, color):
+    def __init__(self, name, component_1, component_1_port, component_2, component_2_port, radius, color):
         self.name = name
 
-        self.component_1_index = component_1_index
-        self.component_2_index = component_2_index
+        self.component_1 = component_1
+        self.component_2 = component_2
 
-        self.component_1 = self.components[component_1_index]
-        self.component_2 = self.components[component_2_index]
+        self.component_1_port = component_1_port
+        self.component_2_port = component_2_port
 
         self.radius = radius
         self.color = color
