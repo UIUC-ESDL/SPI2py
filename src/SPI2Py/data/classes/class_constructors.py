@@ -56,17 +56,20 @@ def create_interconnects(inputs):
     interconnect_nodes = []
     interconnect_segments = []
 
-    for interconnect in inputs['interconnects']:
+    for interconnect in inputs.values():
 
-        # name = inputs
+        name = interconnect['name']
 
-        component_1 = components[inputs['interconnects'][interconnect]['component 1']]
-        component_2 = components[inputs['interconnects'][interconnect]['component 2']]
+        component_1 = interconnect['component 1']
+        component_1_port = interconnect['component 1 port']
 
-        radius = inputs['interconnects'][interconnect]['radius']
-        color = inputs['interconnects'][interconnect]['color']
+        component_2 = interconnect['component 2']
+        component_2_port = interconnect['component 2 port']
 
-        interconnect = Interconnect(component_1, component_2, radius, color)
+        radius = interconnect['radius']
+        color = interconnect['color']
+
+        interconnect = Interconnect(name, component_1, component_1_port, component_2, component_2_port, radius, color)
         # logging.info(' Interconnect: ' + str(interconnect) + ' created.')
 
         # Add Interconnect, InterconnectNodes, and InterconnectSegments to lists
@@ -78,16 +81,17 @@ def create_interconnects(inputs):
     # TODO Unstrip port nodes?
     interconnect_nodes = nodes[1:-1] # Strip the first and last nodes (port nodes)
 
+
 def create_structures(inputs):
     
     structures = []
 
-    for structure in inputs['structures']:
+    for structure in inputs.values():
 
-        name = inputs['structures'][structure]['name']
-        color = inputs['structures'][structure]['color']
-        origins = inputs['structures'][structure]['origins']
-        dimensions = inputs['structures'][structure]['dimensions']
+        name = structure['name']
+        color = structure['color']
+        origins = structure['origins']
+        dimensions = structure['dimensions']
 
         positions, radii = generate_rectangular_prisms(origins, dimensions)
 

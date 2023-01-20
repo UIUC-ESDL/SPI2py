@@ -78,7 +78,7 @@ class Component(DynamicObject):
 
 
     def __repr__(self):
-        return "Component: " + self.name
+        return self.name
 
     @property
     def reference_position(self):
@@ -171,9 +171,14 @@ class Interconnect(InterconnectNode, InterconnectEdge):
     in spatial_configuration.py.
     """
 
-    def __init__(self, component_1, component_2, radius, color):
-        self.component_1 = component_1
-        self.component_2 = component_2
+    def __init__(self, name, component_1_index, component_2_index, radius, color):
+        self.name = name
+
+        self.component_1_index = component_1_index
+        self.component_2_index = component_2_index
+
+        self.component_1 = self.components[component_1_index]
+        self.component_2 = self.components[component_2_index]
 
         self.radius = radius
         self.color = color
@@ -242,9 +247,10 @@ class Interconnect(InterconnectNode, InterconnectEdge):
     def update_positions(self, positions_dict):
         pass
 
+
 class Structure:
-    def __init__(self, positions, radii, color, name):
+    def __init__(self, name, positions, radii, color):
+        self.name = name
         self.positions = positions
         self.radii = radii
         self.color = color
-        self.name = name

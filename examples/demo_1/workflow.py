@@ -42,7 +42,7 @@ demo.create_objects_from_input()
 
 # Map the objects to a 3D layout
 layout_generation_method = 'manual'
-
+#
 pos_comp0 = np.array([-3., -4.41, -0.24, 0., 0., 0.])
 pos_comp1 = np.array([2., 4.41, 0.24, 0., 0., 0.])
 pos_comp2 = np.array([5, -3, -1, 0., 0., 0.])
