@@ -73,7 +73,7 @@ class SpatialConfiguration(System):
         if design_vector is None:
 
             for obj in self.objects:
-                positions_dict[obj] = (obj.positions, obj.radii)
+                positions_dict[str(obj)] = (obj.positions, obj.radii)
 
         else:
 

@@ -81,6 +81,7 @@ def create_interconnects(inputs):
     # TODO Unstrip port nodes?
     interconnect_nodes = nodes[1:-1] # Strip the first and last nodes (port nodes)
 
+    return interconnects, interconnect_nodes, interconnect_segments
 
 def create_structures(inputs):
     
