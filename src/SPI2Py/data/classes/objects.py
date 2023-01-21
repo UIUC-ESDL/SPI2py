@@ -26,10 +26,11 @@
         return self.radii
 
 """
-
+import warnings
 import numpy as np
 from scipy.spatial.distance import euclidean
 
+from .input_validation import InputValidation
 from ...analysis.transformations import translate, rotate_about_point
 
 
@@ -46,6 +47,7 @@ from ...analysis.transformations import translate, rotate_about_point
 #         self.movement = []
 #         self.movement_depends_on = []
 #
+
 
 
     # def calculate_positions(self, design_vector, positions_dict={}):
