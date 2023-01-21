@@ -98,14 +98,9 @@ class Component(InputValidation):
                  port_positions: np.ndarray,
                  port_radii: np.ndarray,
                  port_colors: Union[str, list[str]],
-                 movement: tuple[str]=('3D Translation', '3D Rotation') ):
+                 movement: tuple[str] = ('3D Translation', '3D Rotation')):
 
         super(Component, self).__init__(name, positions, radii, color)
-
-        # self.name = name
-        # self.positions = positions
-        # self.radii = radii
-        # self.color = color
 
         self.movement = movement
 
@@ -163,7 +158,9 @@ class Component(InputValidation):
         """
         return np.concatenate((self.reference_position, self.rotation))
 
-    def calculate_positions(self, design_vector, positions_dict={}):
+    def calculate_positions(self,
+                            design_vector,
+                            positions_dict={}):
 
         # TODO Add functionality to accept positions_dict and work for InterconnectSegments
 
@@ -192,7 +189,8 @@ class Component(InputValidation):
 
         return positions_dict
 
-    def update_positions(self, positions_dict):
+    def update_positions(self,
+                         positions_dict: dict):
         """
         Update positions of object spheres given a design vector
 
@@ -203,7 +201,12 @@ class Component(InputValidation):
 
 
 class InterconnectNode:
-    def __init__(self, node, radius, color, movement=['3D Translation']):
+    def __init__(self,
+                 node,
+                 radius,
+                 color,
+                 movement=['3D Translation']):
+
         self.name = node
         self.node = node
         self.radius = radius
@@ -229,7 +232,9 @@ class InterconnectNode:
     def design_vector(self):
         return self.positions.flatten()
 
-    def calculate_positions(self, design_vector, positions_dict={}):
+    def calculate_positions(self,
+                            design_vector,
+                            positions_dict={}):
 
         # TODO Add functionality to accept positions_dict and work for InterconnectSegments
 
@@ -248,7 +253,8 @@ class InterconnectNode:
 
         return positions_dict
 
-    def update_positions(self, positions_dict):
+    def update_positions(self,
+                         positions_dict: dict):
         """
         Update positions of object spheres given a design vector
 
@@ -259,7 +265,13 @@ class InterconnectNode:
 
 
 class InterconnectEdge:
-    def __init__(self, name, object_1, object_2, radius, color):
+    def __init__(self,
+                 name,
+                 object_1,
+                 object_2,
+                 radius,
+                 color):
+
         self.name = name
         self.object_1 = object_1
         self.object_2 = object_2
@@ -283,7 +295,8 @@ class InterconnectEdge:
     def __str__(self):
         return self.name
 
-    def calculate_positions(self, positions_dict):
+    def calculate_positions(self,
+                            positions_dict: dict):
         # TODO revise logic for getting the reference point instead of object's first sphere
         # Address varying number of spheres
 
@@ -305,7 +318,9 @@ class InterconnectEdge:
         # TODO Change positions_dict to include kwarg and return addition?
         return {str(self): (positions, radii)}
 
-    def update_positions(self, positions_dict):
+    def update_positions(self,
+                         positions_dict: dict):
+
         self.positions = self.calculate_positions(positions_dict)[str(self)][0]  # index zero for tuple
 
         # TODO Separate this into a different function?
@@ -332,7 +347,15 @@ class Interconnect(InterconnectNode, InterconnectEdge):
         component_2 = [i for i in self.components if repr(i) == self.component_2][0]
     """
 
-    def __init__(self, name, component_1, component_1_port, component_2, component_2_port, radius, color):
+    def __init__(self,
+                 name,
+                 component_1,
+                 component_1_port,
+                 component_2,
+                 component_2_port,
+                 radius,
+                 color):
+
         self.name = name
 
         self.component_1 = component_1
@@ -415,15 +438,21 @@ class Interconnect(InterconnectNode, InterconnectEdge):
     def edges(self):
         return [segment.edge for segment in self.segments]
 
-    def calculate_positions(self, positions_dict):
+    def calculate_positions(self,
+                            positions_dict: dict):
         pass
 
-    def update_positions(self, positions_dict):
+    def update_positions(self,
+                         positions_dict: dict):
         pass
 
 
 class Structure:
-    def __init__(self, name, positions, radii, color):
+    def __init__(self,
+                 name,
+                 positions,
+                 radii,
+                 color):
         self.name = name
         self.positions = positions
         self.radii = radii
