@@ -6,6 +6,8 @@ from ...analysis.transformations import translate, rotate_about_point
 
 # TODO Add port object
 
+# TODO Add a parent class that sets str, repr, and formats arrays 1D vs 2D, etc.
+
 class DynamicObject:
     # TODO Implement a single class to handle how objects move and update positions... let child classes mutate them
     def __init__(self):
@@ -126,7 +128,8 @@ class InterconnectNode(DynamicObject):
 
 
 class InterconnectEdge(DynamicObject):
-    def __init__(self, object_1, object_2, radius, color):
+    def __init__(self, name, object_1, object_2, radius, color):
+        self.name = name
         self.object_1 = object_1
         self.object_2 = object_2
 
@@ -163,9 +166,10 @@ class InterconnectEdge(DynamicObject):
             num_spheres = 1
 
         positions = np.linspace(pos_1, pos_2, num_spheres)
+        radii = np.repeat(self.radius, num_spheres)
 
         # TODO Change positions_dict to include kwarg and return addition?
-        return {str(self): positions}
+        return {str(self): (positions, radii)}
 
     def update_positions(self, positions_dict):
         self.positions = self.calculate_positions(positions_dict)[str(self)]
@@ -240,12 +244,12 @@ class Interconnect(InterconnectNode, InterconnectEdge):
         # Add the interconnect nodes
         for i in range(self.number_of_nodes):
             # Each node should have unique identifier
-            node_prefix = self.component_1 + '-' + self.component_2 + '_'
+            node_prefix = self.component_1 + '-' + self.component_2 + '_node_'
             node = node_prefix + str(i)
 
             interconnect_node = InterconnectNode(node, self.radius, self.color)
             nodes.append(interconnect_node)
-            node_names.append(interconnect_node)
+            node_names.append(str(interconnect_node))
 
 
         # Add component 2
@@ -266,8 +270,12 @@ class Interconnect(InterconnectNode, InterconnectEdge):
 
         # TODO Implement
         # TODO Check...
+        i=0
         for object_1, object_2 in self.node_pairs:
-            segments.append(InterconnectEdge(object_1, object_2, self.radius, self.color))
+
+            name = self.component_1 + '-' + self.component_2 + '_edge_' + str(i)
+            i+= 1
+            segments.append(InterconnectEdge(name, object_1, object_2, self.radius, self.color))
 
         return segments
 
