@@ -144,7 +144,12 @@ class Component:
             new_positions = rotate_about_point(new_positions, rotation)
 
         # TODO Should we
+        # TODO Remove port
         positions_dict[str(self)] = (new_positions, self.radii)
+
+        for port_name, port_index in zip(self.port_names, self.port_indices):
+            full_port_name = self.name+"_"+port_name
+            positions_dict[full_port_name] = (new_positions[port_index], self.radii[port_index])
 
         return positions_dict
 
