@@ -9,12 +9,16 @@ import matplotlib.colors as mcolors
 
 
 class InputValidation:
-    def __init__(self, name, positions, radii, colors):
+    def __init__(self, name, positions, radii, color):
 
         self.name = name
         self.positions = self._validate_positions(positions)
         self.radii = self._validate_radii(radii)
-        self.colors = self._validate_colors(colors)
+        # self.color = self._validate_colors(color)
+
+        # self.positions = positions
+        # self.radii = radii
+        self.color = color
 
     def _validate_position(self, position) -> np.ndarray:
         pass
@@ -28,11 +32,11 @@ class InputValidation:
             raise ValueError('Positions must be a list or numpy array for %d.' % self.name)
 
         if isinstance(positions, list):
-            warnings.warning('Positions should be a numpy array for %d.' % self.name)
+            warnings.warn('Positions should be a numpy array for %d.' % self.name)
             positions = np.array(positions)
 
         if len(positions.shape) == 1:
-            warnings.warning('Positions are not 2D for %d.' % self.name)
+            warnings.warn('Positions are not 2D for %d.' % self.name)
             positions = positions.reshape(-1, 3)
 
         if positions.shape[1] != 3:
@@ -43,10 +47,18 @@ class InputValidation:
     def _validate_radii(self, radii) -> np.ndarray:
 
             if radii is None:
-                raise ValueError('Radii have not been set.')
+                raise ValueError('Radii have not been set for %d.' % self.name)
 
-            if len(radii.shape[0]) != len(self.positions.shape[0]):
-                raise ValueError('Radii must be the same length as positions.')
+            if isinstance(radii, list):
+                warnings.warn('Radii should be a numpy array for %d.' % self.name)
+                radii = np.array(radii)
+
+            if len(radii.shape) > 1:
+                warnings.warn('Radii should be 1D for %d.' % self.name)
+                radii = radii.reshape(-1)
+
+            if radii.shape[0] != self.positions.shape[0]:
+                raise ValueError('There must be 1 radius for each position row for %d.' % self.name)
 
             return radii
 

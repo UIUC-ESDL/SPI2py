@@ -28,6 +28,7 @@
 """
 
 import numpy as np
+# import warnings
 from scipy.spatial.distance import euclidean
 
 from .input_validation import InputValidation
@@ -87,16 +88,18 @@ class Port:
         self.color = color
 
 
-class Component:
+class Component(InputValidation):
 
     def __init__(self, name, positions, radii, color, 
                     port_names, port_positions, port_radii, port_colors,
                     movement=('3D Translation', '3D Rotation')):
 
-        self.name = name
-        self.positions = positions
-        self.radii = radii
-        self.color = color
+        super(Component, self).__init__(name, positions, radii, color)
+
+        # self.name = name
+        # self.positions = positions
+        # self.radii = radii
+        # self.color = color
         
         self.movement = movement
 
