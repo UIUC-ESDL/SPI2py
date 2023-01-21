@@ -3,13 +3,18 @@
 """
 
 import warnings
+from typing import Union
 import numpy as np
 import matplotlib.colors as mcolors
 
 
 
 class InputValidation:
-    def __init__(self, name, positions, radii, color):
+    def __init__(self,
+                 name: str,
+                 positions: np.ndarray,
+                 radii: np.ndarray,
+                 color: Union[str, list[str]]):
 
         self.name = name
         self.positions = self._validate_positions(positions)

@@ -26,7 +26,7 @@
         return self.radii
 
 """
-
+from typing import Union
 import numpy as np
 
 from scipy.spatial.distance import euclidean
@@ -78,18 +78,27 @@ from ...analysis.transformations import translate, rotate_about_point
 #     """
 #     self.positions, self.radii = positions_dict[str(self)]
 
-
 class Port(InputValidation):
 
     def __init__(self, name, origin, radius, color):
-        super(Component, self).__init__(name, origin, radius, color)
+        self.name = name
+        self.origin = origin
+        self.radius = radius
+        self.color = color
 
 
 class Component(InputValidation):
 
-    def __init__(self, name, positions, radii, color,
-                 port_names, port_positions, port_radii, port_colors,
-                 movement=('3D Translation', '3D Rotation')):
+    def __init__(self,
+                 name: str,
+                 positions: np.ndarray,
+                 radii: np.ndarray,
+                 color: Union[str, list[str]],
+                 port_names: Union[str, list[str]],
+                 port_positions: np.ndarray,
+                 port_radii: np.ndarray,
+                 port_colors: Union[str, list[str]],
+                 movement: tuple[str]=('3D Translation', '3D Rotation') ):
 
         super(Component, self).__init__(name, positions, radii, color)
 
@@ -106,7 +115,7 @@ class Component(InputValidation):
         self.rotation = np.array([0, 0, 0])
 
         # Ports
-        self.port_indices = []  # Tracks the index within positions and radii that the port is located
+        self.port_indices = []  # Tracks the index wihtin positions and radii that the port is located
         self.port_names = port_names
         self.port_positions = port_positions
         self.port_radii = port_radii
@@ -264,7 +273,8 @@ class InterconnectEdge:
         self.edge = (self.object_1, self.object_2)
 
         # Placeholder for plot test functionality, random positions
-        self.positions = None
+        # self.positions = None
+        self.positions = np.empty((0, 3))
         self.radii = None
 
     def __repr__(self):
