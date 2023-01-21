@@ -30,11 +30,6 @@ class SPI2:
         self.config = None
         self.inputs = None
 
-        self.components = []
-        self.interconnects = []
-        self.interconnect_nodes = []
-        self.interconnect_segments = []
-        self.structures = []
         self.layout = None
 
         self.result = None

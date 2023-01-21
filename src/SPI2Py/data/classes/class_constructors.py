@@ -36,13 +36,14 @@ def create_components(inputs):
         port_names = component['port names']
         port_origins = np.array(component['port origins']) # TODO Make array creation cleaner
         port_radii = component['port radii']
+        port_color = component['port colors']
 
         # Generate the component's positions and radii
 
         positions, radii = generate_rectangular_prisms(origins, dimensions)
 
         # Create the component
-        component = Component(name, positions, radii, color, port_names, port_origins, port_radii)
+        component = Component(name, positions, radii, color, port_names, port_origins, port_radii, port_color)
         # logging.info(' Component: ' + str(component) + ' created.')
         components.append(component)
 
