@@ -8,6 +8,7 @@ from ...analysis.transformations import translate, rotate_about_point
 
 # TODO Add a parent class that sets str, repr, and formats arrays 1D vs 2D, etc.
 
+
 class DynamicObject:
     # TODO Implement a single class to handle how objects move and update positions... let child classes mutate them
     def __init__(self):
@@ -50,6 +51,9 @@ class Component(DynamicObject):
     def __init__(self, name, positions, radii, color, 
                     port_names, port_positions, port_radii, 
                     movement=('3D Translation', '3D Rotation')):
+
+        # Check inputs
+        assert isinstance(self, Interconnect)
 
         self.name = name
         self.positions = positions
@@ -172,7 +176,7 @@ class InterconnectEdge(DynamicObject):
         return {str(self): (positions, radii)}
 
     def update_positions(self, positions_dict):
-        self.positions = self.calculate_positions(positions_dict)[str(self)]
+        self.positions = self.calculate_positions(positions_dict)[str(self)][0] # index zero for tuple
 
         # TODO Separate this into a different function?
         self.radii = np.repeat(self.radius, self.positions.shape[0])
