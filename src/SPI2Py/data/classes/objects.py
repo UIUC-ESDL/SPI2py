@@ -39,44 +39,53 @@ from ...analysis.transformations import translate, rotate_about_point
 
 # TODO Add a parent class that sets str, repr, and formats arrays 1D vs 2D, etc.
 
-# class DynamicObject:
-#     # TODO Implement a single class to handle how objects move and update positions... let child classes mutate them
-#     def __init__(self):
-#         self.positions = None
-#         self.radii = None
-#         self.reference_position = None
-#         self.movement = []
-#         self.movement_depends_on = []
-#
+class DynamicObject(InputValidation):
+    # TODO Implement a single class to handle how objects move and update positions... let child classes mutate them
+    def __init__(self,
+                 name: str,
+                 positions: np.ndarray,
+                 radii: np.ndarray,
+                 color: Union[str, list[str]],
+                 movement: Union[str, list[str]] = ['3D Translation', '3D Rotation']):
+
+        # self.name = name
+        # self.positions = positions
+        # self.radii = radii
+        # self.color = color
+        super().__init__(name, positions, radii, color)
+
+        self.movement = movement
+        # self.movement_depends_on = []
+        # self.reference_position = None
 
 
-# def calculate_positions(self, design_vector, positions_dict={}):
-#
-#     # TODO Add functionality to accept positions_dict and work for InterconnectSegments
-#
-#     new_positions = self.positions
-#
-#     if '3D Translation' in self.movement:
-#         new_reference_position = design_vector[0:3]
-#         new_positions = translate(new_positions, self.reference_position, new_reference_position)
-#
-#     if '3D Rotation' in self.movement:
-#         rotation = design_vector[3:None]
-#         new_positions = rotate_about_point(new_positions, rotation)
-#
-#     # TODO Should we
-#     positions_dict[str(self)] = (new_positions, self.radii)
-#
-#     return positions_dict
-#
-# def update_positions(self, positions_dict):
-#     """
-#     Update positions of object spheres given a design vector
-#
-#     :param positions_dict:
-#     :return:
-#     """
-#     self.positions, self.radii = positions_dict[str(self)]
+    # def calculate_positions(self, design_vector, positions_dict={}):
+    #
+    #     # TODO Add functionality to accept positions_dict and work for InterconnectSegments
+    #
+    #     new_positions = self.positions
+    #
+    #     if '3D Translation' in self.movement:
+    #         new_reference_position = design_vector[0:3]
+    #         new_positions = translate(new_positions, self.reference_position, new_reference_position)
+    #
+    #     if '3D Rotation' in self.movement:
+    #         rotation = design_vector[3:None]
+    #         new_positions = rotate_about_point(new_positions, rotation)
+    #
+    #     # TODO Should we
+    #     positions_dict[str(self)] = (new_positions, self.radii)
+    #
+    #     return positions_dict
+
+    def update_positions(self, positions_dict: dict)->dict:
+        """
+        Update positions of object spheres given a design vector
+
+        :param positions_dict:
+        :return:
+        """
+        self.positions, self.radii = positions_dict[str(self)]
 
 class Port(InputValidation):
 
@@ -87,7 +96,7 @@ class Port(InputValidation):
         self.color = color
 
 
-class Component(InputValidation):
+class Component(DynamicObject):
 
     def __init__(self,
                  name: str,
@@ -100,9 +109,9 @@ class Component(InputValidation):
                  port_colors: Union[str, list[str]],
                  movement: tuple[str] = ('3D Translation', '3D Rotation')):
 
-        super(Component, self).__init__(name, positions, radii, color)
+        super(Component, self).__init__(name, positions, radii, color, movement)
 
-        self.movement = movement
+        # self.movement = movement
 
         self.ports = []
 
@@ -296,7 +305,7 @@ class InterconnectEdge:
         return self.name
 
     def calculate_positions(self,
-                            positions_dict: dict):
+                            positions_dict: dict)->dict:
         # TODO revise logic for getting the reference point instead of object's first sphere
         # Address varying number of spheres
 
