@@ -14,11 +14,7 @@ class InputValidation:
         self.name = name
         self.positions = self._validate_positions(positions)
         self.radii = self._validate_radii(radii)
-        # self.color = self._validate_colors(color)
-
-        # self.positions = positions
-        # self.radii = radii
-        self.color = color
+        self.color = self._validate_colors(color)
 
     def _validate_position(self, position) -> np.ndarray:
         pass
@@ -85,11 +81,17 @@ class InputValidation:
         if colors is None:
             raise ValueError('Color has not been set for %d.' % self.name)
 
-        if len(colors) == 1:
-            self._validate_color(colors)
+        if isinstance(colors, list):
 
-        if len(colors) > 1:
-            for color in colors:
-                self._validate_color(color)
+            if len(colors) == 1:
+                self._validate_color(colors)
+
+            if len(colors) > 1:
+                for color in colors:
+                    self._validate_color(color)
+        elif isinstance(colors, str):
+            self._validate_color(colors)
+        else:
+            raise ValueError('Colors must be a list or string for %d.' % self.name)
 
         return colors

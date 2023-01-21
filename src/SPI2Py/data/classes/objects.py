@@ -28,7 +28,7 @@
 """
 
 import numpy as np
-# import warnings
+
 from scipy.spatial.distance import euclidean
 
 from .input_validation import InputValidation
@@ -50,49 +50,46 @@ from ...analysis.transformations import translate, rotate_about_point
 #
 
 
+# def calculate_positions(self, design_vector, positions_dict={}):
+#
+#     # TODO Add functionality to accept positions_dict and work for InterconnectSegments
+#
+#     new_positions = self.positions
+#
+#     if '3D Translation' in self.movement:
+#         new_reference_position = design_vector[0:3]
+#         new_positions = translate(new_positions, self.reference_position, new_reference_position)
+#
+#     if '3D Rotation' in self.movement:
+#         rotation = design_vector[3:None]
+#         new_positions = rotate_about_point(new_positions, rotation)
+#
+#     # TODO Should we
+#     positions_dict[str(self)] = (new_positions, self.radii)
+#
+#     return positions_dict
+#
+# def update_positions(self, positions_dict):
+#     """
+#     Update positions of object spheres given a design vector
+#
+#     :param positions_dict:
+#     :return:
+#     """
+#     self.positions, self.radii = positions_dict[str(self)]
 
-    # def calculate_positions(self, design_vector, positions_dict={}):
-    #
-    #     # TODO Add functionality to accept positions_dict and work for InterconnectSegments
-    #
-    #     new_positions = self.positions
-    #
-    #     if '3D Translation' in self.movement:
-    #         new_reference_position = design_vector[0:3]
-    #         new_positions = translate(new_positions, self.reference_position, new_reference_position)
-    #
-    #     if '3D Rotation' in self.movement:
-    #         rotation = design_vector[3:None]
-    #         new_positions = rotate_about_point(new_positions, rotation)
-    #
-    #     # TODO Should we
-    #     positions_dict[str(self)] = (new_positions, self.radii)
-    #
-    #     return positions_dict
-    #
-    # def update_positions(self, positions_dict):
-    #     """
-    #     Update positions of object spheres given a design vector
-    #
-    #     :param positions_dict:
-    #     :return:
-    #     """
-    #     self.positions, self.radii = positions_dict[str(self)]
 
-class Port:
+class Port(InputValidation):
 
     def __init__(self, name, origin, radius, color):
-        self.name = name
-        self.origin = origin
-        self.radius = radius
-        self.color = color
+        super(Component, self).__init__(name, origin, radius, color)
 
 
 class Component(InputValidation):
 
-    def __init__(self, name, positions, radii, color, 
-                    port_names, port_positions, port_radii, port_colors,
-                    movement=('3D Translation', '3D Rotation')):
+    def __init__(self, name, positions, radii, color,
+                 port_names, port_positions, port_radii, port_colors,
+                 movement=('3D Translation', '3D Rotation')):
 
         super(Component, self).__init__(name, positions, radii, color)
 
@@ -100,7 +97,7 @@ class Component(InputValidation):
         # self.positions = positions
         # self.radii = radii
         # self.color = color
-        
+
         self.movement = movement
 
         self.ports = []
@@ -109,7 +106,7 @@ class Component(InputValidation):
         self.rotation = np.array([0, 0, 0])
 
         # Ports
-        self.port_indices = [] # Tracks the index wihtin positions and radii that the port is located
+        self.port_indices = []  # Tracks the index within positions and radii that the port is located
         self.port_names = port_names
         self.port_positions = port_positions
         self.port_radii = port_radii
@@ -120,13 +117,11 @@ class Component(InputValidation):
         if port_positions is not None and port_radii is not None:
 
             for position, radius in zip(self.port_positions, self.port_radii):
-                
-                self.positions = np.vstack((self.positions, position)) # TODO Make this cleaner
-                self.radii = np.append(self.radii, radius) # TODO Make this cleaner
+                self.positions = np.vstack((self.positions, position))  # TODO Make this cleaner
+                self.radii = np.append(self.radii, radius)  # TODO Make this cleaner
 
-                port_index = self.positions.shape[0]-1 # Nabs the final row index
+                port_index = self.positions.shape[0] - 1  # Nabs the final row index
                 self.port_indices.append(port_index)
-
 
     def __repr__(self):
         return self.name
@@ -183,7 +178,7 @@ class Component(InputValidation):
             #     port.origin = new_positions[port_index]
 
             for port_name, port_index in zip(self.port_names, self.port_indices):
-                full_port_name = self.name+"_"+port_name
+                full_port_name = self.name + "_" + port_name
                 positions_dict[full_port_name] = (new_positions[port_index], self.radii[port_index])
 
         return positions_dict
@@ -301,7 +296,7 @@ class InterconnectEdge:
         return {str(self): (positions, radii)}
 
     def update_positions(self, positions_dict):
-        self.positions = self.calculate_positions(positions_dict)[str(self)][0] # index zero for tuple
+        self.positions = self.calculate_positions(positions_dict)[str(self)][0]  # index zero for tuple
 
         # TODO Separate this into a different function?
         self.radii = np.repeat(self.radius, self.positions.shape[0])
@@ -380,7 +375,6 @@ class Interconnect(InterconnectNode, InterconnectEdge):
             nodes.append(interconnect_node)
             node_names.append(str(interconnect_node))
 
-
         # Add component 2
         nodes.append(self.component_2)
         node_names.append(self.component_2)
@@ -399,11 +393,10 @@ class Interconnect(InterconnectNode, InterconnectEdge):
 
         # TODO Implement
         # TODO Check...
-        i=0
+        i = 0
         for object_1, object_2 in self.node_pairs:
-
             name = self.component_1 + '-' + self.component_2 + '_edge_' + str(i)
-            i+= 1
+            i += 1
             segments.append(InterconnectEdge(name, object_1, object_2, self.radius, self.color))
 
         return segments
