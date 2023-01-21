@@ -26,7 +26,7 @@
         return self.radii
 
 """
-import warnings
+
 import numpy as np
 from scipy.spatial.distance import euclidean
 

@@ -1,25 +1,46 @@
+"""
+
+"""
+
+import warnings
+import numpy as np
+import matplotlib.colors as mcolors
+
+
+
 class InputValidation:
-    def _validate_positions(self, positions):
+    def __init__(self, name, positions, radii, colors):
+
+        self.name = name
+        self.positions = self._validate_positions(positions)
+        self.radii = self._validate_radii(radii)
+        self.colors = self._validate_colors(colors)
+
+    def _validate_position(self, position) -> np.ndarray:
+        pass
+
+    def _validate_positions(self, positions) -> np.ndarray:
 
         if positions is None:
-            raise ValueError('Positions have not been set.')
+            raise ValueError('Positions have not been set for %d.' % self.name)
 
         if not isinstance(positions, list) and not isinstance(positions, np.ndarray):
-            raise ValueError('Positions must be a list or numpy array.')
+            raise ValueError('Positions must be a list or numpy array for %d.' % self.name)
 
         if isinstance(positions, list):
-            warnings.warning('Positions should be a numpy array.')
+            warnings.warning('Positions should be a numpy array for %d.' % self.name)
             positions = np.array(positions)
 
         if len(positions.shape) == 1:
-            warnings.warning('Positions are not 2D.')
+            warnings.warning('Positions are not 2D for %d.' % self.name)
             positions = positions.reshape(-1, 3)
 
         if positions.shape[1] != 3:
-            raise ValueError('Positions must be 3D. Where did you get the extra dimension from?')
+            raise ValueError('Positions must be 3D for %d.' % self.name)
 
         return positions
-    def _validate_radii(self, radii):
+
+    def _validate_radii(self, radii) -> np.ndarray:
 
             if radii is None:
                 raise ValueError('Radii have not been set.')
@@ -29,13 +50,34 @@ class InputValidation:
 
             return radii
 
-    def _validate_colors(self, color):
-        if color is None:
-            raise ValueError('Color has not been set.')
+    def _validate_color(self, color):
 
-        if len(color) == 1:
-            raise ValueError('Color must be a 3 element list.')
+        if isinstance(color, str):
+            pass
+        else:
+            raise ValueError('Colors must be a string for %d.' % self.name)
 
-        if len(color) > 1:
+        if color in mcolors.BASE_COLORS:
+            pass
+        elif color in mcolors.TABLEAU_COLORS:
+            pass
+        elif color in mcolors.CSS4_COLORS:
+            pass
+        elif color in mcolors.XKCD_COLORS:
+            pass
+        else:
+            raise ValueError('Color not recognized for %d.' % self.name)
 
-        return color
+    def _validate_colors(self, colors):
+
+        if colors is None:
+            raise ValueError('Color has not been set for %d.' % self.name)
+
+        if len(colors) == 1:
+            self._validate_color(colors)
+
+        if len(colors) > 1:
+            for color in colors:
+                self._validate_color(color)
+
+        return colors
