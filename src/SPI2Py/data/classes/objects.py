@@ -76,10 +76,19 @@ from ...analysis.transformations import translate, rotate_about_point
     #     """
     #     self.positions, self.radii = positions_dict[str(self)]
 
+class Port:
+
+    def __init__(self, name, origin, radius, color):
+        self.name = name
+        self.origin = origin
+        self.radius = radius
+        self.color = color
+
+
 class Component:
 
     def __init__(self, name, positions, radii, color, 
-                    port_names, port_positions, port_radii, 
+                    port_names, port_positions, port_radii, port_colors,
                     movement=('3D Translation', '3D Rotation')):
 
         self.name = name
@@ -99,6 +108,9 @@ class Component:
         self.port_names = port_names
         self.port_positions = port_positions
         self.port_radii = port_radii
+        self.port_colors = port_colors
+
+        self.ports = self._create_ports()
 
         if port_positions is not None and port_radii is not None:
 
@@ -116,6 +128,19 @@ class Component:
 
     def __str__(self):
         return self.name
+
+    def _create_ports(self):
+
+        ports = []
+
+        inputs = [self.port_names, self.port_positions, self.port_radii, self.port_colors]
+
+        if all([input is not None for input in inputs]):
+
+            for name, position, radius, color in zip(self.port_names, self.port_positions, self.port_radii, self.color):
+                ports.append(Port(name, position, radius, color))
+
+        return ports
 
     @property
     def reference_position(self):
@@ -147,9 +172,14 @@ class Component:
         # TODO Remove port
         positions_dict[str(self)] = (new_positions, self.radii)
 
-        for port_name, port_index in zip(self.port_names, self.port_indices):
-            full_port_name = self.name+"_"+port_name
-            positions_dict[full_port_name] = (new_positions[port_index], self.radii[port_index])
+        if self.port_positions is not None and self.port_radii is not None:
+
+            # for port_index, port in zip(self.port_indices, self.ports):
+            #     port.origin = new_positions[port_index]
+
+            for port_name, port_index in zip(self.port_names, self.port_indices):
+                full_port_name = self.name+"_"+port_name
+                positions_dict[full_port_name] = (new_positions[port_index], self.radii[port_index])
 
         return positions_dict
 

@@ -9,6 +9,7 @@ components:
         port names: [supply, return]
         port origins: [[1,1,1], [1,1,2]]
         port radii: [0.25, 0.25]
+        port colors: [red, blue]
 
 
     1:
@@ -20,6 +21,7 @@ components:
         port names: [supply, return]
         port origins: [[1,1,-3], [-4,-3,5]]
         port radii: [0.3, 0.3]
+        port colors: [red, blue]
 
 
     2:
@@ -31,6 +33,7 @@ components:
         port names:
         port origins:
         port radii:
+        port colors:
 
     3:
         name: component3
@@ -41,6 +44,7 @@ components:
         port names:
         port origins:
         port radii:
+        port colors:
 
 interconnects:
 
