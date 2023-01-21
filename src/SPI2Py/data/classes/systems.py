@@ -15,8 +15,9 @@ class Subsystem:
 
     """
 
-    def __init__(self, components, interconnect_nodes, interconnect_segments, structures):
+    def __init__(self, components, interconnects, interconnect_nodes, interconnect_segments, structures):
         self.components = components
+        self.interconnects = interconnects
         self.interconnect_nodes = interconnect_nodes
         self.interconnect_segments = interconnect_segments
         self.structures = structures

@@ -19,6 +19,7 @@ from .optimization.solvers import gradient_based_optimization
 from .result.visualization.visualization import generate_gif
 
 
+
 class SPI2:
     """
     The SPI2 Class provides the user with a means to interact with the API...
@@ -82,7 +83,7 @@ class SPI2:
         self.structures = create_structures(self.inputs['structures'])
 
         # Generate SpatialConfiguration
-        self.layout = SpatialConfiguration(self.components, self.interconnect_nodes, self.interconnect_segments, self.structures)
+        self.layout = SpatialConfiguration(self.components, self.interconnects, self.interconnect_nodes, self.interconnect_segments, self.structures)
 
     def generate_layout(self, layout_generation_method, inputs=None, include_interconnect_nodes=False):
         """

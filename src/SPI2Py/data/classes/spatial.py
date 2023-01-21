@@ -100,6 +100,7 @@ class SpatialConfiguration(System):
         :type new_design_vector: np.ndarray
         """
 
+        # TODO Update calc function call to take vectors instead of vector?
         new_design_vectors = self.slice_design_vector(new_design_vector)
 
         positions_dict = self.calculate_positions(new_design_vector)
