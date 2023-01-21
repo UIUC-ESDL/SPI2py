@@ -37,46 +37,46 @@ from ...analysis.transformations import translate, rotate_about_point
 
 # TODO Add a parent class that sets str, repr, and formats arrays 1D vs 2D, etc.
 
-class DynamicObject:
-    # TODO Implement a single class to handle how objects move and update positions... let child classes mutate them
-    def __init__(self):
-        self.positions = None
-        self.radii = None
-        self.reference_position = None
-        self.movement = []
-        self.movement_depends_on = []
+# class DynamicObject:
+#     # TODO Implement a single class to handle how objects move and update positions... let child classes mutate them
+#     def __init__(self):
+#         self.positions = None
+#         self.radii = None
+#         self.reference_position = None
+#         self.movement = []
+#         self.movement_depends_on = []
+#
 
 
+    # def calculate_positions(self, design_vector, positions_dict={}):
+    #
+    #     # TODO Add functionality to accept positions_dict and work for InterconnectSegments
+    #
+    #     new_positions = self.positions
+    #
+    #     if '3D Translation' in self.movement:
+    #         new_reference_position = design_vector[0:3]
+    #         new_positions = translate(new_positions, self.reference_position, new_reference_position)
+    #
+    #     if '3D Rotation' in self.movement:
+    #         rotation = design_vector[3:None]
+    #         new_positions = rotate_about_point(new_positions, rotation)
+    #
+    #     # TODO Should we
+    #     positions_dict[str(self)] = (new_positions, self.radii)
+    #
+    #     return positions_dict
+    #
+    # def update_positions(self, positions_dict):
+    #     """
+    #     Update positions of object spheres given a design vector
+    #
+    #     :param positions_dict:
+    #     :return:
+    #     """
+    #     self.positions, self.radii = positions_dict[str(self)]
 
-    def calculate_positions(self, design_vector, positions_dict={}):
-
-        # TODO Add functionality to accept positions_dict and work for InterconnectSegments
-
-        new_positions = self.positions
-
-        if '3D Translation' in self.movement:
-            new_reference_position = design_vector[0:3]
-            new_positions = translate(new_positions, self.reference_position, new_reference_position)
-
-        if '3D Rotation' in self.movement:
-            rotation = design_vector[3:None]
-            new_positions = rotate_about_point(new_positions, rotation)
-
-        # TODO Should we
-        positions_dict[str(self)] = (new_positions, self.radii)
-
-        return positions_dict
-
-    def update_positions(self, positions_dict):
-        """
-        Update positions of object spheres given a design vector
-
-        :param positions_dict:
-        :return:
-        """
-        self.positions, self.radii = positions_dict[str(self)]
-
-class Component(DynamicObject):
+class Component:
 
     def __init__(self, name, positions, radii, color, 
                     port_names, port_positions, port_radii, 
@@ -129,8 +129,36 @@ class Component(DynamicObject):
         """
         return np.concatenate((self.reference_position, self.rotation))
 
+    def calculate_positions(self, design_vector, positions_dict={}):
 
-class InterconnectNode(DynamicObject):
+        # TODO Add functionality to accept positions_dict and work for InterconnectSegments
+
+        new_positions = self.positions
+
+        if '3D Translation' in self.movement:
+            new_reference_position = design_vector[0:3]
+            new_positions = translate(new_positions, self.reference_position, new_reference_position)
+
+        if '3D Rotation' in self.movement:
+            rotation = design_vector[3:None]
+            new_positions = rotate_about_point(new_positions, rotation)
+
+        # TODO Should we
+        positions_dict[str(self)] = (new_positions, self.radii)
+
+        return positions_dict
+
+    def update_positions(self, positions_dict):
+        """
+        Update positions of object spheres given a design vector
+
+        :param positions_dict:
+        :return:
+        """
+        self.positions, self.radii = positions_dict[str(self)]
+
+
+class InterconnectNode:
     def __init__(self, node, radius, color, movement=['3D Translation']):
         self.name = node
         self.node = node
@@ -157,8 +185,36 @@ class InterconnectNode(DynamicObject):
     def design_vector(self):
         return self.positions.flatten()
 
+    def calculate_positions(self, design_vector, positions_dict={}):
 
-class InterconnectEdge(DynamicObject):
+        # TODO Add functionality to accept positions_dict and work for InterconnectSegments
+
+        new_positions = self.positions
+
+        if '3D Translation' in self.movement:
+            new_reference_position = design_vector[0:3]
+            new_positions = translate(new_positions, self.reference_position, new_reference_position)
+
+        if '3D Rotation' in self.movement:
+            rotation = design_vector[3:None]
+            new_positions = rotate_about_point(new_positions, rotation)
+
+        # TODO Should we
+        positions_dict[str(self)] = (new_positions, self.radii)
+
+        return positions_dict
+
+    def update_positions(self, positions_dict):
+        """
+        Update positions of object spheres given a design vector
+
+        :param positions_dict:
+        :return:
+        """
+        self.positions, self.radii = positions_dict[str(self)]
+
+
+class InterconnectEdge:
     def __init__(self, name, object_1, object_2, radius, color):
         self.name = name
         self.object_1 = object_1
@@ -166,6 +222,8 @@ class InterconnectEdge(DynamicObject):
 
         self.radius = radius
         self.color = color
+
+        self.movement = []
 
         # Create edge tuple for NetworkX graphs
         self.edge = (self.object_1, self.object_2)

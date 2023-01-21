@@ -52,7 +52,7 @@ pos_int0node0 = np.array([-1., 2., 2.])
 pos_int1node0 = np.array([1., 2., 3.])
 
 # locations = np.concatenate((pos_comp0, pos_comp1, pos_int0node0))
-locations = np.concatenate((pos_comp0, pos_comp1, pos_comp2, pos_int0node0))
+locations = np.concatenate((pos_comp0, pos_comp1, pos_comp2, pos_comp3, pos_int0node0))
 # locations = np.concatenate((pos_comp0, pos_comp1, pos_comp2, pos_comp3, pos_int0node0, pos_int1node0))
 
 demo.generate_layout(layout_generation_method, inputs=locations)

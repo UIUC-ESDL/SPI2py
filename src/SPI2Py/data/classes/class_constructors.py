@@ -34,7 +34,7 @@ def create_components(inputs):
 
         # Extract the port information
         port_names = component['port names']
-        port_origins = np.array([component['port origins']]) # TODO Make array creation cleaner
+        port_origins = np.array(component['port origins']) # TODO Make array creation cleaner
         port_radii = component['port radii']
 
         # Generate the component's positions and radii
