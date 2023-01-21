@@ -58,7 +58,7 @@ locations = np.concatenate((pos_comp0, pos_comp1, pos_comp2, pos_int0node0))
 demo.generate_layout(layout_generation_method, inputs=locations)
 
 # For development: Plot initial layout
-# demo.layout.plot_layout()
+demo.layout.plot_layout()
 
 # # Perform gradient-based optimization
 # demo.optimize_spatial_configuration()
