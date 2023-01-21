@@ -1,3 +1,32 @@
+"""
+
+    @property
+    def positions(self):
+
+        if self.positions is None:
+            raise ValueError('Positions have not been set.')
+
+        if len(self.positions.shape) == 1:
+            raise ValueError('Positions are not 2D.')
+
+        if self.positions.shape[1] != 3:
+            raise ValueError('Positions must be 3D.')
+
+        return self.positions
+
+    @property
+    def radii(self):
+
+        if self.radii is None:
+            raise ValueError('Radii have not been set.')
+
+        if len(self.radii.shape[0]) != len(self.positions.shape[0]):
+            raise ValueError('Radii must be the same length as positions.')
+
+        return self.radii
+
+"""
+
 import numpy as np
 from scipy.spatial.distance import euclidean
 
@@ -8,7 +37,6 @@ from ...analysis.transformations import translate, rotate_about_point
 
 # TODO Add a parent class that sets str, repr, and formats arrays 1D vs 2D, etc.
 
-
 class DynamicObject:
     # TODO Implement a single class to handle how objects move and update positions... let child classes mutate them
     def __init__(self):
@@ -17,6 +45,8 @@ class DynamicObject:
         self.reference_position = None
         self.movement = []
         self.movement_depends_on = []
+
+
 
     def calculate_positions(self, design_vector, positions_dict={}):
 
@@ -51,9 +81,6 @@ class Component(DynamicObject):
     def __init__(self, name, positions, radii, color, 
                     port_names, port_positions, port_radii, 
                     movement=('3D Translation', '3D Rotation')):
-
-        # Check inputs
-        assert isinstance(self, Interconnect)
 
         self.name = name
         self.positions = positions
