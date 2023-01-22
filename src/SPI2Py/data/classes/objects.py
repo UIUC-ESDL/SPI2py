@@ -194,9 +194,6 @@ class Component(Object):
         self.degrees_of_freedom = degrees_of_freedom
         self.reference_object = reference_object
 
-        self.three_d_translation = all([dof in self.degrees_of_freedom for dof in ['x', 'y', 'z']])
-        self.three_d_rotation = all([dof in self.degrees_of_freedom for dof in ['rx', 'ry', 'rz']])
-
         # Initialize the rotation attribute
         # self.rotation = np.array([0, 0, 0])
 
@@ -245,19 +242,11 @@ class Component(Object):
 
         # TODO Add functionality to accept positions_dict and work for InterconnectSegments
 
-        new_positions = self.positions
+        # TODO Delete this
+        new_positions = np.copy(self.positions)
 
-        if self.three_d_translation is True:
-            new_reference_position = design_vector[0:3]
-            new_positions = translate(new_positions, self.reference_position, new_reference_position)
 
-        if self.three_d_rotation is True:
-            rotation = design_vector[3:None]
-            new_positions = rotate_about_point(new_positions, rotation)
-
-        # TODO Should we
-        # TODO Remove port
-        positions_dict[str(self)] = (new_positions, self.radii)
+        positions_dict = self.calculate_independent_positions(design_vector, positions_dict)
 
         if self.port_positions is not None and self.port_radii is not None:
 
