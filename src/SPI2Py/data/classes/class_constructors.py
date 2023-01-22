@@ -31,6 +31,7 @@ def create_components(inputs):
         color = component['color']
         origins = component['origins']
         dimensions = component['dimensions']
+        rotation = component['rotation']
 
         # Extract the port information
         port_names = component['port names']
@@ -43,7 +44,7 @@ def create_components(inputs):
         positions, radii = generate_rectangular_prisms(origins, dimensions)
 
         # Create the component
-        component = Component(name, positions, radii, color, port_names, port_origins, port_radii, port_color)
+        component = Component(name, positions, rotation, radii, color, port_names, port_origins, port_radii, port_color)
         # logging.info(' Component: ' + str(component) + ' created.')
         components.append(component)
 
