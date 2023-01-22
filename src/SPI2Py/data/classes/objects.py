@@ -46,12 +46,16 @@ class Object(InputValidation):
                  positions: np.ndarray,
                  radii: np.ndarray,
                  color: Union[str, list[str]],
-                 movement: Union[str, tuple[str]] = ('3D Translation', '3D Rotation')):
+                 movement: Union[str, tuple[str]] = ('3D Translation', '3D Rotation'),
+                 reference_object: Union[None, str] = None):
 
         super().__init__(name, positions, radii, color)
 
         self.movement = movement
-        # self.movement_depends_on = []
+        self.reference_object = reference_object
+
+        self.rotation = np.zeros(3)
+
         # self.reference_position = None
 
     def __repr__(self):
@@ -59,6 +63,28 @@ class Object(InputValidation):
 
     def __str__(self):
         return self.name
+
+    @property
+    def reference_position(self):
+        return self.positions[0]
+
+    @property
+    def design_vector(self):
+        """
+        TODO Provide a method to reduce the design vector (e.g., not translation along z axis)
+        :return:
+        """
+
+        if '3D Translation' in self.movement and '3D Rotation' not in self.movement:
+            design_vector = self.reference_position
+
+        elif '3D Translation' in self.movement and '3D Rotation' in self.movement:
+            design_vector = np.concatenate((self.reference_position, self.rotation))
+
+        else:
+            raise ValueError('Movement not recognized.')
+
+        return design_vector
 
     def calculate_positions(self,
                             design_vector: np.ndarray,
@@ -117,15 +143,11 @@ class Component(Object):
 
         super(Component, self).__init__(name, positions, radii, color, movement)
 
-        # self.movement = movement
-
-        self.ports = []
-
         # Initialize the rotation attribute
         self.rotation = np.array([0, 0, 0])
 
         # Ports
-        self.port_indices = []  # Tracks the index wihtin positions and radii that the port is located
+        self.port_indices = []  # Tracks the index within positions and radii that the port is located
         self.port_names = port_names
         self.port_positions = port_positions
         self.port_radii = port_radii
@@ -156,9 +178,7 @@ class Component(Object):
 
         return ports
 
-    @property
-    def reference_position(self):
-        return self.positions[0]
+
 
     @property
     def design_vector(self):
