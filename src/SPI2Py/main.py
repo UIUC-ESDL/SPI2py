@@ -9,7 +9,7 @@ from datetime import datetime
 import yaml
 
 from .data.spherical_decomposition import generate_rectangular_prisms
-from .data.classes.class_constructors import create_components, create_interconnects, create_structures
+from .data.classes.class_constructors import create_components, create_ports, create_interconnects, create_structures
 from .data.classes.spatial import SpatialConfiguration
 
 from .layout.generation_methods import generate_random_layout
@@ -69,7 +69,9 @@ class SPI2:
         """
 
         # Create Components
-        components, ports = create_components(self.inputs['components'])
+        components = create_components(self.inputs['components'])
+
+        ports = create_ports(self.inputs['ports'])
 
         # Create Interconnects
         interconnects, interconnect_nodes, interconnect_segments = create_interconnects(self.inputs['interconnects'])

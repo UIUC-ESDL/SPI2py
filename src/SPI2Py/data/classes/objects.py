@@ -167,11 +167,32 @@ class Object(InputValidation):
 
 class Port(InputValidation):
 
-    def __init__(self, name, origin, radius, color):
-        self.name = name
-        self.origin = origin
-        self.radius = radius
+    def __init__(self, component_name, port_name, color, reference_point_offset, radius):
+
+        self.component_name = component_name
+        self.port_name = port_name
         self.color = color
+        self.reference_point_offset = reference_point_offset
+        self.radius = radius
+
+    def __repr__(self):
+        return self.component_name + '_' + self.port_name + '_port'
+
+    def __str__(self):
+        return self.component_name + '_' + self.port_name + '_port'
+
+    def calculate_positions(self, positions_dict):
+
+        # Get the reference point
+        reference_point = positions_dict[self.component_name][0][0]
+
+        # Calculate the port position
+        port_position = reference_point + self.reference_point_offset
+
+        # Add the port position to the positions dictionary
+        positions_dict[str(self)] = (port_position, self.radius)
+
+        return positions_dict
 
 
 class Component(Object):
@@ -182,10 +203,6 @@ class Component(Object):
                  rotation: np.ndarray,
                  radii: np.ndarray,
                  color: Union[str, list[str]],
-                 port_names: Union[str, list[str]],
-                 port_positions: np.ndarray,
-                 port_radii: np.ndarray,
-                 port_colors: Union[str, list[str]],
                  degrees_of_freedom: tuple[str] = ('x', 'y', 'z', 'rx', 'ry', 'rz'),
                  reference_object: Union[None, tuple[str]] = None):
 
@@ -196,38 +213,6 @@ class Component(Object):
 
         # Initialize the rotation attribute
         # self.rotation = np.array([0, 0, 0])
-
-        # Ports
-        self.port_indices = []  # Tracks the index within positions and radii that the port is located
-        self.port_names = port_names
-        self.port_positions = port_positions
-        self.port_radii = port_radii
-        self.port_colors = port_colors
-
-        self.ports = self._create_ports()
-
-        if port_positions is not None and port_radii is not None:
-
-            for position, radius in zip(self.port_positions, self.port_radii):
-                self.positions = np.vstack((self.positions, position))  # TODO Make this cleaner
-                self.radii = np.append(self.radii, radius)  # TODO Make this cleaner
-
-                port_index = self.positions.shape[0] - 1  # Nabs the final row index
-                self.port_indices.append(port_index)
-
-
-    def _create_ports(self):
-
-        ports = []
-
-        inputs = [self.port_names, self.port_positions, self.port_radii, self.port_colors]
-
-        if all([input is not None for input in inputs]):
-
-            for name, position, radius, color in zip(self.port_names, self.port_positions, self.port_radii, self.color):
-                ports.append(Port(name, position, radius, color))
-
-        return ports
 
     @property
     def design_vector(self):
