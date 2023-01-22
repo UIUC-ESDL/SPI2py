@@ -23,6 +23,7 @@ def extract_inputs():
 def create_components(inputs):
 
     components = []
+    ports = []
 
     for component in inputs.values():
 
@@ -47,8 +48,9 @@ def create_components(inputs):
         component = Component(name, positions, rotation, radii, color, port_names, port_origins, port_radii, port_color)
         # logging.info(' Component: ' + str(component) + ' created.')
         components.append(component)
+        ports+=component.ports
 
-    return components
+    return components, ports
 
 
 def create_interconnects(inputs):
