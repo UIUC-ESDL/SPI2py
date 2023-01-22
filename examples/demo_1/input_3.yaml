@@ -2,7 +2,7 @@ components:
 
     0:
         name: control_valve_1
-        color: blue
+        color: aquamarine
         origins: [ [ 1, 1, 1 ], [2, 1, 1], [3, 1, 1], ]
         dimensions: [ [ 2, 2, 2 ], [2, 2, 2], [2, 2, 2] ]
         rotation: [0,0,0]
@@ -34,14 +34,14 @@ ports:
         component name: control_valve_1
         port name: supply
         color: red
-        radius: 0.25
-        reference point offset: [1,1,1]
+        radius: 0.5
+        reference point offset: [0,0,1.5]
     1:
         component name: control_valve_1
         port name: return
         color: blue
-        radius: 0.125
-        reference point offset: [ 1,1,2 ]
+        radius: 0.5
+        reference point offset: [2,0,1.5]
 
     2:
         component name: actuator_1
@@ -55,7 +55,7 @@ ports:
         port name: return
         color: blue
         radius: 0.125
-        reference point offset: [-4,-3,5]
+        reference point offset: [-1,-3,1]
 
 interconnects:
 
