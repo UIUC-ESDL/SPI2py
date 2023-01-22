@@ -171,9 +171,16 @@ class Port(InputValidation):
 
         self.component_name = component_name
         self.port_name = port_name
+
+        self.name = self.component_name + '_' + self.port_name + '_port'
+
         self.color = color
-        self.reference_point_offset = reference_point_offset
-        self.radius = radius
+        self.reference_point_offset = self._validate_positions(reference_point_offset)
+        self.radius = self._validate_radii(radius)
+
+        self.positions = None
+
+
 
     def __repr__(self):
         return self.component_name + '_' + self.port_name + '_port'
@@ -193,6 +200,16 @@ class Port(InputValidation):
         positions_dict[str(self)] = (port_position, self.radius)
 
         return positions_dict
+
+    def set_positions(self, positions_dict: dict) -> dict:
+        """
+        Update positions of object spheres given a design vector
+
+        :param positions_dict:
+        :return:
+        """
+
+        self.positions, self.radii = positions_dict[self.name]
 
 
 class Component(Object):
@@ -225,22 +242,7 @@ class Component(Object):
                             design_vector,
                             positions_dict={}):
 
-        # TODO Add functionality to accept positions_dict and work for InterconnectSegments
-
-        # TODO Delete this
-        new_positions = np.copy(self.positions)
-
-
         positions_dict = self.calculate_independent_positions(design_vector, positions_dict)
-
-        if self.port_positions is not None and self.port_radii is not None:
-
-            # for port_index, port in zip(self.port_indices, self.ports):
-            #     port.origin = new_positions[port_index]
-
-            for port_name, port_index in zip(self.port_names, self.port_indices):
-                full_port_name = self.name + "_" + port_name
-                positions_dict[full_port_name] = (new_positions[port_index], self.radii[port_index])
 
         return positions_dict
 

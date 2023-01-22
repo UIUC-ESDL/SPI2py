@@ -27,7 +27,7 @@ class Subsystem:
 
     @property
     def objects(self):
-        return self.components + self.interconnect_nodes + self.interconnect_segments + self.structures
+        return self.components + self.ports + self.interconnect_nodes + self.interconnect_segments + self.structures
 
     @property
     def design_vector_objects(self):
@@ -35,7 +35,7 @@ class Subsystem:
 
     @property
     def moving_objects(self):
-        return self.components + self.interconnect_nodes + self.interconnect_segments
+        return self.components + self.ports + self.interconnect_nodes + self.interconnect_segments
 
     @property
     def nodes(self):

@@ -45,6 +45,7 @@ def create_components(inputs):
 
     return components
 
+
 def create_ports(inputs):
 
     ports = []
