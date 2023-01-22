@@ -51,7 +51,7 @@ class Object(InputValidation):
                  degrees_of_freedom: tuple[str] = ('x', 'y', 'z', 'rx', 'ry', 'rz'),
                  reference_object: Union[None, tuple[str]] = None):
 
-        super().__init__(name, positions, rotation, radii, color)
+        super(Object, self).__init__(name, positions, rotation, radii, color)
 
         self.degrees_of_freedom = degrees_of_freedom
         self.reference_object = reference_object
@@ -145,7 +145,9 @@ class Component(Object):
                  port_colors: Union[str, list[str]],
                  degrees_of_freedom: tuple[str] = ('3D Translation', '3D Rotation')):
 
-        super(Component, self).__init__(name, positions, rotation, radii, color, degrees_of_freedom)
+        super(Component, self).__init__(name, positions, rotation, radii, color)
+
+        self.degrees_of_freedom = degrees_of_freedom
 
         # Initialize the rotation attribute
         # self.rotation = np.array([0, 0, 0])
@@ -242,12 +244,6 @@ class InterconnectNode(Object):
         self.positions = np.array([[0., 0., 0.]])  # Initialize a dummy value
         self.movement = movement
 
-    # def __repr__(self):
-    #     return self.name
-    #
-    # def __str__(self):
-    #     return self.name
-
     @property
     def reference_position(self):
         return self.positions
@@ -277,18 +273,8 @@ class InterconnectNode(Object):
 
         return positions_dict
 
-    # def set_positions(self,
-    #                   positions_dict: dict):
-    #     """
-    #     Update positions of object spheres given a design vector
-    #
-    #     :param positions_dict:
-    #     :return:
-    #     """
-    #     self.positions, self.radii = positions_dict[str(self)]
 
-
-class InterconnectEdge:
+class InterconnectEdge(Object):
     def __init__(self,
                  name,
                  object_1,
@@ -312,12 +298,6 @@ class InterconnectEdge:
         # self.positions = None
         self.positions = np.empty((0, 3))
         self.radii = None
-
-    def __repr__(self):
-        return self.name
-
-    def __str__(self):
-        return self.name
 
     def calculate_positions(self,
                             positions_dict: dict)->dict:
@@ -343,7 +323,9 @@ class InterconnectEdge:
         return {str(self): (positions, radii)}
 
     def set_positions(self,
-                      positions_dict: dict):
+                      positions_dict: dict) -> dict:
+
+        # self.positions, self.radii = positions_dict[self.name]
 
         self.positions = self.calculate_positions(positions_dict)[str(self)][0]  # index zero for tuple
 
@@ -471,20 +453,23 @@ class Interconnect(InterconnectNode, InterconnectEdge):
         pass
 
 
-class Structure:
+class Structure(Object):
     def __init__(self,
                  name,
                  positions,
+                 rotation,
                  radii,
                  color):
 
-        self.name = name
-        self.positions = positions
-        self.radii = radii
-        self.color = color
+        # self.name = name
+        # self.positions = positions
+        # self.rotation = rotation
+        # self.radii = radii
+        # self.color = color
+        super(Structure, self).__init__(name, positions, rotation, radii, color)
 
-    def __repr__(self):
-        return self.name
-
-    def __str__(self):
-        return self.name
+    # def __repr__(self):
+    #     return self.name
+    #
+    # def __str__(self):
+    #     return self.name
