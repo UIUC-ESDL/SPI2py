@@ -60,6 +60,9 @@ class Object(InputValidation):
 
         # self.reference_position = None
 
+        self.three_d_translation = all([dof in self.degrees_of_freedom for dof in ['x', 'y', 'z']])
+        self.three_d_rotation = all([dof in self.degrees_of_freedom for dof in ['rx', 'ry', 'rz']])
+
     def __repr__(self):
         return self.name
 
@@ -77,10 +80,10 @@ class Object(InputValidation):
     #     :return:
     #     """
     #
-    #     if '3D Translation' in self.degrees_of_freedom and '3D Rotation' not in self.degrees_of_freedom:
+    #     if self.three_d_translation is True and self.three_d_rotation is not True:
     #         design_vector = self.reference_position
     #
-    #     elif '3D Translation' in self.degrees_of_freedom and '3D Rotation' in self.degrees_of_freedom:
+    #     elif self.three_d_translation is True and self.three_d_rotation is True:
     #         design_vector = np.concatenate((self.reference_position, self.rotation))
     #
     #     else:
@@ -93,19 +96,17 @@ class Object(InputValidation):
                                         design_vector: np.ndarray,
                                         positions_dict: Union[None, dict] = None) -> dict:
 
-        new_positions = self.positions
+        """
 
-        # Check for 3D translation
-        three_d_translation = all([dof in ['x', 'y', 'z'] for dof in self.degrees_of_freedom])
+        """
 
-        if three_d_translation is True:
+        new_positions = np.copy(self.positions)
+
+        if self.three_d_translation is True:
             new_reference_position = design_vector[0:3]
             new_positions = translate(new_positions, self.reference_position, new_reference_position)
 
-        # Check for 3D rotation
-        three_d_rotation = all([dof in ['rx', 'ry', 'rz'] for dof in self.degrees_of_freedom])
-
-        if three_d_rotation is True:
+        if self.three_d_rotation is True:
             rotation = design_vector[3:None]
             new_positions = rotate_about_point(new_positions, rotation)
 
@@ -118,26 +119,39 @@ class Object(InputValidation):
     def calculate_dependent_positions(self,
                                       design_vector: np.ndarray,
                                       positions_dict: Union[None, dict] = None) -> dict:
-        pass
+        """
 
-    def calculate_positions(self,
-                            design_vector: np.ndarray,
-                            positions_dict: Union[None, dict] = None) -> dict:
-
-        if positions_dict is None:
-            positions_dict = {}
-
+        """
+        # If fixed
         if self.reference_object is None:
+            raise ValueError('This object is fixed..? or just static?')
 
-            # Calculate the independent positions
-            positions_dict = self.calculate_independent_positions(design_vector, positions_dict)
-
-        elif self.reference_object is not None:
-
-            # Calculate the dependent positions
-            positions_dict = self.calculate_dependent_positions(design_vector, positions_dict)
+        # If straight line
 
         return positions_dict
+    #
+    # def calculate_positions(self,
+    #                         design_vector: np.ndarray,
+    #                         positions_dict: Union[None, dict] = None) -> dict:
+    #
+    #     """
+    #
+    #     """
+    #
+    #     if positions_dict is None:
+    #         positions_dict = {}
+    #
+    #     if self.reference_object is None:
+    #
+    #         # Calculate the independent positions
+    #         positions_dict = self.calculate_independent_positions(design_vector, positions_dict)
+    #
+    #     elif self.reference_object is not None:
+    #
+    #         # Calculate the dependent positions
+    #         positions_dict = self.calculate_dependent_positions(design_vector, positions_dict)
+    #
+    #     return positions_dict
 
 
     def set_positions(self, positions_dict: dict) -> dict:
@@ -172,11 +186,16 @@ class Component(Object):
                  port_positions: np.ndarray,
                  port_radii: np.ndarray,
                  port_colors: Union[str, list[str]],
-                 degrees_of_freedom: tuple[str] = ('3D Translation', '3D Rotation')):
+                 degrees_of_freedom: tuple[str] = ('x', 'y', 'z', 'rx', 'ry', 'rz'),
+                 reference_object: Union[None, tuple[str]] = None):
 
         super(Component, self).__init__(name, positions, rotation, radii, color)
 
         self.degrees_of_freedom = degrees_of_freedom
+        self.reference_object = reference_object
+
+        self.three_d_translation = all([dof in self.degrees_of_freedom for dof in ['x', 'y', 'z']])
+        self.three_d_rotation = all([dof in self.degrees_of_freedom for dof in ['rx', 'ry', 'rz']])
 
         # Initialize the rotation attribute
         # self.rotation = np.array([0, 0, 0])
@@ -213,6 +232,13 @@ class Component(Object):
 
         return ports
 
+    @property
+    def design_vector(self):
+
+        design_vector = np.concatenate((self.reference_position, self.rotation))
+
+        return design_vector
+
     def calculate_positions(self,
                             design_vector,
                             positions_dict={}):
@@ -221,11 +247,11 @@ class Component(Object):
 
         new_positions = self.positions
 
-        if '3D Translation' in self.degrees_of_freedom:
+        if self.three_d_translation is True:
             new_reference_position = design_vector[0:3]
             new_positions = translate(new_positions, self.reference_position, new_reference_position)
 
-        if '3D Rotation' in self.degrees_of_freedom:
+        if self.three_d_rotation is True:
             rotation = design_vector[3:None]
             new_positions = rotate_about_point(new_positions, rotation)
 
@@ -243,16 +269,6 @@ class Component(Object):
                 positions_dict[full_port_name] = (new_positions[port_index], self.radii[port_index])
 
         return positions_dict
-
-    def set_positions(self,
-                      positions_dict: dict):
-        """
-        Update positions of object spheres given a design vector
-
-        :param positions_dict:
-        :return:
-        """
-        self.positions, self.radii = positions_dict[str(self)]
 
 
 class InterconnectNode(Object):
