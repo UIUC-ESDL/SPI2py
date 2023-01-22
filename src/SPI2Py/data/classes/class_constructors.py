@@ -95,10 +95,11 @@ def create_structures(inputs):
         color = structure['color']
         origins = structure['origins']
         dimensions = structure['dimensions']
+        rotation = structure['rotation']
 
         positions, radii = generate_rectangular_prisms(origins, dimensions)
 
-        structure = Structure(name, positions, radii, color)
+        structure = Structure(name, positions, rotation, radii, color)
 
         # logging.info(' Structure: ' + str(structure) + ' created.')
 
