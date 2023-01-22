@@ -175,10 +175,14 @@ class Port(InputValidation):
         self.name = self.component_name + '_' + self.port_name + '_port'
 
         self.color = color
+
+        # Initialize positions...
+        self.positions = np.zeros((1, 3))
+
         self.reference_point_offset = self._validate_positions(reference_point_offset)
         self.radius = self._validate_radii(radius)
 
-        self.positions = None
+
 
 
 

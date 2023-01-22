@@ -58,7 +58,7 @@ def create_ports(inputs):
         reference_point_offset = port['reference point offset']
         radius = port['radius']
 
-        _port = Port(component_name, port_name, reference_point_offset, radius, color)
+        _port = Port(component_name, port_name, color, reference_point_offset, radius)
 
         # logging.info(' Port: ' + str(port) + ' created.')
         ports.append(_port)

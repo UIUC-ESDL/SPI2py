@@ -35,7 +35,7 @@ class InputValidation:
             raise ValueError('Positions have not been set for %s.' % self.name)
 
         if not isinstance(positions, list) and not isinstance(positions, np.ndarray):
-            raise ValueError('Positions must be a list or numpy array for %s.' % self.name)
+            raise ValueError('Positions must be a list or numpy array for %s not %s.' % (self.name, type(positions)))
 
         if isinstance(positions, list):
             warnings.warn('Positions should be a numpy array for %s.' % self.name)
@@ -54,6 +54,10 @@ class InputValidation:
 
             if radii is None:
                 raise ValueError('Radii have not been set for %s.' % self.name)
+
+            if isinstance(radii, float):
+                warnings.warn('Radii should be a numpy array for %s.' % self.name)
+                radii = np.array([radii])
 
             if isinstance(radii, list):
                 warnings.warn('Radii should be a numpy array for %s.' % self.name)
