@@ -461,15 +461,5 @@ class Structure(Object):
                  radii,
                  color):
 
-        # self.name = name
-        # self.positions = positions
-        # self.rotation = rotation
-        # self.radii = radii
-        # self.color = color
         super(Structure, self).__init__(name, positions, rotation, radii, color)
 
-    # def __repr__(self):
-    #     return self.name
-    #
-    # def __str__(self):
-    #     return self.name
