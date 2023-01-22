@@ -1,4 +1,4 @@
-from SPI2Py.data.classes.objects import DynamicObject
+from SPI2Py.data.classes.objects import Object
 
 # TODO Implement
 def test_create_DynamicObject():
