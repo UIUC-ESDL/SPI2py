@@ -5,7 +5,7 @@
 import numpy as np
 
 from ..spherical_decomposition import generate_rectangular_prisms
-from .objects import Component, Interconnect, Structure
+from .objects import Component, Port, Interconnect, InterconnectNode, InterconnectEdge, Structure
 
 def extract_inputs(): 
     
@@ -23,7 +23,7 @@ def extract_inputs():
 def create_components(inputs):
 
     components = []
-    ports = []
+
 
     for component in inputs.values():
 
@@ -34,23 +34,34 @@ def create_components(inputs):
         dimensions = component['dimensions']
         rotation = component['rotation']
 
-        # Extract the port information
-        port_names = component['port names']
-        port_origins = np.array(component['port origins']) # TODO Make array creation cleaner
-        port_radii = component['port radii']
-        port_color = component['port colors']
-
         # Generate the component's positions and radii
 
         positions, radii = generate_rectangular_prisms(origins, dimensions)
 
         # Create the component
-        component = Component(name, positions, rotation, radii, color, port_names, port_origins, port_radii, port_color)
+        component = Component(name, positions, rotation, radii, color)
         # logging.info(' Component: ' + str(component) + ' created.')
         components.append(component)
-        ports+=component.ports
 
-    return components, ports
+    return components
+
+def create_ports(inputs):
+
+    ports = []
+
+    # for port in inputs.values():
+    #
+    #     name = port['name']
+    #     component = port['component']
+    #     origin = port['origin']
+    #     radius = port['radius']
+    #     color = port['color']
+    #
+    #     port = Port(name, component, origin, radius, color)
+    #     # logging.info(' Port: ' + str(port) + ' created.')
+    #     ports.append(port)
+
+    return ports
 
 
 def create_interconnects(inputs):
