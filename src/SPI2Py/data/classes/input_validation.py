@@ -13,16 +13,21 @@ class InputValidation:
     def __init__(self,
                  name: str,
                  positions: np.ndarray,
+                 rotation: np.ndarray,
                  radii: np.ndarray,
                  color: Union[str, list[str]]):
 
         self.name = name
         self.positions = self._validate_positions(positions)
+        self.rotation = self._validate_rotation(rotation)
         self.radii = self._validate_radii(radii)
         self.color = self._validate_colors(color)
 
     def _validate_position(self, position) -> np.ndarray:
-        pass
+        return position
+
+    def _validate_rotation(self, rotation) -> np.ndarray:
+        return rotation
 
     def _validate_positions(self, positions) -> np.ndarray:
 
