@@ -70,45 +70,74 @@ class Object(InputValidation):
     def reference_position(self):
         return self.positions[0]
 
-    @property
-    def design_vector(self):
-        """
-        TODO Provide a method to reduce the design vector (e.g., not translation along z axis)
-        :return:
-        """
+    # @property
+    # def design_vector(self):
+    #     """
+    #     TODO Provide a method to reduce the design vector (e.g., not translation along z axis)
+    #     :return:
+    #     """
+    #
+    #     if '3D Translation' in self.degrees_of_freedom and '3D Rotation' not in self.degrees_of_freedom:
+    #         design_vector = self.reference_position
+    #
+    #     elif '3D Translation' in self.degrees_of_freedom and '3D Rotation' in self.degrees_of_freedom:
+    #         design_vector = np.concatenate((self.reference_position, self.rotation))
+    #
+    #     else:
+    #         warnings.warn('This object is fixed')
+    #         design_vector = None
+    #
+    #     return design_vector
 
-        if '3D Translation' in self.degrees_of_freedom and '3D Rotation' not in self.degrees_of_freedom:
-            design_vector = self.reference_position
+    def calculate_independent_positions(self,
+                                        design_vector: np.ndarray,
+                                        positions_dict: Union[None, dict] = None) -> dict:
 
-        elif '3D Translation' in self.degrees_of_freedom and '3D Rotation' in self.degrees_of_freedom:
-            design_vector = np.concatenate((self.reference_position, self.rotation))
+        new_positions = self.positions
 
-        else:
-            warnings.warn('This object is fixed')
-            design_vector = None
+        # Check for 3D translation
+        three_d_translation = all([dof in ['x', 'y', 'z'] for dof in self.degrees_of_freedom])
 
-        return design_vector
+        if three_d_translation is True:
+            new_reference_position = design_vector[0:3]
+            new_positions = translate(new_positions, self.reference_position, new_reference_position)
 
-    # def calculate_positions(self,
-    #                         design_vector: np.ndarray,
-    #                         positions_dict: Union[None, dict] = None) -> dict:
-    #
-    #     if positions_dict is None:
-    #         positions_dict = {}
-    #
-    #     new_positions = self.positions
-    #
-    #     if '3D Translation' in self.movement:
-    #         new_reference_position = design_vector[0:3]
-    #         new_positions = translate(new_positions, self.reference_position, new_reference_position)
-    #
-    #     if '3D Rotation' in self.movement:
-    #         rotation = design_vector[3:None]
-    #         new_positions = rotate_about_point(new_positions, rotation)
-    #
-    #     positions_dict[str(self)] = (new_positions, self.radii)
-    #
-    #     return positions_dict
+        # Check for 3D rotation
+        three_d_rotation = all([dof in ['rx', 'ry', 'rz'] for dof in self.degrees_of_freedom])
+
+        if three_d_rotation is True:
+            rotation = design_vector[3:None]
+            new_positions = rotate_about_point(new_positions, rotation)
+
+        # TODO Check for constrained movement cases
+
+        positions_dict[str(self)] = (new_positions, self.radii)
+
+        return positions_dict
+
+    def calculate_dependent_positions(self,
+                                      design_vector: np.ndarray,
+                                      positions_dict: Union[None, dict] = None) -> dict:
+        pass
+
+    def calculate_positions(self,
+                            design_vector: np.ndarray,
+                            positions_dict: Union[None, dict] = None) -> dict:
+
+        if positions_dict is None:
+            positions_dict = {}
+
+        if self.reference_object is None:
+
+            # Calculate the independent positions
+            positions_dict = self.calculate_independent_positions(design_vector, positions_dict)
+
+        elif self.reference_object is not None:
+
+            # Calculate the dependent positions
+            positions_dict = self.calculate_dependent_positions(design_vector, positions_dict)
+
+        return positions_dict
 
 
     def set_positions(self, positions_dict: dict) -> dict:
@@ -444,13 +473,6 @@ class Interconnect(InterconnectNode, InterconnectEdge):
     def edges(self):
         return [segment.edge for segment in self.segments]
 
-    def calculate_positions(self,
-                            positions_dict: dict):
-        pass
-
-    def set_positions(self,
-                      positions_dict: dict):
-        pass
 
 
 class Structure(Object):
