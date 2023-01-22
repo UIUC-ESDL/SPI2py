@@ -49,17 +49,18 @@ def create_ports(inputs):
 
     ports = []
 
-    # for port in inputs.values():
-    #
-    #     name = port['name']
-    #     component = port['component']
-    #     origin = port['origin']
-    #     radius = port['radius']
-    #     color = port['color']
-    #
-    #     port = Port(name, component, origin, radius, color)
-    #     # logging.info(' Port: ' + str(port) + ' created.')
-    #     ports.append(port)
+    for port in inputs.values():
+
+        component_name = port['component name']
+        port_name = port['port name']
+        color = port['color']
+        reference_point_offset = port['reference point offset']
+        radius = port['radius']
+
+        _port = Port(component_name, port_name, reference_point_offset, radius, color)
+
+        # logging.info(' Port: ' + str(port) + ' created.')
+        ports.append(_port)
 
     return ports
 
