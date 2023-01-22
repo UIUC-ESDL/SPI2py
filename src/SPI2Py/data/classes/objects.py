@@ -176,14 +176,13 @@ class Port(InputValidation):
 
         self.color = color
 
-        # Initialize positions...
-        self.positions = np.zeros((1, 3))
 
         self.reference_point_offset = self._validate_positions(reference_point_offset)
+
+        # Initialize position as the offset from the reference point
+        self.positions = self.reference_point_offset
+
         self.radius = self._validate_radii(radius)
-
-
-
 
 
     def __repr__(self):
