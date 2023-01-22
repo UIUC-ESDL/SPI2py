@@ -107,7 +107,7 @@ class SpatialConfiguration(System):
 
 
         for obj, new_design_vector in zip(self.design_vector_objects, new_design_vectors):
-            obj.update_positions(positions_dict)
+            obj.set_positions(positions_dict)
 
 
         # Is there some class-specific logic?
@@ -119,7 +119,7 @@ class SpatialConfiguration(System):
         #
         for interconnect in self.interconnect_segments:
 
-            interconnect.update_positions(positions_dict)
+            interconnect.set_positions(positions_dict)
 
     def plot_layout(self, savefig=False, directory=None):
 
