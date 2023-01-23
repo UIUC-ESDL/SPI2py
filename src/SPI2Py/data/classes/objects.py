@@ -390,6 +390,9 @@ class Interconnect(InterconnectNode, InterconnectEdge):
         self.component_1_port = component_1_port
         self.component_2_port = component_2_port
 
+        self.object_1 = self.component_1 + '_' + self.component_1_port + '_port'
+        self.object_2 = self.component_2 + '_' + self.component_2_port + '_port'
+
         self.radius = radius
         self.color = color
 
@@ -421,8 +424,8 @@ class Interconnect(InterconnectNode, InterconnectEdge):
         # TODO Make sure nodes are 2D and not 1D!
 
         # Create the nodes list and add component 1
-        nodes = [self.component_1]
-        node_names = [self.component_1]
+        nodes = [self.object_1]
+        node_names = [self.object_1]
 
         # Add the interconnect nodes
         for i in range(self.number_of_nodes):
@@ -435,8 +438,8 @@ class Interconnect(InterconnectNode, InterconnectEdge):
             node_names.append(str(interconnect_node))
 
         # Add component 2
-        nodes.append(self.component_2)
-        node_names.append(self.component_2)
+        nodes.append(self.object_2)
+        node_names.append(self.object_2)
 
         return nodes, node_names
 
