@@ -380,7 +380,8 @@ class Interconnect(InterconnectNode, InterconnectEdge):
                  component_2,
                  component_2_port,
                  radius,
-                 color):
+                 color,
+                 number_of_bends):
 
         self.name = name
 
@@ -396,10 +397,12 @@ class Interconnect(InterconnectNode, InterconnectEdge):
         self.radius = radius
         self.color = color
 
+        # self.number_of_bends = number_of_bends
+
         # Per configuration file
         # TODO connect this setting to the config file
-        self.number_of_nodes = 1
-        self.number_of_edges = self.number_of_nodes + 1
+        self.number_of_bends = number_of_bends
+        self.number_of_edges = self.number_of_bends + 1
 
         # Create InterconnectNode objects
         self.nodes, self.node_names = self.create_nodes()
@@ -428,7 +431,7 @@ class Interconnect(InterconnectNode, InterconnectEdge):
         node_names = [self.object_1]
 
         # Add the interconnect nodes
-        for i in range(self.number_of_nodes):
+        for i in range(self.number_of_bends):
             # Each node should have unique identifier
             node_prefix = self.component_1 + '-' + self.component_1_port + '_' + self.component_2 + '-' + self.component_2_port + '_node_'
             node = node_prefix + str(i)

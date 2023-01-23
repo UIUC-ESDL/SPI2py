@@ -71,6 +71,8 @@ interconnects:
 
         radius: 0.25
 
+        number of bends: 2
+
     1:
         name: hp_cv_to_actuator2
         color: blue
@@ -82,6 +84,8 @@ interconnects:
         component 2 port: return
 
         radius: 0.25
+
+        number of bends: 1
 
 structures:
 
