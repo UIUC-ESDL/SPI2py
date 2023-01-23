@@ -49,11 +49,11 @@ pos_comp2 = np.array([5, -3, -1, 0., 0., 0.])
 pos_comp3 = np.array([3., 5., 3., 0., 0., 0.])
 #
 pos_int0node0 = np.array([-1., 2., 2.])
-pos_int1node0 = np.array([1., 2., 3.])
+pos_int1node0 = np.array([4., 0., 1.])
 
 # locations = np.concatenate((pos_comp0, pos_comp1, pos_int0node0))
-locations = np.concatenate((pos_comp0, pos_comp1, pos_comp2, pos_comp3, pos_int0node0))
-# locations = np.concatenate((pos_comp0, pos_comp1, pos_comp2, pos_comp3, pos_int0node0, pos_int1node0))
+# locations = np.concatenate((pos_comp0, pos_comp1, pos_comp2, pos_comp3, pos_int0node0))
+locations = np.concatenate((pos_comp0, pos_comp1, pos_comp2, pos_comp3, pos_int0node0, pos_int1node0))
 
 demo.generate_layout(layout_generation_method, inputs=locations)
 

@@ -93,10 +93,10 @@ def create_interconnects(inputs):
         # Use append for single objects and extend for lists of objects
         interconnects.append(interconnect)
         interconnect_segments.extend(interconnect.segments)
-        nodes.extend(interconnect.nodes)
+        nodes.extend(interconnect.interconnect_nodes)
     
     # TODO Unstrip port nodes?
-    interconnect_nodes = nodes[1:-1] # Strip the first and last nodes (port nodes)
+    interconnect_nodes = nodes
 
     return interconnects, interconnect_nodes, interconnect_segments
 

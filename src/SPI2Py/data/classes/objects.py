@@ -430,7 +430,7 @@ class Interconnect(InterconnectNode, InterconnectEdge):
         # Add the interconnect nodes
         for i in range(self.number_of_nodes):
             # Each node should have unique identifier
-            node_prefix = self.component_1 + '-' + self.component_2 + '_node_'
+            node_prefix = self.component_1 + '-' + self.component_1_port + '_' + self.component_2 + '-' + self.component_2_port + '_node_'
             node = node_prefix + str(i)
 
             interconnect_node = InterconnectNode(node, self.radius, self.color)
@@ -444,6 +444,8 @@ class Interconnect(InterconnectNode, InterconnectEdge):
         return nodes, node_names
 
     def create_node_pairs(self):
+
+        #
 
         node_pairs = [(self.node_names[i], self.node_names[i + 1]) for i in range(len(self.node_names) - 1)]
 
