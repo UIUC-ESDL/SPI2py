@@ -34,7 +34,7 @@ Visualization:
 
   # true or false; should the program generate a GIF?
   # Warning, generating GIFs increases the runtime
-  Output GIF: false
+  Output GIF: true
   GIF Filename: geometric_optimization
 
 

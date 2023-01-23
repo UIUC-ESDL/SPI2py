@@ -128,9 +128,9 @@ class SPI2:
 
         # Generate GIF
         if self.config['Visualization']['Output GIF'] is True:
-            generate_gif(self.layout, self.design_vector_log, 1, self.config['Outputs']['Folderpath'])
+            generate_gif(self.layout, self.design_vector_log, 1, self.directory)
 
-    def write_output(self, output_filepath):
+    def write_output(self, output_filename):
 
         # Create a timestamp
         now = datetime.now()
@@ -146,5 +146,5 @@ class SPI2:
                    'Comments': 'Placeholder'}
 
 
-        with open(output_filepath, 'w') as f:
+        with open(self.directory + output_filename, 'w') as f:
             json.dump(self.outputs, f)
