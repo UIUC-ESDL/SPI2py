@@ -329,6 +329,7 @@ class InterconnectEdge(Object):
         pos_1 = positions_dict[self.object_1][0][0]
         pos_2 = positions_dict[self.object_2][0][0]
 
+        # Replace with pure-python implementation for Numba
         dist = euclidean(pos_1, pos_2)
 
         # We don't want zero-length interconnects or interconnect segments--they cause problems!
@@ -351,6 +352,8 @@ class InterconnectEdge(Object):
 
         # TODO Separate this into a different function?
         self.radii = np.repeat(self.radius, self.positions.shape[0])
+
+        return
 
 
 class Interconnect(InterconnectNode, InterconnectEdge):

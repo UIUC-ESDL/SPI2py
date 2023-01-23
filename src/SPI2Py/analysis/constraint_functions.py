@@ -45,12 +45,11 @@ def interference_component_component(x, layout):
     # Calculate the interferences between each sphere of each object pair
     interferences = []
     for obj1, obj2 in layout.component_component_pairs:
-
         positions_a = positions_dict[str(obj1)][0]
-        radii_a = obj1.radii.reshape(-1, 1)
+        radii_a = positions_dict[str(obj1)][1]
 
         positions_b = positions_dict[str(obj2)][0]
-        radii_b = obj2.radii.reshape(-1, 1)
+        radii_b = positions_dict[str(obj2)][1]
 
         dist = min_spheres_spheres_interference(positions_a, radii_a, positions_b, radii_b)
 
@@ -69,11 +68,11 @@ def interference_component_interconnect(x, layout):
     # Calculate the interferences between each sphere of each object pair
     interferences = []
     for obj1, obj2 in layout.component_interconnect_pairs:
-        positions_a = positions_dict[obj1]
-        radii_a = obj1.radii.reshape(-1, 1)
+        positions_a = positions_dict[str(obj1)][0]
+        radii_a = positions_dict[str(obj1)][1]
 
-        positions_b = positions_dict[obj2]
-        radii_b = obj2.radii.reshape(-1, 1)
+        positions_b = positions_dict[str(obj2)][0]
+        radii_b = positions_dict[str(obj2)][1]
 
         dist = min_spheres_spheres_interference(positions_a, radii_a, positions_b, radii_b)
 
@@ -92,11 +91,11 @@ def interference_interconnect_interconnect(x, layout):
     # Calculate the interferences between each sphere of each object pair
     interferences = []
     for obj1, obj2 in layout.interconnect_interconnect_pairs:
-        positions_a = positions_dict[obj1]
-        radii_a = obj1.radii.reshape(-1, 1)
+        positions_a = positions_dict[str(obj1)][0]
+        radii_a = positions_dict[str(obj1)][1]
 
-        positions_b = positions_dict[obj2]
-        radii_b = obj2.radii.reshape(-1, 1)
+        positions_b = positions_dict[str(obj2)][0]
+        radii_b = positions_dict[str(obj2)][1]
 
         dist = min_spheres_spheres_interference(positions_a, radii_a, positions_b, radii_b)
 
@@ -114,10 +113,10 @@ def interference_structure_all(x, layout):
     # Calculate the interferences between each sphere of each object pair
     interferences = []
     for obj1, obj2 in layout.structure_moving_object_pairs:
-        positions_a = positions_dict[obj1]
+        positions_a = positions_dict[str(obj1)][0]
         radii_a = obj1.radii.reshape(-1, 1)
 
-        positions_b = positions_dict[obj2]
+        positions_b = positions_dict[str(obj2)][0]
         radii_b = obj2.radii.reshape(-1, 1)
 
         dist = min_spheres_spheres_interference(positions_a, radii_a, positions_b, radii_b)
