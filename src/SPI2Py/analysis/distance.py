@@ -32,6 +32,10 @@ def min_spheres_spheres_interference(positions_a, radii_a, positions_b, radii_b)
     """
 
     pairwise_distances = cdist(positions_a, positions_b)
+
+    # TODO Reshape radii to 2D
+    radii_a = radii_a.reshape(-1, 1)
+    radii_b = radii_b.reshape(-1, 1)
     pairwise_radii = cdist(radii_a, radii_b)
 
     pairwise_interferences = pairwise_radii - pairwise_distances
