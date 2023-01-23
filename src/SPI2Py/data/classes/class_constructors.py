@@ -86,7 +86,9 @@ def create_interconnects(inputs):
         radius = interconnect['radius']
         color = interconnect['color']
 
-        interconnect = Interconnect(name, component_1, component_1_port, component_2, component_2_port, radius, color)
+        number_of_bends = interconnect['number of bends']
+
+        interconnect = Interconnect(name, component_1, component_1_port, component_2, component_2_port, radius, color, number_of_bends)
         # logging.info(' Interconnect: ' + str(interconnect) + ' created.')
 
         # Add Interconnect, InterconnectNodes, and InterconnectSegments to lists

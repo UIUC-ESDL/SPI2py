@@ -10,7 +10,7 @@ Filenames:
 Geometry:
 
   # The number of bends per each interconnect
-  bends per interconnect: 1
+  bends per interconnect: 2
 
 Solver:
 
@@ -34,7 +34,7 @@ Visualization:
 
   # true or false; should the program generate a GIF?
   # Warning, generating GIFs increases the runtime
-  Output GIF: true
+  Output GIF: false
   GIF Filename: geometric_optimization
 
 
