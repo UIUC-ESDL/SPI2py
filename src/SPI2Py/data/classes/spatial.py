@@ -112,16 +112,11 @@ class SpatialConfiguration(System):
         for obj, new_design_vector in zip(self.design_vector_objects, new_design_vectors):
             obj.set_positions(positions_dict)
 
+
         for port in self.ports:
             port.set_positions(positions_dict)
 
-        # Is there some class-specific logic?
-        # for obj in self.components:
-        #     pass
-        #
-        # for obj in self.interconnect_nodes:
-        #     pass
-        #
+
         for interconnect in self.interconnect_segments:
 
             interconnect.set_positions(positions_dict)
