@@ -10,8 +10,8 @@ components:
     1:
         name: actuator_1
         color: orange
-        origins: [ [ -3,0,0 ], [-3, 0, 0] ]
-        dimensions: [ [ 1,1,4 ], [4,1,1] ]
+        origins: [ [ -3,0,-6 ],[ -3,0,-4.5 ],[-3,0,-3], [-1, -0.5, -1] ]
+        dimensions: [ [ 3,3,1.5 ],[ 3,3,1.5 ],[ 3,3,1.5 ], [1,1,5] ]
         rotation: [0,0,0]
 
 
@@ -47,15 +47,15 @@ ports:
         component name: actuator_1
         port name: supply
         color: red
-        radius: 0.25
-        reference point offset: [1,1,-3]
+        radius: 0.5
+        reference point offset: [1,-1,0]
 
     3:
         component name: actuator_1
         port name: return
         color: blue
-        radius: 0.125
-        reference point offset: [-1,-3,1]
+        radius: 0.25
+        reference point offset: [0,-1,0]
 
 interconnects:
 

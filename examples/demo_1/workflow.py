@@ -66,14 +66,14 @@ demo.layout.plot_layout()
 # demo.layout.plot_layout()
 
 # Perform gradient-based optimization
-demo.optimize_spatial_configuration()
+# demo.optimize_spatial_configuration()
 
 # For development: Print Results
-print('Result:', demo.result)
+# print('Result:', demo.result)
 
 # # For development: Plot the final layout to see the change
-demo.layout.set_positions(demo.result.x)
-demo.layout.plot_layout()
+# demo.layout.set_positions(demo.result.x)
+# demo.layout.plot_layout()
 
 # Write output file
 # output_filepath = folderpath + 'output.json'
