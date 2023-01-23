@@ -23,7 +23,7 @@ components:
         rotation: [0,0,0]
 
     3:
-        name: component3
+        name: component_3
         color: green
         origins: [ [ 0, 0, 0 ], [ 1, 0, 0 ], [ 1, 1, 0 ], [ 1, 1, 3 ] ]
         dimensions: [ [ 1, 1, 1 ], [ 1, 2, 1 ], [ 1, 1, 4 ], [ 2, 1, 1 ] ]
@@ -48,14 +48,14 @@ ports:
         port name: supply
         color: red
         radius: 0.5
-        reference point offset: [1,-1,0]
+        reference point offset: [0,-1,0]
 
     3:
         component name: actuator_1
         port name: return
         color: blue
         radius: 0.25
-        reference point offset: [0,-1,0]
+        reference point offset: [1,-1,0]
 
 interconnects:
 
@@ -71,17 +71,17 @@ interconnects:
 
         radius: 0.25
 
-#    1:
-#        name: hp_cv_to_actuator2
-#        color: blue
-#
-#        component 1: control_valve_1
-#        component 1 port: return
-#
-#        component 2: actuator_1
-#        component 2 port: return
-#
-#        radius: 1
+    1:
+        name: hp_cv_to_actuator2
+        color: blue
+
+        component 1: control_valve_1
+        component 1 port: return
+
+        component 2: actuator_1
+        component 2 port: return
+
+        radius: 0.25
 
 structures:
 
