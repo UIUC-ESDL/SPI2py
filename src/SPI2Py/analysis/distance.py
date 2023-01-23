@@ -31,6 +31,7 @@ def min_spheres_spheres_interference(positions_a, radii_a, positions_b, radii_b)
     :return:
     """
 
+    print('begin')
     pairwise_distances = cdist(positions_a, positions_b)
     pairwise_radii = cdist(radii_a, radii_b)
 

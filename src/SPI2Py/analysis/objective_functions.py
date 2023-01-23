@@ -28,8 +28,8 @@ def aggregate_pairwise_distance(x, layout):
         object_1 = object_pair[0]
         object_2 = object_pair[1]
 
-        positions_1 = positions_dict[object_1]
-        positions_2 = positions_dict[object_2]
+        positions_1 = positions_dict[object_1][0]
+        positions_2 = positions_dict[object_2][0]
 
         objective += sum(sum(cdist(positions_1, positions_2)))
 
