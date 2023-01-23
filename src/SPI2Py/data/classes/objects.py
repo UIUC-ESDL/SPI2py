@@ -284,13 +284,9 @@ class InterconnectNode(Object):
 
         new_positions = self.positions
 
-        if '3D Translation' in self.movement:
-            new_reference_position = design_vector[0:3]
-            new_positions = translate(new_positions, self.reference_position, new_reference_position)
 
-        if '3D Rotation' in self.movement:
-            rotation = design_vector[3:None]
-            new_positions = rotate_about_point(new_positions, rotation)
+        new_reference_position = design_vector[0:3]
+        new_positions = translate(new_positions, self.reference_position, new_reference_position)
 
         # TODO Should we
         positions_dict[str(self)] = (new_positions, self.radii)
