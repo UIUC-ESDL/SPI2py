@@ -17,14 +17,14 @@ components:
 
     2:
         name: component_2
-        color: green
+        color: indigo
         origins: [ [0, 0, 0] ]
         dimensions: [ [ 1, 3, 3 ] ]
         rotation: [0,0,0]
 
     3:
         name: component_3
-        color: green
+        color: olivedrab
         origins: [ [ 0, 0, 0 ], [ 1, 0, 0 ], [ 1, 1, 0 ], [ 1, 1, 3 ] ]
         dimensions: [ [ 1, 1, 1 ], [ 1, 2, 1 ], [ 1, 1, 4 ], [ 2, 1, 1 ] ]
         rotation: [0,0,0]
