@@ -74,21 +74,23 @@ class InputValidation:
 
     def _validate_color(self, color):
 
+
+
         if isinstance(color, str):
             pass
         else:
             raise ValueError('Colors must be a string for %s.' % self.name)
 
-        if color in mcolors.BASE_COLORS:
+        self.valid_colors = {**mcolors.BASE_COLORS, **mcolors.TABLEAU_COLORS, **mcolors.CSS4_COLORS,
+                             **mcolors.XKCD_COLORS}
+
+        if color in self.valid_colors:
             pass
-        elif color in mcolors.TABLEAU_COLORS:
-            pass
-        elif color in mcolors.CSS4_COLORS:
-            pass
-        elif color in mcolors.XKCD_COLORS:
-            pass
+
         else:
-            raise ValueError('Color not recognized for %s.' % self.name)
+
+            raise ValueError('Color not recognized for %s. For a list of valid colors inspect the attribute '
+                             'self.valid_colors.keys().' % self.name)
 
     def _validate_colors(self, colors):
 
