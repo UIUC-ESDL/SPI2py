@@ -31,6 +31,9 @@ class Subsystem:
 
     @property
     def design_vector_objects(self):
+
+        # Implement if not fixed in space
+
         return self.components + self.interconnect_nodes
 
     @property

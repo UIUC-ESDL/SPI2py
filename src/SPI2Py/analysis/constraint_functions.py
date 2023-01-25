@@ -30,7 +30,7 @@ def interference(x, layout, pairs):
     #
     #     max_interference = max(interferences)
 
-    for obj1, obj2 in layout.component_component_pairs:
+    for obj1, obj2 in pairs:
         positions_a = positions_dict[str(obj1)][0]
         radii_a = positions_dict[str(obj1)][1]
 

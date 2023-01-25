@@ -81,8 +81,8 @@ def gradient_based_optimization(layout):
     nlc_structure_all = NonlinearConstraint(lambda x: interference(x, layout,layout.structure_moving_object_pairs), -np.inf, 0)
 
     # nlcs = [nlc_component_component]
-    # nlcs = [nlc_component_component, nlc_component_interconnect]
-    nlcs = [nlc_component_component, nlc_component_interconnect, nlc_interconnect_interconnect, nlc_structure_all]
+    nlcs = [nlc_component_component, nlc_component_interconnect, nlc_interconnect_interconnect]
+    # nlcs = [nlc_component_component, nlc_component_interconnect, nlc_interconnect_interconnect, nlc_structure_all]
 
     options = {}
 
