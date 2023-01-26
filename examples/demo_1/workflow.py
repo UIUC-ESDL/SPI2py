@@ -59,6 +59,9 @@ locations = np.concatenate((pos_comp0, pos_comp1, pos_comp2, pos_comp3, pos_int0
 
 demo.generate_layout(layout_generation_method, inputs=locations)
 
+# Troubleshooting
+demo.layout.components[1].degrees_of_freedom = None
+
 # For development: Plot initial layout
 demo.layout.plot_layout()
 
@@ -68,16 +71,16 @@ demo.layout.plot_layout()
 # demo.layout.plot_layout()
 
 # Perform gradient-based optimization
-# demo.optimize_spatial_configuration()
+demo.optimize_spatial_configuration()
 
 # For development: Print Results
-# print('Result:', demo.result)
+print('Result:', demo.result)
 
 # For development: Plot the final layout to see the change
-# demo.layout.set_positions(demo.result.x)
-# demo.layout.plot_layout()
+demo.layout.set_positions(demo.result.x)
+demo.layout.plot_layout()
 
 # Write output file
-# demo.write_output('output.json')
+demo.write_output('output.json')
 
 print('Done')
