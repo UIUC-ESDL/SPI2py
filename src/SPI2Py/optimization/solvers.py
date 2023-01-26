@@ -75,7 +75,7 @@ def gradient_based_optimization(layout):
 
     # NonlinearConstraint object for trust-constr method does not take kwargs
     # Use lambda functions to format constraint functions as needed with kwargs
-    nlc_component_component = NonlinearConstraint(lambda x: interference(x, layout,layout.component_component_pairs), -np.inf, -0)
+    nlc_component_component = NonlinearConstraint(lambda x: interference(x, layout,layout.component_component_pairs), -np.inf, -3)
     nlc_component_interconnect = NonlinearConstraint(lambda x: interference(x, layout,layout.component_interconnect_pairs), -np.inf, 0)
     nlc_interconnect_interconnect = NonlinearConstraint(lambda x: interference(x, layout,layout.interconnect_interconnect_pairs), -np.inf, 0)
     nlc_structure_all = NonlinearConstraint(lambda x: interference(x, layout,layout.structure_moving_object_pairs), -np.inf, 0)

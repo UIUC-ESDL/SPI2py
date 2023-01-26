@@ -34,7 +34,7 @@ class Subsystem:
 
         # Implement if not fixed in space
 
-        return self.components + self.interconnect_nodes
+        return [component for component in self.components if component.degrees_of_freedom is not None] + self.interconnect_nodes
 
     @property
     def moving_objects(self):
