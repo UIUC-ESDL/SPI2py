@@ -72,7 +72,7 @@ def remove_valence_two_vertices(graph):
     new_edges = []
     for comp in nx.connected_components(T):
         C = T.subgraph(comp)
-        if C.number_of_bends() == C.number_of_edges():
+        if C.number_of_nodes() == C.number_of_edges():
             x = next(iter(comp))
             y = x
         else:
@@ -127,9 +127,9 @@ def h_poly(abstract_graph):
             for u, v in loops:
                 G.remove_edge(u, v)
                 loop_factor = -loop_factor * (A + 1 + A ** -1)
-            if G.number_of_bends() == 1:
+            if G.number_of_nodes() == 1:
                 ans = -loop_factor
-            elif G.number_of_bends() == 2:
+            elif G.number_of_nodes() == 2:
                 b = -(A ** -1 + 2 + A)
                 q = G.number_of_edges()
 
