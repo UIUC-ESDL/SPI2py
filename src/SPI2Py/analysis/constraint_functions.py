@@ -5,7 +5,7 @@
 """
 
 
-from .distance import min_spheres_spheres_interference
+from .distance import max_spheres_spheres_interference
 
 
 def interference(x, layout, pairs):
@@ -37,7 +37,7 @@ def interference(x, layout, pairs):
         positions_b = positions_dict[str(obj2)][0]
         radii_b = positions_dict[str(obj2)][1]
 
-        dist = min_spheres_spheres_interference(positions_a, radii_a, positions_b, radii_b)
+        dist = max_spheres_spheres_interference(positions_a, radii_a, positions_b, radii_b)
 
         interferences.append(dist)
 

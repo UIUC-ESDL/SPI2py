@@ -12,7 +12,7 @@ from numba import njit
 from scipy.spatial.distance import cdist
 
 
-def min_spheres_spheres_interference(positions_a, radii_a, positions_b, radii_b):
+def max_spheres_spheres_interference(positions_a, radii_a, positions_b, radii_b):
     """
     Computes the minimum distance between two sets of spheres.
 
@@ -36,6 +36,8 @@ def min_spheres_spheres_interference(positions_a, radii_a, positions_b, radii_b)
     # TODO Reshape radii to 2D
     radii_a = radii_a.reshape(-1, 1)
     radii_b = radii_b.reshape(-1, 1)
+
+    # TODO Shouldn't I be adding these... (?)
     pairwise_radii = cdist(radii_a, radii_b)
 
     pairwise_interferences = pairwise_radii - pairwise_distances
