@@ -52,6 +52,9 @@ def plot(plot_array, savefig, directory):
     ax.set_xlim(-5, 5)
     ax.set_ylim(-5, 5)
     ax.set_zlim(-5, 5)
+    # ax.set_xlim(0, 100)
+    # ax.set_ylim(0, 100)
+    # ax.set_zlim(0, 20)
 
     plt.show()
 
