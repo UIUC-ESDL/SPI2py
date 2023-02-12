@@ -36,18 +36,6 @@ def wrap_constraint_functions():
     pass
 
 
-def log_design_vector(xk, *argv):
-    """
-    Logs the design vector...
-
-    argv is since difference solvers pass diff arguments but we only want to capture xk
-    Note: callback function args for trust-const method
-    :return:
-    """
-
-    design_vector_log.append(xk)
-
-
 def gradient_based_optimization(layout):
     """
     Constrained optimization...
@@ -65,7 +53,18 @@ def gradient_based_optimization(layout):
     """
 
     # Declare design vector log as global to read/write it
-    global design_vector_log
+    design_vector_log = []
+
+    def log_design_vector(xk, *argv):
+        """
+        Logs the design vector...
+
+        argv is since difference solvers pass diff arguments but we only want to capture xk
+        Note: callback function args for trust-const method
+        :return:
+        """
+
+        design_vector_log.append(xk)
 
     fun = aggregate_pairwise_distance
 
@@ -105,7 +104,3 @@ def gradient_based_optimization(layout):
 
     return res, design_vector_log
 
-
-# Define the log outside the functions so functions can declare it as a global variable and read/write to it
-# without the callback function needing to take an argument
-design_vector_log = []
