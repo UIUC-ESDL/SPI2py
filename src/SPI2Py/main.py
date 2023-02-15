@@ -25,10 +25,13 @@ class SPI2:
     The SPI2 Class provides the user with a means to interact with the API...
     """
 
-    def __init__(self):
-        self.directory = None
-        self.config = None
-        self.inputs = None
+    def __init__(self, directory, input_file, config_file):
+
+        self.directory = directory
+        self.config = self.add_configuration_file(config_file)
+        self.inputs = self.add_input_file(input_file)
+
+
 
         self.layout = None
 
@@ -37,29 +40,29 @@ class SPI2:
 
         self.outputs = None
 
+        self.initialize_logger()
+
+        self.create_objects_from_input()
+
     def add_directory(self, directory):
         self.directory = directory
-
-    def initialize_logger(self):
-        logging.basicConfig(filename= self.directory + 'output.log', encoding='utf-8', level=logging.INFO, filemode='w')
-
-    def add_input_file(self, input_filename):
-        input_filepath = self.directory + input_filename
-        with open(input_filepath, 'r') as f:
-            self.inputs = yaml.safe_load(f)
 
     def add_configuration_file(self, config_filename):
         config_filepath = self.directory + config_filename
         with open(config_filepath, 'r') as f:
-            self.config = yaml.safe_load(f)
+            config = yaml.safe_load(f)
+        return config
 
+    def add_input_file(self, input_filename):
+        input_filepath = self.directory + input_filename
+        with open(input_filepath, 'r') as f:
+            inputs = yaml.safe_load(f)
+        return inputs
 
+    def initialize_logger(self):
+        logger_name = self.directory + self.config['results']['Log Filepath']
+        logging.basicConfig(filename=logger_name, encoding='utf-8', level=logging.INFO, filemode='w')
 
-
-
-
-    
-    
 
     def create_objects_from_input(self):
         """
@@ -124,11 +127,13 @@ class SPI2:
 
 
     def optimize_spatial_configuration(self):
-        self.result, self.design_vector_log = gradient_based_optimization(self.layout)
+        self.result, self.design_vector_log = gradient_based_optimization(self.layout, self.config['optimization'])
 
         # Generate GIF
-        if self.config['Visualization']['Output GIF'] is True:
+        if self.config['results']['Output GIF'] is True:
             generate_gif(self.layout, self.design_vector_log, 1, self.directory)
+
+
 
     def write_output(self, output_filename):
 

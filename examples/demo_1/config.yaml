@@ -1,3 +1,5 @@
+data:
+
 User: Chad Peterson
 
 Filenames:
@@ -12,7 +14,11 @@ Geometry:
   # The number of bends per each interconnect
   bends per interconnect: 2
 
-Solver:
+analysis: a
+
+layout: a
+
+optimization:
 
   # The number of random initial layouts and subsequent optimizations
   number of solutions: 1
@@ -20,27 +26,43 @@ Solver:
   # Tolerances between 1e-1 and 2.5e-1 solve within a reasonable time
   convergence tolerance: 2.5e-1
 
+  #
+  check for collision between:
+    components and components: true
+    components and interconnects: true
+    components and structures: false
+    interconnects and interconnects: true
+    interconnects and structures: false
+
   # 0 to 1; 0 means no collision, >0 means some collision
   component_component_collision_tolerance: 0
   component_interconnect_collision_tolerance: 0.5
   interconnect_interconnect_collision_tolerance: 0.5
   structure_all_collision_tolerance: 0
 
-Visualization:
+results:
 
-  # Value between 0 and 20
-  # Corresponds to...
-  resolution: 8
+  Report Filepath: report.json
+  Log Filepath: logger.log
 
-  # true or false; should the program generate a GIF?
-  # Warning, generating GIFs increases the runtime
   Output GIF: false
-  GIF Filename: geometric_optimization
+  GIF Filename: geometric_optimization # TODO Change to GIF Filepath
+
+  Visualization:
+
+    # Value between 0 and 20
+    # Corresponds to...
+    resolution: 8
+
+    # true or false; should the program generate a GIF?
+    # Warning, generating GIFs increases the runtime
 
 
-Outputs:
 
-  Filepath: output.json
+
+  Outputs:
+
+    Filepath: output.json
 
 
 

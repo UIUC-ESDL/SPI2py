@@ -36,7 +36,7 @@ def wrap_constraint_functions():
     pass
 
 
-def gradient_based_optimization(layout):
+def gradient_based_optimization(layout, config):
     """
     Constrained optimization...
 
@@ -74,14 +74,17 @@ def gradient_based_optimization(layout):
 
     # NonlinearConstraint object for trust-constr method does not take kwargs
     # Use lambda functions to format constraint functions as needed with kwargs
-    nlc_component_component = NonlinearConstraint(lambda x: interference(x, layout,layout.component_component_pairs), -np.inf, -3)
-    nlc_component_interconnect = NonlinearConstraint(lambda x: interference(x, layout,layout.component_interconnect_pairs), -np.inf, 0)
-    nlc_interconnect_interconnect = NonlinearConstraint(lambda x: interference(x, layout,layout.interconnect_interconnect_pairs), -np.inf, 0)
-    nlc_structure_all = NonlinearConstraint(lambda x: interference(x, layout,layout.structure_moving_object_pairs), -np.inf, 0)
-
-    # nlcs = [nlc_component_component]
-    nlcs = [nlc_component_component, nlc_component_interconnect, nlc_interconnect_interconnect]
-    # nlcs = [nlc_component_component, nlc_component_interconnect, nlc_interconnect_interconnect, nlc_structure_all]
+    nlcs = []
+    if config['check for collision between']['components and components'] is True:
+        nlcs.append(NonlinearConstraint(lambda x: interference(x, layout, layout.component_component_pairs), -np.inf, -3))
+    if config['check for collision between']['components and interconnects'] is True:
+        nlcs.append(NonlinearConstraint(lambda x: interference(x, layout, layout.component_interconnect_pairs), -np.inf, 0))
+    if config['check for collision between']['components and structures'] is True:
+        nlcs.append(NonlinearConstraint(lambda x: interference(x, layout, layout.component_structure_pairs), -np.inf, 0))
+    if config['check for collision between']['interconnects and interconnects'] is True:
+        nlcs.append(NonlinearConstraint(lambda x: interference(x, layout, layout.interconnect_interconnect_pairs), -np.inf, 0))
+    if config['check for collision between']['interconnects and structures'] is True:
+        nlcs.append(NonlinearConstraint(lambda x: interference(x, layout, layout.interconnect_structure_pairs), -np.inf, 0))
 
     options = {}
 
@@ -90,10 +93,13 @@ def gradient_based_optimization(layout):
 
     # TODO Evaluate different solver methods and parametric tunings
 
-
-
-    res = minimize(fun, x0, args=layout, method='trust-constr', constraints=nlcs, tol=1e-2,
-                   options=options, callback=log_design_vector)
+    res = minimize(fun, x0,
+                   args=layout,
+                   method='trust-constr',
+                   constraints=nlcs,
+                   tol=1e-2,
+                   options=options,
+                   callback=log_design_vector)
 
     # Add final value
     design_vector_log.append(res.x)

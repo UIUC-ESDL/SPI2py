@@ -87,6 +87,18 @@ class Subsystem:
         return component_interconnect_pairs
 
     @property
+    def component_structure_pairs(self):
+        """
+        TODO Write unit tests to ensure it creates the correct pairs
+
+        :return:
+        """
+
+        component_structure_pairs = list(product(self.components, self.structures))
+
+        return component_structure_pairs
+
+    @property
     def interconnect_interconnect_pairs(self):
         """
         TODO Write unit tests to ensure it creates the correct pairs
@@ -108,17 +120,19 @@ class Subsystem:
 
         return interconnect_interconnect_pairs
 
+
+
     @property
-    def structure_moving_object_pairs(self):
+    def interconnect_structure_pairs(self):
         """
         TODO Write unit tests to ensure it creates the correct pairs
 
         :return:
         """
 
-        structure_moving_object_pairs = list(product(self.structures, self.moving_objects))
+        interconnect_structure_pairs = list(product(self.interconnect_segments, self.structures))
 
-        return structure_moving_object_pairs
+        return interconnect_structure_pairs
 
 
 class System(Subsystem):

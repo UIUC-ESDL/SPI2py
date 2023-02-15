@@ -21,24 +21,14 @@ import numpy as np
 
 from SPI2Py.main import SPI2
 
+# Define the example's directory
+directory = os.path.dirname(__file__) + '/'
+
 # Initialize the class
-demo = SPI2()
+demo = SPI2(directory=directory,
+            input_file='input_3.yaml',
+            config_file='config.yaml')
 
-# Specify the example's directory
-demo.add_directory(os.path.dirname(__file__) + '/')
-
-# Initialize the logger
-demo.initialize_logger()
-
-# Specify the input file
-demo.add_input_file('input_3.yaml')
-# demo.add_input_file('input_2.yaml')
-
-# Specify the config file
-demo.add_configuration_file('config.yaml')
-
-# Generate classes from the inputs file
-demo.create_objects_from_input()
 
 # Map the objects to a 3D layout
 layout_generation_method = 'manual'
