@@ -60,7 +60,7 @@ class SpatialConfiguration(System):
 
         return design_vectors
 
-    def calculate_positions(self, design_vector=None):
+    def calculate_positions(self, design_vector):
         """
         TODO get positions for interconnects, structures, etc
         :param design_vector:
@@ -70,27 +70,32 @@ class SpatialConfiguration(System):
 
         positions_dict = {}
 
-        if design_vector is None:
+        design_vectors = self.slice_design_vector(design_vector)
 
-            for obj in self.objects:
-                positions_dict[str(obj)] = (obj.positions, obj.radii)
+        # TODO Components that don't have design vectors...
+        # STATIC OBJECTS
 
-        else:
 
-            design_vectors = self.slice_design_vector(design_vector)
+        # DYNAMIC OBJECTS - Independent
 
-            # Get positions of design  classes
-            for obj, design_vector_row in zip(self.design_vector_objects, design_vectors):
-                positions_dict = {**positions_dict, **obj.calculate_positions(design_vector_row)}
+        # Get positions of design  classes
+        for obj, design_vector_row in zip(self.design_vector_objects, design_vectors):
+            positions_dict = obj.calculate_positions(design_vector_row, positions_dict)
 
-            for port in self.ports:
-                positions_dict = {**positions_dict, **port.calculate_positions(positions_dict)}
 
-            # For interconnect nodes and segments...
-            for interconnect in self.interconnect_segments:
-                positions_dict = {**positions_dict, **interconnect.calculate_positions(positions_dict)}
 
-            # Get positions of interconnect nodes and structures...
+        # DYNAMIC OBJECTS - Dependent
+
+        for port in self.ports:
+            positions_dict = port.calculate_positions(positions_dict)
+
+        # For interconnect nodes and segments...
+        for interconnect in self.interconnect_segments:
+            positions_dict = interconnect.calculate_positions(positions_dict)
+
+        # Get positions of interconnect nodes and structures...
+
+
 
         return positions_dict
 
@@ -108,18 +113,15 @@ class SpatialConfiguration(System):
 
         positions_dict = self.calculate_positions(new_design_vector)
 
-
         for obj, new_design_vector in zip(self.design_vector_objects, new_design_vectors):
             obj.set_positions(positions_dict)
-
 
         for port in self.ports:
             port.set_positions(positions_dict)
 
-
         for interconnect in self.interconnect_segments:
-
             interconnect.set_positions(positions_dict)
+
 
     def plot_layout(self, savefig=False, directory=None):
 

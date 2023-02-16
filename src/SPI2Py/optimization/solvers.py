@@ -31,11 +31,6 @@ from ..analysis.objective_functions import aggregate_pairwise_distance
 
 from ..analysis.constraint_functions import interference
 
-
-def wrap_constraint_functions():
-    pass
-
-
 def gradient_based_optimization(layout, config):
     """
     Constrained optimization...

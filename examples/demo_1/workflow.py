@@ -32,33 +32,31 @@ demo = SPI2(directory=directory,
 
 # Map the objects to a 3D layout
 layout_generation_method = 'manual'
-#
+
+# Define the design vectors of each object
 pos_comp0 = np.array([-3., -4.41, -0.24, 0., 0., 0.])
 pos_comp1 = np.array([2., 4.41, 0.24, 0., 0., 0.])
 pos_comp2 = np.array([5, -3, -1, 0., 0., 0.])
 pos_comp3 = np.array([-3., -1., 3., 0., 0., 0.])
-#
 pos_int0node0 = np.array([-3., -2., 2.])
 pos_int0node1 = np.array([-1., 0., 2.])
 pos_int1node0 = np.array([4., 0., 1.])
 pos_int1node1 = np.array([4., 2., 1.])
 
-# locations = np.concatenate((pos_comp0, pos_comp1, pos_int0node0))
-# locations = np.concatenate((pos_comp0, pos_comp1, pos_comp2, pos_comp3, pos_int0node0))
 locations = np.concatenate((pos_comp0, pos_comp1, pos_comp2, pos_comp3, pos_int0node0, pos_int0node1, pos_int1node0, pos_int1node1))
 
+# Generate the layout
 demo.generate_layout(layout_generation_method, inputs=locations)
 
+print('1')
 # Troubleshooting
-demo.layout.components[1].degrees_of_freedom = None
+# demo.layout.components[0].degrees_of_freedom = None
+# demo.layout.components[1].degrees_of_freedom = None
+# demo.layout.components[2].degrees_of_freedom = None
+# demo.layout.components[3].degrees_of_freedom = None
 
 # For development: Plot initial layout
 demo.layout.plot_layout()
-
-# initial_dv = demo.layout.design_vector + 1
-#
-# demo.layout.set_positions(initial_dv)
-# demo.layout.plot_layout()
 
 # Perform gradient-based optimization
 demo.optimize_spatial_configuration()

@@ -48,7 +48,7 @@ class Object(InputValidation):
                  rotation: np.ndarray,
                  radii: np.ndarray,
                  color: Union[str, list[str]],
-                 degrees_of_freedom: tuple[str] = ('x', 'y', 'z', 'rx', 'ry', 'rz'),
+                 degrees_of_freedom: Union[tuple[str], None] = ('x', 'y', 'z', 'rx', 'ry', 'rz'),
                  reference_object: Union[None, tuple[str]] = None):
 
         super(Object, self).__init__(name, positions, rotation, radii, color)
@@ -59,9 +59,9 @@ class Object(InputValidation):
         self.rotation = np.zeros(3)
 
         # self.reference_position = None
-
-        self.three_d_translation = all([dof in self.degrees_of_freedom for dof in ['x', 'y', 'z']])
-        self.three_d_rotation = all([dof in self.degrees_of_freedom for dof in ['rx', 'ry', 'rz']])
+        if degrees_of_freedom is not None:
+            self.three_d_translation = all([dof in self.degrees_of_freedom for dof in ['x', 'y', 'z']])
+            self.three_d_rotation = all([dof in self.degrees_of_freedom for dof in ['rx', 'ry', 'rz']])
 
     def __repr__(self):
         return self.name
@@ -116,19 +116,19 @@ class Object(InputValidation):
 
         return positions_dict
 
-    def calculate_dependent_positions(self,
-                                      design_vector: np.ndarray,
-                                      positions_dict: Union[None, dict] = None) -> dict:
-        """
-
-        """
-        # If fixed
-        if self.reference_object is None:
-            raise ValueError('This object is fixed..? or just static?')
-
-        # If straight line
-
-        return positions_dict
+    # def calculate_dependent_positions(self,
+    #                                   design_vector: np.ndarray,
+    #                                   positions_dict: Union[None, dict] = None) -> dict:
+    #     """
+    #
+    #     """
+    #     # If fixed
+    #     if self.reference_object is None:
+    #         raise ValueError('This object is fixed..? or just static?')
+    #
+    #     # If straight line
+    #
+    #     return positions_dict
     #
     # def calculate_positions(self,
     #                         design_vector: np.ndarray,
@@ -154,7 +154,7 @@ class Object(InputValidation):
     #     return positions_dict
 
 
-    def set_positions(self, positions_dict: dict) -> dict:
+    def set_positions(self, positions_dict: dict):
         """
         Update positions of object spheres given a design vector
 
@@ -176,6 +176,7 @@ class Port(InputValidation):
 
         self.color = color
 
+        # TODO Add reference object and set DOF to None?
 
         self.reference_point_offset = self._validate_positions(reference_point_offset)
 
@@ -223,7 +224,7 @@ class Component(Object):
                  rotation: np.ndarray,
                  radii: np.ndarray,
                  color: Union[str, list[str]],
-                 degrees_of_freedom: tuple[str] = ('x', 'y', 'z', 'rx', 'ry', 'rz'),
+                 degrees_of_freedom: Union[tuple[str], None] = ('x', 'y', 'z', 'rx', 'ry', 'rz'),
                  reference_object: Union[None, tuple[str]] = None):
 
         super(Component, self).__init__(name, positions, rotation, radii, color)
@@ -243,7 +244,7 @@ class Component(Object):
 
     def calculate_positions(self,
                             design_vector,
-                            positions_dict={}):
+                            positions_dict):
 
         positions_dict = self.calculate_independent_positions(design_vector, positions_dict)
 
@@ -255,7 +256,8 @@ class InterconnectNode(Object):
                  node,
                  radius,
                  color,
-                 movement=['3D Translation']):
+                 degrees_of_freedom: Union[tuple[str], None] = ('x', 'y', 'z', 'rx', 'ry', 'rz'),
+                 reference_object: Union[None, tuple[str]] = None):
 
         self.name = node
         self.node = node
@@ -266,7 +268,8 @@ class InterconnectNode(Object):
         self.radii = np.array([radius])
         # TODO Sort out None value vs dummy values
         self.positions = np.array([[0., 0., 0.]])  # Initialize a dummy value
-        self.movement = movement
+        self.degrees_of_freedom = degrees_of_freedom
+        self.reference_object = reference_object
 
     @property
     def reference_position(self):
@@ -278,7 +281,7 @@ class InterconnectNode(Object):
 
     def calculate_positions(self,
                             design_vector,
-                            positions_dict={}):
+                            positions_dict):
 
         # TODO Add functionality to accept positions_dict and work for InterconnectSegments
 
@@ -300,7 +303,9 @@ class InterconnectEdge(Object):
                  object_1,
                  object_2,
                  radius,
-                 color):
+                 color,
+                 degrees_of_freedom: Union[tuple[str], None] = None,
+                 reference_object: Union[None, tuple[str]] = None):
 
         self.name = name
         self.object_1 = object_1
@@ -309,7 +314,8 @@ class InterconnectEdge(Object):
         self.radius = radius
         self.color = color
 
-        self.movement = []
+        self.degrees_of_freedom = degrees_of_freedom
+        self.reference_object = reference_object
 
         # Create edge tuple for NetworkX graphs
         self.edge = (self.object_1, self.object_2)
@@ -320,7 +326,7 @@ class InterconnectEdge(Object):
         self.radii = None
 
     def calculate_positions(self,
-                            positions_dict: dict)->dict:
+                            positions_dict: dict) -> dict:
         # TODO revise logic for getting the reference point instead of object's first sphere
         # Address varying number of spheres
 
@@ -340,8 +346,10 @@ class InterconnectEdge(Object):
         positions = np.linspace(pos_1, pos_2, num_spheres)
         radii = np.repeat(self.radius, num_spheres)
 
+        positions_dict[str(self)] = (positions, radii)
+
         # TODO Change positions_dict to include kwarg and return addition?
-        return {str(self): (positions, radii)}
+        return positions_dict
 
     def set_positions(self,
                       positions_dict: dict) -> dict:
@@ -483,7 +491,9 @@ class Structure(Object):
                  positions,
                  rotation,
                  radii,
-                 color):
+                 color,
+                 degrees_of_freedom: Union[tuple[str], None] = None,
+                 reference_object: Union[None, tuple[str]] = None):
 
-        super(Structure, self).__init__(name, positions, rotation, radii, color)
+        super(Structure, self).__init__(name, positions, rotation, radii, color, degrees_of_freedom, reference_object)
 

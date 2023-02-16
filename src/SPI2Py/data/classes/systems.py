@@ -33,11 +33,13 @@ class Subsystem:
     def design_vector_objects(self):
 
         # Implement if not fixed in space
+        # TODO only take waypoints if they can move ...
 
         return [component for component in self.components if component.degrees_of_freedom is not None] + self.interconnect_nodes
 
     @property
     def moving_objects(self):
+        # TODO Not fully correct
         return self.components + self.ports + self.interconnect_nodes + self.interconnect_segments
 
     @property
