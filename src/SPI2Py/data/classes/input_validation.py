@@ -8,7 +8,6 @@ import numpy as np
 import matplotlib.colors as mcolors
 
 
-
 class InputValidation:
     def __init__(self,
                  name: str,
@@ -30,7 +29,7 @@ class InputValidation:
         self.degrees_of_freedom = self._validate_degrees_of_freedom(degrees_of_freedom)
 
 
-
+    # TODO Validate name
     def _validate_position(self, position) -> np.ndarray:
         return position
 
@@ -131,7 +130,11 @@ class InputValidation:
         # TODO Add logic to ensure dynamic fully dependent objects don't reference other dynamic fully dependent objects
 
         if reference_objects is None:
-            if 'dependent' in self.movement:
+
+            # Quick workaround - include independent since "dependent" is in it...
+            if 'independent' in self.movement:
+                pass
+            elif 'dependent' in self.movement:
                 raise ValueError('Reference objects must be specified for dependent movement for %s.' % self.name)
             else:
                 pass
@@ -162,5 +165,3 @@ class InputValidation:
                     raise ValueError('Invalid DOF specified for %s.' % self.name)
 
         return degrees_of_freedom
-
-

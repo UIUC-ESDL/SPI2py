@@ -27,6 +27,7 @@ class Subsystem:
     4. Dynamic, Fully Dependent: Objects that are fully constrained to another object
         -The ports of a component
 
+    TODO Change positions dict from pass-thru edit to merge edit
     """
 
     def __init__(self, components, ports, interconnects, interconnect_nodes, interconnect_segments, structures):
@@ -88,71 +89,11 @@ class Subsystem:
             if obj.movement == 'dynamic_partially_dependent':
                 objects.append(obj)
 
-        # Order the list
-
-        # First, for simplicity, sort the objects into lists.
-        # Since dynamic partially dependent objects are updated after all other movement classes,
-        # if a dynamic partially dependent object is constrained to them, the order doesn't matter
-        # However, if a dynamic partially dependent object is constrained to another dynamic partially dependent object,
-        # We must make sure the constrained is called after the constraining object.
-        dependent_on_another_dependent = []
-        not_dependent_on_another_dependent = []
-
-
-        for obj in objects:
-
-            # If all the reference objects are either static or dynamic independent, then we can add it to the list
-
-            if all([ref_obj in self.static_objects or ref_obj in self.dynamic_independent_objects for ref_obj in obj.reference_objects]):
-                not_dependent_on_another_dependent.append(obj)
-            else:
-                dependent_on_another_dependent.append(obj)
-
-        # Now, we need to order the dependent objects
-        # The exact order does not matter, we just must ensure items don't reference future items
-        # Sort two lists based on one (list of objects and list of reference objects)
-
-        # Arbitrary number to prevent infinite loops
-        iter = 0
-        max_iterations = 50
-
-        # Start with all objects in cache and then remove them as they are added to the ordered list
-        cache = dependent_on_another_dependent.copy()
-        dependent_on_another_dependent_ordered = []
-
-        while len(cache) > 0 and iter < max_iterations:
-
-            # Now the cache only contains objects that reference each other
-            # Therefore,
-            # During each loop, first loop through the remaining objects in cache and add no-brainers
-
-            for obj in cache:
-
-                # If no calls then add and delete
-                if all([ref_obj in dependent_on_another_dependent_ordered for ref_obj in obj.reference_objects]):
-                    dependent_on_another_dependent_ordered.append(obj)
-                    cache.remove(obj)
-                else:
-                    pass
-
-            # Then, loop through the remaining objects in cache and
-            for obj in cache:
-                # If calls, find the
-                pass
-
-            if iter == max_iterations-1:
-                # TODO Check for circular references and overconstrained objects in the InputValidation class
-                raise Exception('The objects are not properly ordered. There is likely a circular reference.')
-
-
-        ordered_objects = not_dependent_on_another_dependent + dependent_on_another_dependent_ordered
-
-
-        return ordered_objects
+        return objects
 
     @property
     def dynamic_fully_dependent_objects(self):
-
+            # TODO Sort to makesure ports are before edges...
             # TODO Add check to make sure fully dependent objects aren't constraint to other fully dependent objects
 
             objects = []

@@ -91,6 +91,12 @@ class Object(InputValidation):
     #
     #     return design_vector
 
+    def calculate_static_positions(self, positions_dict):
+
+        positions_dict[str(self)] = (self.positions, self.radii)
+
+        return positions_dict
+
     def calculate_independent_positions(self,
                                         design_vector: np.ndarray,
                                         positions_dict: Union[None, dict] = None) -> dict:
@@ -510,3 +516,9 @@ class Structure(Object):
 
         super(Structure, self).__init__(name, positions, rotation, radii, color, movement, reference_objects, degrees_of_freedom)
 
+    def calculate_positions(self,
+                            positions_dict: dict) -> dict:
+
+        positions_dict = self.calculate_static_positions(positions_dict)
+
+        return positions_dict

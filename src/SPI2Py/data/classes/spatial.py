@@ -25,7 +25,13 @@ class SpatialConfiguration(System):
         """
         # Convert this to a flatten-like from design_vectors?
         design_vector = np.empty(0)
-        for obj in self.design_vector_objects:
+        # for obj in self.design_vector_objects:
+        #     design_vector = np.concatenate((design_vector, obj.design_vector))
+
+        for obj in self.dynamic_independent_objects:
+            design_vector = np.concatenate((design_vector, obj.design_vector))
+
+        for obj in self.dynamic_partially_dependent_objects:
             design_vector = np.concatenate((design_vector, obj.design_vector))
 
         return design_vector
@@ -40,9 +46,30 @@ class SpatialConfiguration(System):
         :return:
         """
 
+        # # Get the size of the design vector for each design vector object
+        # design_vector_sizes = []
+        # for i, obj in enumerate(self.design_vector_objects):
+        #     design_vector_sizes.append(obj.design_vector.size)
+        #
+        # # Index values
+        # start, stop = 0, 0
+        # design_vectors = []
+        #
+        # for i, size in enumerate(design_vector_sizes):
+        #     # Increment stop index
+        #     stop += design_vector_sizes[i]
+        #
+        #     design_vectors.append(design_vector[start:stop])
+        #
+        #     # Increment start index
+        #     start = stop
+
         # Get the size of the design vector for each design vector object
         design_vector_sizes = []
-        for i, obj in enumerate(self.design_vector_objects):
+        for i, obj in enumerate(self.dynamic_independent_objects):
+            design_vector_sizes.append(obj.design_vector.size)
+
+        for i, obj in enumerate(self.dynamic_partially_dependent_objects):
             design_vector_sizes.append(obj.design_vector.size)
 
         # Index values
@@ -78,24 +105,35 @@ class SpatialConfiguration(System):
 
         # DYNAMIC OBJECTS - Independent
 
-        # Get positions of design  classes
-        for obj, design_vector_row in zip(self.design_vector_objects, design_vectors):
+        # # Get positions of design  classes
+        # for obj, design_vector_row in zip(self.design_vector_objects, design_vectors):
+        #     positions_dict = obj.calculate_positions(design_vector_row, positions_dict)
+        #
+        #
+        #
+        # # DYNAMIC OBJECTS - Dependent
+        #
+        # for port in self.ports:
+        #     positions_dict = port.calculate_positions(positions_dict)
+        #
+        # # For interconnect nodes and segments...
+        # for interconnect in self.interconnect_segments:
+        #     positions_dict = interconnect.calculate_positions(positions_dict)
+        #
+        # # Get positions of interconnect nodes and structures...
+
+        # STATIC OBJECTS
+        for obj in self.static_objects:
+            positions_dict = obj.calculate_positions(positions_dict)
+
+        # DYNAMIC OBJECTS - Independent then Partially Dependent
+        objects = self.dynamic_independent_objects + self.dynamic_partially_dependent_objects
+        for obj, design_vector_row in zip(objects, design_vectors):
             positions_dict = obj.calculate_positions(design_vector_row, positions_dict)
 
-
-
-        # DYNAMIC OBJECTS - Dependent
-
-        for port in self.ports:
-            positions_dict = port.calculate_positions(positions_dict)
-
-        # For interconnect nodes and segments...
-        for interconnect in self.interconnect_segments:
-            positions_dict = interconnect.calculate_positions(positions_dict)
-
-        # Get positions of interconnect nodes and structures...
-
-
+        # DYNAMIC OBJECTS - Fully Dependent
+        for obj in self.dynamic_fully_dependent_objects:
+            positions_dict = obj.calculate_positions(positions_dict)
 
         return positions_dict
 
