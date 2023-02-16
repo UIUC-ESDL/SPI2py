@@ -48,12 +48,12 @@ class Object(InputValidation):
                  rotation:           np.ndarray,
                  radii:              np.ndarray,
                  color:              Union[str, list[str]],
-                 movement:           str,
-                 reference_objects:  Union[None, tuple[str]] = None,
+                 movement_class:           str,
+                 constraints:  Union[None, tuple[str]] = None,
                  degrees_of_freedom: Union[tuple[str], None] = ('x', 'y', 'z', 'rx', 'ry', 'rz')
                  ):
 
-        super(Object, self).__init__(name, positions, rotation, radii, color, movement, reference_objects, degrees_of_freedom)
+        super(Object, self).__init__(name, positions, rotation, radii, color, movement_class, constraints, degrees_of_freedom)
 
         self.rotation = np.zeros(3)
 
@@ -121,19 +121,42 @@ class Object(InputValidation):
 
         return positions_dict
 
-    # def calculate_dependent_positions(self,
-    #                                   design_vector: np.ndarray,
-    #                                   positions_dict: Union[None, dict] = None) -> dict:
-    #     """
-    #
-    #     """
-    #     # If fixed
-    #     if self.reference_objects is None:
-    #         raise ValueError('This object is fixed..? or just static?')
-    #
-    #     # If straight line
-    #
-    #     return positions_dict
+    def calculate_dependent_positions(self,
+                                      design_vector: np.ndarray,
+                                      positions_dict: Union[None, dict] = None) -> dict:
+        """
+        Types of Constrained Motion
+
+        Fully Dependent Constraints
+        1. "offset translation and rotation"
+        2. ...(?)
+
+        #
+        2. "constant translation offset variable rotation"
+        2. "variable translation constant rotation offset
+        2. "colinear" (not implemented)
+        3. "colinear with offset" (not implemented)
+        """
+
+        def offset_translation_and_rotation_(self,positions_dict):
+            # TODO Remove design vector argument
+            # Get the reference point
+            reference_point = positions_dict[self.component_name][0][0]
+
+            # Calculate the port position
+            port_position = reference_point + self.reference_point_offset
+
+            # Add the port position to the positions dictionary
+            positions_dict[str(self)] = (port_position, self.radius)
+
+            return positions_dict
+
+        if self.movement_class == 'offset translation and rotation':
+            positions_dict = offset_translation_and_rotation_(self, positions_dict)
+        else:
+            raise NotImplementedError('This type of constrained motion is not implemented.')
+
+        return positions_dict
     #
     # def calculate_positions(self,
     #                         design_vector: np.ndarray,
@@ -197,7 +220,7 @@ class Port(InputValidation):
 
         self.radius = self._validate_radii(radius)
 
-        self.movement = 'dynamic_fully_dependent'
+        self.movement_class = 'fully dependent'
 
 
     def __repr__(self):
@@ -239,11 +262,11 @@ class Component(Object):
                  rotation: np.ndarray,
                  radii: np.ndarray,
                  color: Union[str, list[str]],
-                 movement='dynamic_independent',
-                 reference_objects: Union[None, tuple[str]] = None,
+                 movement_class='independent',
+                 constraints: Union[None, tuple[str]] = None,
                  degrees_of_freedom: Union[tuple[str], None] = ('x', 'y', 'z', 'rx', 'ry', 'rz')):
 
-        super(Component, self).__init__(name, positions, rotation, radii, color, movement, reference_objects, degrees_of_freedom)
+        super(Component, self).__init__(name, positions, rotation, radii, color, movement_class, constraints, degrees_of_freedom)
 
         # Initialize the rotation attribute
         # self.rotation = np.array([0, 0, 0])
@@ -259,9 +282,9 @@ class Component(Object):
                             design_vector,
                             positions_dict):
         # TODO Add logic to generalize this for all object types
-        if self.movement == 'static':
+        if self.movement_class == 'static':
             positions_dict = self.calculate_static_positions(positions_dict)
-        elif self.movement == 'dynamic_independent':
+        elif self.movement_class == 'independent':
             positions_dict = self.calculate_independent_positions(design_vector, positions_dict)
         else:
             raise NotImplementedError('This movement type is not implemented yet')
@@ -275,7 +298,7 @@ class InterconnectNode(Object):
                  radius,
                  color,
                  degrees_of_freedom: Union[tuple[str], None] = ('x', 'y', 'z', 'rx', 'ry', 'rz'),
-                 reference_objects: Union[None, tuple[str]] = None):
+                 constraints: Union[None, tuple[str]] = None):
 
         self.name = node
         self.node = node
@@ -286,9 +309,9 @@ class InterconnectNode(Object):
         self.radii = np.array([radius])
         # TODO Sort out None value vs dummy values
         self.positions = np.array([[0., 0., 0.]])  # Initialize a dummy value
-        self.movement = 'dynamic_independent'
+        self.movement_class = 'independent'
         self.degrees_of_freedom = degrees_of_freedom
-        self.reference_objects = reference_objects
+        self.reference_objects = constraints
 
     @property
     def reference_position(self):
@@ -324,7 +347,7 @@ class InterconnectEdge(Object):
                  radius,
                  color,
                  degrees_of_freedom: Union[tuple[str], None] = None,
-                 reference_objects: Union[None, tuple[str]] = None):
+                 constraints: Union[None, tuple[str]] = None):
 
         self.name = name
         self.object_1 = object_1
@@ -334,7 +357,7 @@ class InterconnectEdge(Object):
         self.color = color
 
         self.degrees_of_freedom = degrees_of_freedom
-        self.reference_objects = reference_objects
+        self.reference_objects = constraints
 
         # Create edge tuple for NetworkX graphs
         self.edge = (self.object_1, self.object_2)
@@ -344,7 +367,7 @@ class InterconnectEdge(Object):
         self.positions = np.empty((0, 3))
         self.radii = None
 
-        self.movement = 'dynamic_fully_dependent'
+        self.movement_class = 'fully dependent'
 
     def calculate_positions(self,
                             design_vector,
@@ -385,7 +408,7 @@ class InterconnectEdge(Object):
         # TODO Separate this into a different function?
         self.radii = np.repeat(self.radius, self.positions.shape[0])
 
-        return
+
 
 
 class Interconnect(InterconnectNode, InterconnectEdge):
@@ -519,11 +542,11 @@ class Structure(Object):
                  rotation,
                  radii,
                  color,
-                 movement: str = 'static',
-                 degrees_of_freedom: Union[tuple[str], None] = None,
-                 reference_objects: Union[None, tuple[str]] = None):
+                 movement_class: str = 'static',
+                 constraints: Union[None, dict] = None,
+                 degrees_of_freedom: Union[tuple[str], None] = None):
 
-        super(Structure, self).__init__(name, positions, rotation, radii, color, movement, reference_objects, degrees_of_freedom)
+        super(Structure, self).__init__(name, positions, rotation, radii, color, movement_class, constraints, degrees_of_freedom)
 
     def calculate_positions(self,
                             design_vector,

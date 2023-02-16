@@ -51,24 +51,24 @@ class Subsystem:
         objects = []
 
         for obj in self.objects:
-            if obj.movement == 'static':
+            if obj.movement_class == 'static':
                 objects.append(obj)
 
         return objects
 
     @property
-    def dynamic_independent_objects(self):
+    def independent_objects(self):
 
         objects = []
 
         for obj in self.objects:
-            if obj.movement == 'dynamic_independent':
+            if obj.movement_class == 'independent':
                 objects.append(obj)
 
         return objects
 
     @property
-    def dynamic_partially_dependent_objects(self):
+    def partially_dependent_objects(self):
 
         """
         Partially dependent objects are objects that are constrained to other objects but retain some
@@ -86,20 +86,20 @@ class Subsystem:
         objects = []
 
         for obj in self.objects:
-            if obj.movement == 'dynamic_partially_dependent':
+            if obj.movement_class == 'partially dependent':
                 objects.append(obj)
 
         return objects
 
     @property
-    def dynamic_fully_dependent_objects(self):
+    def fully_dependent_objects(self):
             # TODO Sort to makesure ports are before edges...
             # TODO Add check to make sure fully dependent objects aren't constraint to other fully dependent objects
 
             objects = []
 
             for obj in self.objects:
-                if obj.movement == 'dynamic_fully_dependent':
+                if obj.movement_class == 'fully dependent':
                     objects.append(obj)
 
             return objects
@@ -113,7 +113,7 @@ class Subsystem:
 
         uncategorized = []
 
-        categorized = self.static_objects + self.dynamic_independent_objects + self.dynamic_partially_dependent_objects + self.dynamic_fully_dependent_objects
+        categorized = self.static_objects + self.independent_objects + self.partially_dependent_objects + self.fully_dependent_objects
 
         for obj in self.objects:
             if obj not in categorized:

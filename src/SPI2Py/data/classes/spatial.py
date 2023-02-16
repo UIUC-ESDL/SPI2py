@@ -28,10 +28,10 @@ class SpatialConfiguration(System):
         # for obj in self.design_vector_objects:
         #     design_vector = np.concatenate((design_vector, obj.design_vector))
 
-        for obj in self.dynamic_independent_objects:
+        for obj in self.independent_objects:
             design_vector = np.concatenate((design_vector, obj.design_vector))
 
-        for obj in self.dynamic_partially_dependent_objects:
+        for obj in self.partially_dependent_objects:
             design_vector = np.concatenate((design_vector, obj.design_vector))
 
         return design_vector
@@ -66,10 +66,10 @@ class SpatialConfiguration(System):
 
         # Get the size of the design vector for each design vector object
         design_vector_sizes = []
-        for i, obj in enumerate(self.dynamic_independent_objects):
+        for i, obj in enumerate(self.independent_objects):
             design_vector_sizes.append(obj.design_vector.size)
 
-        for i, obj in enumerate(self.dynamic_partially_dependent_objects):
+        for i, obj in enumerate(self.partially_dependent_objects):
             design_vector_sizes.append(obj.design_vector.size)
 
         # Index values
@@ -105,12 +105,12 @@ class SpatialConfiguration(System):
             positions_dict = obj.calculate_positions(design_vector,positions_dict)
 
         # DYNAMIC OBJECTS - Independent then Partially Dependent
-        objects = self.dynamic_independent_objects + self.dynamic_partially_dependent_objects
+        objects = self.independent_objects + self.partially_dependent_objects
         for obj, design_vector_row in zip(objects, design_vectors):
             positions_dict = obj.calculate_positions(design_vector_row, positions_dict)
 
         # DYNAMIC OBJECTS - Fully Dependent
-        for obj in self.dynamic_fully_dependent_objects:
+        for obj in self.fully_dependent_objects:
             positions_dict = obj.calculate_positions(design_vector,positions_dict)
 
         return positions_dict
@@ -133,12 +133,12 @@ class SpatialConfiguration(System):
         # DO NOT UPDATE, OBVIOUSLY
 
         # DYNAMIC OBJECTS - Independent then Partially Dependent
-        objects = self.dynamic_independent_objects + self.dynamic_partially_dependent_objects
+        objects = self.independent_objects + self.partially_dependent_objects
         for obj, new_design_vector in zip(objects, new_design_vectors):
             obj.set_positions(positions_dict)
 
         # DYNAMIC OBJECTS - Fully Dependent
-        for obj in self.dynamic_fully_dependent_objects:
+        for obj in self.fully_dependent_objects:
             obj.set_positions(positions_dict)
 
 

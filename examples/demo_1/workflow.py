@@ -49,10 +49,10 @@ locations = np.concatenate((pos_comp0, pos_comp1, pos_comp2, pos_comp3, pos_int0
 demo.generate_layout(layout_generation_method, inputs=locations)
 
 
-demo.layout.components[0].movement = 'static'
-demo.layout.components[1].movement = 'static'
-demo.layout.components[2].movement = 'static'
-demo.layout.components[3].movement = 'static'
+demo.layout.components[0].movement_class = 'static'
+demo.layout.components[1].movement_class = 'static'
+demo.layout.components[2].movement_class = 'static'
+demo.layout.components[3].movement_class = 'static'
 
 # For development: Plot initial layout
 demo.layout.plot_layout()

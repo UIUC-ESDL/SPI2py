@@ -15,25 +15,30 @@ class InputValidation:
                  rotation: np.ndarray,
                  radii: np.ndarray,
                  color: Union[str, list[str]],
-                 movement: str,
-                 reference_objects: Union[str, list[str], None],
+                 movement_class: str,
+                 constraints: Union[None, dict],
                  degrees_of_freedom: Union[list[int], None]):
 
-        self.name = name
-        self.positions = self._validate_positions(positions)
-        self.rotation = self._validate_rotation(rotation)
-        self.radii = self._validate_radii(radii)
-        self.color = self._validate_colors(color)
-        self.movement = self._validate_movement(movement)
-        self.reference_objects = self._validate_reference_objects(reference_objects)
+        self.name           = name
+        self.positions      = self._validate_positions(positions)
+        self.rotation       = self._validate_rotation(rotation)
+        self.radii          = self._validate_radii(radii)
+        self.color          = self._validate_colors(color)
+        self.movement_class = self._validate_movement_class(movement_class)
+        self.constraints = self._validate_constraints(constraints)
         self.degrees_of_freedom = self._validate_degrees_of_freedom(degrees_of_freedom)
 
 
-    # TODO Validate name
+    def _validate_name(self, name):
+        # TODO Implement this function
+        return name
+
     def _validate_position(self, position) -> np.ndarray:
+        # TODO Implement this function
         return position
 
     def _validate_rotation(self, rotation) -> np.ndarray:
+        # TODO Implement this function
         return rotation
 
     def _validate_positions(self, positions) -> np.ndarray:
@@ -117,42 +122,43 @@ class InputValidation:
 
         return colors
 
-    def _validate_movement(self, movement):
+    def _validate_movement_class(self, movement_class):
 
-        if not isinstance(movement, str):
+        if not isinstance(movement_class, str):
             raise TypeError('Movement must be a string for %s.' % self.name)
 
+        valid_movement_classes = ['static','independent', 'partially_dependent', 'fully_dependent']
 
-        return movement
+        return movement_class
 
-    def _validate_reference_objects(self, reference_objects):
-
+    def _validate_constraints(self, constraints):
+        # TODO Ensure that is no reference objects are not specified that movement class isn't dependent
         # TODO Add logic to ensure dynamic fully dependent objects don't reference other dynamic fully dependent objects
+        # TODO Update for dictionary and None...
+        # if reference_objects is None:
+        #
+        #     # Quick workaround - include independent since "dependent" is in it...
+        #     if 'independent' in self.movement_class:
+        #         pass
+        #     elif 'dependent' in self.movement_class:
+        #         raise ValueError('Reference objects must be specified for dependent movement for %s.' % self.name)
+        #     else:
+        #         pass
+        #
+        # elif isinstance(reference_objects, str):
+        #     # TODO Add a system-integration test to ensure that only valid reference objects are specified
+        #     pass
+        #
+        # elif isinstance(reference_objects, list):
+        #     for reference_object in reference_objects:
+        #         if not isinstance(reference_object, str):
+        #             raise TypeError('Reference objects must be a string for %s.' % self.name)
+        #
+        #         # TODO Add a system-integration test to ensure that only valid reference objects are specified
+        # else:
+        #     raise TypeError('Reference objects must be NoneType, a string or a list for %s.' % self.name)
 
-        if reference_objects is None:
-
-            # Quick workaround - include independent since "dependent" is in it...
-            if 'independent' in self.movement:
-                pass
-            elif 'dependent' in self.movement:
-                raise ValueError('Reference objects must be specified for dependent movement for %s.' % self.name)
-            else:
-                pass
-
-        elif isinstance(reference_objects, str):
-            # TODO Add a system-integration test to ensure that only valid reference objects are specified
-            pass
-
-        elif isinstance(reference_objects, list):
-            for reference_object in reference_objects:
-                if not isinstance(reference_object, str):
-                    raise TypeError('Reference objects must be a string for %s.' % self.name)
-
-                # TODO Add a system-integration test to ensure that only valid reference objects are specified
-        else:
-            raise TypeError('Reference objects must be NoneType, a string or a list for %s.' % self.name)
-
-        return reference_objects
+        return constraints
 
     def _validate_degrees_of_freedom(self, degrees_of_freedom):
 

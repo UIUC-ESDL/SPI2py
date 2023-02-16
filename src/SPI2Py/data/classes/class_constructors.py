@@ -20,10 +20,10 @@ def extract_inputs():
     
     pass
 
+
 def create_components(inputs):
 
     components = []
-
 
     for component in inputs.values():
 
