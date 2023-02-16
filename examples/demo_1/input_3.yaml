@@ -1,11 +1,28 @@
 components:
 
+    # Component index (start with zero)
     0:
         name: control_valve_1
         color: aquamarine
+
+        # The geometric primitives that make up the component
         origins: [ [ 1, 1, 1 ], [2, 1, 1], [3, 1, 1], ]
         dimensions: [ [ 2, 2, 2 ], [2, 2, 2], [2, 2, 2] ]
         rotation: [0,0,0]
+
+        # Constraint type:
+        # static
+        # dynamic_independent
+        # dynamic_partially-dependent
+        # dynamic_fully-dependent
+        movement: dynamic_independent
+
+        degrees of freedom: [1,1,1,1,1,1]
+
+        # TODO - add constraint types
+        # constraint type:
+
+
 
 
     1:
@@ -15,6 +32,8 @@ components:
         dimensions: [ [ 3,3,1.5 ],[ 3,3,1.5 ],[ 3,3,1.5 ], [1,1,5] ]
         rotation: [0,0,0]
 
+        movement: dynamic_independent
+
 
     2:
         name: component_2
@@ -23,12 +42,15 @@ components:
         dimensions: [ [ 1, 3, 3 ] ]
         rotation: [0,0,0]
 
+        movement: dynamic_independent
+
     3:
         name: component_3
         color: olivedrab
         origins: [ [ 0, 0, 0 ], [ 1, 0, 0 ], [ 1, 1, 0 ], [ 1, 1, 3 ] ]
         dimensions: [ [ 1, 1, 1 ], [ 1, 2, 1 ], [ 1, 1, 4 ], [ 2, 1, 1 ] ]
         rotation: [0,0,0]
+        movement: dynamic_independent
 
 ports:
     0:
@@ -37,12 +59,15 @@ ports:
         color: red
         radius: 0.5
         reference point offset: [0,0,1.5]
+        movement: dynamic_full_dependent
+
     1:
         component name: control_valve_1
         port name: return
         color: blue
         radius: 0.5
         reference point offset: [2,0,1.5]
+        movement: dynamic_full_dependent
 
     2:
         component name: actuator_1
@@ -50,6 +75,7 @@ ports:
         color: red
         radius: 0.5
         reference point offset: [0,-1,0]
+        movement: dynamic_full_dependent
 
     3:
         component name: actuator_1
@@ -57,6 +83,7 @@ ports:
         color: blue
         radius: 0.25
         reference point offset: [1,-1,0]
+        movement: dynamic_full_dependent
 
 interconnects:
 
@@ -96,5 +123,6 @@ structures:
         origins: [[-1,-1,-3], [-1,1,-3]]
         dimensions: [[5,5,1], [1,1,1]]
         rotation: [0,0,0]
+        movement: static
 
 

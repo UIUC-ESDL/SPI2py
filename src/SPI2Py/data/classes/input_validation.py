@@ -15,13 +15,21 @@ class InputValidation:
                  positions: np.ndarray,
                  rotation: np.ndarray,
                  radii: np.ndarray,
-                 color: Union[str, list[str]]):
+                 color: Union[str, list[str]],
+                 movement: str,
+                 reference: Union[str, None],
+                 degrees_of_freedom: Union[list[int], None]):
 
         self.name = name
         self.positions = self._validate_positions(positions)
         self.rotation = self._validate_rotation(rotation)
         self.radii = self._validate_radii(radii)
         self.color = self._validate_colors(color)
+        self.movement = self._validate_movement(movement)
+        self.reference = self._validate_reference(reference)
+        self.degrees_of_freedom = self._validate_degrees_of_freedom(degrees_of_freedom)
+
+
 
     def _validate_position(self, position) -> np.ndarray:
         return position
@@ -74,8 +82,6 @@ class InputValidation:
 
     def _validate_color(self, color):
 
-
-
         if isinstance(color, str):
             pass
         else:
@@ -111,3 +117,27 @@ class InputValidation:
             raise ValueError('Colors must be a list or string for %s.' % self.name)
 
         return colors
+
+    def _validate_movement(self, movement):
+
+        if not isinstance(movement, str):
+            raise TypeError('Movement must be a string for %s.' % self.name)
+
+        return movement
+
+    def _validate_reference(self, reference):
+        return reference
+
+    def _validate_degrees_of_freedom(self, degrees_of_freedom):
+
+        if not isinstance(degrees_of_freedom, tuple) and degrees_of_freedom is not None:
+            raise TypeError('Degrees of freedom must be a tuple for %s.' % self.name)
+
+        if degrees_of_freedom is not None:
+            for dof in degrees_of_freedom:
+                if dof not in ('x', 'y', 'z', 'rx', 'ry', 'rz'):
+                    raise ValueError('Invalid DOF specified for %s.' % self.name)
+
+        return degrees_of_freedom
+
+

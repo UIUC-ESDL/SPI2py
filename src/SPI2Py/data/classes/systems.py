@@ -13,6 +13,20 @@ class Subsystem:
     """
     Defines the non-spatial aspects of the system.
 
+    There are four types of objects:
+    1. Static
+        -Structures
+        -Sensors that must be fixed in space
+
+    2. Dynamic, Independent: Objects that can move independently of each other
+        -...
+
+    3. Dynamic, Partially Dependent: Objects that are constrained relative to other object(s) but retain some dergee(s) of freedom
+        -Coaxial components
+
+    4. Dynamic, Fully Dependent: Objects that are fully constrained to another object
+        -The ports of a component
+
     """
 
     def __init__(self, components, ports, interconnects, interconnect_nodes, interconnect_segments, structures):
@@ -28,6 +42,44 @@ class Subsystem:
     @property
     def objects(self):
         return self.components + self.ports + self.interconnect_nodes + self.interconnect_segments + self.structures
+
+
+    @property
+    def objects_static(self):
+        # TODO Implement
+        pass
+
+    @property
+    def objects_dynamic_independent(self):
+        # TODO Implement
+        pass
+
+    @property
+    def objects_dynamic_partially_dependent(self):
+        # TODO Implement
+        pass
+
+    @property
+    def objects_dynamic_fully_dependent(self):
+        # TODO Implement
+        pass
+
+    @property
+    def _objects_uncategorized(self):
+
+        # Should be empty, checks if above missed anything
+
+        uncategorized = []
+
+        categorized = self.objects_static + self.objects_dynamic_independent + self.objects_dynamic_partially_dependent + self.objects_dynamic_fully_dependent
+
+        for obj in self.objects:
+            if obj not in categorized:
+                uncategorized.append(obj)
+
+        return uncategorized
+
+
 
     @property
     def design_vector_objects(self):

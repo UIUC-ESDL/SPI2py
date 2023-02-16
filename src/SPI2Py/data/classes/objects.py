@@ -48,13 +48,11 @@ class Object(InputValidation):
                  rotation: np.ndarray,
                  radii: np.ndarray,
                  color: Union[str, list[str]],
-                 degrees_of_freedom: Union[tuple[str], None] = ('x', 'y', 'z', 'rx', 'ry', 'rz'),
-                 reference_object: Union[None, tuple[str]] = None):
+                 movement: str,
+                 reference_object: Union[None, tuple[str]] = None,
+                 degrees_of_freedom: Union[tuple[str], None] = ('x', 'y', 'z', 'rx', 'ry', 'rz')):
 
-        super(Object, self).__init__(name, positions, rotation, radii, color)
-
-        self.degrees_of_freedom = degrees_of_freedom
-        self.reference_object = reference_object
+        super(Object, self).__init__(name, positions, rotation, radii, color, movement, reference_object, degrees_of_freedom)
 
         self.rotation = np.zeros(3)
 
@@ -224,13 +222,11 @@ class Component(Object):
                  rotation: np.ndarray,
                  radii: np.ndarray,
                  color: Union[str, list[str]],
-                 degrees_of_freedom: Union[tuple[str], None] = ('x', 'y', 'z', 'rx', 'ry', 'rz'),
-                 reference_object: Union[None, tuple[str]] = None):
+                 movement='dynamic_independent',
+                 reference_object: Union[None, tuple[str]] = None,
+                 degrees_of_freedom: Union[tuple[str], None] = ('x', 'y', 'z', 'rx', 'ry', 'rz')):
 
-        super(Component, self).__init__(name, positions, rotation, radii, color)
-
-        self.degrees_of_freedom = degrees_of_freedom
-        self.reference_object = reference_object
+        super(Component, self).__init__(name, positions, rotation, radii, color, movement, reference_object,degrees_of_freedom)
 
         # Initialize the rotation attribute
         # self.rotation = np.array([0, 0, 0])
@@ -492,8 +488,9 @@ class Structure(Object):
                  rotation,
                  radii,
                  color,
+                 movement: str = 'static',
                  degrees_of_freedom: Union[tuple[str], None] = None,
                  reference_object: Union[None, tuple[str]] = None):
 
-        super(Structure, self).__init__(name, positions, rotation, radii, color, degrees_of_freedom, reference_object)
+        super(Structure, self).__init__(name, positions, rotation, radii, color, movement,reference_object,degrees_of_freedom)
 
