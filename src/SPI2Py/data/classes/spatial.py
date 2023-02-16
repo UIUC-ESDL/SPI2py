@@ -99,29 +99,6 @@ class SpatialConfiguration(System):
 
         design_vectors = self.slice_design_vector(design_vector)
 
-        # TODO Components that don't have design vectors...
-        # STATIC OBJECTS
-
-
-        # DYNAMIC OBJECTS - Independent
-
-        # # Get positions of design  classes
-        # for obj, design_vector_row in zip(self.design_vector_objects, design_vectors):
-        #     positions_dict = obj.calculate_positions(design_vector_row, positions_dict)
-        #
-        #
-        #
-        # # DYNAMIC OBJECTS - Dependent
-        #
-        # for port in self.ports:
-        #     positions_dict = port.calculate_positions(positions_dict)
-        #
-        # # For interconnect nodes and segments...
-        # for interconnect in self.interconnect_segments:
-        #     positions_dict = interconnect.calculate_positions(positions_dict)
-        #
-        # # Get positions of interconnect nodes and structures...
-
         # STATIC OBJECTS
         for obj in self.static_objects:
             positions_dict = obj.calculate_positions(positions_dict)
@@ -151,14 +128,17 @@ class SpatialConfiguration(System):
 
         positions_dict = self.calculate_positions(new_design_vector)
 
-        for obj, new_design_vector in zip(self.design_vector_objects, new_design_vectors):
+        # STATIC OBJECTS
+        # DO NOT UPDATE, OBVIOUSLY
+
+        # DYNAMIC OBJECTS - Independent then Partially Dependent
+        objects = self.dynamic_independent_objects + self.dynamic_partially_dependent_objects
+        for obj, new_design_vector in zip(objects, new_design_vectors):
             obj.set_positions(positions_dict)
 
-        for port in self.ports:
-            port.set_positions(positions_dict)
-
-        for interconnect in self.interconnect_segments:
-            interconnect.set_positions(positions_dict)
+        # DYNAMIC OBJECTS - Fully Dependent
+        for obj in self.dynamic_fully_dependent_objects:
+            obj.set_positions(positions_dict)
 
 
     def plot_layout(self, savefig=False, directory=None):
