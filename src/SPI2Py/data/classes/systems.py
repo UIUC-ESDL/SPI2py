@@ -70,12 +70,15 @@ class Subsystem:
     def dynamic_partially_dependent_objects(self):
 
         """
-        Since partially dependent objects can be constrained to other partially dependent objects, we
-        need to order them in a way where looping through the list will update properly.
+        Partially dependent objects are objects that are constrained to other objects but retain some
+        degree of freedom (e.g. coaxial components).
 
-        Since we are checking we invert and check if static/independant
+        For the time being, we will simplify the problem by assuming that you cannot chain dependencies.
+        For example, we may assert that the position of objects B,C, and D may depend directly on A. However,
+        we may not assert that the position of object D depends on the position of C, which depends on the position f B, etc.
 
         TODO Write unit tests to confirm sorting works properly
+        TODO Add check that ensures partially dependent objects are not constrained to other partially or fully dependent objects
         """
 
         # Create the unordered list
@@ -119,11 +122,18 @@ class Subsystem:
 
         while len(cache) > 0 and iter < max_iterations:
 
-            # During each loop, first loop through the remaining objects in cache and add nobrainers
+            # Now the cache only contains objects that reference each other
+            # Therefore,
+            # During each loop, first loop through the remaining objects in cache and add no-brainers
+
             for obj in cache:
 
                 # If no calls then add and delete
-                pass
+                if all([ref_obj in dependent_on_another_dependent_ordered for ref_obj in obj.reference_objects]):
+                    dependent_on_another_dependent_ordered.append(obj)
+                    cache.remove(obj)
+                else:
+                    pass
 
             # Then, loop through the remaining objects in cache and
             for obj in cache:
@@ -142,6 +152,8 @@ class Subsystem:
 
     @property
     def dynamic_fully_dependent_objects(self):
+
+            # TODO Add check to make sure fully dependent objects aren't constraint to other fully dependent objects
 
             objects = []
 
