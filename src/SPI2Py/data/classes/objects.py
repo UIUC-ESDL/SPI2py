@@ -43,16 +43,17 @@ from ...analysis.transformations import translate, rotate_about_point
 class Object(InputValidation):
     # TODO Implement a single class to handle how objects move and update positions... let child classes mutate them
     def __init__(self,
-                 name: str,
-                 positions: np.ndarray,
-                 rotation: np.ndarray,
-                 radii: np.ndarray,
-                 color: Union[str, list[str]],
-                 movement: str,
-                 reference_object: Union[None, tuple[str]] = None,
-                 degrees_of_freedom: Union[tuple[str], None] = ('x', 'y', 'z', 'rx', 'ry', 'rz')):
+                 name:               str,
+                 positions:          np.ndarray,
+                 rotation:           np.ndarray,
+                 radii:              np.ndarray,
+                 color:              Union[str, list[str]],
+                 movement:           str,
+                 reference_objects:  Union[None, tuple[str]] = None,
+                 degrees_of_freedom: Union[tuple[str], None] = ('x', 'y', 'z', 'rx', 'ry', 'rz')
+                 ):
 
-        super(Object, self).__init__(name, positions, rotation, radii, color, movement, reference_object, degrees_of_freedom)
+        super(Object, self).__init__(name, positions, rotation, radii, color, movement, reference_objects, degrees_of_freedom)
 
         self.rotation = np.zeros(3)
 
@@ -121,7 +122,7 @@ class Object(InputValidation):
     #
     #     """
     #     # If fixed
-    #     if self.reference_object is None:
+    #     if self.reference_objects is None:
     #         raise ValueError('This object is fixed..? or just static?')
     #
     #     # If straight line
@@ -139,12 +140,12 @@ class Object(InputValidation):
     #     if positions_dict is None:
     #         positions_dict = {}
     #
-    #     if self.reference_object is None:
+    #     if self.reference_objects is None:
     #
     #         # Calculate the independent positions
     #         positions_dict = self.calculate_independent_positions(design_vector, positions_dict)
     #
-    #     elif self.reference_object is not None:
+    #     elif self.reference_objects is not None:
     #
     #         # Calculate the dependent positions
     #         positions_dict = self.calculate_dependent_positions(design_vector, positions_dict)
@@ -152,7 +153,9 @@ class Object(InputValidation):
     #     return positions_dict
 
 
-    def set_positions(self, positions_dict: dict):
+    def set_positions(self,
+                      positions_dict: dict
+                      ):
         """
         Update positions of object spheres given a design vector
 
@@ -165,7 +168,12 @@ class Object(InputValidation):
 
 class Port(InputValidation):
 
-    def __init__(self, component_name, port_name, color, reference_point_offset, radius):
+    def __init__(self,
+                 component_name,
+                 port_name,
+                 color,
+                 reference_point_offset,
+                 radius):
 
         self.component_name = component_name
         self.port_name = port_name
@@ -182,6 +190,8 @@ class Port(InputValidation):
         self.positions = self.reference_point_offset
 
         self.radius = self._validate_radii(radius)
+
+        self.movement = 'dynamic_fully_dependent'
 
 
     def __repr__(self):
@@ -223,10 +233,10 @@ class Component(Object):
                  radii: np.ndarray,
                  color: Union[str, list[str]],
                  movement='dynamic_independent',
-                 reference_object: Union[None, tuple[str]] = None,
+                 reference_objects: Union[None, tuple[str]] = None,
                  degrees_of_freedom: Union[tuple[str], None] = ('x', 'y', 'z', 'rx', 'ry', 'rz')):
 
-        super(Component, self).__init__(name, positions, rotation, radii, color, movement, reference_object,degrees_of_freedom)
+        super(Component, self).__init__(name, positions, rotation, radii, color, movement, reference_objects, degrees_of_freedom)
 
         # Initialize the rotation attribute
         # self.rotation = np.array([0, 0, 0])
@@ -253,7 +263,7 @@ class InterconnectNode(Object):
                  radius,
                  color,
                  degrees_of_freedom: Union[tuple[str], None] = ('x', 'y', 'z', 'rx', 'ry', 'rz'),
-                 reference_object: Union[None, tuple[str]] = None):
+                 reference_objects: Union[None, tuple[str]] = None):
 
         self.name = node
         self.node = node
@@ -264,8 +274,9 @@ class InterconnectNode(Object):
         self.radii = np.array([radius])
         # TODO Sort out None value vs dummy values
         self.positions = np.array([[0., 0., 0.]])  # Initialize a dummy value
+        self.movement = 'dynamic_independent'
         self.degrees_of_freedom = degrees_of_freedom
-        self.reference_object = reference_object
+        self.reference_objects = reference_objects
 
     @property
     def reference_position(self):
@@ -301,7 +312,7 @@ class InterconnectEdge(Object):
                  radius,
                  color,
                  degrees_of_freedom: Union[tuple[str], None] = None,
-                 reference_object: Union[None, tuple[str]] = None):
+                 reference_objects: Union[None, tuple[str]] = None):
 
         self.name = name
         self.object_1 = object_1
@@ -311,7 +322,7 @@ class InterconnectEdge(Object):
         self.color = color
 
         self.degrees_of_freedom = degrees_of_freedom
-        self.reference_object = reference_object
+        self.reference_objects = reference_objects
 
         # Create edge tuple for NetworkX graphs
         self.edge = (self.object_1, self.object_2)
@@ -320,6 +331,8 @@ class InterconnectEdge(Object):
         # self.positions = None
         self.positions = np.empty((0, 3))
         self.radii = None
+
+        self.movement = 'dynamic_fully_dependent'
 
     def calculate_positions(self,
                             positions_dict: dict) -> dict:
@@ -482,6 +495,9 @@ class Interconnect(InterconnectNode, InterconnectEdge):
 
 
 class Structure(Object):
+    """
+    A structure is a static object that is not a component or interconnect.
+    """
     def __init__(self,
                  name,
                  positions,
@@ -490,7 +506,7 @@ class Structure(Object):
                  color,
                  movement: str = 'static',
                  degrees_of_freedom: Union[tuple[str], None] = None,
-                 reference_object: Union[None, tuple[str]] = None):
+                 reference_objects: Union[None, tuple[str]] = None):
 
-        super(Structure, self).__init__(name, positions, rotation, radii, color, movement,reference_object,degrees_of_freedom)
+        super(Structure, self).__init__(name, positions, rotation, radii, color, movement, reference_objects, degrees_of_freedom)
 

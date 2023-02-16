@@ -45,40 +45,128 @@ class Subsystem:
 
 
     @property
-    def objects_static(self):
-        # TODO Implement
-        pass
+    def static_objects(self):
+
+        objects = []
+
+        for obj in self.objects:
+            if obj.movement == 'static':
+                objects.append(obj)
+
+        return objects
 
     @property
-    def objects_dynamic_independent(self):
-        # TODO Implement
-        pass
+    def dynamic_independent_objects(self):
+
+        objects = []
+
+        for obj in self.objects:
+            if obj.movement == 'dynamic_independent':
+                objects.append(obj)
+
+        return objects
 
     @property
-    def objects_dynamic_partially_dependent(self):
-        # TODO Implement
-        pass
+    def dynamic_partially_dependent_objects(self):
+
+        """
+        Since partially dependent objects can be constrained to other partially dependent objects, we
+        need to order them in a way where looping through the list will update properly.
+
+        Since we are checking we invert and check if static/independant
+
+        TODO Write unit tests to confirm sorting works properly
+        """
+
+        # Create the unordered list
+        objects = []
+
+        for obj in self.objects:
+            if obj.movement == 'dynamic_partially_dependent':
+                objects.append(obj)
+
+        # Order the list
+
+        # First, for simplicity, sort the objects into lists.
+        # Since dynamic partially dependent objects are updated after all other movement classes,
+        # if a dynamic partially dependent object is constrained to them, the order doesn't matter
+        # However, if a dynamic partially dependent object is constrained to another dynamic partially dependent object,
+        # We must make sure the constrained is called after the constraining object.
+        dependent_on_another_dependent = []
+        not_dependent_on_another_dependent = []
+
+
+        for obj in objects:
+
+            # If all the reference objects are either static or dynamic independent, then we can add it to the list
+
+            if all([ref_obj in self.static_objects or ref_obj in self.dynamic_independent_objects for ref_obj in obj.reference_objects]):
+                not_dependent_on_another_dependent.append(obj)
+            else:
+                dependent_on_another_dependent.append(obj)
+
+        # Now, we need to order the dependent objects
+        # The exact order does not matter, we just must ensure items don't reference future items
+        # Sort two lists based on one (list of objects and list of reference objects)
+
+        # Arbitrary number to prevent infinite loops
+        iter = 0
+        max_iterations = 50
+
+        # Start with all objects in cache and then remove them as they are added to the ordered list
+        cache = dependent_on_another_dependent.copy()
+        dependent_on_another_dependent_ordered = []
+
+        while len(cache) > 0 and iter < max_iterations:
+
+            # During each loop, first loop through the remaining objects in cache and add nobrainers
+            for obj in cache:
+
+                # If no calls then add and delete
+                pass
+
+            # Then, loop through the remaining objects in cache and
+            for obj in cache:
+                # If calls, find the
+                pass
+
+            if iter == max_iterations-1:
+                # TODO Check for circular references and overconstrained objects in the InputValidation class
+                raise Exception('The objects are not properly ordered. There is likely a circular reference.')
+
+
+        ordered_objects = not_dependent_on_another_dependent + dependent_on_another_dependent_ordered
+
+
+        return ordered_objects
 
     @property
-    def objects_dynamic_fully_dependent(self):
-        # TODO Implement
-        pass
+    def dynamic_fully_dependent_objects(self):
+
+            objects = []
+
+            for obj in self.objects:
+                if obj.movement == 'dynamic_fully_dependent':
+                    objects.append(obj)
+
+            return objects
 
     @property
-    def _objects_uncategorized(self):
+    def _uncategorized_objects(self):
 
-        # Should be empty, checks if above missed anything
+        """
+        This list should be empty. It checks to make sure every object is categorized as one of the four types of objects.
+        """
 
         uncategorized = []
 
-        categorized = self.objects_static + self.objects_dynamic_independent + self.objects_dynamic_partially_dependent + self.objects_dynamic_fully_dependent
+        categorized = self.static_objects + self.dynamic_independent_objects + self.dynamic_partially_dependent_objects + self.dynamic_fully_dependent_objects
 
         for obj in self.objects:
             if obj not in categorized:
                 uncategorized.append(obj)
 
         return uncategorized
-
 
 
     @property

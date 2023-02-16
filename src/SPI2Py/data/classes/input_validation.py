@@ -17,7 +17,7 @@ class InputValidation:
                  radii: np.ndarray,
                  color: Union[str, list[str]],
                  movement: str,
-                 reference: Union[str, None],
+                 reference_objects: Union[str, list[str], None],
                  degrees_of_freedom: Union[list[int], None]):
 
         self.name = name
@@ -26,7 +26,7 @@ class InputValidation:
         self.radii = self._validate_radii(radii)
         self.color = self._validate_colors(color)
         self.movement = self._validate_movement(movement)
-        self.reference = self._validate_reference(reference)
+        self.reference_objects = self._validate_reference_objects(reference_objects)
         self.degrees_of_freedom = self._validate_degrees_of_freedom(degrees_of_freedom)
 
 
@@ -123,10 +123,33 @@ class InputValidation:
         if not isinstance(movement, str):
             raise TypeError('Movement must be a string for %s.' % self.name)
 
+
         return movement
 
-    def _validate_reference(self, reference):
-        return reference
+    def _validate_reference_objects(self, reference_objects):
+
+        # TODO Add logic to ensure dynamic fully dependent objects don't reference other dynamic fully dependent objects
+
+        if reference_objects is None:
+            if 'dependent' in self.movement:
+                raise ValueError('Reference objects must be specified for dependent movement for %s.' % self.name)
+            else:
+                pass
+
+        elif isinstance(reference_objects, str):
+            # TODO Add a system-integration test to ensure that only valid reference objects are specified
+            pass
+
+        elif isinstance(reference_objects, list):
+            for reference_object in reference_objects:
+                if not isinstance(reference_object, str):
+                    raise TypeError('Reference objects must be a string for %s.' % self.name)
+
+                # TODO Add a system-integration test to ensure that only valid reference objects are specified
+        else:
+            raise TypeError('Reference objects must be NoneType, a string or a list for %s.' % self.name)
+
+        return reference_objects
 
     def _validate_degrees_of_freedom(self, degrees_of_freedom):
 
