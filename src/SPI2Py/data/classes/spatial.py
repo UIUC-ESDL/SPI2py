@@ -93,6 +93,7 @@ class SpatialConfiguration(System):
         :param design_vector:
         :param design_vector:
         :return:
+        TODO Remove unnecessary design vector arguments
         """
 
         positions_dict = {}
@@ -101,7 +102,7 @@ class SpatialConfiguration(System):
 
         # STATIC OBJECTS
         for obj in self.static_objects:
-            positions_dict = obj.calculate_positions(positions_dict)
+            positions_dict = obj.calculate_positions(design_vector,positions_dict)
 
         # DYNAMIC OBJECTS - Independent then Partially Dependent
         objects = self.dynamic_independent_objects + self.dynamic_partially_dependent_objects
@@ -110,7 +111,7 @@ class SpatialConfiguration(System):
 
         # DYNAMIC OBJECTS - Fully Dependent
         for obj in self.dynamic_fully_dependent_objects:
-            positions_dict = obj.calculate_positions(positions_dict)
+            positions_dict = obj.calculate_positions(design_vector,positions_dict)
 
         return positions_dict
 
@@ -122,7 +123,7 @@ class SpatialConfiguration(System):
         :param new_design_vector: Desired design vector
         :type new_design_vector: np.ndarray
         """
-
+        # TODO Detangle calculate and set positions
         # TODO Update calc function call to take vectors instead of vector?
         new_design_vectors = self.slice_design_vector(new_design_vector)
 

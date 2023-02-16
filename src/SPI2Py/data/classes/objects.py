@@ -206,8 +206,9 @@ class Port(InputValidation):
     def __str__(self):
         return self.component_name + '_' + self.port_name + '_port'
 
-    def calculate_positions(self, positions_dict):
+    def calculate_positions(self, design_vector, positions_dict):
 
+        # TODO Remove design vector argument
         # Get the reference point
         reference_point = positions_dict[self.component_name][0][0]
 
@@ -257,8 +258,13 @@ class Component(Object):
     def calculate_positions(self,
                             design_vector,
                             positions_dict):
-
-        positions_dict = self.calculate_independent_positions(design_vector, positions_dict)
+        # TODO Add logic to generalize this for all object types
+        if self.movement == 'static':
+            positions_dict = self.calculate_static_positions(positions_dict)
+        elif self.movement == 'dynamic_independent':
+            positions_dict = self.calculate_independent_positions(design_vector, positions_dict)
+        else:
+            raise NotImplementedError('This movement type is not implemented yet')
 
         return positions_dict
 
@@ -341,7 +347,9 @@ class InterconnectEdge(Object):
         self.movement = 'dynamic_fully_dependent'
 
     def calculate_positions(self,
+                            design_vector,
                             positions_dict: dict) -> dict:
+        # TODO Remove temp design vector argument
         # TODO revise logic for getting the reference point instead of object's first sphere
         # Address varying number of spheres
 
@@ -371,7 +379,8 @@ class InterconnectEdge(Object):
 
         # self.positions, self.radii = positions_dict[self.name]
 
-        self.positions = self.calculate_positions(positions_dict)[str(self)][0]  # index zero for tuple
+        # TODO Remove dummy input for design vector
+        self.positions = self.calculate_positions([],positions_dict)[str(self)][0]  # index zero for tuple
 
         # TODO Separate this into a different function?
         self.radii = np.repeat(self.radius, self.positions.shape[0])
@@ -517,8 +526,9 @@ class Structure(Object):
         super(Structure, self).__init__(name, positions, rotation, radii, color, movement, reference_objects, degrees_of_freedom)
 
     def calculate_positions(self,
+                            design_vector,
                             positions_dict: dict) -> dict:
-
+        # TODO Remove temp design vector argument
         positions_dict = self.calculate_static_positions(positions_dict)
 
         return positions_dict

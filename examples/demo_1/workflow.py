@@ -48,12 +48,11 @@ locations = np.concatenate((pos_comp0, pos_comp1, pos_comp2, pos_comp3, pos_int0
 # Generate the layout
 demo.generate_layout(layout_generation_method, inputs=locations)
 
-print('1')
-# Troubleshooting
-# demo.layout.components[0].degrees_of_freedom = None
-# demo.layout.components[1].degrees_of_freedom = None
-# demo.layout.components[2].degrees_of_freedom = None
-# demo.layout.components[3].degrees_of_freedom = None
+
+demo.layout.components[0].movement = 'static'
+demo.layout.components[1].movement = 'static'
+demo.layout.components[2].movement = 'static'
+demo.layout.components[3].movement = 'static'
 
 # For development: Plot initial layout
 demo.layout.plot_layout()
