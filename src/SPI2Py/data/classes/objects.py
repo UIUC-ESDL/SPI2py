@@ -102,6 +102,7 @@ class Object(InputValidation):
 
         Temporarily treats the object as independent with either 3 or 6 degrees of freedom.
         Both calculates and sets positions.
+        # TODO Implement a mapping function
         """
 
         positions = self.calculate_independent_positions(design_vector)

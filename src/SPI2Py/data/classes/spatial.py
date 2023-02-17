@@ -120,24 +120,11 @@ class SpatialConfiguration(System):
 
         Takes a flattened design vector and sets the positions of the objects in the layout.
 
-        :param new_design_vector: Desired design vector
-        :type new_design_vector: np.ndarray
+        :param positions_dict: A dictionary of positions for each object in the layout.
+        :type positions_dict: dict
         """
 
-        # STATIC OBJECTS
-        for obj in self.static_objects:
-            obj.set_positions(positions_dict)
-
-        # INDEPENDENT OBJECTS
-        for obj in self.independent_objects:
-            obj.set_positions(positions_dict)
-
-        # PARTIALLY DEPENDENT OBJECTS
-        for obj in self.partially_dependent_objects:
-            obj.set_positions(positions_dict)
-
-        # FULLY DEPENDENT OBJECTS
-        for obj in self.fully_dependent_objects:
+        for obj in self.objects:
             obj.set_positions(positions_dict)
 
 
