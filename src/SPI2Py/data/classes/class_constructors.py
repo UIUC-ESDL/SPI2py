@@ -7,19 +7,6 @@ import numpy as np
 from ..spherical_decomposition import generate_rectangular_prisms
 from .objects import Component, Port, Interconnect, InterconnectNode, InterconnectEdge, Structure
 
-def extract_inputs(): 
-    
-    def extract_components():
-        pass
-
-    def extract_interconnects():
-        pass
-
-    def extract_structures():
-        pass
-    
-    pass
-
 
 def create_components(inputs):
 
@@ -32,13 +19,12 @@ def create_components(inputs):
         color = component['color']
         shapes = component['shapes']
         rotation = component['rotation']
-        # movement_class = component['movement class']
+        movement_class = component['movement class']
 
         # Generate the component's positions and radii
         # Temporarily strip away box and rotation since it's all boxes and no rotation
         origins = []
         dimensions = []
-
         for shape in shapes.values():
             origins.append(shape['origin'])
             dimensions.append(shape['dimensions'])
@@ -46,7 +32,7 @@ def create_components(inputs):
         positions, radii = generate_rectangular_prisms(origins, dimensions)
 
         # Create the component
-        component = Component(name, positions, rotation, radii, color)
+        component = Component(name, positions, rotation, radii, color, movement_class=movement_class)
         # logging.info(' Component: ' + str(component) + ' created.')
         components.append(component)
 
@@ -117,9 +103,14 @@ def create_structures(inputs):
 
         name = structure['name']
         color = structure['color']
-        origins = structure['origins']
-        dimensions = structure['dimensions']
         rotation = structure['rotation']
+        shapes = structure['shapes']
+
+        origins = []
+        dimensions = []
+        for shape in shapes.values():
+            origins.append(shape['origin'])
+            dimensions.append(shape['dimensions'])
 
         positions, radii = generate_rectangular_prisms(origins, dimensions)
 

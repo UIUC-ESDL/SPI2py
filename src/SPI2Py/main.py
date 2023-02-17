@@ -109,7 +109,8 @@ class SPI2:
         # TODO implement different layout generation methods
 
         if layout_generation_method == 'manual':
-            self.layout.set_positions(inputs)
+            positions_dict = self.layout.calculate_positions(inputs)
+            self.layout.set_positions(positions_dict)
 
 
         elif layout_generation_method == 'force directed':

@@ -48,14 +48,19 @@ class Object(InputValidation):
                  rotation:           np.ndarray,
                  radii:              np.ndarray,
                  color:              Union[str, list[str]],
-                 movement_class:           str,
-                 constraints:  Union[None, tuple[str]] = None,
+                 movement_class:     str,
+                 position:           Union[None, np.ndarray] = np.array([0, 0, 0]),
+                 constraints:        Union[None, dict] = None,
                  degrees_of_freedom: Union[tuple[str], None] = ('x', 'y', 'z', 'rx', 'ry', 'rz')
                  ):
 
         super(Object, self).__init__(name, positions, rotation, radii, color, movement_class, constraints, degrees_of_freedom)
 
+        # self.position = position
         self.rotation = np.zeros(3)
+
+        # TODO If static then automatically map the object to the layout
+
 
         # self.reference_position = None
         if degrees_of_freedom is not None:
@@ -90,6 +95,17 @@ class Object(InputValidation):
     #         design_vector = None
     #
     #     return design_vector
+
+    def map_object(self, design_vector):
+        """
+        Maps the object to a 3D layout.
+
+        Temporarily treats the object as independent with either 3 or 6 degrees of freedom.
+        Both calculates and sets positions.
+        """
+
+        positions = self.calculate_independent_positions(design_vector)
+
 
     def calculate_static_positions(self, positions_dict):
 

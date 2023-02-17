@@ -19,18 +19,21 @@ class InputValidation:
                  constraints: Union[None, dict],
                  degrees_of_freedom: Union[list[int], None]):
 
-        self.name           = name
-        self.positions      = self._validate_positions(positions)
-        self.rotation       = self._validate_rotation(rotation)
-        self.radii          = self._validate_radii(radii)
-        self.color          = self._validate_colors(color)
-        self.movement_class = self._validate_movement_class(movement_class)
-        self.constraints = self._validate_constraints(constraints)
+        self.name               = self._validate_name(name)
+        self.positions          = self._validate_positions(positions)
+        self.rotation           = self._validate_rotation(rotation)
+        self.radii              = self._validate_radii(radii)
+        self.color              = self._validate_colors(color)
+        self.movement_class     = self._validate_movement_class(movement_class)
+        self.constraints        = self._validate_constraints(constraints)
         self.degrees_of_freedom = self._validate_degrees_of_freedom(degrees_of_freedom)
 
 
     def _validate_name(self, name):
-        # TODO Implement this function
+
+        if not isinstance(name, str):
+            raise TypeError('Name must be a string not %s.' % type(name))
+
         return name
 
     def _validate_position(self, position) -> np.ndarray:

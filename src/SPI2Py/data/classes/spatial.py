@@ -115,7 +115,7 @@ class SpatialConfiguration(System):
 
         return positions_dict
 
-    def set_positions(self, new_design_vector):
+    def set_positions(self, positions_dict):
         """set_positions Sets the positions of the objects in the layout.
 
         Takes a flattened design vector and sets the positions of the objects in the layout.
@@ -125,16 +125,16 @@ class SpatialConfiguration(System):
         """
         # TODO Detangle calculate and set positions
         # TODO Update calc function call to take vectors instead of vector?
-        new_design_vectors = self.slice_design_vector(new_design_vector)
+        # new_design_vectors = self.slice_design_vector(new_design_vector)
 
-        positions_dict = self.calculate_positions(new_design_vector)
+        # positions_dict = self.calculate_positions(new_design_vector)
 
         # STATIC OBJECTS
         # DO NOT UPDATE, OBVIOUSLY
 
         # DYNAMIC OBJECTS - Independent then Partially Dependent
         objects = self.independent_objects + self.partially_dependent_objects
-        for obj, new_design_vector in zip(objects, new_design_vectors):
+        for obj in objects:
             obj.set_positions(positions_dict)
 
         # DYNAMIC OBJECTS - Fully Dependent
