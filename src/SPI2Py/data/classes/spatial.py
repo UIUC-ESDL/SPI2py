@@ -123,21 +123,20 @@ class SpatialConfiguration(System):
         :param new_design_vector: Desired design vector
         :type new_design_vector: np.ndarray
         """
-        # TODO Detangle calculate and set positions
-        # TODO Update calc function call to take vectors instead of vector?
-        # new_design_vectors = self.slice_design_vector(new_design_vector)
-
-        # positions_dict = self.calculate_positions(new_design_vector)
 
         # STATIC OBJECTS
-        # DO NOT UPDATE, OBVIOUSLY
-
-        # DYNAMIC OBJECTS - Independent then Partially Dependent
-        objects = self.independent_objects + self.partially_dependent_objects
-        for obj in objects:
+        for obj in self.static_objects:
             obj.set_positions(positions_dict)
 
-        # DYNAMIC OBJECTS - Fully Dependent
+        # INDEPENDENT OBJECTS
+        for obj in self.independent_objects:
+            obj.set_positions(positions_dict)
+
+        # PARTIALLY DEPENDENT OBJECTS
+        for obj in self.partially_dependent_objects:
+            obj.set_positions(positions_dict)
+
+        # FULLY DEPENDENT OBJECTS
         for obj in self.fully_dependent_objects:
             obj.set_positions(positions_dict)
 
