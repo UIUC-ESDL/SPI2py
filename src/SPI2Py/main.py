@@ -25,12 +25,11 @@ class SPI2:
     The SPI2 Class provides the user with a means to interact with the API...
     """
 
-    def __init__(self, directory, input_file, config_file):
+    def __init__(self, directory, config_file, input_file):
 
         self.directory = directory
         self.config = self.add_configuration_file(config_file)
         self.inputs = self.add_input_file(input_file)
-
 
 
         self.layout = None

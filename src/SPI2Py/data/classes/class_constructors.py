@@ -30,11 +30,18 @@ def create_components(inputs):
         # Extract the component's attributes
         name = component['name']
         color = component['color']
-        origins = component['origins']
-        dimensions = component['dimensions']
+        shapes = component['shapes']
         rotation = component['rotation']
+        # movement_class = component['movement class']
 
         # Generate the component's positions and radii
+        # Temporarily strip away box and rotation since it's all boxes and no rotation
+        origins = []
+        dimensions = []
+
+        for shape in shapes.values():
+            origins.append(shape['origin'])
+            dimensions.append(shape['dimensions'])
 
         positions, radii = generate_rectangular_prisms(origins, dimensions)
 

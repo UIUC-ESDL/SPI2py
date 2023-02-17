@@ -26,8 +26,8 @@ directory = os.path.dirname(__file__) + '/'
 
 # Initialize the class
 demo = SPI2(directory=directory,
-            input_file='input_3.yaml',
-            config_file='config.yaml')
+            config_file='config.yaml',
+            input_file='input.yaml')
 
 
 # Map the objects to a 3D layout
@@ -42,7 +42,6 @@ pos_int0node0 = np.array([-3., -2., 2.])
 pos_int0node1 = np.array([-1., 0., 2.])
 pos_int1node0 = np.array([4., 0., 1.])
 pos_int1node1 = np.array([4., 2., 1.])
-
 locations = np.concatenate((pos_comp0, pos_comp1, pos_comp2, pos_comp3, pos_int0node0, pos_int0node1, pos_int1node0, pos_int1node1))
 
 # Generate the layout

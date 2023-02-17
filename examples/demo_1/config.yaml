@@ -4,7 +4,7 @@ User: Chad Peterson
 
 Filenames:
   
-  input: input_1.yaml
+  input: input.yaml
   log: logger.log
   output: output.json
   GIF: output.gif

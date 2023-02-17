@@ -93,16 +93,15 @@ class Subsystem:
 
     @property
     def fully_dependent_objects(self):
-            # TODO Sort to makesure ports are before edges...
-            # TODO Add check to make sure fully dependent objects aren't constraint to other fully dependent objects
+        # TODO Sort to makesure ports are before edges...
 
-            objects = []
+        objects = []
 
-            for obj in self.objects:
-                if obj.movement_class == 'fully dependent':
-                    objects.append(obj)
+        for obj in self.objects:
+            if obj.movement_class == 'fully dependent':
+                objects.append(obj)
 
-            return objects
+        return objects
 
     @property
     def _uncategorized_objects(self):
