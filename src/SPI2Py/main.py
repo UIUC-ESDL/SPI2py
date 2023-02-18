@@ -8,8 +8,7 @@ from datetime import datetime
 
 import yaml
 
-from .data.classes.class_constructors import create_components, create_ports, create_interconnects, create_structures
-from .data.classes.spatial import SpatialConfiguration
+from .data.classes.class_constructors import create_components, create_ports, create_interconnects, create_structures, SpatialConfiguration
 
 from .layout.generation_methods import generate_random_layout
 
