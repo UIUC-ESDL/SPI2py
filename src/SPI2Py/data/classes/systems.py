@@ -30,13 +30,14 @@ class Subsystem:
     TODO Change positions dict from pass-thru edit to merge edit
     """
 
-    def __init__(self, components, ports, interconnects, interconnect_nodes, interconnect_segments, structures):
+    def __init__(self, components, ports, interconnects, interconnect_nodes, interconnect_segments, structures, config):
         self.components = components
         self.ports = ports
         self.interconnects = interconnects
         self.interconnect_nodes = interconnect_nodes
         self.interconnect_segments = interconnect_segments
         self.structures = structures
+        self.config = config
 
         
 

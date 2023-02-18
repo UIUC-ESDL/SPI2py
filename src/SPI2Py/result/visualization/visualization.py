@@ -10,12 +10,11 @@ import imageio.v2 as imageio
 import tempfile
 
 
-def plot_sphere(position, radius, color, ax):
+def plot_sphere(position, radius, color, ax, resolution):
     # The effective resolution of the sphere
-    num_points = 12
 
-    u = np.linspace(0, 2 * np.pi, num_points)
-    v = np.linspace(0, np.pi, num_points)
+    u = np.linspace(0, 2 * np.pi, resolution)
+    v = np.linspace(0, np.pi, resolution)
 
     x = position[0] + radius * (np.outer(np.cos(u), np.sin(v)))
     y = position[1] + radius * (np.outer(np.sin(u), np.sin(v)))
@@ -24,7 +23,7 @@ def plot_sphere(position, radius, color, ax):
     ax.plot_surface(x, y, z, linewidth=0.0, color=color)
 
 
-def plot(plot_array, savefig, directory):
+def plot(plot_array, savefig, directory, config):
     """
     Plots classes...
 
@@ -36,22 +35,29 @@ def plot(plot_array, savefig, directory):
     :return:
     """
 
+    # Unpack plotting config settings
+    xlim = config['results']['plot']['x limits']
+    ylim = config['results']['plot']['y limits']
+    zlim = config['results']['plot']['z limits']
+    resolution = config['results']['plot']['resolution']
+
+
     fig = plt.figure()
     ax = fig.add_subplot(projection='3d')
 
     for positions, radii, color in plot_array:
 
         for position, radius in zip(positions, radii):
-            plot_sphere(position, radius, color, ax)
+            plot_sphere(position, radius, color, ax, resolution)
 
     # Format Plot
     ax.set_xlabel('X Label')
     ax.set_ylabel('Y Label')
     ax.set_zlabel('Z Label')
 
-    ax.set_xlim(-5, 5)
-    ax.set_ylim(-5, 5)
-    ax.set_zlim(-5, 5)
+    ax.set_xlim(xlim)
+    ax.set_ylim(ylim)
+    ax.set_zlim(zlim)
 
 
     plt.show()

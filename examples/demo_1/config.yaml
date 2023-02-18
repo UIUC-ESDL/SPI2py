@@ -56,35 +56,18 @@ optimization:
 
 results:
 
-  # Logger
   Logger Filename: logger.log
-
-  # Output report
   Report Filename: report.json
-
-  # GIF Animation
-  # true or false, warning generating GIFS increases runtime
-  # TODO Fix GIF generation
-  Output GIF: false
   GIF Filename: geometric_optimization.gif
 
-  # Plotting
-  Plotting:
-
-    # TODO Use these values
+  plot:
     x limits: [-5, 5]
     y limits: [-5, 5]
     z limits: [-5, 5]
 
-    # Value between 0 and 20
-    # Corresponds to...
-    resolution: 8
-
-    # true or false; should the program generate a GIF?
-    # Warning, generating GIFs increases the runtime
-
-
-
+    # Resolution of each individual sphere
+    # Value between 3 and 20
+    resolution: 12
 
   Outputs:
 

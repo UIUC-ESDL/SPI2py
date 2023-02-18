@@ -15,7 +15,7 @@ from SPI2Py.main import EntryPoint
 # Define the example's directory
 directory = os.path.dirname(__file__) + '/'
 
-# Initialize the class
+# Initialize the EntryPoint class with your current working directory, and the config & input files
 demo = EntryPoint(directory=directory,
                   config_file='config.yaml',
                   input_file='input.yaml')
@@ -54,6 +54,6 @@ demo.layout.set_positions(positions_dict)
 demo.layout.plot_layout()
 
 # Write output file
-demo.write_output()
+demo.create_report()
 
 print('Done')

@@ -8,7 +8,6 @@ from datetime import datetime
 
 import yaml
 
-from .data.spherical_decomposition import generate_rectangular_prisms
 from .data.classes.class_constructors import create_components, create_ports, create_interconnects, create_structures
 from .data.classes.spatial import SpatialConfiguration
 
@@ -27,32 +26,26 @@ class EntryPoint:
 
     def __init__(self, directory, config_file, input_file):
 
+        # Initialize the parameters
         self.directory = directory
-        self.config = self.add_configuration_file(config_file)
-        self.inputs = self.add_input_file(input_file)
+        self.config    = self.read_config_file(config_file)
+        self.inputs    = self.read_input_file(input_file)
 
-
-        self.layout = None
-
-        self.result = None
-        self.design_vector_log = None
-
-        self.outputs = None
-
+        # Initialize the logger
         self.initialize_logger()
 
+        # Create objects from the input file
         self.create_objects_from_input()
 
-    def add_directory(self, directory):
-        self.directory = directory
+        # Create the system from the objects
 
-    def add_configuration_file(self, config_filename):
+    def read_config_file(self, config_filename):
         config_filepath = self.directory + config_filename
         with open(config_filepath, 'r') as f:
             config = yaml.safe_load(f)
         return config
 
-    def add_input_file(self, input_filename):
+    def read_input_file(self, input_filename):
         input_filepath = self.directory + input_filename
         with open(input_filepath, 'r') as f:
             inputs = yaml.safe_load(f)
@@ -62,7 +55,6 @@ class EntryPoint:
         logger_name = self.directory + self.config['results']['Logger Filename']
         logging.basicConfig(filename=logger_name, encoding='utf-8', level=logging.INFO, filemode='w')
 
-
     def create_objects_from_input(self):
         """
 
@@ -70,19 +62,13 @@ class EntryPoint:
         :return:
         """
 
-        # Create Components
         components = create_components(self.inputs['components'])
-
         ports = create_ports(self.inputs['ports'])
-
-        # Create Interconnects
         interconnects, interconnect_nodes, interconnect_segments = create_interconnects(self.inputs['interconnects'])
-
-        # Create Structures
         structures = create_structures(self.inputs['structures'])
 
         # Generate SpatialConfiguration
-        self.layout = SpatialConfiguration(components, ports, interconnects, interconnect_nodes, interconnect_segments, structures)
+        self.layout = SpatialConfiguration(components, ports, interconnects, interconnect_nodes, interconnect_segments, structures, self.config)
 
     def generate_layout(self, layout_generation_method, inputs=None, include_interconnect_nodes=False):
         """
@@ -120,23 +106,14 @@ class EntryPoint:
         else:
             print('Sorry, no other layout generation methods are implemented yet')
 
-
-
-
-
-
-
     def optimize_spatial_configuration(self):
         self.result, self.design_vector_log = run_optimizer(self.layout, self.config['optimization'])
 
-        # Generate GIF
-        if self.config['results']['Output GIF'] is True:
-            gif_filepath = self.config['results']['GIF Filename']
-            generate_gif(self.layout, self.design_vector_log, 1, self.directory, gif_filepath)
+    def create_gif_animation(self):
+        gif_filepath = self.config['results']['GIF Filename']
+        generate_gif(self.layout, self.design_vector_log, 1, self.directory, gif_filepath)
 
-
-
-    def write_output(self):
+    def create_report(self):
 
         # Unpack dictionary values
         user_name = self.config['User Name']

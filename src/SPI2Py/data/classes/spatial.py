@@ -150,7 +150,7 @@ class SpatialConfiguration(System):
 
             layout_plot_array.append([positions, radii, color])
 
-        plot(layout_plot_array, savefig, directory)
+        plot(layout_plot_array, savefig, directory,self.config)
 
 
 class Volume:
