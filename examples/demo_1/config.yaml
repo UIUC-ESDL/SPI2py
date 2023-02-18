@@ -1,27 +1,39 @@
+# Configuration File
+# Sections: data, analysis, layout, optimization, results
+# data: ...
+# analysis: ...
+# layout: ...
+# optimization: ...
+# results: ...
+
+User Name: Chad Peterson
+Problem Description: This is a demo problem
+
 data:
+  placeholder: placeholder
 
-  User: Chad Peterson
+analysis:
+  placeholder: placeholder
 
-Filenames:
-  
-  input: input.yaml
-  log: logger.log
-  output: output.json
-  GIF: output.gif
+layout:
 
-Geometry:
+  # The number of random initial layouts and subsequent optimizations
+  # Not currently used
+  number of solutions: 1
 
-  # The number of bends per each interconnect
-  bends per interconnect: 2
-
-analysis: a
-
-layout: a
 
 optimization:
 
-  # The number of random initial layouts and subsequent optimizations
-  number of solutions: 1
+  # Solver
+  # TODO Add more solvers
+  solver: scipy.optimize.minimize
+
+  # Method
+  # TODO Add more methods
+  method: trust-constr
+
+  # TODO Specify objective function
+  # TODO Specify constraint function
 
   # Tolerances between 1e-1 and 2.5e-1 solve within a reasonable time
   convergence tolerance: 2.5e-1
@@ -44,11 +56,14 @@ optimization:
 
 results:
 
-  Report Filepath: report.json
+  # Output report
+  Report Filename: report.json
   Log Filepath: logger.log
 
+  # Animation
   Output GIF: false
   GIF Filename: geometric_optimization # TODO Change to GIF Filepath
+  GIF: output.gif
 
   Visualization:
 

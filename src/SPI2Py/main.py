@@ -135,7 +135,12 @@ class SPI2:
 
 
 
-    def write_output(self, output_filename):
+    def write_output(self):
+
+        # Unpack dictionary values
+        user_name = self.config['User Name']
+        problem_description = self.config['Problem Description']
+        report_filename = self.config['results']['Report Filename']
 
         # Create a timestamp
         now = datetime.now()
@@ -143,13 +148,17 @@ class SPI2:
 
         # TODO Create a prompt to ask user for comments on the results
 
+        # Convert the design vector log of a list of arrays of list to lists
+        # json cannot serialize numpy arrays
+        design_vector_log = [log.tolist() for log in self.design_vector_log]
+
         # Create the output dictionary
-        self.outputs = {'Placeholder': 1,
-                   '': 1,
-                   'Date and time': now_formatted,
-                   '': 1,
-                   'Comments': 'Placeholder'}
+        self.outputs = {'User Name': user_name,
+                        'Date and time': now_formatted,
+                        'Problem Description': problem_description,
+                        'Comments': 'Placeholder',
+                        'Design vector log': design_vector_log}
 
 
-        with open(self.directory + output_filename, 'w') as f:
+        with open(self.directory + report_filename, 'w') as f:
             json.dump(self.outputs, f)

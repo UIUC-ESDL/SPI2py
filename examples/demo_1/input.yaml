@@ -1,14 +1,33 @@
+# Demo input file
+# Types of objects: components, ports, interconnects, structures
+
+
 components:
+    # Start with index 0
     0:
+        # Must be a unique name
         name: control_valve_1
+
+        # Must be a valid matplotlib color name
         color: aquamarine
+
+        # Options: static, independent, partially_dependent, fully_dependent
         movement class: static
+
+        # Define the shapes that comprise the object
         shapes:
             0:
+                # Options: box
                 type: box
+
+                # The bottom corner of the box
                 origin: [0,0,0]
+
+                # The dimensions of the box
                 dimensions: [2,2,2]
-                rotation: [0,0,0] # Not currently used
+
+                # Rotation is not currently used and is included for future development
+                rotation: [0,0,0]
             1:
                 type: box
                 origin: [1,0,0]

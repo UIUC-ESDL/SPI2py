@@ -53,23 +53,19 @@ def run_optimizer(layout, config):
     Note: There are plans to develop SPI2py-specific solvers to provide more flexibility.
 
     TODO Implement design vector bounds (e.g., rotation angles should be between 0 and 2pi)
+    TODO Evaluate other solvers and methods
+    TODO Connect logger with the optimizer
 
     :param layout:
-    :param x0: Initial design vector
+    :param config:
     :return:
     """
-
-    layout = layout
-
-    # Initialize the design vector log
-    # Since the log_design_vector function is nested inside this function, it can append the variable
-    design_vector_log = []
 
     def log_design_vector(xk, *argv):
         """
         Logs the design vector...
 
-        argv is since difference solvers pass diff arguments but we only want to capture xk
+        argv is since difference solvers pass diff arguments, but we only want to capture xk
         Note: callback function args for trust-const method
         :return:
         """
@@ -82,28 +78,16 @@ def run_optimizer(layout, config):
 
     nlcs = []
 
+    # Unpack the config dictionary
+    convergence_tolerance = config['convergence tolerance']
 
+    # Initialize the design vector log
+    # Since the log_design_vector function is nested inside this function, it can append the variable
+    design_vector_log = []
 
-    # NonlinearConstraint object for trust-constr method does not take kwargs
-    # Use lambda functions to format constraint functions as needed with kwargs
-    # nlc_cc = NonlinearConstraint(lambda x: max_interference(x, layout, layout.component_component_pairs), -np.inf, -3)
-    # nlc_ci = NonlinearConstraint(lambda x: max_interference(x, layout, layout.component_interconnect_pairs), -np.inf, 0)
-    # nlc_cs = NonlinearConstraint(lambda x: max_interference(x, layout, layout.component_structure_pairs), -np.inf, 0)
-    # nlc_ii = NonlinearConstraint(lambda x: max_interference(x, layout, layout.interconnect_interconnect_pairs), -np.inf, 0)
-    # nlc_is = NonlinearConstraint(lambda x: max_interference(x, layout, layout.interconnect_structure_pairs), -np.inf, 0)
+    # Add the applicable constraints
     nlcs = []
-    # if config['detect collision']['components and components'] is True:
-    #     nlcs.append(nlc_cc)
-    # if config['detect collision']['components and interconnects'] is True:
-    #     nlcs.append(nlc_ci)
-    # if config['detect collision']['components and structures'] is True:
-    #     nlcs.append(nlc_cs)
-    # if config['detect collision']['interconnects and interconnects'] is True:
-    #     nlcs.append(nlc_ii)
-    # if config['detect collision']['interconnects and structures'] is True:
-    #     nlcs.append(nlc_is)
-
-    for object_pair, check_collision, collision_tolerance in zip(layout.object_pairs,layout.object_pairs, config['detect collision'].values()):
+    for object_pair, check_collision, collision_tolerance in zip(layout.object_pairs, layout.object_pairs, config['detect collision'].values()):
         if check_collision is True:
             nlc = NonlinearConstraint(lambda x: max_interference(x, layout, object_pair), -np.inf, collision_tolerance)
             nlcs.append(nlc)
@@ -113,8 +97,7 @@ def run_optimizer(layout, config):
     # Add initial value
     design_vector_log.append(x0)
 
-    # TODO Evaluate different solver methods and parametric tunings
-
+    # Run the solver
     res = minimize(lambda x: fun(x, layout), x0,
                    method='trust-constr',
                    constraints=nlcs,
@@ -124,10 +107,6 @@ def run_optimizer(layout, config):
 
     # Add final value
     design_vector_log.append(res.x)
-
-    # For troubleshooting
-    print('Constraint is', max_interference(res.x, layout, layout.component_component_pairs))
-
 
     return res, design_vector_log
 

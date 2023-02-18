@@ -52,6 +52,6 @@ demo.layout.set_positions(positions_dict)
 demo.layout.plot_layout()
 
 # Write output file
-demo.write_output('output.json')
+demo.write_output()
 
 print('Done')
