@@ -69,9 +69,6 @@ results:
     # Value between 3 and 20
     resolution: 12
 
-  Outputs:
-
-    Filepath: output.json
 
 
 

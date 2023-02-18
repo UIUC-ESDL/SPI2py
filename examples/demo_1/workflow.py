@@ -45,6 +45,9 @@ demo.layout.plot_layout()
 # Perform gradient-based optimization
 demo.optimize_spatial_configuration()
 
+# Generate GIF animation
+# demo.create_gif_animation()
+
 # For development: Print Results
 print('Result:', demo.result)
 

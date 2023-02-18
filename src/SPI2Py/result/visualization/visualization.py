@@ -88,7 +88,7 @@ def generate_gif(layout, design_vector_log, frames_per_figure, gif_directory, gi
             pos_dict = layout.calculate_positions(xk)
             layout.set_positions(pos_dict)
 
-            layout.plot_layout(savefig=True, directory=gif_directory)
+            layout.plot_layout(savefig=True, directory=filepath)
 
             i += 1
 
@@ -113,7 +113,7 @@ def generate_gif(layout, design_vector_log, frames_per_figure, gif_directory, gi
             images.append(imageio.imread(filename))
 
     # TODO Add config file input for GIF name
-    filepath = gif_directory + gif_filename
+    output_filepath = gif_directory + gif_filename
 
-    imageio.mimsave(filepath, images)
+    imageio.mimsave(output_filepath, images)
 
