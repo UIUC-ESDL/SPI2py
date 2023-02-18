@@ -18,7 +18,7 @@ def create_components(inputs):
         name = component['name']
         color = component['color']
         shapes = component['shapes']
-        rotation = component['rotation']
+
         movement_class = component['movement class']
 
         # Generate the component's positions and radii
@@ -31,8 +31,8 @@ def create_components(inputs):
 
         positions, radii = generate_rectangular_prisms(origins, dimensions)
 
-        # Create the component
-        component = Component(name, positions, rotation, radii, color, movement_class=movement_class)
+
+        component = Component(name, positions, radii, color, movement_class=movement_class)
         # logging.info(' Component: ' + str(component) + ' created.')
         components.append(component)
 
@@ -103,8 +103,8 @@ def create_structures(inputs):
 
         name = structure['name']
         color = structure['color']
-        rotation = structure['rotation']
         shapes = structure['shapes']
+        movement_class = structure['movement class']
 
         origins = []
         dimensions = []
@@ -114,7 +114,7 @@ def create_structures(inputs):
 
         positions, radii = generate_rectangular_prisms(origins, dimensions)
 
-        structure = Structure(name, positions, rotation, radii, color)
+        structure = Structure(name, positions, radii, color, movement_class=movement_class)
 
         # logging.info(' Structure: ' + str(structure) + ' created.')
 

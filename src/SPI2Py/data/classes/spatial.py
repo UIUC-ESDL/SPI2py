@@ -10,7 +10,7 @@ from ...result.visualization.visualization import plot
 
 class SpatialConfiguration(System):
     """
-
+    When creating a spatial configuration, we must automatically map static objects
     TODO Add an update order...
     """
 
@@ -127,6 +127,16 @@ class SpatialConfiguration(System):
         for obj in self.objects:
             obj.set_positions(positions_dict)
 
+    def map_object(self, obj_name, design_vector):
+
+        for obj in self.objects:
+            if repr(obj) == obj_name:
+                pos_dict = obj.calculate_independent_positions(design_vector, {})
+                obj.set_positions(pos_dict)
+                print('Mapped object: {}'.format(obj_name))
+
+    def map_objects(self, map_objs, design_vectors):
+        raise NotImplementedError
 
     def plot_layout(self, savefig=False, directory=None):
 

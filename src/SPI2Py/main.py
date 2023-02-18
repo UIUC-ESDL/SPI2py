@@ -14,7 +14,7 @@ from .data.classes.spatial import SpatialConfiguration
 
 from .layout.generation_methods import generate_random_layout
 
-from .optimization.solvers import gradient_based_optimization
+from .optimization.solvers import run_optimizer
 
 from .result.visualization.visualization import generate_gif
 
@@ -127,7 +127,7 @@ class SPI2:
 
 
     def optimize_spatial_configuration(self):
-        self.result, self.design_vector_log = gradient_based_optimization(self.layout, self.config['optimization'])
+        self.result, self.design_vector_log = run_optimizer(self.layout, self.config['optimization'])
 
         # Generate GIF
         if self.config['results']['Output GIF'] is True:

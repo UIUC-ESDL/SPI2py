@@ -4,16 +4,19 @@
 
 """
 
-
 from .distance import max_spheres_spheres_interference
 
 
-def interference(x, layout, pairs):
+def max_interference(x, layout, pairs):
     """
-    Checks for the maximum collision between two ojects
+    Calculates the maximum interference between two objects.
+
+    A positive interference indicates that the objects are in collision.
+    A negative interference indicates that the objects are not in collision.
 
     :param x:
     :param layout:
+    :param pairs:
     :return:
     """
 
@@ -22,13 +25,6 @@ def interference(x, layout, pairs):
 
     # Calculate the interferences between each sphere of each object pair
     interferences = []
-    # for (positions_1, radius_1, position_2, radius_2) in zip(positions_1, radii_1, positions_2, radii_2):
-    #
-    #     dist = min_spheres_spheres_interference(positions_a, radii_a, positions_b, radii_b)
-    #
-    #     interferences.append(dist)
-    #
-    #     max_interference = max(interferences)
 
     for obj1, obj2 in pairs:
         positions_a = positions_dict[str(obj1)][0]

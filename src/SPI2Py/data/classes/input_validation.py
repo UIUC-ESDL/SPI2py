@@ -12,7 +12,6 @@ class InputValidation:
     def __init__(self,
                  name: str,
                  positions: np.ndarray,
-                 rotation: np.ndarray,
                  radii: np.ndarray,
                  color: Union[str, list[str]],
                  movement_class: str,
@@ -21,10 +20,10 @@ class InputValidation:
 
         self.name               = self._validate_name(name)
         self.positions          = self._validate_positions(positions)
-        self.rotation           = self._validate_rotation(rotation)
         self.radii              = self._validate_radii(radii)
         self.color              = self._validate_colors(color)
         self.movement_class     = self._validate_movement_class(movement_class)
+        # self.rotation           = self._validate_rotation(rotation)
         self.constraints        = self._validate_constraints(constraints)
         self.degrees_of_freedom = self._validate_degrees_of_freedom(degrees_of_freedom)
 
@@ -40,9 +39,9 @@ class InputValidation:
         # TODO Implement this function
         return position
 
-    def _validate_rotation(self, rotation) -> np.ndarray:
-        # TODO Implement this function
-        return rotation
+    # def _validate_rotation(self, rotation) -> np.ndarray:
+    #     # TODO Implement this function
+    #     return rotation
 
     def _validate_positions(self, positions) -> np.ndarray:
 

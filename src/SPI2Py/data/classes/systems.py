@@ -228,6 +228,17 @@ class Subsystem:
 
         return interconnect_structure_pairs
 
+    @property
+    def object_pairs(self):
+        object_pairs = []
+        object_pairs += [self.component_component_pairs]
+        object_pairs += [self.component_interconnect_pairs]
+        object_pairs += [self.component_structure_pairs]
+        object_pairs += [self.interconnect_interconnect_pairs]
+        object_pairs += [self.interconnect_structure_pairs]
+
+        return object_pairs
+
 
 class System(Subsystem):
     """

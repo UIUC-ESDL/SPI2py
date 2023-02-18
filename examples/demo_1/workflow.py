@@ -18,34 +18,24 @@ demo = SPI2(directory=directory,
             config_file='config.yaml',
             input_file='input.yaml')
 
+# Map static objects to the layout
+demo.layout.map_object('control_valve_1', [-3., -4.41, -0.24, 0., 0., 0.])
+demo.layout.map_object('actuator_1', [2., 4.41, 0.24, 0., 0., 0.])
+demo.layout.map_object('component_2', [5, -3, -1, 0., 0., 0.])
+demo.layout.map_object('component_3', [-3., -1., 3., 0., 0., 0.])
+demo.layout.map_object('bedplate', [-1., -1., -3, 0., 0., 0.])
+
+# Map the waypoints
+pos_int0node0 = np.array([-3., -2., 2.])
+pos_int0node1 = np.array([-1., 0., 2.])
+pos_int1node0 = np.array([4., 0., 1.])
+locations = np.concatenate((pos_int0node0, pos_int0node1, pos_int1node0))
 
 # Map the objects to a 3D layout
 layout_generation_method = 'manual'
 
-# Define the design vectors of each object
-# ['control_valve_1','actuator_1','component_2','component_3']
-# pos_comp0 = np.array([-3., -4.41, -0.24, 0., 0., 0.])
-# pos_comp1 = np.array([2., 4.41, 0.24, 0., 0., 0.])
-# pos_comp2 = np.array([5, -3, -1, 0., 0., 0.])
-# pos_comp3 = np.array([-3., -1., 3., 0., 0., 0.])
-
-# Set waypoint positions
-pos_int0node0 = np.array([-3., -2., 2.])
-pos_int0node1 = np.array([-1., 0., 2.])
-pos_int1node0 = np.array([4., 0., 1.])
-pos_int1node1 = np.array([4., 2., 1.])
-locations = np.concatenate((pos_int0node0, pos_int0node1, pos_int1node0, pos_int1node1))
-
 # Generate the layout
 demo.generate_layout(layout_generation_method, inputs=locations)
-
-# print(demo.layout.static_objects)
-
-
-# demo.layout.components[0].movement_class = 'static'
-# demo.layout.components[1].movement_class = 'static'
-# demo.layout.components[2].movement_class = 'static'
-# demo.layout.components[3].movement_class = 'static'
 
 # For development: Plot initial layout
 demo.layout.plot_layout()

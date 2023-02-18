@@ -24,30 +24,45 @@ and are not allowed to build from the source (or it just adds another level of d
 """
 
 import numpy as np
-
 from scipy.optimize import minimize, NonlinearConstraint
+from ..analysis.objectives import aggregate_pairwise_distance
+from ..analysis.constraints import max_interference
 
-from ..analysis.objective_functions import aggregate_pairwise_distance
 
-from ..analysis.constraint_functions import interference
-
-def gradient_based_optimization(layout, config):
+def run_optimizer(layout, config):
     """
-    Constrained optimization...
+    This is a helper function that runs the optimization solver.
 
-    There are plans to use the JAX-wrapped implementation of scipy.optimize.minimize;
+    Wrapping the solver in a helper function provides a few key benefits:
+    1. We can easily switch between different solvers.
+    2. Variable scope; we want to log intermediate values and results such as design vectors.
+    Solvers such as scipy.optimize.minimize and Matlab fmincon support callback/output functions,
+    but these functions might not provide the specific information we want to log.
+
+    Rather than declaring global variables (which is bad practice), we can use a nest the solver, callback,
+    objective, and constraint functions inside of a helper function, which allows the callback function.
+    See https://www.mathworks.com/help/optim/ug/output-functions.html for a nice example of this.
+
+    Note: We still define portions of the objective and constraint functions outside of the helper function, which
+    variable scope does not reach. In the future we may need to move these functions inside the helper function, or
+    pass the results we want back to the helper objective/constraint function.
+
+    Note: There are plans to use the JAX-wrapped implementation of scipy.optimize.minimize;
     however, it currently only supports the BFGS method for unconstrained optimization.
 
-    Bounds are not implemented.
+    Note: There are plans to develop SPI2py-specific solvers to provide more flexibility.
 
-    For now objective function and constraints are hard-coded into this solver. Future versions
-    may seek more flexibility.
+    TODO Implement design vector bounds (e.g., rotation angles should be between 0 and 2pi)
+
     :param layout:
     :param x0: Initial design vector
     :return:
     """
 
-    # Declare design vector log as global to read/write it
+    layout = layout
+
+    # Initialize the design vector log
+    # Since the log_design_vector function is nested inside this function, it can append the variable
     design_vector_log = []
 
     def log_design_vector(xk, *argv):
@@ -65,21 +80,33 @@ def gradient_based_optimization(layout, config):
 
     x0 = layout.design_vector
 
+    nlcs = []
+
 
 
     # NonlinearConstraint object for trust-constr method does not take kwargs
     # Use lambda functions to format constraint functions as needed with kwargs
+    # nlc_cc = NonlinearConstraint(lambda x: max_interference(x, layout, layout.component_component_pairs), -np.inf, -3)
+    # nlc_ci = NonlinearConstraint(lambda x: max_interference(x, layout, layout.component_interconnect_pairs), -np.inf, 0)
+    # nlc_cs = NonlinearConstraint(lambda x: max_interference(x, layout, layout.component_structure_pairs), -np.inf, 0)
+    # nlc_ii = NonlinearConstraint(lambda x: max_interference(x, layout, layout.interconnect_interconnect_pairs), -np.inf, 0)
+    # nlc_is = NonlinearConstraint(lambda x: max_interference(x, layout, layout.interconnect_structure_pairs), -np.inf, 0)
     nlcs = []
-    if config['check for collision between']['components and components'] is True:
-        nlcs.append(NonlinearConstraint(lambda x: interference(x, layout, layout.component_component_pairs), -np.inf, -3))
-    if config['check for collision between']['components and interconnects'] is True:
-        nlcs.append(NonlinearConstraint(lambda x: interference(x, layout, layout.component_interconnect_pairs), -np.inf, 0))
-    if config['check for collision between']['components and structures'] is True:
-        nlcs.append(NonlinearConstraint(lambda x: interference(x, layout, layout.component_structure_pairs), -np.inf, 0))
-    if config['check for collision between']['interconnects and interconnects'] is True:
-        nlcs.append(NonlinearConstraint(lambda x: interference(x, layout, layout.interconnect_interconnect_pairs), -np.inf, 0))
-    if config['check for collision between']['interconnects and structures'] is True:
-        nlcs.append(NonlinearConstraint(lambda x: interference(x, layout, layout.interconnect_structure_pairs), -np.inf, 0))
+    # if config['detect collision']['components and components'] is True:
+    #     nlcs.append(nlc_cc)
+    # if config['detect collision']['components and interconnects'] is True:
+    #     nlcs.append(nlc_ci)
+    # if config['detect collision']['components and structures'] is True:
+    #     nlcs.append(nlc_cs)
+    # if config['detect collision']['interconnects and interconnects'] is True:
+    #     nlcs.append(nlc_ii)
+    # if config['detect collision']['interconnects and structures'] is True:
+    #     nlcs.append(nlc_is)
+
+    for object_pair, check_collision, collision_tolerance in zip(layout.object_pairs,layout.object_pairs, config['detect collision'].values()):
+        if check_collision is True:
+            nlc = NonlinearConstraint(lambda x: max_interference(x, layout, object_pair), -np.inf, collision_tolerance)
+            nlcs.append(nlc)
 
     options = {}
 
@@ -88,8 +115,7 @@ def gradient_based_optimization(layout, config):
 
     # TODO Evaluate different solver methods and parametric tunings
 
-    res = minimize(fun, x0,
-                   args=layout,
+    res = minimize(lambda x: fun(x, layout), x0,
                    method='trust-constr',
                    constraints=nlcs,
                    tol=1e-2,
@@ -100,7 +126,7 @@ def gradient_based_optimization(layout, config):
     design_vector_log.append(res.x)
 
     # For troubleshooting
-    print('Constraint is', interference(res.x, layout, layout.component_component_pairs))
+    print('Constraint is', max_interference(res.x, layout, layout.component_component_pairs))
 
 
     return res, design_vector_log

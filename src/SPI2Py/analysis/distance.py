@@ -77,7 +77,6 @@ def min_kdtree_distance(tree, positions):
     """
 
     # tree.query returns distances and IDs. We only care about the distances
-    # TODO explain this comment better
     dist, _ = tree.query(positions)
     min_dist = np.min(dist)
 
@@ -98,7 +97,7 @@ def min_spheres_linesegment_distance(points, a, b):
 
     TODO Modify function calls to provide a list of point(s) instead of a single point
     TODO Fix documentation
-    TODO Vectorize?
+    TODO Vectorize
 
     :param points: list of
     :param a: (3,)
@@ -130,7 +129,7 @@ def min_linesegment_linesegment_distance(a0, a1, b0, b1):
 
     TODO Write unit tests
     TODO Document function logic more clearly
-    TODO Vectorize?
+    TODO Vectorize
     """
 
     # Calculate denominator

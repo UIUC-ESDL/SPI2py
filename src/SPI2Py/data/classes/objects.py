@@ -45,16 +45,14 @@ class Object(InputValidation):
     def __init__(self,
                  name:               str,
                  positions:          np.ndarray,
-                 rotation:           np.ndarray,
                  radii:              np.ndarray,
                  color:              Union[str, list[str]],
                  movement_class:     str,
-                 position:           Union[None, np.ndarray] = np.array([0, 0, 0]),
                  constraints:        Union[None, dict] = None,
                  degrees_of_freedom: Union[tuple[str], None] = ('x', 'y', 'z', 'rx', 'ry', 'rz')
                  ):
 
-        super(Object, self).__init__(name, positions, rotation, radii, color, movement_class, constraints, degrees_of_freedom)
+        super(Object, self).__init__(name, positions, radii, color, movement_class, constraints, degrees_of_freedom)
 
         # self.position = position
         self.rotation = np.zeros(3)
@@ -124,11 +122,21 @@ class Object(InputValidation):
 
         new_positions = np.copy(self.positions)
 
-        if self.three_d_translation is True:
+        # TODO Fix workaround. For now assume 1x3 = translation nand 1x6 = translation and rotation
+
+        # if self.three_d_translation is True:
+        #     new_reference_position = design_vector[0:3]
+        #     new_positions = translate(new_positions, self.reference_position, new_reference_position)
+        #
+        # if self.three_d_rotation is True:
+        #     rotation = design_vector[3:None]
+        #     new_positions = rotate_about_point(new_positions, rotation)
+
+        if len(design_vector) >= 3:
             new_reference_position = design_vector[0:3]
             new_positions = translate(new_positions, self.reference_position, new_reference_position)
 
-        if self.three_d_rotation is True:
+        if len(design_vector) == 6:
             rotation = design_vector[3:None]
             new_positions = rotate_about_point(new_positions, rotation)
 
@@ -276,17 +284,16 @@ class Component(Object):
     def __init__(self,
                  name: str,
                  positions: np.ndarray,
-                 rotation: np.ndarray,
                  radii: np.ndarray,
                  color: Union[str, list[str]],
                  movement_class='independent',
                  constraints: Union[None, tuple[str]] = None,
                  degrees_of_freedom: Union[tuple[str], None] = ('x', 'y', 'z', 'rx', 'ry', 'rz')):
 
-        super(Component, self).__init__(name, positions, rotation, radii, color, movement_class, constraints, degrees_of_freedom)
+        super(Component, self).__init__(name, positions, radii, color, movement_class,constraints, degrees_of_freedom)
 
         # Initialize the rotation attribute
-        # self.rotation = np.array([0, 0, 0])
+        self.rotation = np.array([0, 0, 0])
 
     @property
     def design_vector(self):
@@ -556,14 +563,13 @@ class Structure(Object):
     def __init__(self,
                  name,
                  positions,
-                 rotation,
                  radii,
                  color,
                  movement_class: str = 'static',
                  constraints: Union[None, dict] = None,
                  degrees_of_freedom: Union[tuple[str], None] = None):
 
-        super(Structure, self).__init__(name, positions, rotation, radii, color, movement_class, constraints, degrees_of_freedom)
+        super(Structure, self).__init__(name, positions,radii, color, movement_class, constraints, degrees_of_freedom)
 
     def calculate_positions(self,
                             design_vector,
