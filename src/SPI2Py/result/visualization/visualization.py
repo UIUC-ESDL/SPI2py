@@ -52,9 +52,7 @@ def plot(plot_array, savefig, directory):
     ax.set_xlim(-5, 5)
     ax.set_ylim(-5, 5)
     ax.set_zlim(-5, 5)
-    # ax.set_xlim(0, 100)
-    # ax.set_ylim(0, 100)
-    # ax.set_zlim(0, 20)
+
 
     plt.show()
 
@@ -63,7 +61,7 @@ def plot(plot_array, savefig, directory):
         fig.savefig(directory)
 
 
-def generate_gif(layout, design_vector_log, frames_per_figure, GIFfilepath):
+def generate_gif(layout, design_vector_log, frames_per_figure, gif_directory, gif_filename):
     """
 
     :param layout:
@@ -81,9 +79,10 @@ def generate_gif(layout, design_vector_log, frames_per_figure, GIFfilepath):
         i = 1
         for xk in design_vectors:
             filepath = tempDir+'/'+str(i)
-            layout.set_positions(xk)
+            pos_dict = layout.calculate_positions(xk)
+            layout.set_positions(pos_dict)
 
-            layout.plot_layout(savefig=True, directory=filepath)
+            layout.plot_layout(savefig=True, directory=gif_directory)
 
             i += 1
 
@@ -108,7 +107,7 @@ def generate_gif(layout, design_vector_log, frames_per_figure, GIFfilepath):
             images.append(imageio.imread(filename))
 
     # TODO Add config file input for GIF name
-    filepath = GIFfilepath + 'geo_opt.gif'
+    filepath = gif_directory + gif_filename
 
     imageio.mimsave(filepath, images)
 

@@ -56,16 +56,25 @@ optimization:
 
 results:
 
+  # Logger
+  Logger Filename: logger.log
+
   # Output report
   Report Filename: report.json
-  Log Filepath: logger.log
 
-  # Animation
+  # GIF Animation
+  # true or false, warning generating GIFS increases runtime
+  # TODO Fix GIF generation
   Output GIF: false
-  GIF Filename: geometric_optimization # TODO Change to GIF Filepath
-  GIF: output.gif
+  GIF Filename: geometric_optimization.gif
 
-  Visualization:
+  # Plotting
+  Plotting:
+
+    # TODO Use these values
+    x limits: [-5, 5]
+    y limits: [-5, 5]
+    z limits: [-5, 5]
 
     # Value between 0 and 20
     # Corresponds to...

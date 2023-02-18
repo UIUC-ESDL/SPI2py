@@ -20,7 +20,7 @@ from .result.visualization.visualization import generate_gif
 
 
 
-class SPI2:
+class EntryPoint:
     """
     The SPI2 Class provides the user with a means to interact with the API...
     """
@@ -59,7 +59,7 @@ class SPI2:
         return inputs
 
     def initialize_logger(self):
-        logger_name = self.directory + self.config['results']['Log Filepath']
+        logger_name = self.directory + self.config['results']['Logger Filename']
         logging.basicConfig(filename=logger_name, encoding='utf-8', level=logging.INFO, filemode='w')
 
 
@@ -131,7 +131,8 @@ class SPI2:
 
         # Generate GIF
         if self.config['results']['Output GIF'] is True:
-            generate_gif(self.layout, self.design_vector_log, 1, self.directory)
+            gif_filepath = self.config['results']['GIF Filename']
+            generate_gif(self.layout, self.design_vector_log, 1, self.directory, gif_filepath)
 
 
 

@@ -8,15 +8,17 @@ Author:     Chad Peterson
 # Import packages
 import os
 import numpy as np
-from SPI2Py.main import SPI2
+
+# EntryPoint is the main class used to interact with the SPI2Py library
+from SPI2Py.main import EntryPoint
 
 # Define the example's directory
 directory = os.path.dirname(__file__) + '/'
 
 # Initialize the class
-demo = SPI2(directory=directory,
-            config_file='config.yaml',
-            input_file='input.yaml')
+demo = EntryPoint(directory=directory,
+                  config_file='config.yaml',
+                  input_file='input.yaml')
 
 # Map static objects to the layout
 demo.layout.map_object('control_valve_1', [-3., -4.41, -0.24, 0., 0., 0.])
