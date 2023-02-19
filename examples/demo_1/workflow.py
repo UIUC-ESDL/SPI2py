@@ -5,23 +5,36 @@ Author:     Chad Peterson
 
 """
 
-# Import packages
-import os
+# %% Import packages
+
 import numpy as np
 
-# EntryPoint is the main class used to interact with the SPI2Py library
-from SPI2Py.main import EntryPoint
+# %% Obtain the local path of this example's directory
 
-# Define the example's directory
+import os
 directory = os.path.dirname(__file__) + '/'
+
+# %% Import the SPI2py library
+
+# Import EntryPoint, the main class used to interact with the SPI2Py library
+
+from SPI2py.main import EntryPoint
+
+# %%
+
+
+
 
 # Initialize the EntryPoint class with your current working directory, and the config & input files
 demo = EntryPoint(directory=directory,
                   config_file='config.yaml',
                   input_file='input.yaml')
 
-# Define the initial design vectors for the waypoints that can move
-# [x,y,z] Since design variables to rotate individual spheres adds unnecessary complexity
+# %% Define the initial design vector
+
+# In this example, all components and structures are static.
+# Therefore, the only design variables are the positions of the interconnect waypoints
+# Since waypoints are single spheres, we only need design variables for x,y,z translation
 pos_interconnect_0_node_0 = np.array([-3., -2., 2.])
 pos_interconnect_0_node_1 = np.array([-1., 0., 2.])
 pos_interconnect_1_node_0 = np.array([4., 0., 1.])
