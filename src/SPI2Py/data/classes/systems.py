@@ -13,21 +13,15 @@ import numpy as np
 from SPI2Py.result.visualization.plotting import plot
 
 
-class Subsystem:
+class System:
     """
-    Defines the non-spatial aspects of the system.
+    Defines the associative (non-spatial) aspects of the system.
 
     There are four types of objects:
-    1. Static
-        -Structures
-        -Sensors that must be fixed in space
-
+    1. Static: Objects that cannot move
     2. Independent: Objects that can move independently of each other
-        -...
-
     3. Partially Dependent: Objects that are constrained relative to other object(s) but retain some dergee(s) of freedom
         -Coaxial components
-
     4. Fully Dependent: Objects that are fully constrained to another object
         -The ports of a component
 
@@ -124,36 +118,6 @@ class Subsystem:
 
         return uncategorized
 
-
-    @property
-    def design_vector_objects(self):
-
-        # Implement if not fixed in space
-        # TODO only take waypoints if they can move ...
-
-        return [component for component in self.components if component.degrees_of_freedom is not None] + self.interconnect_nodes
-
-    @property
-    def moving_objects(self):
-        # TODO Not fully correct
-        return self.components + self.ports + self.interconnect_nodes + self.interconnect_segments
-
-    @property
-    def nodes(self):
-        return [design_object.node for design_object in self.design_vector_objects]
-
-    @property
-    def edges(self):
-        return [interconnect.edge for interconnect in self.interconnect_segments]
-
-    def add_object(self):
-        # TODO Implement this function
-        pass
-
-    def remove_object(self):
-        # TODO Implement this function
-        pass
-
     @property
     def component_component_pairs(self):
         """
@@ -244,13 +208,6 @@ class Subsystem:
         return object_pairs
 
 
-class System(Subsystem):
-    """
-    System combines subsystems from various disciplines (e.g., fluid, electrical, structural)
-    """
-    pass
-
-
 class SpatialConfiguration(System):
     """
     When creating a spatial configuration, we must automatically map static objects
@@ -266,10 +223,8 @@ class SpatialConfiguration(System):
         -------
 
         """
-        # Convert this to a flatten-like from design_vectors?
+
         design_vector = np.empty(0)
-        # for obj in self.design_vector_objects:
-        #     design_vector = np.concatenate((design_vector, obj.design_vector))
 
         for obj in self.independent_objects:
             design_vector = np.concatenate((design_vector, obj.design_vector))
@@ -288,24 +243,6 @@ class SpatialConfiguration(System):
 
         :return:
         """
-
-        # # Get the size of the design vector for each design vector object
-        # design_vector_sizes = []
-        # for i, obj in enumerate(self.design_vector_objects):
-        #     design_vector_sizes.append(obj.design_vector.size)
-        #
-        # # Index values
-        # start, stop = 0, 0
-        # design_vectors = []
-        #
-        # for i, size in enumerate(design_vector_sizes):
-        #     # Increment stop index
-        #     stop += design_vector_sizes[i]
-        #
-        #     design_vectors.append(design_vector[start:stop])
-        #
-        #     # Increment start index
-        #     start = stop
 
         # Get the size of the design vector for each design vector object
         design_vector_sizes = []
@@ -393,7 +330,9 @@ class SpatialConfiguration(System):
 
             layout_plot_array.append([positions, radii, color])
 
-        plot(layout_plot_array, savefig, directory,self.config)
+        fig = plot(layout_plot_array, savefig, directory,self.config)
+
+        fig.show()
 
 
 class Volume:

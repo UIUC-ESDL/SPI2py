@@ -56,10 +56,10 @@ def plot(plot_array, savefig, directory, config):
     ax.set_zlim(zlim)
 
 
-    plt.show()
+
 
     # Save Figure for GIF generation
     if savefig is True:
         fig.savefig(directory)
 
-
+    return fig
