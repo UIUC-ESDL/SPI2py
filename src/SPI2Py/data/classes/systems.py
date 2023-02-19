@@ -120,67 +120,53 @@ class System:
 
     @property
     def component_component_pairs(self):
-        """
-        TODO Write unit tests to ensure it creates the correct pairs
+        return list(combinations(self.components, 2))
 
-        :return:
-        """
-
-        component_component_pairs = list(combinations(self.components, 2))
-
-        return component_component_pairs
 
     @property
     def component_interconnect_pairs(self):
         """
+        Pairing logic:
+        1. Don't check for collision between a component and the interconnect that is attached to it.
+
         TODO Write unit tests to ensure it creates the correct pairs
 
         :return:
         """
 
-        component_interconnect_pairs = list(product(self.components, self.interconnect_segments))
+        pairs = list(product(self.components, self.interconnect_segments))
 
-        # Remove interconnects attached to components b/c ...
-        for component, interconnect in component_interconnect_pairs:
-
+        # Remove pairs that contain a component and its own interconnect
+        for component, interconnect in pairs:
             if component is interconnect.object_1 or component is interconnect.object_2:
-                component_interconnect_pairs.remove((component, interconnect))
+                pairs.remove((component, interconnect))
 
-        return component_interconnect_pairs
+        return pairs
 
     @property
     def component_structure_pairs(self):
-        """
-        TODO Write unit tests to ensure it creates the correct pairs
-
-        :return:
-        """
-
-        component_structure_pairs = list(product(self.components, self.structures))
-
-        return component_structure_pairs
+        return list(product(self.components, self.structures))
 
     @property
     def interconnect_interconnect_pairs(self):
         """
+        Pairing logic:
+        1. Don't check for collision between two segments of the same interconnect.
+
         TODO Write unit tests to ensure it creates the correct pairs
 
         :return:
         """
 
         # Create a list of all interconnect pairs
-        interconnect_interconnect_pairs = list(combinations(self.interconnect_segments, 2))
+        pairs = list(combinations(self.interconnect_segments, 2))
 
-        # Remove segments that share the same component
-        # This is a temporary feature b/c the ends of those two interconnects will share a point
-        # and thus always overlap slightly...
-        # TODO implement this feature
 
         # Remove segments that are from the same interconnect
         # If a pipe intersects itself, usually the pipe can just be made shorter...
         # TODO implement this feature
 
-        return interconnect_interconnect_pairs
+        return pairs
 
 
 

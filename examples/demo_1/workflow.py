@@ -27,7 +27,7 @@ demo.layout.map_object('component_2', [5, -3, -1, 0., 0., 0.])
 demo.layout.map_object('component_3', [-3., -1., 3., 0., 0., 0.])
 demo.layout.map_object('bedplate', [-1., -1., -3, 0., 0., 0.])
 
-# Map the waypoints
+# Define the initial design vectors for the waypoints
 pos_int0node0 = np.array([-3., -2., 2.])
 pos_int0node1 = np.array([-1., 0., 2.])
 pos_int1node0 = np.array([4., 0., 1.])
