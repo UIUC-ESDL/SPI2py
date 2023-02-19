@@ -30,24 +30,21 @@ initial_design_vector = np.concatenate((pos_interconnect_0_node_0,
                                         pos_interconnect_1_node_0))
 
 # Generate the layout
-demo.generate_layout(method='manual', inputs=initial_design_vector)
+demo.generate_spatial_configuration(method='manual', inputs=initial_design_vector)
 
 # Plot initial layout
-demo.layout.plot_layout()
+demo.spatial_configuration.plot_layout()
 
 # Perform gradient-based optimization
 demo.optimize_spatial_configuration()
 
-# Generate GIF animation
-# Caution: Uncommenting this command may significantly increase the runtime
-# of the script depending on the number of solver iterations.
+# Generate GIF animation; caution this function will increase runtime
 # demo.create_gif_animation()
 
-
 # For development: Plot the final layout to see the change
-positions_dict = demo.layout.calculate_positions(demo.result.x)
-demo.layout.set_positions(positions_dict)
-demo.layout.plot_layout()
+positions_dict = demo.spatial_configuration.calculate_positions(demo.result.x)
+demo.spatial_configuration.set_positions(positions_dict)
+demo.spatial_configuration.plot_layout()
 
 
 # Write output file
@@ -60,3 +57,4 @@ with open(demo.logger_name) as f:
     print(f.read())
 
 print('Done')
+

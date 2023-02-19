@@ -10,7 +10,7 @@ import yaml
 
 from .data.classes.class_constructors import create_components, create_ports, create_interconnects, create_structures
 from .data.classes.objects import Component, Port, Interconnect, InterconnectNode, InterconnectEdge, Structure
-from .data.classes.systems import SpatialConfiguration
+from .data.classes.systems import System, SpatialConfiguration
 
 # Import objective and constraint functions
 from .analysis.objectives import aggregate_pairwise_distance
@@ -44,10 +44,10 @@ class EntryPoint:
         self.initialize_logger()
 
         # Create objects from the input file
-        self.objects = self.create_objects()
+        self.system = self.create_system()
 
-        # Create the system from the objects
-        self.layout = self.create_spatial_configuration()
+        # Systems do not start with a spatial configuration
+        self.spatial_configuration = None
 
     def read_config_file(self, config_filename):
         config_filepath = self.directory + config_filename
@@ -64,14 +64,12 @@ class EntryPoint:
     def initialize_logger(self):
         logging.basicConfig(filename=self.logger_name, encoding='utf-8', level=logging.INFO, filemode='w')
 
-    def create_objects(self):
+    def create_system(self):
         """
         Create the objects from the input files.
 
         :return:
         """
-
-        objects = []
 
         components = create_components(self._component_inputs)
         ports = create_ports(self._port_inputs)
@@ -81,39 +79,41 @@ class EntryPoint:
 
         structures = create_structures(self._structure_inputs)
 
-        objects = [components, ports, interconnects, interconnect_nodes, interconnect_segments, structures]
+        system = System(components, ports, interconnects, interconnect_nodes, interconnect_segments, structures, self.config)
 
-        return objects
+        return system
 
     def create_spatial_configuration(self):
 
-        # Unpack the objects
-        components, ports, interconnects, interconnect_nodes, interconnect_segments, structures = self.objects
+        return
 
-        return SpatialConfiguration(components, ports, interconnects, interconnect_nodes, interconnect_segments,
-                                           structures, self.config)
-
-    def generate_layout(self, method, inputs=None):
+    def generate_spatial_configuration(self, method, inputs=None):
         """
         Map the objects to a 3D layout.
 
         First, map static objects to the layout since their positions are independent of the layout generation method.
 
-        :param layout_generation_method:
+        :param method:
         :param inputs:
 
 
         TODO implement different layout generation methods
         """
 
-        self.layout.map_static_objects()
+        spatial_configuration = SpatialConfiguration(self.system)
+
+        spatial_configuration.map_static_objects()
 
         if method == 'manual':
-            positions_dict = self.layout.calculate_positions(inputs)
-            self.layout.set_positions(positions_dict)
+            positions_dict = spatial_configuration.calculate_positions(inputs)
+            spatial_configuration.set_positions(positions_dict)
 
         else:
             raise NotImplementedError
+
+        self.spatial_configuration = spatial_configuration
+
+
 
 
     def optimize_spatial_configuration(self):
@@ -124,14 +124,14 @@ class EntryPoint:
         # TODO Add ability to choose constraint functions
         constraint_function = max_interference
 
-        self.result, self.design_vector_log = run_optimizer(self.layout,
+        self.result, self.design_vector_log = run_optimizer(self.spatial_configuration,
                                                             objective_function,
                                                             constraint_function,
                                                             self.config['optimization'])
 
     def create_gif_animation(self):
         gif_filepath = self.config['results']['GIF Filename']
-        generate_gif(self.layout, self.design_vector_log, 1, self.directory, gif_filepath)
+        generate_gif(self.spatial_configuration, self.design_vector_log, 1, self.directory, gif_filepath)
 
     def create_report(self):
 

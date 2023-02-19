@@ -195,11 +195,13 @@ class System:
         return object_pairs
 
 
-class SpatialConfiguration(System):
+class SpatialConfiguration:
     """
     When creating a spatial configuration, we must automatically map static objects
     TODO Add an update order...
     """
+    def __init__(self, system):
+        self.system = system
 
     @property
     def design_vector(self):
@@ -213,10 +215,10 @@ class SpatialConfiguration(System):
 
         design_vector = np.empty(0)
 
-        for obj in self.independent_objects:
+        for obj in self.system.independent_objects:
             design_vector = np.concatenate((design_vector, obj.design_vector))
 
-        for obj in self.partially_dependent_objects:
+        for obj in self.system.partially_dependent_objects:
             design_vector = np.concatenate((design_vector, obj.design_vector))
 
         return design_vector
@@ -233,10 +235,10 @@ class SpatialConfiguration(System):
 
         # Get the size of the design vector for each design vector object
         design_vector_sizes = []
-        for i, obj in enumerate(self.independent_objects):
+        for i, obj in enumerate(self.system.independent_objects):
             design_vector_sizes.append(obj.design_vector.size)
 
-        for i, obj in enumerate(self.partially_dependent_objects):
+        for i, obj in enumerate(self.system.partially_dependent_objects):
             design_vector_sizes.append(obj.design_vector.size)
 
         # Index values
@@ -268,16 +270,16 @@ class SpatialConfiguration(System):
         design_vectors = self.slice_design_vector(design_vector)
 
         # STATIC OBJECTS
-        for obj in self.static_objects:
+        for obj in self.system.static_objects:
             positions_dict = obj.calculate_positions(design_vector,positions_dict)
 
         # DYNAMIC OBJECTS - Independent then Partially Dependent
-        objects = self.independent_objects + self.partially_dependent_objects
+        objects = self.system.independent_objects + self.system.partially_dependent_objects
         for obj, design_vector_row in zip(objects, design_vectors):
             positions_dict = obj.calculate_positions(design_vector_row, positions_dict)
 
         # DYNAMIC OBJECTS - Fully Dependent
-        for obj in self.fully_dependent_objects:
+        for obj in self.system.fully_dependent_objects:
             positions_dict = obj.calculate_positions(design_vector,positions_dict)
 
         return positions_dict
@@ -291,7 +293,7 @@ class SpatialConfiguration(System):
         :type positions_dict: dict
         """
 
-        for obj in self.objects:
+        for obj in self.system.objects:
             obj.set_positions(positions_dict)
 
     def map_static_objects(self):
@@ -305,7 +307,7 @@ class SpatialConfiguration(System):
         as a design vector.
         """
 
-        for static_object in self.static_objects:
+        for static_object in self.system.static_objects:
             pos_dict = static_object.calculate_independent_positions(static_object.static_position, {})
             static_object.set_positions(pos_dict)
 
@@ -314,7 +316,7 @@ class SpatialConfiguration(System):
 
         layout_plot_array = []
 
-        for obj in self.objects:
+        for obj in self.system.objects:
 
             positions = obj.positions
             radii = obj.radii
@@ -322,7 +324,7 @@ class SpatialConfiguration(System):
 
             layout_plot_array.append([positions, radii, color])
 
-        fig = plot(layout_plot_array, savefig, directory,self.config)
+        fig = plot(layout_plot_array, savefig, directory,self.system.config)
 
         fig.show()
 

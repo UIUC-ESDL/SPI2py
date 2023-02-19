@@ -81,7 +81,7 @@ def run_optimizer(layout, objective_function, constraint_function, config):
 
     # Unpack the parameters
     x0 = layout.design_vector
-    object_pairs = layout.object_pairs
+    object_pairs = layout.system.object_pairs
 
     # Unpack the config dictionary
     convergence_tolerance = config['convergence tolerance']
