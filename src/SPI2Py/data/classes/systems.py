@@ -26,6 +26,7 @@ class System:
         -The ports of a component
 
     TODO Change positions dict from pass-thru edit to merge edit
+    TODO Add a method to specifically and consistently order all objects based on their dependancy (and check for cirular/overconstrained)
     """
 
     def __init__(self, components, ports, interconnects, interconnect_nodes, interconnect_segments, structures, config):
@@ -293,16 +294,12 @@ class SpatialConfiguration(System):
         for obj in self.objects:
             obj.set_positions(positions_dict)
 
-    def map_object(self, obj_name, design_vector):
+    def map_static_objects(self):
 
-        for obj in self.objects:
-            if repr(obj) == obj_name:
-                pos_dict = obj.calculate_independent_positions(design_vector, {})
-                obj.set_positions(pos_dict)
-                print('Mapped object: {}'.format(obj_name))
+        for static_object in self.static_objects:
+            pos_dict = static_object.calculate_independent_positions(static_object.static_position, {})
+            static_object.set_positions(pos_dict)
 
-    def map_objects(self, map_objs, design_vectors):
-        raise NotImplementedError
 
     def plot_layout(self, savefig=False, directory=None):
 

@@ -39,7 +39,7 @@ optimization:
   convergence tolerance: 2.5e-1
 
   # Specify whether to check for collision between specific pairs
-  detect collision:
+  check collisions:
     components and components: true
     components and interconnects: true
     components and structures: false

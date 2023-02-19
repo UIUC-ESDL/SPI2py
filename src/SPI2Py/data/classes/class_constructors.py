@@ -21,6 +21,7 @@ def create_components(inputs):
 
         movement_class = component['movement class']
 
+
         # Generate the component's positions and radii
         # Temporarily strip away box and rotation since it's all boxes and no rotation
         origins = []
@@ -31,8 +32,11 @@ def create_components(inputs):
 
         positions, radii = generate_rectangular_prisms(origins, dimensions)
 
-
-        component = Component(name, positions, radii, color, movement_class=movement_class)
+        if movement_class != 'static':
+            component = Component(name, positions, radii, color, movement_class=movement_class)
+        elif movement_class == 'static':
+            static_position = component['position']
+            component = Component(name, positions, radii, color, movement_class=movement_class, static_position=static_position)
         # logging.info(' Component: ' + str(component) + ' created.')
         components.append(component)
 
@@ -114,7 +118,12 @@ def create_structures(inputs):
 
         positions, radii = generate_rectangular_prisms(origins, dimensions)
 
-        structure = Structure(name, positions, radii, color, movement_class=movement_class)
+        if movement_class != 'static':
+            structure = Structure(name, positions, radii, color, movement_class=movement_class)
+        elif movement_class == 'static':
+            static_position = structure['position']
+            structure = Structure(name, positions, radii, color, movement_class=movement_class, static_position=static_position)
+
 
         # logging.info(' Structure: ' + str(structure) + ' created.')
 

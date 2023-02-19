@@ -20,13 +20,6 @@ demo = EntryPoint(directory=directory,
                   config_file='config.yaml',
                   input_file='input.yaml')
 
-# Map static objects to the layout [x,y,z,rx,ry,rz]
-demo.layout.map_object('control_valve_1', [-3., -4.41, -0.24, 0., 0., 0.])
-demo.layout.map_object('actuator_1', [2., 4.41, 0.24, 0., 0., 0.])
-demo.layout.map_object('component_2', [5, -3, -1, 0., 0., 0.])
-demo.layout.map_object('component_3', [-3., -1., 3., 0., 0., 0.])
-demo.layout.map_object('bedplate', [-1., -1., -3, 0., 0., 0.])
-
 # Define the initial design vectors for the waypoints that can move
 # [x,y,z] Since design variables to rotate individual spheres adds unnecessary complexity
 pos_int0node0 = np.array([-3., -2., 2.])

@@ -20,7 +20,8 @@ class InputValidation:
                  color: Union[str, list[str]],
                  movement_class: str,
                  constraints: Union[None, dict],
-                 degrees_of_freedom: Union[list[int], None]):
+                 degrees_of_freedom: Union[list[int], None],
+                 static_position=None):
 
         self.name               = self._validate_name(name)
         self.positions          = self._validate_positions(positions)
@@ -30,6 +31,7 @@ class InputValidation:
         # self.rotation           = self._validate_rotation(rotation)
         self.constraints        = self._validate_constraints(constraints)
         self.degrees_of_freedom = self._validate_degrees_of_freedom(degrees_of_freedom)
+        self.static_position    = static_position
 
 
     def _validate_name(self, name):
@@ -184,9 +186,10 @@ class Object(InputValidation):
     # TODO Implement a single class to handle how objects move and update positions... let child classes mutate them
     def __init__(self, name, positions, radii, color, movement_class,
                  constraints=None,
-                 degrees_of_freedom=('x', 'y', 'z', 'rx', 'ry', 'rz')):
+                 degrees_of_freedom=('x', 'y', 'z', 'rx', 'ry', 'rz'),
+                 static_position=None):
 
-        super(Object, self).__init__(name, positions, radii, color, movement_class, constraints, degrees_of_freedom)
+        super(Object, self).__init__(name, positions, radii, color, movement_class, constraints, degrees_of_freedom,static_position)
 
 
         self.rotation = np.zeros(3)
@@ -418,9 +421,10 @@ class Component(Object):
                  color: Union[str, list[str]],
                  movement_class='independent',
                  constraints: Union[None, tuple[str]] = None,
-                 degrees_of_freedom: Union[tuple[str], None] = ('x', 'y', 'z', 'rx', 'ry', 'rz')):
+                 degrees_of_freedom: Union[tuple[str], None] = ('x', 'y', 'z', 'rx', 'ry', 'rz'),
+                 static_position=None):
 
-        super(Component, self).__init__(name, positions, radii, color, movement_class,constraints, degrees_of_freedom)
+        super(Component, self).__init__(name, positions, radii, color, movement_class,constraints, degrees_of_freedom, static_position)
 
         # Initialize the rotation attribute
         self.rotation = np.array([0, 0, 0])
@@ -697,9 +701,10 @@ class Structure(Object):
                  color,
                  movement_class: str = 'static',
                  constraints: Union[None, dict] = None,
-                 degrees_of_freedom: Union[tuple[str], None] = None):
+                 degrees_of_freedom: Union[tuple[str], None] = None,
+                 static_position=None):
 
-        super(Structure, self).__init__(name, positions,radii, color, movement_class, constraints, degrees_of_freedom)
+        super(Structure, self).__init__(name, positions,radii, color, movement_class, constraints, degrees_of_freedom,static_position)
 
     def calculate_positions(self,
                             design_vector,

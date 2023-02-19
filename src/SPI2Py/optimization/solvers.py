@@ -29,8 +29,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-
-def run_optimizer(layout, objective_function, constraint_function,config):
+def run_optimizer(layout, objective_function, constraint_function, config):
     """
     This is a helper function that runs the optimization solver.
 
@@ -52,12 +51,15 @@ def run_optimizer(layout, objective_function, constraint_function,config):
     however, it currently only supports the BFGS method for unconstrained optimization.
 
     Note: There are plans to develop SPI2py-specific solvers to provide more flexibility.
+    Note: Since the current objective and constraint functions may be non-smooth / linear we define the
+    Hessian ("hessp") as zero.
 
     TODO Implement design vector bounds (e.g., rotation angles should be between 0 and 2pi)
     TODO Evaluate other solvers and methods
-    TODO Connect logger with the optimizer
 
     :param layout:
+    :param objective_function:
+    :param constraint_function:
     :param config:
     :return:
     """
@@ -73,28 +75,29 @@ def run_optimizer(layout, objective_function, constraint_function,config):
 
         design_vector_log.append(xk)
 
-
-    x0 = layout.design_vector
-
-    nlcs = []
-
-    # Unpack the config dictionary
-    convergence_tolerance = config['convergence tolerance']
-
     # Initialize the design vector log
     # Since the log_design_vector function is nested inside this function, it can append the variable
     design_vector_log = []
 
-    # Add the applicable constraints
-    nlcs = []
-    for object_pair, check_collision, collision_tolerance in zip(layout.object_pairs, layout.object_pairs, config['detect collision'].values()):
-        if check_collision is True:
-            nlc = NonlinearConstraint(lambda x: constraint_function(x, layout, object_pair), -np.inf, collision_tolerance)
-            nlcs.append(nlc)
+    # Unpack the parameters
+    x0 = layout.design_vector
+    object_pairs = layout.object_pairs
 
+    # Unpack the config dictionary
+    convergence_tolerance = config['convergence tolerance']
+    check_collisions      = config['check collisions'].values()
+    collision_tolerances  = config['collision tolerance'].values()
+
+    # Add the applicable interference constraints
+    nlcs = []
+    for object_pair, check_collision, collision_tolerance in zip(object_pairs, check_collisions, collision_tolerances):
+        if check_collision is True:
+            nlcs.append(NonlinearConstraint(lambda x: constraint_function(x, layout, object_pair), -np.inf, collision_tolerance))
+
+    # TODO Implement options
     options = {}
 
-    # Add initial value
+    # Log the initial design vector (before running the solver)
     design_vector_log.append(x0)
 
     # Run the solver
@@ -103,9 +106,10 @@ def run_optimizer(layout, objective_function, constraint_function,config):
                    constraints=nlcs,
                    tol=1e-2,
                    options=options,
-                   callback=log_design_vector)
+                   callback=log_design_vector,
+                   hessp=0)
 
-    # Add final value
+    # Log the final design vector
     design_vector_log.append(res.x)
 
     # Log the results

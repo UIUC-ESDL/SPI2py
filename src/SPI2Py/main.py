@@ -89,6 +89,8 @@ class EntryPoint:
 
         """
 
+        # TODO Map static positions...
+
         # TODO Implement ability to include or exclude interconnect nodes from layout generation methods
         if include_interconnect_nodes:
             pass
@@ -99,6 +101,9 @@ class EntryPoint:
         # TODO implement different layout generation methods
 
         if layout_generation_method == 'manual':
+
+            self.layout.map_static_objects()
+
             positions_dict = self.layout.calculate_positions(inputs)
             self.layout.set_positions(positions_dict)
 
