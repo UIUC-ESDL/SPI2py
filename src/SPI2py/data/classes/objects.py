@@ -269,7 +269,7 @@ class Object(InputValidation):
         return positions_dict
 
     def calculate_dependent_positions(self,
-                                      design_vector: np.ndarray,
+                                      design_vector:  np.ndarray,
                                       positions_dict: Union[None, dict] = None) -> dict:
         """
         Types of Constrained Motion
@@ -404,23 +404,30 @@ class Port(InputValidation):
 class Component(Object):
 
     def __init__(self,
-                 name: str,
-                 positions: np.ndarray,
-                 radii: np.ndarray,
-                 color: Union[str, list[str]],
-                 movement_class='independent',
-                 constraints: Union[None, tuple[str]] = None,
-                 degrees_of_freedom: Union[tuple[str], None] = ('x', 'y', 'z', 'rx', 'ry', 'rz'),
-                 static_position=None):
+                 name:                  str,
+                 positions:             np.ndarray,
+                 radii:                 np.ndarray,
+                 color:                 Union[str, list[str]],
+                 movement_class:        str = 'independent',
+                 constraints:           Union[None, tuple[str]] = None,
+                 degrees_of_freedom:    Union[tuple[str], None] = ('x', 'y', 'z', 'rx', 'ry', 'rz'),
+                 static_position:       Union[np.ndarray, None] = None):
 
-        super(Component, self).__init__(name, positions, radii, color, movement_class,constraints, degrees_of_freedom, static_position)
+        super(Component, self).__init__(name,
+                                        positions,
+                                        radii,
+                                        color,
+                                        movement_class,
+                                        constraints,
+                                        degrees_of_freedom,
+                                        static_position)
 
         # Initialize the rotation attribute
         self.rotation = np.array([0, 0, 0])
 
     @property
     def design_vector(self):
-
+        # TODO Implement a more universal design vector function
         design_vector = np.concatenate((self.reference_position, self.rotation))
 
         return design_vector

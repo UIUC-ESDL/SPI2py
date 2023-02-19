@@ -27,12 +27,15 @@ demo = EntryPoint(directory=directory,
 # Define the initial design vector
 # In this example, all components and structures are static.
 # Therefore, the only design variables are the 3D positions of the interconnect waypoints (waypoints can't rotate).
-pos_interconnect_0_node_0 = np.array([-3., -2., 2.])
-pos_interconnect_0_node_1 = np.array([-1., 0., 2.])
-pos_interconnect_1_node_0 = np.array([4., 0., 1.])
-initial_design_vector = np.concatenate((pos_interconnect_0_node_0,
-                                        pos_interconnect_0_node_1,
-                                        pos_interconnect_1_node_0))
+# Note: For now, the order of the waypoints must be the same as the order in the input file.
+# Below, interconnect 0 has 2 waypoints, and interconnect 1 has 1 waypoint.
+interconnect_0_node_0_position = np.array([-3., -2., 2.])
+interconnect_0_node_1_position = np.array([-1., 0., 2.])
+interconnect_1_node_0_position = np.array([4., 0., 1.])
+
+initial_design_vector = np.concatenate((interconnect_0_node_0_position,
+                                        interconnect_0_node_1_position,
+                                        interconnect_1_node_0_position))
 
 demo.generate_spatial_configuration(method='manual', inputs=initial_design_vector)
 
