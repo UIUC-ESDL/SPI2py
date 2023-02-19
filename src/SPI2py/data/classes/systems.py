@@ -10,45 +10,60 @@ from itertools import combinations, product
 
 import numpy as np
 
-from SPI2py.result.visualization.plotting import plot
+from SPI2py.result.visualization.plotting import plot_objects
 
 
 class System:
     """
-    Defines the associative (non-spatial) aspects of the system.
+    Defines the associative (non-spatial) aspects of systems.
+
+    The layout module of SPI2py may map a single System to multiple SpatialConfigurations, performing gradient-based
+    optimization on each SpatialConfiguration in parallel.
+
+    This associative information includes things such as which objects to check check for collision between.
+    Movement classes and associated constraints dictate which objects have design variables and if those design
+    variables are constrained.
 
     There are four types of objects:
-    1. Static: Objects that cannot move
-    2. Independent: Objects that can move independently of each other
-    3. Partially Dependent: Objects that are constrained relative to other object(s) but retain some dergee(s) of freedom
-        -Coaxial components
-    4. Fully Dependent: Objects that are fully constrained to another object
-        -The ports of a component
+    1. Static:              Objects that cannot move (but must still be mapped to the spatial configuration)
+    2. Independent:         Objects that can move independently of each other
+    3. Partially Dependent: Objects that are constrained relative to other object(s) but retain some degree of freedom
+    4. Fully Dependent:     Objects that are fully constrained to another object (e.g., the port of a component)
+
+    Note: For the time being we will assume that you cannot chain dependencies.
+    For example, we may assert that the position of objects B,C, and D may depend directly on A.
+    However, we may not assert that the position of object D depends on C, which depends on the position of B.
 
     TODO Change positions dict from pass-thru edit to merge edit
-    TODO Add a method to specifically and consistently order all objects based on their dependancy (and check for cirular/overconstrained)
+    TODO Add a method to consistently order all objects based on their dependency chains
+    TODO Add a method to check for circular dependencies and overconstrained objects
+    TODO Write unit tests to confirm that all property-decorated functions correctly apply filters
     """
 
-    def __init__(self, components, ports, interconnects, interconnect_nodes, interconnect_segments, structures, config):
-        self.components = components
-        self.ports = ports
-        self.interconnects = interconnects
-        self.interconnect_nodes = interconnect_nodes
-        self.interconnect_segments = interconnect_segments
-        self.structures = structures
-        self.config = config
+    def __init__(self,
+                 components,
+                 ports,
+                 interconnects,
+                 interconnect_nodes,
+                 interconnect_segments,
+                 structures,
+                 config: dict):
 
+        # Unpack __init__
+        self.components             = components
+        self.ports                  = ports
+        self.interconnects          = interconnects
+        self.interconnect_nodes     = interconnect_nodes
+        self.interconnect_segments  = interconnect_segments
+        self.structures             = structures
+        self.config                 = config
 
-    @property
-    def objects(self):
-        return self.components + self.ports + self.interconnect_nodes + self.interconnect_segments + self.structures
-
+        # Additional initialization
+        self.objects = components + ports + interconnect_nodes + interconnect_segments + structures
 
     @property
     def static_objects(self):
-
         objects = []
-
         for obj in self.objects:
             if obj.movement_class == 'static':
                 objects.append(obj)
@@ -57,49 +72,26 @@ class System:
 
     @property
     def independent_objects(self):
-
         objects = []
-
         for obj in self.objects:
             if obj.movement_class == 'independent':
                 objects.append(obj)
-
         return objects
 
     @property
     def partially_dependent_objects(self):
-
-        """
-        Partially dependent objects are objects that are constrained to other objects but retain some
-        degree of freedom (e.g. coaxial components).
-
-        For the time being, we will simplify the problem by assuming that you cannot chain dependencies.
-        For example, we may assert that the position of objects B,C, and D may depend directly on A. However,
-        we may not assert that the position of object D depends on the position of C, which depends on the position f B, etc.
-
-        TODO Write unit tests to confirm sorting works properly
-        TODO Add check that ensures partially dependent objects are not constrained to other partially or fully dependent objects
-        """
-
-        # Create the unordered list
         objects = []
-
         for obj in self.objects:
             if obj.movement_class == 'partially dependent':
                 objects.append(obj)
-
         return objects
 
     @property
     def fully_dependent_objects(self):
-        # TODO Sort to makesure ports are before edges...
-
         objects = []
-
         for obj in self.objects:
             if obj.movement_class == 'fully dependent':
                 objects.append(obj)
-
         return objects
 
     @property
@@ -312,7 +304,7 @@ class SpatialConfiguration:
             static_object.set_positions(pos_dict)
 
 
-    def plot_layout(self, savefig=False, directory=None):
+    def plot(self, savefig=False, directory=None):
 
         layout_plot_array = []
 
@@ -324,7 +316,7 @@ class SpatialConfiguration:
 
             layout_plot_array.append([positions, radii, color])
 
-        fig = plot(layout_plot_array, savefig, directory,self.system.config)
+        fig = plot_objects(layout_plot_array, savefig, directory, self.system.config)
 
         fig.show()
 

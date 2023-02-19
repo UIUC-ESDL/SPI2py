@@ -1,8 +1,6 @@
 """
 Example 1:  Simple optimization of a 3D layout
 Author:     Chad Peterson
-
-
 """
 
 # %% Import packages
@@ -39,10 +37,10 @@ initial_design_vector = np.concatenate((pos_interconnect_0_node_0,
 demo.generate_spatial_configuration(method='manual', inputs=initial_design_vector)
 
 # Plot initial spatial configuration
-# TODO Rename plot...
-demo.spatial_configuration.plot_layout()
+demo.spatial_configuration.plot()
 
 # %% Perform gradient-based optimization
+
 demo.optimize_spatial_configuration()
 
 # %% Post-processing
@@ -50,7 +48,7 @@ demo.optimize_spatial_configuration()
 # Plot the final spatial configuration
 positions_dict = demo.spatial_configuration.calculate_positions(demo.result.x)
 demo.spatial_configuration.set_positions(positions_dict)
-demo.spatial_configuration.plot_layout()
+demo.spatial_configuration.plot()
 
 # Generate GIF animation; caution uncommenting this function call will increase runtime
 # demo.create_gif()

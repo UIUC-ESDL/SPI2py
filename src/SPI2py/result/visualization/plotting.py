@@ -19,7 +19,7 @@ def plot_sphere(position, radius, color, ax, resolution):
     ax.plot_surface(x, y, z, linewidth=0.0, color=color)
 
 
-def plot(plot_array, savefig, directory, config):
+def plot_objects(plot_array, savefig, directory, config):
     """
     Plots classes...
 

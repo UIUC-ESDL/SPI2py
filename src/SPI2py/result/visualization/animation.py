@@ -25,7 +25,7 @@ def generate_gif(layout, design_vector_log, frames_per_figure, gif_directory, gi
             pos_dict = layout.calculate_positions(xk)
             layout.set_positions(pos_dict)
 
-            layout.plot_layout(savefig=True, directory=filepath)
+            layout.plot(savefig=True, directory=filepath)
 
             i += 1
 
