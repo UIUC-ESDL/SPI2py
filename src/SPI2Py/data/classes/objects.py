@@ -227,17 +227,6 @@ class Object(InputValidation):
     #
     #     return design_vector
 
-    def map_object(self, design_vector):
-        """
-        Maps the object to a 3D layout.
-
-        Temporarily treats the object as independent with either 3 or 6 degrees of freedom.
-        Both calculates and sets positions.
-        # TODO Implement a mapping function
-        """
-
-        positions = self.calculate_independent_positions(design_vector)
-
 
     def calculate_static_positions(self, positions_dict):
 

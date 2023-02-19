@@ -296,6 +296,15 @@ class SpatialConfiguration(System):
 
     def map_static_objects(self):
 
+        """
+        This method maps static objects to spatial configurations.
+
+        Although static objects do not move or have design variables, they still need to be mapped
+        to spatial configurations. This method temporarily replaces the default self.calculate_static_positions
+        method with the self.calculate_independent_positions method, treating the self.static_position attribute
+        as a design vector.
+        """
+
         for static_object in self.static_objects:
             pos_dict = static_object.calculate_independent_positions(static_object.static_position, {})
             static_object.set_positions(pos_dict)
