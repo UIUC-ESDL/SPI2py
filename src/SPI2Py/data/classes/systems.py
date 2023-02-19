@@ -10,7 +10,7 @@ from itertools import combinations, product
 
 import numpy as np
 
-from SPI2Py.result.visualization.visualization import plot
+from SPI2Py.result.visualization.plotting import plot
 
 
 class Subsystem:

@@ -8,14 +8,18 @@ from datetime import datetime
 
 import yaml
 
-from .data.classes.class_constructors import create_components, create_ports, create_interconnects, create_structures, SpatialConfiguration
+from .data.classes.class_constructors import create_components, create_ports, create_interconnects, create_structures
+from .data.classes.systems import SpatialConfiguration
+
+# Import objective and constraint functions
+from .analysis.objectives import aggregate_pairwise_distance
+from .analysis.constraints import max_interference
 
 from .layout.generation_methods import generate_random_layout
 
 from .optimization.solvers import run_optimizer
 
-from .result.visualization.visualization import generate_gif
-
+from .result.visualization.animation import generate_gif
 
 
 class EntryPoint:
@@ -106,7 +110,17 @@ class EntryPoint:
             print('Sorry, no other layout generation methods are implemented yet')
 
     def optimize_spatial_configuration(self):
-        self.result, self.design_vector_log = run_optimizer(self.layout, self.config['optimization'])
+
+        # TODO Add ability to choose objective function
+        objective_function = aggregate_pairwise_distance
+
+        # TODO Add ability to choose constraint functions
+        constraint_function = max_interference
+
+        self.result, self.design_vector_log = run_optimizer(self.layout,
+                                                            objective_function,
+                                                            constraint_function,
+                                                            self.config['optimization'])
 
     def create_gif_animation(self):
         gif_filepath = self.config['results']['GIF Filename']

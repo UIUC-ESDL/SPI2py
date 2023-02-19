@@ -29,7 +29,7 @@ from ..analysis.objectives import aggregate_pairwise_distance
 from ..analysis.constraints import max_interference
 
 
-def run_optimizer(layout, config):
+def run_optimizer(layout, objective_function, constraint_function,config):
     """
     This is a helper function that runs the optimization solver.
 
@@ -72,7 +72,7 @@ def run_optimizer(layout, config):
 
         design_vector_log.append(xk)
 
-    fun = aggregate_pairwise_distance
+
 
     x0 = layout.design_vector
 
@@ -89,7 +89,7 @@ def run_optimizer(layout, config):
     nlcs = []
     for object_pair, check_collision, collision_tolerance in zip(layout.object_pairs, layout.object_pairs, config['detect collision'].values()):
         if check_collision is True:
-            nlc = NonlinearConstraint(lambda x: max_interference(x, layout, object_pair), -np.inf, collision_tolerance)
+            nlc = NonlinearConstraint(lambda x: constraint_function(x, layout, object_pair), -np.inf, collision_tolerance)
             nlcs.append(nlc)
 
     options = {}
@@ -98,7 +98,7 @@ def run_optimizer(layout, config):
     design_vector_log.append(x0)
 
     # Run the solver
-    res = minimize(lambda x: fun(x, layout), x0,
+    res = minimize(lambda x: objective_function(x, layout), x0,
                    method='trust-constr',
                    constraints=nlcs,
                    tol=1e-2,
