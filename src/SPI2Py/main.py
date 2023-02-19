@@ -9,6 +9,7 @@ from datetime import datetime
 import yaml
 
 from .data.classes.class_constructors import create_components, create_ports, create_interconnects, create_structures
+from .data.classes.objects import Component, Port, Interconnect, InterconnectNode, InterconnectEdge, Structure
 from .data.classes.systems import SpatialConfiguration
 
 # Import objective and constraint functions
@@ -55,8 +56,8 @@ class EntryPoint:
         return inputs
 
     def initialize_logger(self):
-        logger_name = self.directory + self.config['results']['Logger Filename']
-        logging.basicConfig(filename=logger_name, encoding='utf-8', level=logging.INFO, filemode='w')
+        self.logger_name = self.directory + self.config['results']['Logger Filename']
+        logging.basicConfig(filename=self.logger_name, encoding='utf-8', level=logging.INFO, filemode='w')
 
     def create_objects_from_input(self):
         """

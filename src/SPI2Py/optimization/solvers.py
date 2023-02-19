@@ -25,8 +25,9 @@ and are not allowed to build from the source (or it just adds another level of d
 
 import numpy as np
 from scipy.optimize import minimize, NonlinearConstraint
-from ..analysis.objectives import aggregate_pairwise_distance
-from ..analysis.constraints import max_interference
+import logging
+logger = logging.getLogger(__name__)
+
 
 
 def run_optimizer(layout, objective_function, constraint_function,config):
@@ -73,7 +74,6 @@ def run_optimizer(layout, objective_function, constraint_function,config):
         design_vector_log.append(xk)
 
 
-
     x0 = layout.design_vector
 
     nlcs = []
@@ -107,6 +107,9 @@ def run_optimizer(layout, objective_function, constraint_function,config):
 
     # Add final value
     design_vector_log.append(res.x)
+
+    # Log the results
+    logger.info('Optimization results: {}'.format(res))
 
     return res, design_vector_log
 

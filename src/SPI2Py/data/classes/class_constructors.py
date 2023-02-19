@@ -121,3 +121,14 @@ def create_structures(inputs):
         structures.append(structure)
 
     return structures
+
+# def create_system(inputs):
+#
+#     components = create_components(inputs['components'])
+#     ports = create_ports(inputs['ports'])
+#     interconnects, interconnect_nodes, interconnect_segments = create_interconnects(inputs['interconnects'])
+#     structures = create_structures(inputs['structures'])
+#
+#     system = System(components, ports, interconnects, interconnect_nodes, interconnect_segments, structures, config)
+#
+#     return components, ports, interconnects, interconnect_nodes, interconnect_segments, structures

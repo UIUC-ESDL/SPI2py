@@ -20,43 +20,51 @@ demo = EntryPoint(directory=directory,
                   config_file='config.yaml',
                   input_file='input.yaml')
 
-# Map static objects to the layout
+# Map static objects to the layout [x,y,z,rx,ry,rz]
 demo.layout.map_object('control_valve_1', [-3., -4.41, -0.24, 0., 0., 0.])
 demo.layout.map_object('actuator_1', [2., 4.41, 0.24, 0., 0., 0.])
 demo.layout.map_object('component_2', [5, -3, -1, 0., 0., 0.])
 demo.layout.map_object('component_3', [-3., -1., 3., 0., 0., 0.])
 demo.layout.map_object('bedplate', [-1., -1., -3, 0., 0., 0.])
 
-# Define the initial design vectors for the waypoints
+# Define the initial design vectors for the waypoints that can move
+# [x,y,z] Since design variables to rotate individual spheres adds unnecessary complexity
 pos_int0node0 = np.array([-3., -2., 2.])
 pos_int0node1 = np.array([-1., 0., 2.])
 pos_int1node0 = np.array([4., 0., 1.])
-locations = np.concatenate((pos_int0node0, pos_int0node1, pos_int1node0))
+initial_design_vector = np.concatenate((pos_int0node0, pos_int0node1, pos_int1node0))
 
-# Map the objects to a 3D layout
+# Map the objects to a 3D layout (additional methods not yet supported, e.g., force-directed)
 layout_generation_method = 'manual'
 
 # Generate the layout
-demo.generate_layout(layout_generation_method, inputs=locations)
+demo.generate_layout(layout_generation_method, inputs=initial_design_vector)
 
-# For development: Plot initial layout
+# Plot initial layout
 demo.layout.plot_layout()
 
 # Perform gradient-based optimization
 demo.optimize_spatial_configuration()
 
 # Generate GIF animation
+# Caution: Uncommenting this command may significantly increase the runtime
+# of the script depending on the number of solver iterations.
 # demo.create_gif_animation()
 
-# For development: Print Results
-print('Result:', demo.result)
 
 # For development: Plot the final layout to see the change
 positions_dict = demo.layout.calculate_positions(demo.result.x)
 demo.layout.set_positions(positions_dict)
 demo.layout.plot_layout()
 
+
 # Write output file
+# TODO Log successful writing?
 demo.create_report()
+
+
+# Print the log for ...
+with open(demo.logger_name) as f:
+    print(f.read())
 
 print('Done')

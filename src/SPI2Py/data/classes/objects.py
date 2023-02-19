@@ -8,6 +8,8 @@ import warnings
 import matplotlib.colors as mcolors
 from scipy.spatial.distance import euclidean
 from ...analysis.transformations import translate, rotate_about_point
+import logging
+logger = logging.getLogger(__name__)
 
 
 class InputValidation:
@@ -54,11 +56,11 @@ class InputValidation:
             raise ValueError('Positions must be a list or numpy array for %s not %s.' % (self.name, type(positions)))
 
         if isinstance(positions, list):
-            warnings.warn('Positions should be a numpy array for %s.' % self.name)
+            logger.warning('Positions should be a numpy array for %s.' % self.name)
             positions = np.array(positions)
 
         if len(positions.shape) == 1:
-            warnings.warn('Positions are not 2D for %s.' % self.name)
+            logger.warning('Positions are not 2D for %s.' % self.name)
             positions = positions.reshape(-1, 3)
 
         if positions.shape[1] != 3:
@@ -72,15 +74,15 @@ class InputValidation:
                 raise ValueError('Radii have not been set for %s.' % self.name)
 
             if isinstance(radii, float):
-                warnings.warn('Radii should be a numpy array for %s.' % self.name)
+                logger.warning('Radii should be a numpy array for %s.' % self.name)
                 radii = np.array([radii])
 
             if isinstance(radii, list):
-                warnings.warn('Radii should be a numpy array for %s.' % self.name)
+                logger.warning('Radii should be a numpy array for %s.' % self.name)
                 radii = np.array(radii)
 
             if len(radii.shape) > 1:
-                warnings.warn('Radii should be 1D for %s.' % self.name)
+                logger.warning('Radii should be 1D for %s.' % self.name)
                 radii = radii.reshape(-1)
 
             if radii.shape[0] != self.positions.shape[0]:
@@ -217,7 +219,7 @@ class Object(InputValidation):
     #         design_vector = np.concatenate((self.reference_position, self.rotation))
     #
     #     else:
-    #         warnings.warn('This object is fixed')
+    #         logger.warning('This object is fixed')
     #         design_vector = None
     #
     #     return design_vector
