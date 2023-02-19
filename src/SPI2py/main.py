@@ -129,7 +129,7 @@ class EntryPoint:
                                                             constraint_function,
                                                             self.config['optimization'])
 
-    def create_gif_animation(self):
+    def create_gif(self):
         gif_filepath = self.config['results']['GIF Filename']
         generate_gif(self.spatial_configuration, self.design_vector_log, 1, self.directory, gif_filepath)
 
@@ -160,3 +160,7 @@ class EntryPoint:
 
         with open(self.directory + report_filename, 'w') as f:
             json.dump(self.outputs, f)
+
+    def print_log(self):
+        with open(self.logger_name) as f:
+            print(f.read())

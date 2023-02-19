@@ -1,6 +1,6 @@
 dist/*
-src/SPI2Py/result/output/*
-!src/SPI2Py/result/output/.gitkeep
+src/SPI2py/result/output/*
+!src/SPI2py/result/output/.gitkeep
 venv/*
 .idea
 .vscode

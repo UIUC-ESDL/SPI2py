@@ -1,9 +1,9 @@
 # import sys
 # sys.path
-# sys.path.append('C:/Users/cpgui/PycharmProjects/SPI2Py/')
+# sys.path.append('C:/Users/cpgui/PycharmProjects/SPI2py/')
 # # print(sys.path)
 #
-# from src.SPI2Py.utils import shape_generator #import generate_rectangular_prism
+# from src.SPI2py.utils import shape_generator #import generate_rectangular_prism
 #
 #
 #

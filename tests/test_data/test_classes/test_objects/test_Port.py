@@ -1,4 +1,4 @@
-# from src.SPI2Py.data.classes.objects import Port
+# from src.SPI2py.data.classes.objects import Port
 #
 # # Define single port information
 # node = 'test_component_node_1'

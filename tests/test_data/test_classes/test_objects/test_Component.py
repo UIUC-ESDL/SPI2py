@@ -1,4 +1,4 @@
-# from SPI2Py.data.classes.objects import Component
+# from SPI2py.data.classes.objects import Component
 #
 # # Define component inputs
 # positions = [[1, 1, 1]]
