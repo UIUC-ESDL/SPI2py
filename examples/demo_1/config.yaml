@@ -56,7 +56,6 @@ optimization:
 
 results:
 
-  Logger Filename: logger.log
   Report Filename: report.json
   GIF Filename: geometric_optimization.gif
 

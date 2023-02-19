@@ -22,16 +22,15 @@ demo = EntryPoint(directory=directory,
 
 # Define the initial design vectors for the waypoints that can move
 # [x,y,z] Since design variables to rotate individual spheres adds unnecessary complexity
-pos_int0node0 = np.array([-3., -2., 2.])
-pos_int0node1 = np.array([-1., 0., 2.])
-pos_int1node0 = np.array([4., 0., 1.])
-initial_design_vector = np.concatenate((pos_int0node0, pos_int0node1, pos_int1node0))
-
-# Map the objects to a 3D layout (additional methods not yet supported, e.g., force-directed)
-layout_generation_method = 'manual'
+pos_interconnect_0_node_0 = np.array([-3., -2., 2.])
+pos_interconnect_0_node_1 = np.array([-1., 0., 2.])
+pos_interconnect_1_node_0 = np.array([4., 0., 1.])
+initial_design_vector = np.concatenate((pos_interconnect_0_node_0,
+                                        pos_interconnect_0_node_1,
+                                        pos_interconnect_1_node_0))
 
 # Generate the layout
-demo.generate_layout(layout_generation_method, inputs=initial_design_vector)
+demo.generate_layout(method='manual', inputs=initial_design_vector)
 
 # Plot initial layout
 demo.layout.plot_layout()
