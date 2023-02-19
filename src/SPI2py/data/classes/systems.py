@@ -1,19 +1,57 @@
 """Module...
 Docstring
 
-TODO Fill out all the blank functions and write tests for them...
-TODO Look into replacing get/set methods with appropriate decorators...
-
-
 """
+
+
 from itertools import combinations, product
-
 import numpy as np
-
 from SPI2py.result.visualization.plotting import plot_objects
 
 
-class System:
+class InputValidation:
+    def __init__(self,
+                 components,
+                 ports,
+                 interconnects,
+                 interconnect_nodes,
+                 interconnect_segments,
+                 structures,
+                 config: dict):
+
+        # Unpack __init__
+        self.components             = components
+        self.ports                  = ports
+        self.interconnects          = interconnects
+        self.interconnect_nodes     = interconnect_nodes
+        self.interconnect_segments  = interconnect_segments
+        self.structures             = structures
+        self.config                 = config
+
+    def _validate_components(self):
+        raise NotImplementedError
+
+    def _validate_ports(self):
+        raise NotImplementedError
+
+    def _validate_interconnects(self):
+        raise NotImplementedError
+
+    def _validate_interconnect_nodes(self):
+        raise NotImplementedError
+
+    def _validate_interconnect_segments(self):
+        raise NotImplementedError
+
+    def _validate_structures(self):
+        raise NotImplementedError
+
+    def _validate_config(self):
+        raise NotImplementedError
+
+
+
+class System(InputValidation):
     """
     Defines the associative (non-spatial) aspects of systems.
 
@@ -49,16 +87,14 @@ class System:
                  structures,
                  config: dict):
 
-        # Unpack __init__
-        self.components             = components
-        self.ports                  = ports
-        self.interconnects          = interconnects
-        self.interconnect_nodes     = interconnect_nodes
-        self.interconnect_segments  = interconnect_segments
-        self.structures             = structures
-        self.config                 = config
+        super().__init__(components,
+                         ports,
+                         interconnects,
+                         interconnect_nodes,
+                         interconnect_segments,
+                         structures,
+                         config)
 
-        # Additional initialization
         self.objects = components + ports + interconnect_nodes + interconnect_segments + structures
 
     @property
@@ -250,10 +286,12 @@ class SpatialConfiguration:
 
     def calculate_positions(self, design_vector):
         """
-        TODO get positions for interconnects, structures, etc
+
         :param design_vector:
         :param design_vector:
         :return:
+
+        TODO get positions for interconnects, structures, etc
         TODO Remove unnecessary design vector arguments
         """
 
@@ -320,16 +358,3 @@ class SpatialConfiguration:
 
         fig.show()
 
-
-class Volume:
-    """
-    A class that captures the 3D space that we place objects in and optimize
-    """
-    pass
-
-
-class Volumes(Volume):
-    """
-    A class that combines contiguous volumes together.
-    """
-    pass
