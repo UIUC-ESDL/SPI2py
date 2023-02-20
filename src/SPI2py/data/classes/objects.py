@@ -2,7 +2,7 @@
 
 
 """
-from typing import Union
+
 import numpy as np
 import warnings
 import matplotlib.colors as mcolors

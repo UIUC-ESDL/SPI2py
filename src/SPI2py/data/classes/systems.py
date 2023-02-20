@@ -17,7 +17,7 @@ class InputValidation:
                  interconnect_nodes,
                  interconnect_segments,
                  structures,
-                 config: dict):
+                 config):
 
         # Unpack __init__
         self.components             = components
@@ -85,7 +85,7 @@ class System(InputValidation):
                  interconnect_nodes,
                  interconnect_segments,
                  structures,
-                 config: dict):
+                 config):
 
         super().__init__(components,
                          ports,
