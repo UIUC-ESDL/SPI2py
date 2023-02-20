@@ -14,13 +14,13 @@ logger = logging.getLogger(__name__)
 
 class InputValidation:
     def __init__(self,
-                 name: str,
-                 positions: np.ndarray,
-                 radii: np.ndarray,
-                 color: Union[str, list[str]],
-                 movement_class: str,
-                 constraints: Union[None, dict],
-                 degrees_of_freedom: Union[list[int], None],
+                 name,
+                 positions,
+                 radii,
+                 color,
+                 movement_class,
+                 constraints,
+                 degrees_of_freedom,
                  static_position=None):
 
         self.name               = self._validate_name(name)
@@ -41,7 +41,7 @@ class InputValidation:
 
         return name
 
-    def _validate_position(self, position) -> np.ndarray:
+    def _validate_position(self, position):
         # TODO Implement this function
         return position
 
@@ -49,7 +49,7 @@ class InputValidation:
     #     # TODO Implement this function
     #     return rotation
 
-    def _validate_positions(self, positions) -> np.ndarray:
+    def _validate_positions(self, positions):
 
         if positions is None:
             raise ValueError('Positions have not been set for %s.' % self.name)
@@ -70,7 +70,7 @@ class InputValidation:
 
         return positions
 
-    def _validate_radii(self, radii) -> np.ndarray:
+    def _validate_radii(self, radii):
 
             if radii is None:
                 raise ValueError('Radii have not been set for %s.' % self.name)
@@ -235,8 +235,8 @@ class Object(InputValidation):
         return positions_dict
 
     def calculate_independent_positions(self,
-                                        design_vector: np.ndarray,
-                                        positions_dict: Union[None, dict] = None) -> dict:
+                                        design_vector,
+                                        positions_dict = None):
 
         """
 
@@ -269,8 +269,8 @@ class Object(InputValidation):
         return positions_dict
 
     def calculate_dependent_positions(self,
-                                      design_vector:  np.ndarray,
-                                      positions_dict: Union[None, dict] = None) -> dict:
+                                      design_vector,
+                                      positions_dict= None):
         """
         Types of Constrained Motion
 
@@ -390,7 +390,7 @@ class Port(InputValidation):
 
         return positions_dict
 
-    def set_positions(self, positions_dict: dict) -> dict:
+    def set_positions(self, positions_dict: dict):
         """
         Update positions of object spheres given a design vector
 
@@ -404,14 +404,14 @@ class Port(InputValidation):
 class Component(Object):
 
     def __init__(self,
-                 name:                  str,
-                 positions:             np.ndarray,
-                 radii:                 np.ndarray,
-                 color:                 Union[str, list[str]],
-                 movement_class:        str = 'independent',
-                 constraints:           Union[None, tuple[str]] = None,
-                 degrees_of_freedom:    Union[tuple[str], None] = ('x', 'y', 'z', 'rx', 'ry', 'rz'),
-                 static_position:       Union[np.ndarray, None] = None):
+                 name,
+                 positions,
+                 radii,
+                 color,
+                 movement_class = 'independent',
+                 constraints= None,
+                 degrees_of_freedom = ('x', 'y', 'z', 'rx', 'ry', 'rz'),
+                 static_position = None):
 
         super(Component, self).__init__(name,
                                         positions,
@@ -451,8 +451,8 @@ class InterconnectNode(Object):
                  node,
                  radius,
                  color,
-                 degrees_of_freedom: Union[tuple[str], None] = ('x', 'y', 'z', 'rx', 'ry', 'rz'),
-                 constraints: Union[None, tuple[str]] = None):
+                 degrees_of_freedom = ('x', 'y', 'z', 'rx', 'ry', 'rz'),
+                 constraints = None):
 
         self.name = node
         self.node = node
@@ -500,8 +500,8 @@ class InterconnectEdge(Object):
                  object_2,
                  radius,
                  color,
-                 degrees_of_freedom: Union[tuple[str], None] = None,
-                 constraints: Union[None, tuple[str]] = None):
+                 degrees_of_freedom = None,
+                 constraints = None):
 
         self.name = name
         self.object_1 = object_1
@@ -525,7 +525,7 @@ class InterconnectEdge(Object):
 
     def calculate_positions(self,
                             design_vector,
-                            positions_dict: dict) -> dict:
+                            positions_dict):
         # TODO Remove temp design vector argument
         # TODO revise logic for getting the reference point instead of object's first sphere
         # Address varying number of spheres
@@ -552,7 +552,7 @@ class InterconnectEdge(Object):
         return positions_dict
 
     def set_positions(self,
-                      positions_dict: dict) -> dict:
+                      positions_dict):
 
         # self.positions, self.radii = positions_dict[self.name]
 
@@ -695,9 +695,9 @@ class Structure(Object):
                  positions,
                  radii,
                  color,
-                 movement_class: str = 'static',
-                 constraints: Union[None, dict] = None,
-                 degrees_of_freedom: Union[tuple[str], None] = None,
+                 movement_class= 'static',
+                 constraints = None,
+                 degrees_of_freedom = None,
                  static_position=None):
 
         super(Structure, self).__init__(name, positions,radii, color, movement_class, constraints, degrees_of_freedom,static_position)
