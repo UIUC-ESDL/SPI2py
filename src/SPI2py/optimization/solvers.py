@@ -23,8 +23,9 @@ and are not allowed to build from the source (or it just adds another level of d
 
 """
 
+from time import time_ns
 import numpy as np
-from scipy.optimize import minimize, NonlinearConstraint
+from scipy.optimize import minimize, NonlinearConstraint, differential_evolution
 import logging
 logger = logging.getLogger(__name__)
 
@@ -100,6 +101,10 @@ def run_optimizer(layout, objective_function, constraint_function, config):
     # Log the initial design vector (before running the solver)
     design_vector_log.append(x0)
 
+    hess = lambda x: np.zeros((len(x0), len(x0)))
+
+    t1 = time_ns()
+
     # Run the solver
     res = minimize(lambda x: objective_function(x, layout), x0,
                    method='trust-constr',
@@ -107,7 +112,17 @@ def run_optimizer(layout, objective_function, constraint_function, config):
                    tol=1e-2,
                    options=options,
                    callback=log_design_vector,
-                   hessp=0)
+                   hess=hess)
+
+    t2 = time_ns()
+
+    print('runtime: ', (t2 - t1) / 1e9)
+
+    # res = differential_evolution(lambda x: objective_function(x, layout),
+    #                              bounds=[(-5, 5) for _ in range(len(x0))])
+
+
+    # t3 = time_ns()
 
     # Log the final design vector
     design_vector_log.append(res.x)
