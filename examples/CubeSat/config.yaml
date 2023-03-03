@@ -36,23 +36,23 @@ optimization:
   # TODO Specify constraint function
 
   # Tolerances between 1e-1 and 2.5e-1 solve within a reasonable time
-  convergence tolerance: 2.5e-1
+  convergence tolerance: 1e-3
 
   # Specify whether to check for collision between specific pairs
   check collisions:
     components and components: true
     components and interconnects: true
-    components and structures: false
+    components and structures: true
     interconnects and interconnects: true
-    interconnects and structures: false
+    interconnects and structures: true
 
   # 0 to 1; 0 means no collision, >0 means some collision
   collision tolerance:
-    components and components: 0
-    components and interconnects: 0.5
-    components and structures: 0.5
-    interconnects and interconnects: 0.5
-    interconnects and structures: 0
+    components and components: 0.2
+    components and interconnects: 0.2
+    components and structures: 0.2
+    interconnects and interconnects: 0.2
+    interconnects and structures: 0.2
 
 results:
 
@@ -66,7 +66,7 @@ results:
 
     # Resolution of each individual sphere
     # Value between 3 and 20
-    resolution: 12
+    resolution: 15
 
 
 

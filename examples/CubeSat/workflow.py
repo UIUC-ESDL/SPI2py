@@ -63,7 +63,7 @@ demo.spatial_configuration.set_positions(positions_dict)
 demo.spatial_configuration.plot()
 
 # Generate GIF animation; caution uncommenting this function call will increase runtime
-demo.create_gif()
+# demo.create_gif()
 
 # Write output file
 demo.create_report()
