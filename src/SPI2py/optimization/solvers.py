@@ -74,6 +74,8 @@ def run_optimizer(layout, objective_function, constraint_function, config):
         :return:
         """
 
+        print('CONSTRAINT:', constraint_function(xk, layout, object_pairs[0]))
+
         design_vector_log.append(xk)
 
     # Initialize the design vector log
@@ -85,7 +87,7 @@ def run_optimizer(layout, objective_function, constraint_function, config):
     object_pairs = layout.system.object_pairs
 
     # Unpack the config dictionary
-    convergence_tolerance = config['convergence tolerance']
+    convergence_tolerance = float(config['convergence tolerance'])
     check_collisions      = config['check collisions'].values()
     collision_tolerances  = config['collision tolerance'].values()
 
@@ -109,7 +111,7 @@ def run_optimizer(layout, objective_function, constraint_function, config):
     res = minimize(lambda x: objective_function(x, layout), x0,
                    method='trust-constr',
                    constraints=nlcs,
-                   tol=1e-2,
+                   tol=convergence_tolerance,
                    options=options,
                    callback=log_design_vector,
                    hess=hess)
