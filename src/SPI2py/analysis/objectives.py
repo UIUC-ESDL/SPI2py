@@ -33,4 +33,7 @@ def aggregate_pairwise_distance(x, layout):
 
         objective += sum(sum(cdist(positions_1, positions_2)))
 
+    # TODO Add a scaling factor to the objective function to see if it helps
+    objective = objective / 100000
+
     return objective

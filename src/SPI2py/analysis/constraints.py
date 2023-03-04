@@ -3,7 +3,7 @@
 
 
 """
-
+import numpy as np
 from .distance import max_spheres_spheres_interference
 
 
@@ -11,8 +11,12 @@ def max_interference(x, layout, pairs):
     """
     Calculates the maximum interference between two objects.
 
+    # TODO Signed Distance?
+
     A positive interference indicates that the objects are in collision.
     A negative interference indicates that the objects are not in collision.
+
+    # TODO What if instead of max we used a signed large p-norm? Or something similar that is continuous?
 
     :param x:
     :param layout:
@@ -37,6 +41,6 @@ def max_interference(x, layout, pairs):
 
         interferences.append(dist)
 
-        max_interference = max(interferences)
+    max_interference = max(interferences)
 
     return max_interference
