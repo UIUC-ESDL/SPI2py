@@ -93,17 +93,19 @@ def run_optimizer(layout, objective_function, constraint_function, config):
     # nlcs = []
     # for object_pair, check_collision, collision_tolerance in zip(object_pairs, check_collisions, collision_tolerances):
     #     if check_collision is True:
-    #         nlcs.append(NonlinearConstraint(lambda x: constraint_function(x, layout, object_pair), -np.inf, collision_tolerance))
+    #         nlcs.append(NonlinearConstraint(lambda x: constraint_function(x, layout, object_pair), -np.inf, 0))
+    #     elif check_collision is False:
+    #         pass
+    #     else:
+    #         raise ValueError('Invalid value for check_collision. Must be True or False.')
 
-    # nlcs = []
-    # for object_pair, check_collision, collision_tolerance in zip(object_pairs, check_collisions, collision_tolerances):
-    #     if check_collision is True:
-    #         nlcs.append({'type':'ineq','fun':lambda x: collision_tolerance - constraint_function(x, layout, object_pair)})
 
-    # Plus or minus?
-    nlcs = {'type':'ineq','fun':lambda x: 0 - constraint_function(x, layout, object_pairs[0])}
-
-    # nlcs = NonlinearConstraint(lambda x: constraint_function(x, layout, object_pairs[0]), -np.inf, 0)
+    nlcs = []
+    nlcs.append(NonlinearConstraint(lambda x: constraint_function(x, layout, object_pairs[0]), -np.inf, 0))
+    nlcs.append(NonlinearConstraint(lambda x: constraint_function(x, layout, object_pairs[1]), -np.inf, 0.2))
+    nlcs.append(NonlinearConstraint(lambda x: constraint_function(x, layout, object_pairs[2]), -np.inf, 0))
+    nlcs.append(NonlinearConstraint(lambda x: constraint_function(x, layout, object_pairs[3]), -np.inf, 0.2))
+    nlcs.append(NonlinearConstraint(lambda x: constraint_function(x, layout, object_pairs[4]), -np.inf, 0))
 
     # ub - g(x) >= 0
     # 0 - g(x) >= 0
@@ -125,21 +127,21 @@ def run_optimizer(layout, objective_function, constraint_function, config):
     t1 = time_ns()
 
     # Run the solver
-    # res = minimize(lambda x: objective_function(x, layout), x0,
-    #                method='trust-constr',
-    #                constraints=nlcs,
-    #                tol=convergence_tolerance,
-    #                options=options,
-    #                callback=log_design_vector,
-    #                hess=hess)
-
     res = minimize(lambda x: objective_function(x, layout), x0,
                    method='trust-constr',
-                   constraints=nlcs,
-                   tol=1e-6,
+                   constraints= nlcs,
+                   tol=convergence_tolerance,
                    options=options,
                    callback=log_design_vector,
                    hess=hess)
+
+    # res = minimize(lambda x: objective_function(x, layout), x0,
+    #                method='trust-constr',
+    #                constraints=nlcs,
+    #                tol=1e-6,
+    #                options=options,
+    #                callback=log_design_vector,
+    #                hess=hess)
 
     t2 = time_ns()
 
