@@ -11,8 +11,6 @@ def max_interference(x, layout, pairs):
     """
     Calculates the maximum interference between two objects.
 
-    # TODO Signed Distance?
-
     A positive interference indicates that the objects are in collision.
     A negative interference indicates that the objects are not in collision.
 

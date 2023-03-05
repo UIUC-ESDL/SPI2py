@@ -55,11 +55,6 @@ def rotate_about_point(positions, rotation):
 
     alpha, beta, gamma = rotation
 
-    # TODO Remove: Temporarily reducing angles to decrease sensitivity to solver steps
-    alpha = alpha / 3
-    beta = beta / 3
-    gamma = gamma / 3
-
     # Rotation matrix Euler angle convention r = r_z(gamma) @ r_y(beta) @ r_x(alpha)
 
     r_x = np.array([[1., 0., 0.],

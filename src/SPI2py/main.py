@@ -13,7 +13,7 @@ from .data.classes.objects import Component, Port, Interconnect, InterconnectNod
 from .data.classes.systems import System, SpatialConfiguration
 
 # Import objective and constraint functions
-from .analysis.objectives import aggregate_pairwise_distance
+from .analysis.objectives import normalized_aggregate_gap_distance
 from .analysis.constraints import max_interference
 
 from .layout.generation_methods import generate_random_layout
@@ -84,8 +84,7 @@ class EntryPoint:
         return system
 
     def create_spatial_configuration(self):
-
-        return
+        pass
 
     def generate_spatial_configuration(self, method, inputs=None):
         """
@@ -119,7 +118,7 @@ class EntryPoint:
     def optimize_spatial_configuration(self):
 
         # TODO Add ability to choose objective function
-        objective_function = aggregate_pairwise_distance
+        objective_function = normalized_aggregate_gap_distance
 
         # TODO Add ability to choose constraint functions
         constraint_function = max_interference
