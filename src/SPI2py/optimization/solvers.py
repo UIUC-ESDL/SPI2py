@@ -120,14 +120,7 @@ def run_optimizer(layout, objective_function, constraint_function, config):
         nlcs.append(NonlinearConstraint(lambda x: constraint_function(x, layout, object_pairs[4]), -np.inf,
                                         collision_tolerances[4]))
 
-
-
     options = {'verbose': 3}
-
-    # Log the initial design vector (before running the solver)
-    design_vector_log.append(x0)
-
-    hess = lambda x: np.zeros((len(x0), len(x0)))
 
     # Run the solver
     res = minimize(lambda x: objective_function(x, layout), x0,
@@ -136,9 +129,10 @@ def run_optimizer(layout, objective_function, constraint_function, config):
                    tol=convergence_tolerance,
                    options=options,
                    callback=log_design_vector,
-                   hess=hess)
+                   hess=lambda x: np.zeros((len(x0), len(x0))))
 
-    # Log the final design vector
+    # Log the initial and final design vector
+    design_vector_log.insert(0, x0)
     design_vector_log.append(res.x)
 
     # Log the results
