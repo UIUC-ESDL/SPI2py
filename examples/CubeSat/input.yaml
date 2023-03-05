@@ -11,18 +11,9 @@ components:
             0:
                 type: box
                 origin: [0,0,0]
-                dimensions: [2,2,2]
+                dimensions: [6,2,2]
                 rotation: [0,0,0]
-            1:
-                type: box
-                origin: [1,0,0]
-                dimensions: [2,2,2]
-                rotation: [0,0,0]
-            2:
-                type: box
-                origin: [2,0,0]
-                dimensions: [2,2,2]
-                rotation: [0,0,0]
+
 
     1:
         name: actuator_1

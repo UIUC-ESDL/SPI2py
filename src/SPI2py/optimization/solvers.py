@@ -23,9 +23,8 @@ and are not allowed to build from the source (or it just adds another level of d
 
 """
 
-from time import time_ns
 import numpy as np
-from scipy.optimize import minimize, NonlinearConstraint, differential_evolution
+from scipy.optimize import minimize, NonlinearConstraint
 import logging
 logger = logging.getLogger(__name__)
 
@@ -51,9 +50,23 @@ def run_optimizer(layout, objective_function, constraint_function, config):
     Note: There are plans to use the JAX-wrapped implementation of scipy.optimize.minimize;
     however, it currently only supports the BFGS method for unconstrained optimization.
 
-    Note: There are plans to develop SPI2py-specific solvers to provide more flexibility.
-    Note: Since the current objective and constraint functions may be non-smooth / linear we define the
+    Notes:
+    1. There are plans to develop SPI2py-specific solvers to provide more flexibility.
+    2. Since the current objective and constraint functions may be non-smooth / linear we define the
     Hessian ("hessp") as zero.
+    3. I originally wrote a for loop to create each NonlinearConstraint object. However, SciPy Minimize completely
+    ignores the constraints. Inexplicably, manually defining the NonlinearConstraint objects sequentially works and
+    SciPy Minimize enforces the constraints. I use the exact same code, checked that all values are the same, and that
+    NonlinearConstraint objects created inside and outside of a loop have the same attributes and the methods produce
+    the same results. For example:
+    >>> for i in range(3):
+    >>>    print(i)
+    Should produce the same exact result as:
+    >>> print(0)
+    >>> print(1)
+    >>> print(2)
+    But in the case of instantiating NonlinearConstraint objects, it does not. I'm not going to waste any more time
+    trying to figure out why this is happening. I'm just going to manually define the NonlinearConstraint objects.
 
     TODO Implement design vector bounds (e.g., rotation angles should be between 0 and 2pi)
     TODO Evaluate other solvers and methods
@@ -86,45 +99,35 @@ def run_optimizer(layout, objective_function, constraint_function, config):
 
     # Unpack the config dictionary
     convergence_tolerance = float(config['convergence tolerance'])
-    check_collisions      = config['check collisions'].values()
-    collision_tolerances  = config['collision tolerance'].values()
+    check_collisions      = list(config['check collisions'].values())
+    collision_tolerances  = list(config['collision tolerance'].values())
 
     # Add the applicable interference constraints
-    # nlcs = []
-    # for object_pair, check_collision, collision_tolerance in zip(object_pairs, check_collisions, collision_tolerances):
-    #     if check_collision is True:
-    #         nlcs.append(NonlinearConstraint(lambda x: constraint_function(x, layout, object_pair), -np.inf, 0))
-    #     elif check_collision is False:
-    #         pass
-    #     else:
-    #         raise ValueError('Invalid value for check_collision. Must be True or False.')
-
-
     nlcs = []
-    nlcs.append(NonlinearConstraint(lambda x: constraint_function(x, layout, object_pairs[0]), -np.inf, 0))
-    nlcs.append(NonlinearConstraint(lambda x: constraint_function(x, layout, object_pairs[1]), -np.inf, 0.2))
-    nlcs.append(NonlinearConstraint(lambda x: constraint_function(x, layout, object_pairs[2]), -np.inf, 0))
-    nlcs.append(NonlinearConstraint(lambda x: constraint_function(x, layout, object_pairs[3]), -np.inf, 0.2))
-    nlcs.append(NonlinearConstraint(lambda x: constraint_function(x, layout, object_pairs[4]), -np.inf, 0))
+    if check_collisions[0] is True:
+        nlcs.append(NonlinearConstraint(lambda x: constraint_function(x, layout, object_pairs[0]), -np.inf,
+                                        collision_tolerances[0]))
+    if check_collisions[1] is True:
+        nlcs.append(NonlinearConstraint(lambda x: constraint_function(x, layout, object_pairs[1]), -np.inf,
+                                        collision_tolerances[1]))
+    if check_collisions[2] is True:
+        nlcs.append(NonlinearConstraint(lambda x: constraint_function(x, layout, object_pairs[2]), -np.inf,
+                                        collision_tolerances[2]))
+    if check_collisions[3] is True:
+        nlcs.append(NonlinearConstraint(lambda x: constraint_function(x, layout, object_pairs[3]), -np.inf,
+                                        collision_tolerances[3]))
+    if check_collisions[4] is True:
+        nlcs.append(NonlinearConstraint(lambda x: constraint_function(x, layout, object_pairs[4]), -np.inf,
+                                        collision_tolerances[4]))
 
-    # ub - g(x) >= 0
-    # 0 - g(x) >= 0
 
-    # Noninterference
-    # 0 + 10 >= 0 TRUE
 
-    # Interference
-    # 0 + -10 >= 0 FALSE
-
-    # TODO Implement options
     options = {'verbose': 3}
 
     # Log the initial design vector (before running the solver)
     design_vector_log.append(x0)
 
     hess = lambda x: np.zeros((len(x0), len(x0)))
-
-    t1 = time_ns()
 
     # Run the solver
     res = minimize(lambda x: objective_function(x, layout), x0,
@@ -134,24 +137,6 @@ def run_optimizer(layout, objective_function, constraint_function, config):
                    options=options,
                    callback=log_design_vector,
                    hess=hess)
-
-    # res = minimize(lambda x: objective_function(x, layout), x0,
-    #                method='trust-constr',
-    #                constraints=nlcs,
-    #                tol=1e-6,
-    #                options=options,
-    #                callback=log_design_vector,
-    #                hess=hess)
-
-    t2 = time_ns()
-
-    print('runtime: ', (t2 - t1) / 1e9)
-
-    # res = differential_evolution(lambda x: objective_function(x, layout),
-    #                              bounds=[(-5, 5) for _ in range(len(x0))])
-
-
-    # t3 = time_ns()
 
     # Log the final design vector
     design_vector_log.append(res.x)
