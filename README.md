@@ -1,5 +1,5 @@
 
-<img src="logo.png" width="200" class="center">
+<img src="images/logo.png" width="200" class="center">
 
 <style>
 .center {
@@ -27,7 +27,7 @@ demonstrate an early working version by Fall 2023.
 
 ## Highlights
 
-<img src="SPI2py_example_before-after.png" width="200" class="center">
+<img src="images/SPI2py_example_before-after.png" width="200" class="center">
 
 
 ## Publications
