@@ -14,7 +14,7 @@ def max_interference(x, layout, pairs):
     A positive interference indicates that the objects are in collision.
     A negative interference indicates that the objects are not in collision.
 
-    # TODO What if instead of max we used a signed large p-norm? Or something similar that is continuous?
+    TODO Implement constraint aggregation methods in lieu of min/max as described in MDO book Chapter 5.7
 
     :param x:
     :param layout:
