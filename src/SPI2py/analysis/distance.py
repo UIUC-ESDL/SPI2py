@@ -66,6 +66,16 @@ def pairwise_distance(a, b):
 
     return c.reshape(-1)
 
+# TODO Fix autograd
+# from autograd import elementwise_grad, grad, jacobian
+# a = anp.random.rand(20, 3)
+# b = anp.random.rand(17, 3)
+#
+# # g_c = elementwise_grad(pairwise_distance)
+# g_c = jacobian(pairwise_distance)
+#
+# g_c_val = g_c(a, b)
+# g_c_np = np.gradient(pairwise_distance(a, b))
 
 def min_kdtree_distance(tree, positions):
     """
