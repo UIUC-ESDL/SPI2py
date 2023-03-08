@@ -92,6 +92,8 @@ def run_optimizer(layout, objective_function, constraint_function, config):
 
         design_vector_log.append(xk)
 
+
+
     # Initialize the design vector log
     # Since the log_design_vector function is nested inside this function, it can append the variable
     design_vector_log = []
@@ -108,26 +110,26 @@ def run_optimizer(layout, objective_function, constraint_function, config):
     # Add the applicable interference constraints
     nlcs = []
     if check_collisions[0] is True:
-        nlcs.append(NonlinearConstraint(lambda x: constraint_function(x, layout, object_pairs[0]), -np.inf,
+        nlcs.append(NonlinearConstraint(lambda x: kreisselmeier_steinhauser(constraint_function(x, layout, object_pairs[0])), -np.inf,
                                         collision_tolerances[0]))
     if check_collisions[1] is True:
-        nlcs.append(NonlinearConstraint(lambda x: constraint_function(x, layout, object_pairs[1]), -np.inf,
+        nlcs.append(NonlinearConstraint(lambda x: kreisselmeier_steinhauser(constraint_function(x, layout, object_pairs[1])), -np.inf,
                                         collision_tolerances[1]))
     if check_collisions[2] is True:
-        nlcs.append(NonlinearConstraint(lambda x: constraint_function(x, layout, object_pairs[2]), -np.inf,
+        nlcs.append(NonlinearConstraint(lambda x: kreisselmeier_steinhauser(constraint_function(x, layout, object_pairs[2])), -np.inf,
                                         collision_tolerances[2]))
     if check_collisions[3] is True:
-        nlcs.append(NonlinearConstraint(lambda x: constraint_function(x, layout, object_pairs[3]), -np.inf,
+        nlcs.append(NonlinearConstraint(lambda x: kreisselmeier_steinhauser(constraint_function(x, layout, object_pairs[3])), -np.inf,
                                         collision_tolerances[3]))
     if check_collisions[4] is True:
-        nlcs.append(NonlinearConstraint(lambda x: constraint_function(x, layout, object_pairs[4]), -np.inf,
+        nlcs.append(NonlinearConstraint(lambda x: kreisselmeier_steinhauser(constraint_function(x, layout, object_pairs[4])), -np.inf,
                                         collision_tolerances[4]))
 
     # Temporary
-    my_func = lambda x: signed_distance(x, layout, object_pairs[0])
-    g = my_func(x0)
+    # my_func = lambda x: signed_distance(x, layout, object_pairs[0])
+    # g = my_func(x0)
 
-    g_ks = kreisselmeier_steinhauser(g)
+    # g_ks = kreisselmeier_steinhauser(g)
 
     options = {'verbose': 3}
 
