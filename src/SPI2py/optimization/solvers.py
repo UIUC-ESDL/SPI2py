@@ -25,6 +25,9 @@ and are not allowed to build from the source (or it just adds another level of d
 
 import numpy as np
 from scipy.optimize import minimize, NonlinearConstraint
+from ..analysis.distance import pairwise_distance
+from ..analysis.constraints import max_interference, signed_distance
+from ..analysis.constraint_aggregation import kreisselmeier_steinhauser
 import logging
 logger = logging.getLogger(__name__)
 
@@ -119,6 +122,12 @@ def run_optimizer(layout, objective_function, constraint_function, config):
     if check_collisions[4] is True:
         nlcs.append(NonlinearConstraint(lambda x: constraint_function(x, layout, object_pairs[4]), -np.inf,
                                         collision_tolerances[4]))
+
+    # Temporary
+    my_func = lambda x: signed_distance(x, layout, object_pairs[0])
+    g = my_func(x0)
+
+    g_ks = kreisselmeier_steinhauser(g)
 
     options = {'verbose': 3}
 

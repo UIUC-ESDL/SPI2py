@@ -15,6 +15,7 @@ from .data.classes.systems import System, SpatialConfiguration
 # Import objective and constraint functions
 from .analysis.objectives import normalized_aggregate_gap_distance
 from .analysis.constraints import max_interference
+from .analysis.constraint_aggregation import kreisselmeier_steinhauser
 
 from .layout.generation_methods import generate_random_layout
 
