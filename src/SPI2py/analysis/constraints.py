@@ -42,3 +42,6 @@ def max_interference(x, layout, pairs):
     max_interference = max(interferences)
 
     return max_interference
+
+
+

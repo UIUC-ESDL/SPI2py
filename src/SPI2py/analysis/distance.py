@@ -8,6 +8,7 @@ TODO I think it makes sense to get rid of the calculate gap function and to work
 """
 
 import numpy as np
+import autograd.numpy as anp
 from numba import njit
 from scipy.spatial.distance import cdist
 
@@ -45,6 +46,25 @@ def max_spheres_spheres_interference(positions_a, radii_a, positions_b, radii_b)
     max_interference = np.max(pairwise_interferences)
 
     return max_interference
+
+
+def pairwise_distance(a, b):
+    """
+    Calculates the pairwise distance between two sets of points.
+
+    Utilizes array broadcasting to calculate the pairwise distance between two sets of points.
+
+    TODO Write unit tests with Scipy cdist
+    TODO Apply algorithmic differentiation
+
+    :param a:
+    :param b:
+    :return:
+    """
+
+    c = anp.linalg.norm(a[:, None, :] - b[None, :, :], axis=-1)
+
+    return c.reshape(-1)
 
 
 def min_kdtree_distance(tree, positions):
