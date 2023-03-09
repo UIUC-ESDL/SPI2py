@@ -36,7 +36,7 @@ optimization:
   # TODO Specify constraint function
 
   # Tolerances between 1e-1 and 2.5e-1 solve within a reasonable time
-  convergence tolerance: 1e-3
+  convergence tolerance: 1e-1
 
   # Specify whether to check for collision between specific pairs
   check collisions:

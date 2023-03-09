@@ -25,8 +25,8 @@ and are not allowed to build from the source (or it just adds another level of d
 
 import numpy as np
 from scipy.optimize import minimize, NonlinearConstraint
-from ..analysis.distance import pairwise_distance
-from ..analysis.constraints import max_interference, signed_distance
+from ..analysis.distance import euclidean_distances_of_cartesian_product
+from ..analysis.constraints import signed_distances
 from ..analysis.constraint_aggregation import kreisselmeier_steinhauser
 import logging
 logger = logging.getLogger(__name__)

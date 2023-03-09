@@ -1,56 +1,16 @@
 """Distance calculations
 
-Provides functions to calculate the distance between classes in various ways...
-
-TODO I think it makes sense to get rid of the calculate gap function and to work it into the existing functions
-    This will require adding the radii as an additional argument. It works now for uniform spheres, but MDBD will
-    have different sized spheres.
+Provides functions to calculate the distance between classes in various ways.
 """
 
 import numpy as np
-import autograd.numpy as anp
 from numba import njit
-from scipy.spatial.distance import cdist
 
 
-def max_spheres_spheres_interference(positions_a, radii_a, positions_b, radii_b):
+# @njit(cache=True)
+def euclidean_distances_of_cartesian_product(a, b):
     """
-    Computes the minimum distance between two sets of spheres.
-
-    interference<0 means no overlap
-    interference=0 means tangent
-    interference>0 means overlap
-
-    TODO Complete documentation
-    TODO Write unit tests
-    TODO Vectorize?
-
-    :param radii_b:
-    :param positions_b:
-    :param radii_a:
-    :param positions_a:
-    :return:
-    """
-
-    pairwise_distances = cdist(positions_a, positions_b)
-
-    # TODO Reshape radii to 2D
-    radii_a = radii_a.reshape(-1, 1)
-    radii_b = radii_b.reshape(-1, 1)
-
-    # TODO Shouldn't I be adding these... (?)
-    pairwise_radii = cdist(radii_a, radii_b)
-
-    pairwise_interferences = pairwise_radii - pairwise_distances
-
-    max_interference = np.max(pairwise_interferences)
-
-    return max_interference
-
-
-def pairwise_distance(a, b):
-    """
-    Calculates the pairwise distance between two sets of points.
+    Calculates the pairwise Euclidean distance between two sets of points.
 
     Utilizes array broadcasting to calculate the pairwise distance between two sets of points.
 
@@ -62,20 +22,10 @@ def pairwise_distance(a, b):
     :return:
     """
 
-    c = anp.linalg.norm(a[:, None, :] - b[None, :, :], axis=-1)
+    c = np.linalg.norm(a[:, None, :] - b[None, :, :], axis=-1)
 
     return c.reshape(-1)
 
-# TODO Fix autograd
-# from autograd import elementwise_grad, grad, jacobian
-# a = anp.random.rand(20, 3)
-# b = anp.random.rand(17, 3)
-#
-# # g_c = elementwise_grad(pairwise_distance)
-# g_c = jacobian(pairwise_distance)
-#
-# g_c_val = g_c(a, b)
-# g_c_np = np.gradient(pairwise_distance(a, b))
 
 def min_kdtree_distance(tree, positions):
     """

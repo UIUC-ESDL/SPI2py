@@ -14,7 +14,7 @@ from .data.classes.systems import System, SpatialConfiguration
 
 # Import objective and constraint functions
 from .analysis.objectives import normalized_aggregate_gap_distance
-from .analysis.constraints import max_interference
+from .analysis.constraints import signed_distances
 from .analysis.constraint_aggregation import kreisselmeier_steinhauser
 
 from .layout.generation_methods import generate_random_layout
@@ -122,7 +122,7 @@ class EntryPoint:
         objective_function = normalized_aggregate_gap_distance
 
         # TODO Add ability to choose constraint functions
-        constraint_function = max_interference
+        constraint_function = signed_distances
 
         self.result, self.design_vector_log = run_optimizer(self.spatial_configuration,
                                                             objective_function,
