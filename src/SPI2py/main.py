@@ -2,6 +2,7 @@
 
 """
 
+import os
 import json
 import logging
 from datetime import datetime
@@ -29,17 +30,25 @@ class EntryPoint:
     The SPI2 Class provides the user with a means to interact with the API...
     """
 
-    def __init__(self, directory, config_file, input_file):
+    def __init__(self,
+                 directory,
+                 input_file):
+
+        # Initialize default configuration
+        self._entry_point_directory = os.path.dirname(__file__) + '/'
+        self.config = self.read_config_file('data/config.yaml')
 
         # Initialize the parameters
         self.directory              = directory
         self.logger_name            = self.directory + "logger.log"
-        self.config                 = self.read_config_file(config_file)
         self.inputs                 = self.read_input_file(input_file)
         self._component_inputs      = self.inputs['components']
         self._port_inputs           = self.inputs['ports']
         self._interconnect_inputs   = self.inputs['interconnects']
         self._structure_inputs      = self.inputs['structures']
+
+
+
 
         # Initialize the logger
         self.initialize_logger()
@@ -50,8 +59,8 @@ class EntryPoint:
         # Systems do not start with a spatial configuration
         self.spatial_configuration = None
 
-    def read_config_file(self, config_filename):
-        config_filepath = self.directory + config_filename
+    def read_config_file(self, config_filepath):
+        config_filepath = self._entry_point_directory + config_filepath
         with open(config_filepath, 'r') as f:
             config = yaml.safe_load(f)
         return config

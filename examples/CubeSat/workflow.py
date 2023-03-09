@@ -19,7 +19,6 @@ from SPI2py.main import EntryPoint
 
 # Initialize the EntryPoint class with your current working directory, and the config & input files
 demo = EntryPoint(directory=directory,
-                  config_file='config.yaml',
                   input_file='input.yaml')
 
 # %% Map the system to a single spatial configuration
