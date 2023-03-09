@@ -29,7 +29,6 @@ dependencies = [
 "imageio>=2.21.1",
 "pytest",
 "sphinx",
-"jax[cpu]",
 ]
 
 [tool.pytest.ini_options]

@@ -61,6 +61,8 @@ class EntryPoint:
         # Systems do not start with a spatial configuration
         self.spatial_configuration = None
 
+        self.outputs = {}
+
     def read_config_file(self, config_filepath):
         config_filepath = self._entry_point_directory + config_filepath
         with open(config_filepath, 'r') as f:
@@ -86,7 +88,7 @@ class EntryPoint:
         components = create_components(self._component_inputs)
         ports = create_ports(self._port_inputs)
 
-        # TODO switch to just interconencts
+        # TODO switch to just interconnects
         interconnects, interconnect_nodes, interconnect_segments = create_interconnects(self._interconnect_inputs)
 
         structures = create_structures(self._structure_inputs)
@@ -163,6 +165,7 @@ class EntryPoint:
         # json cannot serialize numpy arrays
         design_vector_log = [log.tolist() for log in self.design_vector_log]
 
+        # TODO Merge results instead of overwriting self.outputs
         # Create the output dictionary
         self.outputs = {'Username': user_name,
                         'Date and time': now_formatted,
