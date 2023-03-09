@@ -1,9 +1,12 @@
-"""
-Since we have a lot of constraints we need to aggregate them... insert words here.
+"""Constraint Aggregation Functions
 
+This module contains functions for aggregating constraint values. Constraint functions for signed distances yield
+or thousands of constraints. These functions are used to aggregate the constraint values into a single value in a
+way that is differentiable and continuous.
 """
 
 import numpy as np
+
 
 def kreisselmeier_steinhauser(g, rho=100):
     """
@@ -61,6 +64,7 @@ def induced_exponential_function(g, rho=3):
     g_bar_ie = np.sum(g*np.exp(rho*g)) / np.sum(np.exp(rho*g))
 
     return g_bar_ie
+
 
 def induced_power_function(g, rho=3):
     """

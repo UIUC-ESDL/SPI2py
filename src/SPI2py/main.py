@@ -122,11 +122,13 @@ class EntryPoint:
         objective_function = normalized_aggregate_gap_distance
 
         # TODO Add ability to choose constraint functions
-        constraint_function = signed_distances
+        constraint_function             = signed_distances
+        constraint_aggregation_function = kreisselmeier_steinhauser
 
         self.result, self.design_vector_log = run_optimizer(self.spatial_configuration,
                                                             objective_function,
                                                             constraint_function,
+                                                            constraint_aggregation_function,
                                                             self.config['optimization'])
 
     def create_gif(self):

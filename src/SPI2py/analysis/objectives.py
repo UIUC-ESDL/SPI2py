@@ -73,6 +73,6 @@ def normalized_aggregate_gap_distance(x, layout):
 
 
     # TODO Add a scaling factor to the objective function to see if it helps
-    objective = objective / 100
+    objective = objective / 50
 
     return objective

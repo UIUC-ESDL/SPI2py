@@ -25,14 +25,16 @@ and are not allowed to build from the source (or it just adds another level of d
 
 import numpy as np
 from scipy.optimize import minimize, NonlinearConstraint
-from ..analysis.distance import euclidean_distances_of_cartesian_product
-from ..analysis.constraints import signed_distances
 from ..analysis.constraint_aggregation import kreisselmeier_steinhauser
 import logging
 logger = logging.getLogger(__name__)
 
 
-def run_optimizer(layout, objective_function, constraint_function, config):
+def run_optimizer(layout,
+                  objective_function,
+                  constraint_function,
+                  constraint_aggregation_function,
+                  config):
     """
     This is a helper function that runs the optimization solver.
 
@@ -110,26 +112,20 @@ def run_optimizer(layout, objective_function, constraint_function, config):
     # Add the applicable interference constraints
     nlcs = []
     if check_collisions[0] is True:
-        nlcs.append(NonlinearConstraint(lambda x: kreisselmeier_steinhauser(constraint_function(x, layout, object_pairs[0])), -np.inf,
+        nlcs.append(NonlinearConstraint(lambda x: constraint_aggregation_function(constraint_function(x, layout, object_pairs[0])), -np.inf,
                                         collision_tolerances[0]))
     if check_collisions[1] is True:
-        nlcs.append(NonlinearConstraint(lambda x: kreisselmeier_steinhauser(constraint_function(x, layout, object_pairs[1])), -np.inf,
+        nlcs.append(NonlinearConstraint(lambda x: constraint_aggregation_function(constraint_function(x, layout, object_pairs[1])), -np.inf,
                                         collision_tolerances[1]))
     if check_collisions[2] is True:
-        nlcs.append(NonlinearConstraint(lambda x: kreisselmeier_steinhauser(constraint_function(x, layout, object_pairs[2])), -np.inf,
+        nlcs.append(NonlinearConstraint(lambda x: constraint_aggregation_function(constraint_function(x, layout, object_pairs[2])), -np.inf,
                                         collision_tolerances[2]))
     if check_collisions[3] is True:
-        nlcs.append(NonlinearConstraint(lambda x: kreisselmeier_steinhauser(constraint_function(x, layout, object_pairs[3])), -np.inf,
+        nlcs.append(NonlinearConstraint(lambda x: constraint_aggregation_function(constraint_function(x, layout, object_pairs[3])), -np.inf,
                                         collision_tolerances[3]))
     if check_collisions[4] is True:
-        nlcs.append(NonlinearConstraint(lambda x: kreisselmeier_steinhauser(constraint_function(x, layout, object_pairs[4])), -np.inf,
+        nlcs.append(NonlinearConstraint(lambda x: constraint_aggregation_function(constraint_function(x, layout, object_pairs[4])), -np.inf,
                                         collision_tolerances[4]))
-
-    # Temporary
-    # my_func = lambda x: signed_distance(x, layout, object_pairs[0])
-    # g = my_func(x0)
-
-    # g_ks = kreisselmeier_steinhauser(g)
 
     options = {'verbose': 3}
 
