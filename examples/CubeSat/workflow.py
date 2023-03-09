@@ -21,6 +21,10 @@ from SPI2py.main import EntryPoint
 demo = EntryPoint(directory=directory,
                   input_file='input.yaml')
 
+# Define the username and problem description
+demo.config['Username'] = 'Chad Peterson'
+demo.config['Problem Description'] = 'Simple optimization of a 3D layout'
+
 # %% Map the system to a single spatial configuration
 
 # Define the initial design vector

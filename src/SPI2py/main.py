@@ -1,35 +1,40 @@
+"""Main module for the SPI2py package.
+
+The EntryPoint Class provides the user with a means to interact with the SPI2py API.
 """
 
-"""
-
+# Import standard packages
 import os
 import json
 import logging
 from datetime import datetime
 
+# Import third-party packages
 import yaml
 
+# Import local packages: Data
 from .data.classes.class_constructors import create_components, create_ports, create_interconnects, create_structures
 from .data.classes.objects import Component, Port, Interconnect, InterconnectNode, InterconnectEdge, Structure
 from .data.classes.systems import System, SpatialConfiguration
 
-# Import objective and constraint functions
+# Import local packages: Analysis
 from .analysis.objectives import normalized_aggregate_gap_distance
 from .analysis.constraints import signed_distances
 from .analysis.constraint_aggregation import kreisselmeier_steinhauser
 
+# Import local packages: Layout
 from .layout.generation_methods import generate_random_layout
 
+# Import local packages: Optimization
 from .optimization.solvers import run_optimizer
 
+# Import local packages: Result
 from .result.visualization.animation import generate_gif
 
 
 class EntryPoint:
+    """EntryPoint class for interacting with the SPI2py API.
     """
-    The SPI2 Class provides the user with a means to interact with the API...
-    """
-
     def __init__(self,
                  directory,
                  input_file):
@@ -46,9 +51,6 @@ class EntryPoint:
         self._port_inputs           = self.inputs['ports']
         self._interconnect_inputs   = self.inputs['interconnects']
         self._structure_inputs      = self.inputs['structures']
-
-
-
 
         # Initialize the logger
         self.initialize_logger()
@@ -147,7 +149,7 @@ class EntryPoint:
     def create_report(self):
 
         # Unpack dictionary values
-        user_name = self.config['User Name']
+        user_name = self.config['Username']
         problem_description = self.config['Problem Description']
         report_filename = self.config['results']['Report Filename']
 
@@ -162,7 +164,7 @@ class EntryPoint:
         design_vector_log = [log.tolist() for log in self.design_vector_log]
 
         # Create the output dictionary
-        self.outputs = {'User Name': user_name,
+        self.outputs = {'Username': user_name,
                         'Date and time': now_formatted,
                         'Problem Description': problem_description,
                         'Comments': 'Placeholder',
