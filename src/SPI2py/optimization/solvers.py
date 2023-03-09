@@ -132,7 +132,7 @@ def run_optimizer(layout,
     # Run the solver
     res = minimize(lambda x: objective_function(x, layout), x0,
                    method='trust-constr',
-                   constraints= nlcs,
+                   constraints=nlcs,
                    tol=convergence_tolerance,
                    options=options,
                    callback=log_design_vector,

@@ -1,7 +1,6 @@
-"""
+"""Objective functions for the layout optimization problem
 
-
-
+This module contains the objective functions for the layout optimization problem.
 """
 import numpy as np
 from itertools import combinations

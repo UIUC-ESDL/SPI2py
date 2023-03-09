@@ -1,7 +1,3 @@
-# Demo input file
-# Types of objects: components, ports, interconnects, structures
-
-
 components:
     0:
         name: control_valve_1
@@ -13,8 +9,6 @@ components:
                 origin: [0,0,0]
                 dimensions: [6,2,2]
                 rotation: [0,0,0]
-
-
     1:
         name: actuator_1
         color: orange
@@ -40,8 +34,6 @@ components:
                 origin: [-1,-0.5,-1]
                 dimensions: [1,1,5]
                 rotation: [0,0,0]
-
-
     2:
         name: component_2
         color: indigo
@@ -52,8 +44,6 @@ components:
                 origin: [0,0,0]
                 dimensions: [1,3,3]
                 rotation: [0,0,0]
-
-
     3:
         name: component_3
         color: olivedrab
@@ -88,7 +78,6 @@ ports:
         radius: 0.5
         reference point offset: [0,0,1.5]
         movement class: fully dependent
-
     1:
         component name: control_valve_1
         port name: return
@@ -96,7 +85,6 @@ ports:
         radius: 0.5
         reference point offset: [2,0,1.5]
         movement class: fully dependent
-
     2:
         component name: actuator_1
         port name: supply
@@ -104,7 +92,6 @@ ports:
         radius: 0.5
         reference point offset: [0,-1,0]
         movement class: fully dependent
-
     3:
         component name: actuator_1
         port name: return
@@ -118,33 +105,23 @@ interconnects:
     0:
         name: hp_cv_to_actuator
         color: black
-
         component 1: control_valve_1
         component 1 port: supply
-
         component 2: actuator_1
         component 2 port: supply
-
         radius: 0.25
-
         number of bends: 2
-
     1:
         name: hp_cv_to_actuator2
         color: blue
-
         component 1: control_valve_1
         component 1 port: return
-
         component 2: actuator_1
         component 2 port: return
-
         radius: 0.25
-
         number of bends: 1
 
 structures:
-
     0:
         name: bedplate
         color: gray
@@ -156,8 +133,3 @@ structures:
                 origin: [0,0,0]
                 dimensions: [0.1, 0.1, 0.1]
                 rotation: [0,0,0]
-
-
-
-
-
