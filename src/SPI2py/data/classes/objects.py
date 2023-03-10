@@ -185,7 +185,7 @@ class Port(ObjectValidation):
         self.component_name = component_name
         self.port_name = port_name
 
-        self.name = self.component_name + '_' + self.port_name + '_port'
+        self.name = self.component_name + '-' + self.port_name + '_port'
 
         self.color = color
 
@@ -202,10 +202,10 @@ class Port(ObjectValidation):
 
 
     def __repr__(self):
-        return self.component_name + '_' + self.port_name + '_port'
+        return self.component_name + '-' + self.port_name + '_port'
 
     def __str__(self):
-        return self.component_name + '_' + self.port_name + '_port'
+        return self.component_name + '-' + self.port_name + '_port'
 
     def calculate_positions(self, design_vector, positions_dict):
 
@@ -434,8 +434,8 @@ class Interconnect(InterconnectNode, InterconnectEdge):
         self.component_1_port = component_1_port
         self.component_2_port = component_2_port
 
-        self.object_1 = self.component_1 + '_' + self.component_1_port + '_port'
-        self.object_2 = self.component_2 + '_' + self.component_2_port + '_port'
+        self.object_1 = self.component_1 + '-' + self.component_1_port + '_port'
+        self.object_2 = self.component_2 + '-' + self.component_2_port + '_port'
 
         self.radius = radius
         self.color = color

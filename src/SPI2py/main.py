@@ -127,8 +127,6 @@ class EntryPoint:
         self.spatial_configuration = spatial_configuration
 
 
-
-
     def optimize_spatial_configuration(self):
 
         # TODO Add ability to choose objective function

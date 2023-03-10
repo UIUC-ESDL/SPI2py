@@ -56,22 +56,22 @@ demo.spatial_configuration.plot()
 
 # %% Perform gradient-based optimization
 
-demo.optimize_spatial_configuration()
-
-# %% Post-processing
-
-# Plot the final spatial configuration
-positions_dict = demo.spatial_configuration.calculate_positions(demo.result.x)
-demo.spatial_configuration.set_positions(positions_dict)
-demo.spatial_configuration.plot()
-
-# Generate GIF animation; caution uncommenting this function call will increase runtime
-# demo.create_gif()
-
-# Write output file
-demo.create_report()
-
-# Print the log to see the optimization results and if any warnings or errors occurred
-demo.print_log()
+# demo.optimize_spatial_configuration()
+#
+# # %% Post-processing
+#
+# # Plot the final spatial configuration
+# positions_dict = demo.spatial_configuration.calculate_positions(demo.result.x)
+# demo.spatial_configuration.set_positions(positions_dict)
+# demo.spatial_configuration.plot()
+#
+# # Generate GIF animation; caution uncommenting this function call will increase runtime
+# # demo.create_gif()
+#
+# # Write output file
+# demo.create_report()
+#
+# # Print the log to see the optimization results and if any warnings or errors occurred
+# demo.print_log()
 
 

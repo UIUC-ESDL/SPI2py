@@ -58,6 +58,22 @@ class System(SystemsValidation):
         self.objects = components + ports + interconnect_nodes + interconnect_segments + structures
 
     @property
+    def nodes(self):
+        return [str(obj) for obj in self.components + self.interconnect_nodes]
+
+    @property
+    def edges(self):
+        edges = []
+        for segment in self.interconnect_segments:
+            # Split with "-" to just get component (not port name)
+            # TODO Create a more reliable way to get the component name
+            edge = (str(segment.object_1).split('-')[0], str(segment.object_2).split('-')[0])
+            edges.append(edge)
+
+        return edges
+
+
+    @property
     def static_objects(self):
         objects = []
         for obj in self.objects:
@@ -109,6 +125,7 @@ class System(SystemsValidation):
 
     @property
     def component_component_pairs(self):
+        """TODO Vectorize with cartesian product"""
         return list(combinations(self.components, 2))
 
 
@@ -119,6 +136,7 @@ class System(SystemsValidation):
         1. Don't check for collision between a component and the interconnect that is attached to it.
 
         TODO Write unit tests to ensure it creates the correct pairs
+        TODO Vectorize with cartesian product
 
         :return:
         """
@@ -134,6 +152,7 @@ class System(SystemsValidation):
 
     @property
     def component_structure_pairs(self):
+        """TODO Vectorize with cartesian product"""
         return list(product(self.components, self.structures))
 
     @property
@@ -143,6 +162,7 @@ class System(SystemsValidation):
         1. Don't check for collision between two segments of the same interconnect.
 
         TODO Write unit tests to ensure it creates the correct pairs
+        TODO Vectorize with cartesian product
 
         :return:
         """
@@ -163,6 +183,7 @@ class System(SystemsValidation):
     def interconnect_structure_pairs(self):
         """
         TODO Write unit tests to ensure it creates the correct pairs
+        TODO Vectorize with cartesian product
 
         :return:
         """
@@ -317,4 +338,25 @@ class SpatialConfiguration:
         fig = plot_objects(layout_plot_array, savefig, directory, self.system.config)
 
         fig.show()
+
+    def extract_spatial_graph(self):
+        """
+        Extracts a spatial graph from the layout.
+
+        TODO Remove unconnected nodes?
+
+        :return:
+        """
+
+        nodes = self.system.nodes
+        edges = self.system.edges
+
+        node_positions = []
+
+        positions_dict = self.calculate_positions(self.design_vector)
+
+        # TODO Implement
+
+
+        return nodes, node_positions, edges
 
