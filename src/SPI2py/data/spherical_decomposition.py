@@ -294,7 +294,8 @@ g7 = NonlinearConstraint(lambda di: di[2], -np.inf, z2)
 # TODO Implement bounds
 bounds = Bounds([x1, y1, z1, 0], [x2, y2, z2, max_r])
 
-for i in range(20):
+# while min(r) > 0.01 and max_iter < 20: ...
+for i in range(75):
 
     # TODO Make this work for other than 0 to 1
     d0 = np.random.rand(4)
@@ -316,3 +317,31 @@ ax.set_zlim(-2, 2)
 
 
 plt.show()
+
+
+def plot_sphere(position, radius, color, ax, resolution):
+    # The effective resolution of the sphere
+
+    u = np.linspace(0, 2 * np.pi, resolution)
+    v = np.linspace(0, np.pi, resolution)
+
+    x = position[0] + radius * (np.outer(np.cos(u), np.sin(v)))
+    y = position[1] + radius * (np.outer(np.sin(u), np.sin(v)))
+    z = position[2] + radius * (np.outer(np.ones(np.size(u)), np.cos(v)))
+
+    ax.plot_surface(x, y, z, linewidth=0.0, color=color)
+
+
+fig = plt.figure()
+ax = fig.add_subplot(projection='3d')
+
+
+
+for position, radius in zip(points, radii):
+    plot_sphere(position, radius, 'b', ax, 10)
+
+
+plt.show()
+
+
+
