@@ -9,7 +9,7 @@ from numba import njit
 
 # @njit(cache=True)
 def distance_points_points(a: np.ndarray,
-                           b: np.ndarray) -> float:
+                           b: np.ndarray) -> np.ndarray:
     """
     Calculates the pairwise distance between two sets of points.
 
@@ -20,9 +20,9 @@ def distance_points_points(a: np.ndarray,
     TODO Enable NJIT
     TODO Write unit tests
 
-    :param a: Set of 3D points, (n, 3) ndarray
-    :param b: Set of 3D points, (m, 3) ndarray
-    :return: Minimum distance, float
+    :param a: Set of 3D points, (-1, 3) ndarray
+    :param b: Set of 3D points, (-1, 3) ndarray
+    :return: Euclidean distances, (-1,) np.ndarray
     """
 
     c = np.linalg.norm(a[:, None, :] - b[None, :, :], axis=-1)
@@ -34,7 +34,7 @@ def distance_points_points(a: np.ndarray,
 def signed_distance_spheres_spheres(a:        np.ndarray,
                                     a_radii:  np.ndarray,
                                     b:        np.ndarray,
-                                    b_radii:  np.ndarray) -> float:
+                                    b_radii:  np.ndarray) -> np.ndarray:
     """
     Calculates the pairwise signed distance between two sets of spheres.
 
@@ -47,6 +47,12 @@ def signed_distance_spheres_spheres(a:        np.ndarray,
     TODO Enable NJIT
     TODO Reformat Radii shape so we don't have to keep reshaping it
     TODO Update constraint functions to use this function
+
+    :param a: Set of 3D points, (-1, 3) ndarray
+    :param a_radii: Set of radii, (-1) ndarray
+    :param b: Set of 3D points, (-1, 3) ndarray
+    :param b_radii: Set of radii, (-1) ndarray
+    :return: Signed distance, float
     """
 
     delta_positions = distance_points_points(a, b)
@@ -55,45 +61,6 @@ def signed_distance_spheres_spheres(a:        np.ndarray,
     signed_distances = delta_radii - delta_positions
 
     return signed_distances
-
-
-
-
-# @njit(cache=True)
-def min_spheres_linesegment_distance(points, a, b):
-    """
-    Finds the minimum distance between a set 3D point and a line segment [a,b].
-
-    With hierarchical collision detection we represent classes as recursive sphere trees.
-    First,
-
-    interference<0 means no overlap
-    interference=0 means tangent
-    interference>0 means overlap
-
-    TODO Modify function to handle points not spheres
-    TODO Modify function calls to provide a list of point(s) instead of a single point
-    TODO Fix documentation
-    TODO Vectorize with broadcasting
-    TODO Enable NJIT
-    TODO Compare runtime to Scipy's cdist
-    TODO Compare runtime to min_linesegment_linesegment_distance
-    TODO Write unit tests
-
-    :param points: list of
-    :param a: (3,)
-    :param b: (3,)
-    :return:
-    """
-
-    min_distances = []
-    for point in points:
-        min_point_distance = np.linalg.norm(np.dot(point - b, a - b) / np.dot(a - b, a - b) * (a - b) + b - point)
-        min_distances.append(min_point_distance)
-
-    min_distance = np.min(min_distances)
-
-    return min_distance
 
 
 # @njit(cache=True)
