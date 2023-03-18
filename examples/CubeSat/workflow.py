@@ -77,3 +77,10 @@ from SPI2py import EntryPoint
 from SPI2py.analysis.distance import min_linesegment_linesegment_distance
 
 
+a = np.array([0,0,0])
+b = np.array([0,1,0])
+c = np.array([0,0,1])
+d = np.array([0,1,1])
+dist = min_linesegment_linesegment_distance(a, b, c, d)
+
+print('dist: ', dist)
