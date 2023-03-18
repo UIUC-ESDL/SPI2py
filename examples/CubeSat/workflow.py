@@ -108,12 +108,12 @@ def f2(x): return np.sum(x**2)
 
 x0 = np.array([1., 2., 3., 4., 5., 6., 7., 8., 9., 10., 11., 12., 13., 14., 15., 16., 17., 18., 19., 20., 21., 22., 23., 24., 25., 26., 27., 28., 29., 30., 31., 32., 33., 34., 35., 36., 37., 38., 39., 40., 41., 42., 43., 44., 45., 46., 47., 48., 49., 50.])
 
-# @njit(cache=True)
-# def c(x): return x[0] + x[1]
-#
-# cj1 = { 'type': 'ineq','fun': c}
-# cj2 = { 'type': 'ineq','fun': c}
-# cj3 = { 'type': 'ineq','fun': c}
+@njit(cache=True)
+def c(x): return x[0] + x[1]
+
+cj1 = { 'type': 'ineq','fun': c}
+cj2 = { 'type': 'ineq','fun': c}
+cj3 = { 'type': 'ineq','fun': c}
 
 
 c1 = NonlinearConstraint(lambda x: x[0] + x[1], 0, 1)
@@ -137,7 +137,7 @@ t2 = time_ns()
 
 # Time JIT
 
-res1 = minimize(f2, x0, method='trust-constr', constraints=[c1, c2, c3])
+res1 = minimize(f2, x0, method='trust-constr', constraints=[cj1, cj2, cj3])
 
 
 t3 = time_ns()
