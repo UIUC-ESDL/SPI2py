@@ -77,7 +77,7 @@ from SPI2py import EntryPoint
 from time import time_ns
 
 from SPI2py.analysis.distance import minimum_distance_linesegment_linesegment, \
-    minimum_distance_points_points, min_spheres_linesegment_distance
+    distance_points_points, min_spheres_linesegment_distance
 
 
 # a = np.array([0.,0.,0.])
@@ -95,7 +95,7 @@ t0 = time_ns()
 a = np.array([[0.,0.,0.].[0.,0.,0.],[0.,0.,0.]])
 b = np.array([[0.,0.,0.]])
 
-dist = minimum_distance_points_points(a,b)
+dist = distance_points_points(a, b)
 
 t1 = time_ns()
 

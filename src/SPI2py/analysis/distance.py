@@ -8,10 +8,10 @@ from numba import njit
 
 
 # @njit(cache=True)
-def minimum_distance_points_points(a: np.ndarray,
-                                   b: np.ndarray) -> float:
+def distance_points_points(a: np.ndarray,
+                           b: np.ndarray) -> float:
     """
-    Calculates the minimum distance between two sets of points.
+    Calculates the pairwise distance between two sets of points.
 
     This implementation utilizes array broadcasting to calculate the pairwise distance between two sets of points.
     Specifically, it calculates the Cartesian product of the Euclidean distance for two sets of points.
@@ -29,14 +29,32 @@ def minimum_distance_points_points(a: np.ndarray,
 
     return c.reshape(-1)
 
-def minimum_signed_distance_points_points(a:        np.ndarray,
-                                          a_radii:  np.ndarray,
-                                          b:        np.ndarray,
-                                          b_radii:  np.ndarray) -> float:
+
+# @njit(cache=True)
+def signed_distance_spheres_spheres(a:        np.ndarray,
+                                    a_radii:  np.ndarray,
+                                    b:        np.ndarray,
+                                    b_radii:  np.ndarray) -> float:
     """
-    Calculates the minimum signed distance between two sets of spheres.
+    Calculates the pairwise signed distance between two sets of spheres.
+
+    Convention:
+    Signed Distance < 0 means no overlap
+    Signed Distance = 0 means tangent
+    Signed Distance > 0 means overlap
+
+    TODO Write unit tests
+    TODO Enable NJIT
+    TODO Reformat Radii shape so we don't have to keep reshaping it
+    TODO Update constraint functions to use this function
     """
 
+    delta_positions = distance_points_points(a, b)
+    delta_radii     = distance_points_points(a_radii.reshape(-1, 1), b_radii.reshape(-1, 1))
+
+    signed_distances = delta_radii - delta_positions
+
+    return signed_distances
 
 
 
