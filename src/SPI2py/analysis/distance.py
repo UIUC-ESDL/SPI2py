@@ -8,8 +8,8 @@ from numba import njit
 
 
 # @njit(cache=True)
-def distance_points_points(a: np.ndarray,
-                           b: np.ndarray) -> np.ndarray:
+def distances_points_points(a: np.ndarray,
+                            b: np.ndarray) -> np.ndarray:
     """
     Calculates the pairwise distance between two sets of points.
 
@@ -31,10 +31,10 @@ def distance_points_points(a: np.ndarray,
 
 
 # @njit(cache=True)
-def signed_distance_spheres_spheres(a:        np.ndarray,
-                                    a_radii:  np.ndarray,
-                                    b:        np.ndarray,
-                                    b_radii:  np.ndarray) -> np.ndarray:
+def signed_distances_spheres_spheres(a:        np.ndarray,
+                                     a_radii:  np.ndarray,
+                                     b:        np.ndarray,
+                                     b_radii:  np.ndarray) -> np.ndarray:
     """
     Calculates the pairwise signed distance between two sets of spheres.
 
@@ -55,8 +55,8 @@ def signed_distance_spheres_spheres(a:        np.ndarray,
     :return: Signed distance, float
     """
 
-    delta_positions = distance_points_points(a, b)
-    delta_radii     = distance_points_points(a_radii.reshape(-1, 1), b_radii.reshape(-1, 1))
+    delta_positions = distances_points_points(a, b)
+    delta_radii     = distances_points_points(a_radii.reshape(-1, 1), b_radii.reshape(-1, 1))
 
     signed_distances = delta_radii - delta_positions
 
@@ -164,6 +164,45 @@ def minimum_distance_linesegment_linesegment(a: np.ndarray,
     dist = np.linalg.norm(d1*t - d2*u - d12)
 
     return dist
+
+
+def minimum_signed_distance_capsule_capsule(a:        np.ndarray,
+                                            b:        np.ndarray,
+                                            ab_radii: np.ndarray,
+                                            c:        np.ndarray,
+                                            d:        np.ndarray,
+                                            cd_radii: np.ndarray) -> float:
+
+    """
+    Returns the minimum signed distance between two capsules.
+
+    Since we approximate objects such as line segments with a collection of spheres, approximating a line segment with a
+    large number of spheres will begin to resemble a capsule.
+
+    Convention:
+    Signed Distance < 0 means no overlap
+    Signed Distance = 0 means tangent
+    Signed Distance > 0 means overlap
+
+    Assumes:
+    1. All radii in line AB are the same and all radii in line CD are the same
+
+    TODO Validate that this function works
+    TODO Write unit tests
+    TODO Enable NJIT
+
+    """
+
+    # Verify assumption 1
+    assert np.all(ab_radii == ab_radii[0])
+    assert np.all(cd_radii == cd_radii[0])
+
+    minimum_distance = minimum_distance_linesegment_linesegment(a, b, c, d)
+
+    # TODO Verify this is the correct convention
+    minimum_signed_distance = minimum_distance - (ab_radii[0] + cd_radii[0])
+
+    return minimum_signed_distance
 
 
 

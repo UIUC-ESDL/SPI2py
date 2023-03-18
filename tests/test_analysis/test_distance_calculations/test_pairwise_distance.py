@@ -2,7 +2,7 @@ import numpy as np
 import autograd.numpy as anp
 from autograd import elementwise_grad
 from scipy.spatial.distance import cdist
-from SPI2py.analysis.distance import distance_points_points
+from SPI2py.analysis.distance import distances_points_points
 
 def test_pairwise_distance():
     """
@@ -13,7 +13,7 @@ def test_pairwise_distance():
     a = np.random.rand(20,3)
     b = np.random.rand(17,3)
 
-    c = distance_points_points(a, b)
+    c = distances_points_points(a, b)
 
     cd = cdist(a, b).reshape(-1)
 
@@ -24,7 +24,7 @@ def test_pairwise_distance_autograd():
    a = anp.random.rand(20, 3)
    b = anp.random.rand(17, 3)
 
-   c = distance_points_points(a, b)
+   c = distances_points_points(a, b)
 
    cd = cdist(a, b).reshape(-1)
 

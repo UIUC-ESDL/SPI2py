@@ -4,7 +4,7 @@ This module contains functions that are used to calculate the constraint functio
 """
 
 import numpy as np
-from .distance import distance_points_points
+from .distance import distances_points_points
 
 
 def signed_distances(x, spatial_configuration, pairs):
@@ -37,8 +37,8 @@ def signed_distances(x, spatial_configuration, pairs):
         radii_b = positions_dict[str(obj2)][1]
 
         # TODO Reformat Radii shape so we don't have to keep reshaping it
-        dPositions = distance_points_points(positions_a, positions_b)
-        dRadii     = distance_points_points(radii_a.reshape(-1, 1), radii_b.reshape(-1, 1))
+        dPositions = distances_points_points(positions_a, positions_b)
+        dRadii     = distances_points_points(radii_a.reshape(-1, 1), radii_b.reshape(-1, 1))
 
         all_signed_distances.append(dRadii - dPositions)
 
