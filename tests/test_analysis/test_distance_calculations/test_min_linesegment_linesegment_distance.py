@@ -18,6 +18,43 @@ def test_point_point_overlap():
     assert np.isclose(dist, 0.0)
 
 
+def test_point_point_overlap_positive_coords():
+
+    a = np.array([1., 1., 1.])
+    b = np.array([1., 1., 1.])
+    c = np.array([1., 1., 1.])
+    d = np.array([1., 1., 1.])
+
+    dist = min_linesegment_linesegment_distance(a, b, c, d)
+
+    assert np.isclose(dist, 0.0)
+
+
+def test_point_point_overlap_negative_coords():
+
+    a = np.array([-1., -1., -1.])
+    b = np.array([-1., -1., -1.])
+    c = np.array([-1., -1., -1.])
+    d = np.array([-1., -1., -1.])
+
+    dist = min_linesegment_linesegment_distance(a, b, c, d)
+
+    assert np.isclose(dist, 0.0)
+
+
+def test_point_point_overlap_mixed_coords():
+
+    a = np.array([-1., 1., 0.])
+    b = np.array([-1., 1., 0.])
+    c = np.array([-1., 1., 0.])
+    d = np.array([-1., 1., 0.])
+
+    dist = min_linesegment_linesegment_distance(a, b, c, d)
+
+    assert np.isclose(dist, 0.0)
+
+
+
 def test_point_point_non_overlap():
 
     a = np.array([0., 0., 0.])
@@ -184,4 +221,8 @@ def test_skew():
     dist = min_linesegment_linesegment_distance(a, b, c, d)
 
     assert np.isclose(dist, 1.0)
+
+
+# Autograd tests
+
 

@@ -74,13 +74,58 @@ from SPI2py import EntryPoint
 # # Print the log to see the optimization results and if any warnings or errors occurred
 # demo.print_log()
 
-from SPI2py.analysis.distance import min_linesegment_linesegment_distance
+# from SPI2py.analysis.distance import min_linesegment_linesegment_distance
+#
+#
+# a = np.array([0,0,0])
+# b = np.array([0,1,0])
+# c = np.array([0,0,1])
+# d = np.array([0,1,1])
+# dist = min_linesegment_linesegment_distance(a, b, c, d)
+#
+# print('dist: ', dist)
+
+from numba import njit
+from autograd import grad, jacobian
+import autograd.numpy as anp
+from time import time_ns
+from scipy.optimize import minimize, NonlinearConstraint
+
+# Autograd
+def f1(x): return anp.sum(x**2)
+g1 = grad(f1)
 
 
-a = np.array([0,0,0])
-b = np.array([0,1,0])
-c = np.array([0,0,1])
-d = np.array([0,1,1])
-dist = min_linesegment_linesegment_distance(a, b, c, d)
 
-print('dist: ', dist)
+# JIT
+
+@njit(cache=True)
+def f2(x): return np.sum(x**2)
+
+x0 = np.array([1., 2., 3., 4., 5., 6., 7., 8., 9., 10., 11., 12., 13., 14., 15., 16., 17., 18., 19., 20.])
+
+c1 = NonlinearConstraint(lambda x: x[0] + x[1], 0, 1)
+c2 = NonlinearConstraint(lambda x: x[0] + x[1], 0, 1)
+c3 = NonlinearConstraint(lambda x: x[0] + x[1], 0, 1)
+
+# Time autograd
+
+t1 = time_ns()
+
+res1 = minimize(f1, x0, method='BFGS', jac=g1, options={'disp': True}, constraints=[c1, c2, c3])
+
+t2 = time_ns()
+
+# Time JIT
+
+res1 = minimize(f2, x0, method='BFGS', options={'disp': True}, constraints=[c1, c2, c3])
+
+
+t3 = time_ns()
+
+
+print('Autograd time: ', t2-t1)
+
+print('JIT time: ', t3-t2)
+
+print('Autograd was ', (t3-t2)/(t2-t1), ' times faster than JIT')
