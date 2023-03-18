@@ -7,6 +7,7 @@ import numpy as np
 from numba import njit
 
 
+# @njit(cache=True)
 def minimum_distance_points_points(a: np.ndarray,
                                    b: np.ndarray) -> float:
     """
@@ -28,41 +29,16 @@ def minimum_distance_points_points(a: np.ndarray,
 
     return c.reshape(-1)
 
-
-def min_kdtree_distance(tree, positions):
+def minimum_signed_distance_points_points(a:        np.ndarray,
+                                          a_radii:  np.ndarray,
+                                          b:        np.ndarray,
+                                          b_radii:  np.ndarray) -> float:
     """
-    Returns the minimum distance between a KD-Tree and object.
-
-    In some cases, we need to check the distance between two sets of points, but one
-    set is extremely large (e.g., a complex structure) and thus the number of distance
-    calculations combinatorially grows and becomes prohibitive.
-
-    For static structures (e.g., a structure) we can construct a data structure (i.e., KD Tree)
-    once and then use it to efficiently perform distance calculations. Since the cost of
-    constructing a KD Tree is relatively high, and you must reconstruct it every time positions
-    change we do not use this for moving classes.
-
-    This function presumes the KD Tree is created when the object is initialized and thus
-    takes the tree as an argument instead of trying to create a tree from points every
-    function call.
-
-    interference<0 means no overlap
-    interference=0 means tangent
-    interference>0 means overlap
-
-    TODO Complete documentation
-    TODO Write unit tests
-
-    :param tree:
-    :param positions:
-    :return:
+    Calculates the minimum signed distance between two sets of spheres.
     """
 
-    # tree.query returns distances and IDs. We only care about the distances
-    dist, _ = tree.query(positions)
-    min_dist = np.min(dist)
 
-    return min_dist
+
 
 
 # @njit(cache=True)
@@ -102,7 +78,7 @@ def min_spheres_linesegment_distance(points, a, b):
     return min_distance
 
 
-@njit
+# @njit(cache=True)
 def minimum_distance_linesegment_linesegment(a: np.ndarray,
                                              b: np.ndarray,
                                              c: np.ndarray,
@@ -203,6 +179,44 @@ def minimum_distance_linesegment_linesegment(a: np.ndarray,
     dist = np.linalg.norm(d1*t - d2*u - d12)
 
     return dist
+
+
+
+# TODO Implement KD Tree distance
+# def min_kdtree_distance(tree, positions):
+#     """
+#     Returns the minimum distance between a KD-Tree and object.
+#
+#     In some cases, we need to check the distance between two sets of points, but one
+#     set is extremely large (e.g., a complex structure) and thus the number of distance
+#     calculations combinatorially grows and becomes prohibitive.
+#
+#     For static structures (e.g., a structure) we can construct a data structure (i.e., KD Tree)
+#     once and then use it to efficiently perform distance calculations. Since the cost of
+#     constructing a KD Tree is relatively high, and you must reconstruct it every time positions
+#     change we do not use this for moving classes.
+#
+#     This function presumes the KD Tree is created when the object is initialized and thus
+#     takes the tree as an argument instead of trying to create a tree from points every
+#     function call.
+#
+#     interference<0 means no overlap
+#     interference=0 means tangent
+#     interference>0 means overlap
+#
+#     TODO Complete documentation
+#     TODO Write unit tests
+#
+#     :param tree:
+#     :param positions:
+#     :return:
+#     """
+#
+#     # tree.query returns distances and IDs. We only care about the distances
+#     dist, _ = tree.query(positions)
+#     min_dist = np.min(dist)
+#
+#     return min_dist
 
 
 

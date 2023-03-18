@@ -74,14 +74,38 @@ from SPI2py import EntryPoint
 # # Print the log to see the optimization results and if any warnings or errors occurred
 # demo.print_log()
 
-from SPI2py.analysis.distance import minimum_distance_linesegment_linesegment
+from time import time_ns
+
+from SPI2py.analysis.distance import minimum_distance_linesegment_linesegment, \
+    minimum_distance_points_points, min_spheres_linesegment_distance
 
 
-a = np.array([0.,0.,0.])
-b = np.array([0.,1.,0.])
-c = np.array([0.,0.,1.])
-d = np.array([0.,1.,1.])
-dist = minimum_distance_linesegment_linesegment(a, b, c, d)
+# a = np.array([0.,0.,0.])
+# b = np.array([0.,1.,0.])
+# c = np.array([0.,0.,1.])
+# d = np.array([0.,1.,1.])
+# dist = minimum_distance_linesegment_linesegment(a, b, c, d)
+#
+# print('dist: ', dist)
 
-print('dist: ', dist)
 
+t0 = time_ns()
+
+
+a = np.array([[0.,0.,0.].[0.,0.,0.],[0.,0.,0.]])
+b = np.array([[0.,0.,0.]])
+
+dist = minimum_distance_points_points(a,b)
+
+t1 = time_ns()
+
+
+points = np.array([[0,0,0]])
+a2 = np.array([0.,0.,0.])
+b2 = np.array([1.,0.,0.])
+dist2 = min_spheres_linesegment_distance(points, a2, b2)
+
+t2 = time_ns()
+
+
+print('minimum_distance_points_points: ', t2-t1)
