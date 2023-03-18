@@ -94,18 +94,14 @@ def min_spheres_linesegment_distance(points, a, b):
     return min_distance
 
 
-# TODO Implement this function
-# @njit(cache=True)
+# # TODO Implement this function
+# # @njit(cache=True)
 # def min_linesegment_linesegment_distance(a0, a1, b0, b1):
 #     """
 #     Returns the minimum distance between two line segments.
 #
 #     Given two lines defined by numpy.array pairs (a0,a1,b0,b1)
 #     Return the closest points on each segment and their distance
-#
-#     interference<0 means no overlap
-#     interference=0 means tangent
-#     interference>0 means overlap
 #
 #     TODO Write unit tests
 #     TODO Document function logic more clearly
@@ -115,25 +111,28 @@ def min_spheres_linesegment_distance(points, a, b):
 #     # Calculate denominator
 #     A = a1 - a0
 #     B = b1 - b0
-#     magA = np.linalg.norm(A)
-#     magB = np.linalg.norm(B)
 #
-#     _A = A / magA
-#     _B = B / magB
+#     norm_a = np.linalg.norm(A)
+#     norm_b = np.linalg.norm(B)
 #
-#     cross = np.cross(_A, _B)
-#     denom = np.linalg.norm(cross) ** 2
+#     a_normalized = A / norm_a
+#     b_normalized = B / norm_b
+#
+#     cross_product = np.cross(a_normalized, b_normalized)
+#     denom = np.linalg.norm(cross_product) ** 2
 #
 #     # If lines are parallel (denom=0) test if lines overlap.
 #     # If they don't overlap then there is a closest point solution.
 #     # If they do overlap, there are infinite closest positions, but there is a closest distance
 #
-#     if not denom:
-#         d0 = np.dot(_A, (b0 - a0))
+#     parallel = denom == 0
+#     if not parallel:
+#
+#         d0 = np.dot(a_normalized, (b0 - a0))
 #
 #         # Overlap only possible with clamping
 #
-#         d1 = np.dot(_A, (b1 - a0))
+#         d1 = np.dot(a_normalized, (b1 - a0))
 #
 #         # Is segment B before A?
 #         if d0 <= 0 >= d1:
@@ -146,7 +145,7 @@ def min_spheres_linesegment_distance(points, a, b):
 #             return np.linalg.norm(a0 - b1)
 #
 #         # Is segment B after A?
-#         elif d0 >= magA <= d1:
+#         elif d0 >= norm_a <= d1:
 #
 #             if np.absolute(d0) < np.absolute(d1):
 #                 # Explain case
@@ -156,49 +155,156 @@ def min_spheres_linesegment_distance(points, a, b):
 #             return np.linalg.norm(a1 - b1)
 #
 #         # Case: Segments overlap --> Return distance between parallel segments
-#         return np.linalg.norm(((d0 * _A) + a0) - b0)
+#         return np.linalg.norm(((d0 * a_normalized) + a0) - b0)
 #
-#     # Lines criss-cross: Calculate the projected closest points
+#     elif parallel:
 #
-#     t = (b0 - a0)
-#     detA = np.linalg.det([t, _B, cross])
-#     detB = np.linalg.det([t, _A, cross])
+#         # Lines criss-cross: Calculate the projected closest points
 #
-#     t0 = detA / denom
-#     t1 = detB / denom
 #
-#     pA = a0 + (_A * t0)  # Projected closest point on segment A
-#     pB = b0 + (_B * t1)  # Projected closest point on segment B
 #
-#     # Clamp projections
+#         t = (b0 - a0)
+#         detA = np.linalg.det([t, b_normalized, cross_product])
+#         detB = np.linalg.det([t, a_normalized, cross_product])
 #
-#     if t0 < 0:
-#         pA = a0
-#     elif t0 > magA:
-#         pA = a1
+#         t0 = detA / denom
+#         t1 = detB / denom
 #
-#     if t1 < 0:
-#         pB = b0
-#     elif t1 > magB:
-#         pB = b1
+#         pA = a0 + (a_normalized * t0)  # Projected closest point on segment A
+#         pB = b0 + (b_normalized * t1)  # Projected closest point on segment B
 #
-#     # Clamp projection A
-#     if (t0 < 0) or (t0 > magA):
-#         dot = np.dot(_B, (pA - b0))
-#         if dot < 0:
-#             dot = 0
-#         elif dot > magB:
-#             dot = magB
-#         pB = b0 + (_B * dot)
+#         # Clamp projections
 #
-#     # Clamp projection B
-#     if (t1 < 0) or (t1 > magB):
-#         dot = np.dot(_A, (pB - a0))
-#         if dot < 0:
-#             dot = 0
-#         elif dot > magA:
-#             dot = magA
-#         pA = a0 + (_A * dot)
+#         if t0 < 0:
+#             pA = a0
+#         elif t0 > norm_a:
+#             pA = a1
 #
-#     return np.linalg.norm(pA - pB)
+#         if t1 < 0:
+#             pB = b0
+#         elif t1 > norm_b:
+#             pB = b1
+#
+#         # Clamp projection A
+#         if (t0 < 0) or (t0 > norm_a):
+#             dot = np.dot(b_normalized, (pA - b0))
+#             if dot < 0:
+#                 dot = 0
+#             elif dot > norm_b:
+#                 dot = norm_b
+#             pB = b0 + (b_normalized * dot)
+#
+#         # Clamp projection B
+#         if (t1 < 0) or (t1 > norm_b):
+#             dot = np.dot(a_normalized, (pB - a0))
+#             if dot < 0:
+#                 dot = 0
+#             elif dot > norm_a:
+#                 dot = norm_a
+#             pA = a0 + (a_normalized * dot)
+#
+#         return np.linalg.norm(pA - pB)
+
+
+
+def min_linesegment_linesegment_distance(a: np.ndarray,
+                                         b: np.ndarray,
+                                         c: np.ndarray,
+                                         d: np.ndarray) -> float:
+    """
+    Returns the minimum distance between two line segments.
+
+    Based on the algorithm described in:
+
+    Vladimir J. Lumelsky,
+    "On Fast Computation of Distance Between Line Segments",
+    Information Processing Letters 21 (1985) 55-61
+    https://doi.org/10.1016/0020-0190(85)90032-8
+
+    :param a: (1,3) numpy array
+    :param b: (1,3) numpy array
+    :param c: (1,3) numpy array
+    :param d: (1,3) numpy array
+
+    :return: Minimum distance between line segments, float
+    """
+
+    def fix_bound(num):
+        """
+        If the number is outside the range [0,1] it is clamped to the nearest boundary.
+        """
+        if num < 0:
+            return 0
+        elif num > 1:
+            return 1
+        else:
+            return num
+
+    d1 = b - a
+    d2 = d - c
+    d12 = c - a
+
+    D1 = np.dot(d1, d1.T)
+    D2 = np.dot(d2, d2.T)
+
+    S1 = np.dot(d1, d12.T)
+    S2 = np.dot(d2, d12.T)
+    R = d1*d2.T
+    den = np.dot(D1, D2) - np.square(R)
+
+
+    # Check if one or both line segments are points
+    if D1 == 0 or D2 == 0:
+
+        # Both AB and CD are points
+        if D1 == 0 and D2 == 0:
+            t = 0
+            u = 0
+
+        # AB is a line segment and CD is a point
+        elif D1 != 0:
+            u = 0
+            t = S1/D1
+            t = fix_bound(t)
+
+        # AB is a point and CD is a line segment
+        elif D2 != 0:
+            t = 0
+            u = -S2/D2
+            u = fix_bound(u)
+
+
+    # Check if line segments are parallel
+    elif den == 0:
+        t = 0
+        u = -S2/D2
+        uf = fix_bound(u)
+
+        if uf != u:
+            t = (uf*R + S1)/D1
+            t = fix_bound(t)
+            u = uf
+
+
+    # General case
+    else:
+
+        t = (S1 * D2 - S2 * R) / den;
+
+        t = fix_bound(t);
+
+        u = (t * R - S2) / D2;
+        uf = fix_bound(u);
+
+        if uf != u:
+            t = (uf * R + S1) / D1;
+            t = fix_bound(t);
+
+            u = uf;
+
+    dist = np.linalg.norm(d1 * t - d2 * u - d12)
+
+    if
+
+
 

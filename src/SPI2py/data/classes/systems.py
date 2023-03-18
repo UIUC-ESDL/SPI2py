@@ -3,9 +3,9 @@ Docstring
 
 """
 
-
-from itertools import combinations, product
 import numpy as np
+from itertools import combinations, product
+
 from SPI2py.result.visualization.plotting import plot_objects
 
 from src.SPI2py.data.classes.input_validation import SystemsValidation
