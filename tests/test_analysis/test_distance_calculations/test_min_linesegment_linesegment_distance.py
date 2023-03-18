@@ -1,5 +1,5 @@
 import numpy as np
-from SPI2py.analysis.distance import minimum_distance_linesegment_linesegment
+from SPI2py.analysis.distance import minimum_distance_segment_segment
 
 # TODO Add tests for all negative coordinates and mixed coordinates
 
@@ -13,7 +13,7 @@ def test_point_point_overlap():
     c = np.array([0., 0., 0.])
     d = np.array([0., 0., 0.])
 
-    dist = minimum_distance_linesegment_linesegment(a, b, c, d)
+    dist = minimum_distance_segment_segment(a, b, c, d)
 
     assert np.isclose(dist, 0.0)
 
@@ -25,7 +25,7 @@ def test_point_point_overlap_positive_coords():
     c = np.array([1., 1., 1.])
     d = np.array([1., 1., 1.])
 
-    dist = minimum_distance_linesegment_linesegment(a, b, c, d)
+    dist = minimum_distance_segment_segment(a, b, c, d)
 
     assert np.isclose(dist, 0.0)
 
@@ -37,7 +37,7 @@ def test_point_point_overlap_negative_coords():
     c = np.array([-1., -1., -1.])
     d = np.array([-1., -1., -1.])
 
-    dist = minimum_distance_linesegment_linesegment(a, b, c, d)
+    dist = minimum_distance_segment_segment(a, b, c, d)
 
     assert np.isclose(dist, 0.0)
 
@@ -49,7 +49,7 @@ def test_point_point_overlap_mixed_coords():
     c = np.array([-1., 1., 0.])
     d = np.array([-1., 1., 0.])
 
-    dist = minimum_distance_linesegment_linesegment(a, b, c, d)
+    dist = minimum_distance_segment_segment(a, b, c, d)
 
     assert np.isclose(dist, 0.0)
 
@@ -62,7 +62,7 @@ def test_point_point_non_overlap():
     c = np.array([1., 0., 0.])
     d = np.array([1., 0., 0.])
 
-    dist = minimum_distance_linesegment_linesegment(a, b, c, d)
+    dist = minimum_distance_segment_segment(a, b, c, d)
 
     assert np.isclose(dist, 1.0)
 
@@ -77,7 +77,7 @@ def test_point_linesegment_overlap_1():
     c = np.array([0., 0., 0.])
     d = np.array([1., 0., 0.])
 
-    dist = minimum_distance_linesegment_linesegment(a, b, c, d)
+    dist = minimum_distance_segment_segment(a, b, c, d)
 
     assert np.isclose(dist, 0.0)
 
@@ -89,7 +89,7 @@ def test_point_linesegment_non_overlap_1():
     c = np.array([0., 0., 1.])
     d = np.array([1., 0., 1.])
 
-    dist = minimum_distance_linesegment_linesegment(a, b, c, d)
+    dist = minimum_distance_segment_segment(a, b, c, d)
 
     assert np.isclose(dist, 1.0)
 
@@ -103,7 +103,7 @@ def test_linesegment_point_overlap_2():
     c = np.array([0., 0., 0.])
     d = np.array([0., 0., 0.])
 
-    dist = minimum_distance_linesegment_linesegment(a, b, c, d)
+    dist = minimum_distance_segment_segment(a, b, c, d)
 
     assert np.isclose(dist, 0.0)
 
@@ -115,7 +115,7 @@ def test_linesegment_point_non_overlap_2():
     c = np.array([1., 0., 1.])
     d = np.array([1., 0., 1.])
 
-    dist = minimum_distance_linesegment_linesegment(a, b, c, d)
+    dist = minimum_distance_segment_segment(a, b, c, d)
 
     assert np.isclose(dist, 1.0)
 
@@ -130,7 +130,7 @@ def test_fully_overlapping():
     c = np.array([0., 0., 0.])
     d = np.array([1., 0., 0.])
 
-    dist = minimum_distance_linesegment_linesegment(a, b, c, d)
+    dist = minimum_distance_segment_segment(a, b, c, d)
 
     assert np.isclose(dist, 0.0)
 
@@ -142,7 +142,7 @@ def test_partially_overlapping():
     c = np.array([0.5, 0., 0.])
     d = np.array([1.5, 0., 0.])
 
-    dist = minimum_distance_linesegment_linesegment(a, b, c, d)
+    dist = minimum_distance_segment_segment(a, b, c, d)
 
     assert np.isclose(dist, 0.0)
 
@@ -154,7 +154,7 @@ def test_parallel_horizontal_within_range():
     c = np.array([0., 0., 1.])
     d = np.array([1., 0., 1.])
 
-    dist = minimum_distance_linesegment_linesegment(a, b, c, d)
+    dist = minimum_distance_segment_segment(a, b, c, d)
 
     assert np.isclose(dist, 1.0)
 
@@ -166,7 +166,7 @@ def test_parallel_horizontal_out_of_range():
     c = np.array([2., 0., 1.])
     d = np.array([3., 0., 1.])
 
-    dist = minimum_distance_linesegment_linesegment(a, b, c, d)
+    dist = minimum_distance_segment_segment(a, b, c, d)
 
     expected_dist = np.linalg.norm(c-b)
 
@@ -180,7 +180,7 @@ def test_parallel_horizontal_along_same_axis():
     c = np.array([2., 0., 0.])
     d = np.array([3., 0., 0.])
 
-    dist = minimum_distance_linesegment_linesegment(a, b, c, d)
+    dist = minimum_distance_segment_segment(a, b, c, d)
 
     assert np.isclose(dist, 1.0)
 
@@ -192,7 +192,7 @@ def test_parallel_vertical_within_range():
         c = np.array([0., 0., 1.])
         d = np.array([0., 1., 1.])
 
-        dist = minimum_distance_linesegment_linesegment(a, b, c, d)
+        dist = minimum_distance_segment_segment(a, b, c, d)
 
         assert np.isclose(dist, 1.0)
 
@@ -204,7 +204,7 @@ def test_parallel_vertical_out_of_range():
     c = np.array([1., 2., 0.])
     d = np.array([1., 3., 0.])
 
-    dist = minimum_distance_linesegment_linesegment(a, b, c, d)
+    dist = minimum_distance_segment_segment(a, b, c, d)
 
     expected_dist = np.linalg.norm(c - b)
 
@@ -218,7 +218,7 @@ def test_skew():
     c = np.array([0., 0., 2.])
     d = np.array([1., 0., 1.])
 
-    dist = minimum_distance_linesegment_linesegment(a, b, c, d)
+    dist = minimum_distance_segment_segment(a, b, c, d)
 
     assert np.isclose(dist, 1.0)
 

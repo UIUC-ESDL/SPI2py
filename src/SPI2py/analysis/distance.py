@@ -64,12 +64,12 @@ def signed_distances_spheres_spheres(a:        np.ndarray,
 
 
 # @njit(cache=True)
-def minimum_distance_linesegment_linesegment(a: np.ndarray,
-                                             b: np.ndarray,
-                                             c: np.ndarray,
-                                             d: np.ndarray) -> float:
+def minimum_distance_segment_segment(a: np.ndarray,
+                                     b: np.ndarray,
+                                     c: np.ndarray,
+                                     d: np.ndarray) -> float:
     """
-    Returns the minimum distance between two line segments.
+    Returns the minimum Euclidean distance between two line segments.
 
     This function also works for calculating the distance between a line segment and a point and a point and point.
 
@@ -83,6 +83,7 @@ def minimum_distance_linesegment_linesegment(a: np.ndarray,
     TODO Vectorize
     TODO Enable NJIT
     TODO Compare runtime against Scipy's cdist for moderately sized arrays
+    TODO Review publication
 
     :param a: (1,3) numpy array
     :param b: (1,3) numpy array
@@ -172,7 +173,6 @@ def minimum_signed_distance_capsule_capsule(a:        np.ndarray,
                                             c:        np.ndarray,
                                             d:        np.ndarray,
                                             cd_radii: np.ndarray) -> float:
-
     """
     Returns the minimum signed distance between two capsules.
 
@@ -190,14 +190,13 @@ def minimum_signed_distance_capsule_capsule(a:        np.ndarray,
     TODO Validate that this function works
     TODO Write unit tests
     TODO Enable NJIT
-
     """
 
     # Verify assumption 1
     assert np.all(ab_radii == ab_radii[0])
     assert np.all(cd_radii == cd_radii[0])
 
-    minimum_distance = minimum_distance_linesegment_linesegment(a, b, c, d)
+    minimum_distance = minimum_distance_segment_segment(a, b, c, d)
 
     # TODO Verify this is the correct convention
     minimum_signed_distance = minimum_distance - (ab_radii[0] + cd_radii[0])
