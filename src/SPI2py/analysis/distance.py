@@ -7,18 +7,21 @@ import numpy as np
 from numba import njit
 
 
-def euclidean_distances_of_cartesian_product(a, b):
+def minimum_distance_points_points(a: np.ndarray,
+                                   b: np.ndarray) -> float:
     """
-    Calculates the pairwise Euclidean distance between two sets of points.
+    Calculates the minimum distance between two sets of points.
 
-    Utilizes array broadcasting to calculate the pairwise distance between two sets of points.
+    This implementation utilizes array broadcasting to calculate the pairwise distance between two sets of points.
+    Specifically, it calculates the Cartesian product of the Euclidean distance for two sets of points.
 
     TODO Write unit tests with Scipy cdist
-    TODO Apply algorithmic differentiation
+    TODO Enable NJIT
+    TODO Write unit tests
 
-    :param a:
-    :param b:
-    :return:
+    :param a: Set of 3D points, (n, 3) ndarray
+    :param b: Set of 3D points, (m, 3) ndarray
+    :return: Minimum distance, float
     """
 
     c = np.linalg.norm(a[:, None, :] - b[None, :, :], axis=-1)
@@ -74,9 +77,14 @@ def min_spheres_linesegment_distance(points, a, b):
     interference=0 means tangent
     interference>0 means overlap
 
+    TODO Modify function to handle points not spheres
     TODO Modify function calls to provide a list of point(s) instead of a single point
     TODO Fix documentation
-    TODO Vectorize
+    TODO Vectorize with broadcasting
+    TODO Enable NJIT
+    TODO Compare runtime to Scipy's cdist
+    TODO Compare runtime to min_linesegment_linesegment_distance
+    TODO Write unit tests
 
     :param points: list of
     :param a: (3,)
@@ -94,10 +102,11 @@ def min_spheres_linesegment_distance(points, a, b):
     return min_distance
 
 
-def min_linesegment_linesegment_distance(a: np.ndarray,
-                                         b: np.ndarray,
-                                         c: np.ndarray,
-                                         d: np.ndarray) -> float:
+@njit
+def minimum_distance_linesegment_linesegment(a: np.ndarray,
+                                             b: np.ndarray,
+                                             c: np.ndarray,
+                                             d: np.ndarray) -> float:
     """
     Returns the minimum distance between two line segments.
 
@@ -110,8 +119,9 @@ def min_linesegment_linesegment_distance(a: np.ndarray,
     Information Processing Letters 21 (1985) 55-61
     https://doi.org/10.1016/0020-0190(85)90032-8
 
-    TODO Write Unit Tests
     TODO Vectorize
+    TODO Enable NJIT
+    TODO Compare runtime against Scipy's cdist for moderately sized arrays
 
     :param a: (1,3) numpy array
     :param b: (1,3) numpy array
@@ -125,10 +135,10 @@ def min_linesegment_linesegment_distance(a: np.ndarray,
         """
         If the number is outside the range [0,1] then clamp it to the nearest boundary.
         """
-        if num < 0:
-            return 0
-        elif num > 1:
-            return 1
+        if num < 0.:
+            return 0.
+        elif num > 1.:
+            return 1.
         else:
             return num
 
@@ -144,28 +154,28 @@ def min_linesegment_linesegment_distance(a: np.ndarray,
     den = np.dot(D1, D2) - np.square(R)
 
     # Check if one or both line segments are points
-    if D1 == 0 or D2 == 0:
+    if D1 == 0. or D2 == 0.:
 
         # Both AB and CD are points
-        if D1 == 0 and D2 == 0:
-            t = 0
-            u = 0
+        if D1 == 0. and D2 == 0.:
+            t = 0.
+            u = 0.
 
         # AB is a line segment and CD is a point
-        elif D1 != 0:
-            u = 0
+        elif D1 != 0.:
+            u = 0.
             t = S1/D1
             t = clamp_bound(t)
 
         # AB is a point and CD is a line segment
-        elif D2 != 0:
-            t = 0
+        elif D2 != 0.:
+            t = 0.
             u = -S2/D2
             u = clamp_bound(u)
 
     # Check if line segments are parallel
-    elif den == 0:
-        t = 0
+    elif den == 0.:
+        t = 0.
         u = -S2/D2
         uf = clamp_bound(u)
 
