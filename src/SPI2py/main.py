@@ -20,6 +20,7 @@ from .data.classes.systems import System, SpatialConfiguration
 # Import local packages: Analysis
 from .analysis.objectives import normalized_aggregate_gap_distance
 from .analysis.constraints import signed_distances
+from .analysis.constraints import format_constraints
 from .analysis.constraint_aggregation import kreisselmeier_steinhauser
 
 # Import local packages: Layout
@@ -136,11 +137,16 @@ class EntryPoint:
         constraint_function             = signed_distances
         constraint_aggregation_function = kreisselmeier_steinhauser
 
+        # TODO Switch config to analysis, simplify
+        nlcs = format_constraints(self.spatial_configuration,
+                                  constraint_function,
+                                  constraint_aggregation_function,
+                                  self.config['optimization'])
+
         self.result, self.design_vector_log = run_optimizer(self.spatial_configuration,
                                                             objective_function,
-                                                            constraint_function,
-                                                            constraint_aggregation_function,
-                                                            self.config['optimization'])
+                                                            nlcs,
+                                                            self.config['analysis'])
 
     def create_gif(self):
         gif_filepath = self.config['results']['GIF Filename']

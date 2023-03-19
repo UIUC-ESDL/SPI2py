@@ -9,11 +9,37 @@
 Username: Placeholder
 Problem Description: Placeholder
 
+
 data:
   placeholder: placeholder
 
+
 analysis:
-  placeholder: placeholder
+
+  # Specify whether to check for collision between specific pairs
+  check collisions:
+    components and components: true
+    components and interconnects: true
+    components and structures: false
+    interconnects and interconnects: true
+    interconnects and structures: false
+
+  # Specify which constraint function should be used
+  collision detection methods:
+    components and components: tbd
+    components and interconnects: tbd
+    components and structures: tbd
+    interconnects and interconnects: tbd
+    interconnects and structures: tbd
+
+  # 0 to 1; 0 means no collision, >0 means some collision
+  collision tolerance:
+    components and components: 0
+    components and interconnects: 0.2
+    components and structures: 0.2
+    interconnects and interconnects: 0.2
+    interconnects and structures: 0
+
 
 layout:
 
@@ -38,21 +64,6 @@ optimization:
   # Tolerances between 1e-1 and 2.5e-1 solve within a reasonable time
   convergence tolerance: 2.5e-1
 
-  # Specify whether to check for collision between specific pairs
-  check collisions:
-    components and components: true
-    components and interconnects: true
-    components and structures: false
-    interconnects and interconnects: true
-    interconnects and structures: false
-
-  # 0 to 1; 0 means no collision, >0 means some collision
-  collision tolerance:
-    components and components: 0
-    components and interconnects: 0.2
-    components and structures: 0.2
-    interconnects and interconnects: 0.2
-    interconnects and structures: 0
 
 results:
 

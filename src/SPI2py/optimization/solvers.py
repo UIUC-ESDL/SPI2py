@@ -25,6 +25,7 @@ and are not allowed to build from the source (or it just adds another level of d
 
 import numpy as np
 from scipy.optimize import minimize, NonlinearConstraint
+from ..analysis.constraints import format_constraints
 from ..analysis.constraint_aggregation import kreisselmeier_steinhauser
 import logging
 logger = logging.getLogger(__name__)
@@ -32,8 +33,7 @@ logger = logging.getLogger(__name__)
 
 def run_optimizer(layout,
                   objective_function,
-                  constraint_function,
-                  constraint_aggregation_function,
+                  nonlinear_constraints,
                   config):
     """
     This is a helper function that runs the optimization solver.
@@ -78,7 +78,7 @@ def run_optimizer(layout,
 
     :param layout:
     :param objective_function:
-    :param constraint_function:
+    :param nonlinear_constraints:
     :param config:
     :return:
     """
@@ -95,37 +95,16 @@ def run_optimizer(layout,
         design_vector_log.append(xk)
 
 
-
     # Initialize the design vector log
     # Since the log_design_vector function is nested inside this function, it can append the variable
     design_vector_log = []
 
     # Unpack the parameters
     x0 = layout.design_vector
-    object_pairs = layout.system.object_pairs
 
     # Unpack the config dictionary
     convergence_tolerance = float(config['convergence tolerance'])
-    check_collisions      = list(config['check collisions'].values())
-    collision_tolerances  = list(config['collision tolerance'].values())
 
-    # Add the applicable interference constraints
-    nlcs = []
-    if check_collisions[0] is True:
-        nlcs.append(NonlinearConstraint(lambda x: constraint_aggregation_function(constraint_function(x, layout, object_pairs[0])), -np.inf,
-                                        collision_tolerances[0]))
-    if check_collisions[1] is True:
-        nlcs.append(NonlinearConstraint(lambda x: constraint_aggregation_function(constraint_function(x, layout, object_pairs[1])), -np.inf,
-                                        collision_tolerances[1]))
-    if check_collisions[2] is True:
-        nlcs.append(NonlinearConstraint(lambda x: constraint_aggregation_function(constraint_function(x, layout, object_pairs[2])), -np.inf,
-                                        collision_tolerances[2]))
-    if check_collisions[3] is True:
-        nlcs.append(NonlinearConstraint(lambda x: constraint_aggregation_function(constraint_function(x, layout, object_pairs[3])), -np.inf,
-                                        collision_tolerances[3]))
-    if check_collisions[4] is True:
-        nlcs.append(NonlinearConstraint(lambda x: constraint_aggregation_function(constraint_function(x, layout, object_pairs[4])), -np.inf,
-                                        collision_tolerances[4]))
 
     options = {'verbose': 3}
 

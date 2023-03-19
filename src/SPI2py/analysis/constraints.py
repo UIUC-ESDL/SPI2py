@@ -5,6 +5,7 @@ This module contains functions that are used to calculate the constraint functio
 
 import numpy as np
 from .distance import distances_points_points
+from scipy.optimize import NonlinearConstraint
 
 
 def signed_distances(x, spatial_configuration, pairs):
@@ -45,3 +46,34 @@ def signed_distances(x, spatial_configuration, pairs):
     all_signed_distances = np.concatenate(all_signed_distances, axis=0)
 
     return all_signed_distances
+
+def format_constraints(layout,
+                       constraint_function,
+                       constraint_aggregation_function,
+                       config):
+
+    object_pairs = layout.system.object_pairs
+
+    # Unpack the config dictionary
+    check_collisions      = list(config['check collisions'].values())
+    collision_tolerances  = list(config['collision tolerance'].values())
+
+    # Add the applicable interference constraints
+    nlcs = []
+    if check_collisions[0] is True:
+        nlcs.append(NonlinearConstraint(lambda x: constraint_aggregation_function(constraint_function(x, layout, object_pairs[0])), -np.inf,
+                                        collision_tolerances[0]))
+    if check_collisions[1] is True:
+        nlcs.append(NonlinearConstraint(lambda x: constraint_aggregation_function(constraint_function(x, layout, object_pairs[1])), -np.inf,
+                                        collision_tolerances[1]))
+    if check_collisions[2] is True:
+        nlcs.append(NonlinearConstraint(lambda x: constraint_aggregation_function(constraint_function(x, layout, object_pairs[2])), -np.inf,
+                                        collision_tolerances[2]))
+    if check_collisions[3] is True:
+        nlcs.append(NonlinearConstraint(lambda x: constraint_aggregation_function(constraint_function(x, layout, object_pairs[3])), -np.inf,
+                                        collision_tolerances[3]))
+    if check_collisions[4] is True:
+        nlcs.append(NonlinearConstraint(lambda x: constraint_aggregation_function(constraint_function(x, layout, object_pairs[4])), -np.inf,
+                                        collision_tolerances[4]))
+
+    return nlcs
