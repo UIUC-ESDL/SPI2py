@@ -2,10 +2,8 @@
 
 """
 
-import numpy as np
-
-from ..spherical_decomposition import generate_rectangular_prisms
-from .objects import Component, Port, Interconnect, InterconnectNode, InterconnectEdge, Structure
+from SPI2py.data.shape_generation.spherical_decomposition import generate_rectangular_prisms
+from .objects import Component, Port, Interconnect, Structure
 
 
 def create_components(inputs):
