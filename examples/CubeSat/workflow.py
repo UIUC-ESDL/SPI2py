@@ -14,62 +14,97 @@ directory = os.path.dirname(__file__) + '/'
 
 # %% Import the SPI2py library
 
-# EntryPoint is the main class for interacting with the SPI2py library
-from SPI2py import EntryPoint
+# # EntryPoint is the main class for interacting with the SPI2py library
+# from SPI2py import EntryPoint
+#
+# # Initialize the EntryPoint class with your current working directory and input files
+# demo = EntryPoint(directory=directory,
+#                   input_file='input.yaml')
+#
+# # Define the username and problem description
+# demo.config['Username'] = 'Chad Peterson'
+# demo.config['Problem Description'] = 'Simple optimization of a 3D layout'
+#
+# # %% Map the system to a single spatial configuration
+#
+# # Define the initial design vector
+# component_0_position = np.array([-3., -4.41, -0.24, 0., 0., 0.])
+# component_1_position = np.array([2., 4.41, 0.24, 0., 0., 0.])
+# component_2_position = np.array([5, -3, -1, 0., 0., 0.])
+# component_3_position = np.array([-3., -1., 3., 0., 0., 0.])
+#
+# interconnect_0_node_0_position = np.array([-3., -2., 2.])
+# interconnect_0_node_1_position = np.array([-1., 0., 2.])
+# interconnect_1_node_0_position = np.array([4., 0., 1.])
+#
+# initial_design_vector = np.concatenate((component_0_position,
+#                                         component_1_position,
+#                                         component_2_position,
+#                                         component_3_position,
+#                                         interconnect_0_node_0_position,
+#                                         interconnect_0_node_1_position,
+#                                         interconnect_1_node_0_position))
+#
+# # noinspection DuplicatedCode
+# demo.generate_spatial_configuration(method='manual', inputs=initial_design_vector)
+#
+# # Plot initial spatial configuration
+# demo.spatial_configuration.plot()
+#
+# # %% Perform gradient-based optimization
+#
+# demo.optimize_spatial_configuration()
+#
+# # %% Post-processing
+#
+# # Plot the final spatial configuration
+# positions_dict = demo.spatial_configuration.calculate_positions(demo.result.x)
+# demo.spatial_configuration.set_positions(positions_dict)
+# demo.spatial_configuration.plot()
+#
+# # Generate GIF animation; caution uncommenting this function call will increase runtime
+# # demo.create_gif()
+#
+# # Write output file
+# demo.create_report()
+#
+# # Print the log to see the optimization results and if any warnings or errors occurred
+# demo.print_log()
 
-# Initialize the EntryPoint class with your current working directory, and the config & input files
-demo = EntryPoint(directory=directory,
-                  input_file='input.yaml')
+from numba import njit
+from SPI2py.analysis.distance import minimum_distance_segment_segment
 
-# Define the username and problem description
-demo.config['Username'] = 'Chad Peterson'
-demo.config['Problem Description'] = 'Simple optimization of a 3D layout'
+a = np.array([0., 0., 0.])
+b = np.array([1., 0., 0.])
+c = np.array([0.5, 0., 0.])
+d = np.array([1.5, 0., 0.])
 
-# %% Map the system to a single spatial configuration
+dist, _ = minimum_distance_segment_segment(a, b, c, d)
 
-# Define the initial design vector
-# In this example, all components and structures are static.
-# Therefore, the only design variables are the 3D positions of the interconnect waypoints (waypoints can't rotate).
-# Note: For now, the order of the waypoints must be the same as the order in the input file.
-# Below, interconnect 0 has 2 waypoints, and interconnect 1 has 1 waypoint.
-component_0_position = np.array([-3., -4.41, -0.24, 0., 0., 0.])
-component_1_position = np.array([2., 4.41, 0.24, 0., 0., 0.])
-component_2_position = np.array([5, -3, -1, 0., 0., 0.])
-component_3_position = np.array([-3., -1., 3., 0., 0., 0.])
+print('dist = {}'.format(dist))
 
-interconnect_0_node_0_position = np.array([-3., -2., 2.])
-interconnect_0_node_1_position = np.array([-1., 0., 2.])
-interconnect_1_node_0_position = np.array([4., 0., 1.])
+# @njit
+# def try_dot(a, b):
+#
+#     return np.dot(a, b)
 
-initial_design_vector = np.concatenate((component_0_position,
-                                        component_1_position,
-                                        component_2_position,
-                                        component_3_position,
-                                        interconnect_0_node_0_position,
-                                        interconnect_0_node_1_position,
-                                        interconnect_1_node_0_position))
+# @njit
+# def try_t(a):
+#     return a.T
+#
+#
+# try_t(a)
 
-demo.generate_spatial_configuration(method='manual', inputs=initial_design_vector)
+# print(try_dot(a,b))
 
-# Plot initial spatial configuration
-demo.spatial_configuration.plot()
+# a = np.array([0., 0., 0.])
+# b = np.array([0., 1., 0.])
+# c = np.array([0., 0., 1.])
+# d = np.array([0., 1., 1.])
+#
+# dist = minimum_distance_segment_segment(a, b, c, d)
 
-# %% Perform gradient-based optimization
 
-demo.optimize_spatial_configuration()
 
-# %% Post-processing
 
-# Plot the final spatial configuration
-positions_dict = demo.spatial_configuration.calculate_positions(demo.result.x)
-demo.spatial_configuration.set_positions(positions_dict)
-demo.spatial_configuration.plot()
 
-# Generate GIF animation; caution uncommenting this function call will increase runtime
-# demo.create_gif()
-
-# Write output file
-demo.create_report()
-
-# Print the log to see the optimization results and if any warnings or errors occurred
-demo.print_log()

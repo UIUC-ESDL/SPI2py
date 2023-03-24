@@ -5,6 +5,7 @@ Provides functions to calculate the distance between classes in various ways.
 
 import numpy as np
 from numba import njit
+from typing import Union
 
 
 # @njit(cache=True)
@@ -63,11 +64,11 @@ def signed_distances_spheres_spheres(a:        np.ndarray,
     return signed_distances
 
 
-# @njit(cache=True)
+@njit(cache=True)
 def minimum_distance_segment_segment(a: np.ndarray,
                                      b: np.ndarray,
                                      c: np.ndarray,
-                                     d: np.ndarray) -> float:
+                                     d: np.ndarray) -> tuple[float, np.ndarray]:
     """
     Returns the minimum Euclidean distance between two line segments.
 
@@ -104,7 +105,6 @@ def minimum_distance_segment_segment(a: np.ndarray,
     (12):
 
     TODO Vectorize
-    TODO Enable NJIT
     TODO Compare runtime against Scipy's cdist for moderately sized arrays
     TODO Review publication
 
@@ -136,7 +136,7 @@ def minimum_distance_segment_segment(a: np.ndarray,
     S1  = np.dot(d1, d12.T)
     S2  = np.dot(d2, d12.T)
     R   = np.dot(d1, d2.T)
-    den = np.dot(D1, D2) - np.square(R)
+    den = D1 * D2 - R**2
 
     # Check if one or both line segments are points
     if D1 == 0. or D2 == 0.:
@@ -185,9 +185,10 @@ def minimum_distance_segment_segment(a: np.ndarray,
 
             u = uf
 
-    dist = np.linalg.norm(d1*t - d2*u - d12)
+    min_dist          = np.linalg.norm(d1*t - d2*u - d12)
+    min_dist_position = a + d1*t
 
-    return dist
+    return min_dist, min_dist_position
 
 
 def minimum_signed_distance_capsule_capsule(a:        np.ndarray,
@@ -219,7 +220,7 @@ def minimum_signed_distance_capsule_capsule(a:        np.ndarray,
     assert np.all(ab_radii == ab_radii[0])
     assert np.all(cd_radii == cd_radii[0])
 
-    minimum_distance = minimum_distance_segment_segment(a, b, c, d)
+    minimum_distance, _ = minimum_distance_segment_segment(a, b, c, d)
 
     # TODO Verify this is the correct convention
     minimum_signed_distance = minimum_distance - (ab_radii[0] + cd_radii[0])
