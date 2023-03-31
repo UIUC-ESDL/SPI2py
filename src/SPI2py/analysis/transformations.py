@@ -79,3 +79,12 @@ def rotate_about_point(positions, rotation):
 
     return new_positions
 
+
+# TODO
+
+# from scipy.spatial.transform import Rotation
+# def affine_transform(translation: np.ndarray, rotation: np.ndarray) -> np.ndarray:
+#       transform_matrix = np.eye(4)
+#       transform_matrix[:3, :3] = Rotation.from_rotvec(rotation).as_matrix()
+#       transform_matrix[:3, 3] = translation
+#       return transform_matrix

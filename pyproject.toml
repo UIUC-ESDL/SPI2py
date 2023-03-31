@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "SPI2py"
-version = "0.0.1"
+version = "0.1.0"
 authors = [
   { name="Chad Peterson", email="cp44@illinois.edu" },
 ]
@@ -20,20 +20,31 @@ classifiers = [
 ]
 
 dependencies = [
-"scipy~=1.9.0", 
-"networkx~=2.8.5", 
-"matplotlib==3.5.3", 
-"PyYAML~=6.0",
-"numpy<=1.22.4",
-"numba>=0.56.0",
-"imageio>=2.21.1",
-"pytest",
-"sphinx",
+    "scipy~=1.9.0",
+    "networkx~=2.8.5",
+    "matplotlib",
+    "PyYAML",
+    "numpy<=1.22.4",
+    "numba>=0.56.0",
+    "imageio>=2.21.1",
+    "jupyter",
+    "nbconvert",
+]
+
+[project.optional-dependencies]
+test = [
+    "pytest",
+]
+doc = [
+    "sphinx",
 ]
 
 [tool.pytest.ini_options]
 pythonpath = [
-  ".","src/","src/SPI2Py/","src/SPI2Py/utils/",
+    ".",
+    "src/",
+    "src/SPI2py/",
+    "src/SPI2py/utils/",
 ]
 
 [project.urls]

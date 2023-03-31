@@ -5,7 +5,7 @@ or thousands of constraints. These functions are used to aggregate the constrain
 way that is differentiable and continuous.
 """
 
-import numpy as np
+import autograd.numpy as np
 
 
 def kreisselmeier_steinhauser(g, rho=100):
@@ -50,7 +50,7 @@ def p_norm(g, rho=3):
     return g_bar_pn
 
 
-def induced_exponential_function(g, rho=3):
+def induced_exponential(g, rho=3):
     """
     The induced exponential function method for constraint aggregation.
 
@@ -66,7 +66,7 @@ def induced_exponential_function(g, rho=3):
     return g_bar_ie
 
 
-def induced_power_function(g, rho=3):
+def induced_power(g, rho=3):
     """
     The induced power function method for constraint aggregation.
 

@@ -3,35 +3,56 @@
 Provides functions to calculate the distance between classes in various ways.
 """
 
-import numpy as np
+import autograd.numpy as np
 from numba import njit
 from typing import Union
+from autograd import grad
 
-
-# @njit(cache=True)
 def distances_points_points(a: np.ndarray,
                             b: np.ndarray) -> np.ndarray:
     """
-    Calculates the pairwise distance between two sets of points.
+    Calculates the pairwise distance between two sets of 3D points.
 
     This implementation utilizes array broadcasting to calculate the pairwise distance between two sets of points.
-    Specifically, it calculates the Cartesian product of the Euclidean distance for two sets of points.
+    Specifically, it uses array broadcasting to generate the outer (Cartesian) product of each set of points. It then
+    calculates the elementwise Euclidean distance between the two outer product matrices (the norm of a_i - b_i).
 
-    TODO Write unit tests with Scipy cdist
-    TODO Enable NJIT
-    TODO Write unit tests
+    Example:
+
+    a = np.array([[11, 12, 13], [21, 22, 23], [31, 32, 33]])
+    b = np.array([[41, 42, 43], [51, 52, 53]])
+
+    aa = a[:, None, :] = array([[[11, 12, 13]],
+                                [[21, 22, 23]],
+                                [[31, 32, 33]]])
+
+    bb = b[None, :, :] = array([[[41, 42, 43],
+                                 [51, 52, 53]]])
+
+    c = np.linalg.norm(aa - bb, axis=-1) = array([[[-30, -30, -30],
+                                                   [-40, -40, -40]],
+                                                  [[-20, -20, -20],
+                                                   [-30, -30, -30]],
+                                                  [[-10, -10, -10],
+                                                   [-20, -20, -20]]])
 
     :param a: Set of 3D points, (-1, 3) ndarray
     :param b: Set of 3D points, (-1, 3) ndarray
     :return: Euclidean distances, (-1,) np.ndarray
     """
 
-    c = np.linalg.norm(a[:, None, :] - b[None, :, :], axis=-1)
+    # Reshape the arrays for broadcasting
+    aa = a.reshape(-1, 1, 3)
+    bb = b.reshape(1, -1, 3)
 
-    return c.reshape(-1)
+    c = np.linalg.norm(aa-bb, axis=-1)
+
+    # Reshape the output to a 1D array
+    c.reshape(-1)
+
+    return c
 
 
-# @njit(cache=True)
 def signed_distances_spheres_spheres(a:        np.ndarray,
                                      a_radii:  np.ndarray,
                                      b:        np.ndarray,
@@ -45,7 +66,6 @@ def signed_distances_spheres_spheres(a:        np.ndarray,
     Signed Distance > 0 means overlap
 
     TODO Write unit tests
-    TODO Enable NJIT
     TODO Reformat Radii shape so we don't have to keep reshaping it
     TODO Update constraint functions to use this function
 
@@ -105,8 +125,6 @@ def minimum_distance_segment_segment(a: np.ndarray,
     (12):
 
     TODO Vectorize
-    TODO Compare runtime against Scipy's cdist for moderately sized arrays
-    TODO Review publication
 
     :param a: (1,3) numpy array
     :param b: (1,3) numpy array

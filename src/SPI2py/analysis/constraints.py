@@ -4,7 +4,7 @@ This module contains functions that are used to calculate the constraint functio
 """
 
 import numpy as np
-from .distance import distances_points_points
+from .distance import distances_points_points, signed_distances_spheres_spheres
 from scipy.optimize import NonlinearConstraint
 
 

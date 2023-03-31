@@ -17,11 +17,14 @@ from .data.classes.class_constructors import create_components, create_ports, cr
 from .data.classes.objects import Component, Port, Interconnect, InterconnectNode, InterconnectEdge, Structure
 from .data.classes.systems import System, SpatialConfiguration
 
-# Import local packages: Analysis
-from .analysis.objectives import normalized_aggregate_gap_distance
-from .analysis.constraints import signed_distances
-from .analysis.constraints import format_constraints
-from .analysis.constraint_aggregation import kreisselmeier_steinhauser
+# Import local packages: Analysis Objectives
+from .analysis import normalized_aggregate_gap_distance
+
+# Import local packages: Analysis Constraints
+from .analysis import signed_distances, format_constraints
+
+
+from .analysis import kreisselmeier_steinhauser, p_norm, induced_exponential, induced_power
 
 # Import local packages: Layout
 from .layout.generation_methods import generate_random_layout
