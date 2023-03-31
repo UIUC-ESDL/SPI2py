@@ -37,11 +37,15 @@ def signed_distances(x, spatial_configuration, pairs):
         positions_b = positions_dict[str(obj2)][0]
         radii_b = positions_dict[str(obj2)][1]
 
-        # TODO Reformat Radii shape so we don't have to keep reshaping it
-        dPositions = distances_points_points(positions_a, positions_b)
-        dRadii     = distances_points_points(radii_a.reshape(-1, 1), radii_b.reshape(-1, 1))
+        # # TODO Reformat Radii shape so we don't have to keep reshaping it
+        # dPositions = distances_points_points(positions_a, positions_b)
+        # dRadii     = distances_points_points(radii_a.reshape(-1, 1), radii_b.reshape(-1, 1))
+        #
+        # all_signed_distances.append(dRadii - dPositions)
+        signed_distances = signed_distances_spheres_spheres(positions_a, radii_a, positions_b, radii_b).flatten()
 
-        all_signed_distances.append(dRadii - dPositions)
+
+        all_signed_distances.append(signed_distances)
 
     all_signed_distances = np.concatenate(all_signed_distances, axis=0)
 
@@ -55,8 +59,8 @@ def format_constraints(layout,
     object_pairs = layout.system.object_pairs
 
     # Unpack the config dictionary
-    check_collisions      = list(config['check collisions'].values())
-    collision_tolerances  = list(config['collision tolerance'].values())
+    check_collisions      = list(config['analysis']['check collisions'].values())
+    collision_tolerances  = list(config['analysis']['collision tolerance'].values())
 
     # Add the applicable interference constraints
     nlcs = []

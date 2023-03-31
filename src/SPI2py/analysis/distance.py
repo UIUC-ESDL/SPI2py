@@ -41,9 +41,17 @@ def distances_points_points(a: np.ndarray,
     :return: Euclidean distances, (-1,) np.ndarray
     """
 
-    # Reshape the arrays for broadcasting
-    aa = a.reshape(-1, 1, 3)
-    bb = b.reshape(1, -1, 3)
+    # # Reshape the arrays for broadcasting
+
+    # Radii
+    if a.shape[1] != 3 or b.shape[1] != 3:
+        aa = a.reshape(-1, 1, 1)
+        bb = b.reshape(1, -1, 1)
+
+    # Points
+    else:
+        aa = a.reshape(-1, 1, 3)
+        bb = b.reshape(1, -1, 3)
 
     c = np.linalg.norm(aa-bb, axis=-1)
 
@@ -67,7 +75,6 @@ def signed_distances_spheres_spheres(a:        np.ndarray,
 
     TODO Write unit tests
     TODO Reformat Radii shape so we don't have to keep reshaping it
-    TODO Update constraint functions to use this function
 
     :param a: Set of 3D points, (-1, 3) ndarray
     :param a_radii: Set of radii, (-1) ndarray
@@ -76,10 +83,14 @@ def signed_distances_spheres_spheres(a:        np.ndarray,
     :return: Signed distance, float
     """
 
+    # Reshape radii
+
     delta_positions = distances_points_points(a, b)
     delta_radii     = distances_points_points(a_radii.reshape(-1, 1), b_radii.reshape(-1, 1))
 
     signed_distances = delta_radii - delta_positions
+
+    signed_distances.flatten()
 
     return signed_distances
 

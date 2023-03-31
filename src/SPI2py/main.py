@@ -144,12 +144,12 @@ class EntryPoint:
         nlcs = format_constraints(self.spatial_configuration,
                                   constraint_function,
                                   constraint_aggregation_function,
-                                  self.config['optimization'])
+                                  self.config)
 
         self.result, self.design_vector_log = run_optimizer(self.spatial_configuration,
                                                             objective_function,
                                                             nlcs,
-                                                            self.config['analysis'])
+                                                            self.config)
 
     def create_gif(self):
         gif_filepath = self.config['results']['GIF Filename']

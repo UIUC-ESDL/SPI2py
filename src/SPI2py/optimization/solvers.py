@@ -103,7 +103,7 @@ def run_optimizer(layout,
     x0 = layout.design_vector
 
     # Unpack the config dictionary
-    convergence_tolerance = float(config['convergence tolerance'])
+    convergence_tolerance = float(config['optimization']['convergence tolerance'])
 
 
     options = {'verbose': 3}
@@ -111,7 +111,7 @@ def run_optimizer(layout,
     # Run the solver
     res = minimize(lambda x: objective_function(x, layout), x0,
                    method='trust-constr',
-                   constraints=nlcs,
+                   constraints=nonlinear_constraints,
                    tol=convergence_tolerance,
                    options=options,
                    callback=log_design_vector,
