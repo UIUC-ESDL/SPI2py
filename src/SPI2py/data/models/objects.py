@@ -16,7 +16,7 @@ from matplotlib import colors as mcolors
 logger = logging.getLogger(__name__)
 
 
-class Object:
+class Geometry:
     """
     The Object class is the parent class for all objects in the layout.
 
@@ -24,37 +24,12 @@ class Object:
     """
 
     def __init__(self,
-                 name:               str,
                  positions:          np.ndarray,
-                 radii:              np.ndarray,
-                 color:              Union[str, list[str]],
-                 movement_class:     str,
-                 constraints:        Union[None, dict],
-                 degrees_of_freedom: Union[list[int], None] = ('x', 'y', 'z', 'rx', 'ry', 'rz'),
-                 static_position:    Union[str, None]       = None):
+                 radii:              np.ndarray):
 
-        self.name               = self._validate_name(name)
         self.positions          = self._validate_positions(positions)
         self.radii              = self._validate_radii(radii)
-        self.color              = self._validate_colors(color)
-        self.movement_class     = self._validate_movement_class(movement_class)
-        self.constraints        = self._validate_constraints(constraints)
-        self.degrees_of_freedom = self._validate_degrees_of_freedom(degrees_of_freedom)
-        self.static_position    = static_position
-
         self.rotation = np.zeros(3)
-
-        if degrees_of_freedom is not None:
-            self.three_d_translation = all([dof in self.degrees_of_freedom for dof in ['x', 'y', 'z']])
-            self.three_d_rotation = all([dof in self.degrees_of_freedom for dof in ['rx', 'ry', 'rz']])
-
-    @staticmethod
-    def _validate_name(name: str) -> str:
-
-        if not isinstance(name, str):
-            raise TypeError('Name must be a string not %s.' % type(name))
-
-        return name
 
     def _validate_positions(self, positions: np.ndarray) -> np.ndarray:
 
@@ -99,6 +74,74 @@ class Object:
             raise ValueError('There must be 1 radius for each position row for %s.' % self.name)
 
         return radii
+
+
+
+    @property
+    def reference_position(self):
+        return self.positions[0]
+
+    # @property
+    # def design_vector(self):
+    #     """
+    #     TODO Provide a method to reduce the design vector (e.g., not translation along z axis)
+    #     :return:
+    #     """
+    #
+    #     if self.three_d_translation is True and self.three_d_rotation is not True:
+    #         design_vector = self.reference_position
+    #
+    #     elif self.three_d_translation is True and self.three_d_rotation is True:
+    #         design_vector = np.concatenate((self.reference_position, self.rotation))
+    #
+    #     else:
+    #         logger.warning('This object is fixed')
+    #         design_vector = None
+    #
+    #     return design_vector
+
+
+
+
+class Movement:
+    pass
+
+class Material:
+    pass
+
+class Object(Geometry, Movement, Material):
+
+    def __init__(self,
+                 name: str,
+                 positions: np.ndarray,
+                 radii: np.ndarray,
+                 color: Union[str, list[str]],
+                 movement_class: str,
+                 constraints: Union[None, dict],
+                 degrees_of_freedom: Union[list[int], None] = ('x', 'y', 'z', 'rx', 'ry', 'rz'),
+                 static_position: Union[str, None] = None):
+
+        Geometry.__init__(self, positions, radii)
+        Movement.__init__(self)
+        Material.__init__(self)
+
+        self.name = self._validate_name(name)
+        self.color = self._validate_colors(color)
+        self.movement_class = self._validate_movement_class(movement_class)
+        self.constraints = self._validate_constraints(constraints)
+        self.degrees_of_freedom = self._validate_degrees_of_freedom(degrees_of_freedom)
+        self.static_position = static_position
+
+        if degrees_of_freedom is not None:
+            self.three_d_translation = all([dof in self.degrees_of_freedom for dof in ['x', 'y', 'z']])
+            self.three_d_rotation = all([dof in self.degrees_of_freedom for dof in ['rx', 'ry', 'rz']])
+
+    @staticmethod
+    def _validate_name(name: str) -> str:
+        if not isinstance(name, str):
+            raise TypeError('Name must be a string not %s.' % type(name))
+
+        return name
 
     def _validate_color(self, color):
 
@@ -198,30 +241,6 @@ class Object:
     def __str__(self):
         return self.name
 
-    @property
-    def reference_position(self):
-        return self.positions[0]
-
-    # @property
-    # def design_vector(self):
-    #     """
-    #     TODO Provide a method to reduce the design vector (e.g., not translation along z axis)
-    #     :return:
-    #     """
-    #
-    #     if self.three_d_translation is True and self.three_d_rotation is not True:
-    #         design_vector = self.reference_position
-    #
-    #     elif self.three_d_translation is True and self.three_d_rotation is True:
-    #         design_vector = np.concatenate((self.reference_position, self.rotation))
-    #
-    #     else:
-    #         logger.warning('This object is fixed')
-    #         design_vector = None
-    #
-    #     return design_vector
-
-
     def calculate_static_positions(self, positions_dict):
 
         positions_dict[str(self)] = (self.positions, self.radii)
@@ -279,7 +298,7 @@ class Object:
         3. "colinear with offset" (not implemented)
         """
 
-        def offset_translation_and_rotation_(self,positions_dict):
+        def offset_translation_and_rotation_(self, positions_dict):
             # TODO Remove design vector argument
             # Get the reference point
             reference_point = positions_dict[self.component_name][0][0]
@@ -334,7 +353,6 @@ class Object:
         """
 
         self.positions, self.radii = positions_dict[self.name]
-
 
 class Port(Object):
 
@@ -402,7 +420,7 @@ class Component(Object):
                  positions:             np.ndarray,
                  radii:                 np.ndarray,
                  color:                 Union[str, list[str]],
-                 movement_class:        str = 'independent',
+                 movement_class:        str                     = 'independent',
                  constraints:           Union[None, tuple[str]] = None,
                  degrees_of_freedom:    Union[tuple[str], None] = ('x', 'y', 'z', 'rx', 'ry', 'rz'),
                  static_position:       Union[np.ndarray, None] = None):
