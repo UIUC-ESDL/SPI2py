@@ -10,7 +10,7 @@ from datetime import datetime
 
 import yaml
 
-from .analysis import kreisselmeier_steinhauser
+from .analysis import kreisselmeier_steinhauser, p_norm, induced_exponential, induced_power
 from .analysis import normalized_aggregate_gap_distance
 from .analysis import signed_distances, format_constraints
 from .data.models.class_constructors import create_components, create_ports, create_interconnects, create_structures
@@ -86,7 +86,6 @@ class Data:
         return system
 
 
-
 class Layout:
     """
     Layout class for interacting with the SPI2py API.
@@ -142,25 +141,26 @@ class Optimize:
     """
     Optimize class for interacting with the SPI2py API.
     """
+    def __init__(self):
+        self._spatial_configuration = None
 
-    def optimize_spatial_configuration(self):
-        # TODO Add ability to choose objective function
-        objective_function = normalized_aggregate_gap_distance
-
-        # TODO Add ability to choose constraint functions
-        constraint_function = signed_distances
-        constraint_aggregation_function = kreisselmeier_steinhauser
+    def _optimize_spatial_configuration(self,
+                                        spatial_configuration,
+                                        objective_function,
+                                        constraint_function,
+                                        constraint_aggregation_function,
+                                        config):
 
         # TODO Switch config to analysis, simplify
-        nlcs = format_constraints(self.spatial_configuration,
+        nlcs = format_constraints(spatial_configuration,
                                   constraint_function,
                                   constraint_aggregation_function,
-                                  self.config)
+                                  config)
 
-        self.result, self.design_vector_log = run_optimizer(self.spatial_configuration,
+        self.result, self.design_vector_log = run_optimizer(spatial_configuration,
                                                             objective_function,
                                                             nlcs,
-                                                            self.config)
+                                                            config)
 
 
 class Result:
@@ -232,6 +232,48 @@ class EntryPoint(Data, Layout, Analysis, Optimize, Result):
     def create_spatial_configuration(self, method, inputs=None):
         self._create_spatial_configuration(self.system, method, inputs)
 
+    def optimize_spatial_configuration(self,
+                                       objective_function,
+                                       constraint_function,
+                                       constraint_aggregation_function):
+
+        # Set the objective function
+        if objective_function == 'normalized aggregate gap distance':
+            _objective_function = normalized_aggregate_gap_distance
+        else:
+            raise NotImplementedError
+
+        # Set the constraint function
+        if constraint_function == 'signed distances':
+            _constraint_function = signed_distances
+        else:
+            raise NotImplementedError
+
+        # Set the constraint aggregation function if applicable
+        if constraint_aggregation_function == 'kreisselmeier steinhauser':
+            _constraint_aggregation_function = kreisselmeier_steinhauser
+
+        elif constraint_aggregation_function == 'P-norm':
+            _constraint_aggregation_function = p_norm
+
+        elif constraint_aggregation_function == 'induced exponential':
+            _constraint_aggregation_function = induced_exponential
+
+        elif constraint_aggregation_function == 'induced power':
+            _constraint_aggregation_function = induced_power
+
+        elif constraint_aggregation_function == 'None':
+            # TODO Add the ability to not use a constraint aggregation function
+            raise NotImplementedError
+
+        else:
+            raise NotImplementedError
+
+        self._optimize_spatial_configuration(self.spatial_configuration,
+                                             _objective_function,
+                                             _constraint_function,
+                                             _constraint_aggregation_function,
+                                             self.config)
 
 
 

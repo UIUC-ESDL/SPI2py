@@ -52,7 +52,9 @@ demo.spatial_configuration.plot()
 
 # %% Perform gradient-based optimization
 
-demo.optimize_spatial_configuration()
+demo.optimize_spatial_configuration(objective_function='normalized aggregate gap distance',
+                                    constraint_function='signed distances',
+                                    constraint_aggregation_function='induced exponential')
 
 # %% Post-processing
 
