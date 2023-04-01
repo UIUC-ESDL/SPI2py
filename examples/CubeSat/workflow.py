@@ -12,7 +12,7 @@ from SPI2py import EntryPoint
 directory = os.path.dirname(__file__) + '/'
 
 # Initialize the EntryPoint class with your current working directory and input files
-demo = EntryPoint(directory=directory, input_file='input.yaml')
+demo = EntryPoint(directory=directory)
 
 demo.add_component(name='control_valve_1',
                    color='aquamarine',
@@ -124,24 +124,24 @@ demo.create_spatial_configuration(method='manual',
 # Plot initial spatial configuration
 demo.spatial_configuration.plot()
 
-# # Perform gradient-based optimization
-#
-# demo.optimize_spatial_configuration(objective_function='normalized aggregate gap distance',
-#                                     constraint_function='signed distances',
-#                                     constraint_aggregation_function='induced exponential')
-#
-# # Post-processing
-#
-# # Plot the final spatial configuration
-# positions_dict = demo.spatial_configuration.calculate_positions(demo.result.x)
-# demo.spatial_configuration.set_positions(positions_dict)
-# demo.spatial_configuration.plot()
-#
-# # Generate GIF animation; caution uncommenting this function call will increase runtime
-# # demo.create_gif()
-#
-# # Write output file
-# demo.create_report()
-#
-# # Print the log to see the optimization results and if any warnings or errors occurred
-# demo.print_log()
+# Perform gradient-based optimization
+
+demo.optimize_spatial_configuration(objective_function='normalized aggregate gap distance',
+                                    constraint_function='signed distances',
+                                    constraint_aggregation_function='induced exponential')
+
+# Post-processing
+
+# Plot the final spatial configuration
+positions_dict = demo.spatial_configuration.calculate_positions(demo.result.x)
+demo.spatial_configuration.set_positions(positions_dict)
+demo.spatial_configuration.plot()
+
+# Generate GIF animation; caution uncommenting this function call will increase runtime
+# demo.create_gif()
+
+# Write output file
+demo.create_report()
+
+# Print the log to see the optimization results and if any warnings or errors occurred
+demo.print_log()
