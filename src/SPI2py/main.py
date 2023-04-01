@@ -59,6 +59,42 @@ class Data:
             inputs = yaml.safe_load(f)
         return inputs
 
+    # def add_object(self, object_type, **kwargs):
+    #     """
+    #     Add an object to the system.
+    #
+    #     :param object_type: str
+    #     :param object_name: str
+    #     :param object_parameters: dict
+    #     :return:
+    #     """
+    #     if object_type == 'component':
+    #         self._component_inputs[object_name] = object_parameters
+    #     elif object_type == 'port':
+    #         self._port_inputs[object_name] = object_parameters
+    #     elif object_type == 'interconnect':
+    #         self._interconnect_inputs[object_name] = object_parameters
+    #     elif object_type == 'structure':
+    #         self._structure_inputs[object_name] = object_parameters
+    #     else:
+    #         raise ValueError('Invalid object type.')
+    #
+    #     # Update the system
+    #     self.system = self.create_system()
+
+    # def create_component(self, component_name, component_parameters):
+    #     """
+    #     Add a component to the system.
+    #
+    #     :param component_name: str
+    #     :param component_parameters: dict
+    #     :return:
+    #     """
+    #     self._component_inputs[component_name] = component_parameters
+    #
+    #     # Update the system
+    #     self.system = self.create_system()
+
     def initialize_logger(self):
         logging.basicConfig(filename=self.logger_name, encoding='utf-8', level=logging.INFO, filemode='w')
 

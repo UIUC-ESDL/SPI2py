@@ -15,6 +15,30 @@ directory = os.path.dirname(__file__) + '/'
 # Initialize the EntryPoint class with your current working directory and input files
 demo = EntryPoint(directory=directory, input_file='input.yaml')
 
+demo.add_component(name='control_valve_1',
+                   color='aquamarine',
+                   movement_class='static',
+                   position=[-3., -4.41, -0.24, 0., 0., 0.],
+                   shapes=[{'type': 'box', 'origin': [0,0,0], 'dimensions': [2,2,2], 'rotation': [0,0,0]},
+                           {'type': 'box', 'origin': [1,0,0], 'dimensions': [2,2,2], 'rotation': [0,0,0]},
+                           {'type': 'box', 'origin': [2,0,0], 'dimensions': [2,2,2], 'rotation': [0,0,0]}])
+
+demo.add_component(name='actuator_1',
+                   color='orange',
+                   movement_class='static',
+                   position=[2., 4.41, 0.24, 0., 0., 0.],
+                   shapes=[{'type': 'box', 'origin': [-3,0,-6], 'dimensions': [3,3,1.5], 'rotation': [0,0,0]},
+                           {'type': 'box', 'origin': [-3,0,-4.5], 'dimensions': [3,3,1.5], 'rotation': [0,0,0]},
+                           {'type': 'box', 'origin': [-3,0,-3], 'dimensions': [3,3,1.5], 'rotation': [0,0,0]},
+                           {'type': 'box', 'origin': [-1,-0.5,-1], 'dimensions': [1,1,5], 'rotation': [0,0,0]}])
+
+demo.add_component(name='component_2',
+                   color='indigo',
+                   movement_class='static',
+                   position=[5, -3, -1, 0., 0., 0.],
+                   shapes=[{'type': 'box', 'origin': [0,0,0], 'dimensions': [1,3,3], 'rotation': [0,0,0]}])
+
+
 # Define the username and problem description
 demo.config['Username'] = 'Chad Peterson'
 demo.config['Problem Description'] = 'Simple optimization of a 3D layout'

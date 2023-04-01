@@ -26,6 +26,8 @@ def plot_objects(plot_array, savefig, directory, config):
 
     [[positions_1, radii_1, color_1],[],... ]
 
+    TODO Overlay the plot with the original image
+
     :param plot_array:
     :param savefig:
     :param directory:
@@ -47,7 +49,9 @@ def plot_objects(plot_array, savefig, directory, config):
             sphere = pv.Sphere(radius=radius, center=list(position))
             p.add_mesh(sphere, color=color)
 
-
+    p.view_vector((5.0, 2, 3))
+    p.add_floor('-z', lighting=True, color='tan', pad=1.0)
+    p.enable_shadows()
     p.show()
 
 
