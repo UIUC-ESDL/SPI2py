@@ -23,32 +23,97 @@ from .analysis import normalized_aggregate_gap_distance
 # Import local packages: Analysis Constraints
 from .analysis import signed_distances, format_constraints
 
-
+# Import local packages: Analysis Constraint Aggregation
 from .analysis import kreisselmeier_steinhauser, p_norm, induced_exponential, induced_power
 
 # Import local packages: Layout
 from .layout.generation_methods import generate_random_layout
 
 # Import local packages: Optimization
-from .optimization.solvers import run_optimizer
+from .optimize.solvers import run_optimizer
 
 # Import local packages: Result
 from .result.visualization.animation import generate_gif
 
+class Data:
+    """
+    Data class for interacting with the SPI2py API.
+    """
 
-class EntryPoint:
+    def __init__(self,
+                 directory,
+                 input_file):
+
+        self.directory  = directory
+
+
+    def read_config_file(self, config_filepath):
+        config_filepath = self._entry_point_directory + config_filepath
+        with open(config_filepath, 'r') as f:
+            config = yaml.safe_load(f)
+        return config
+
+    def read_input_file(self, input_filename):
+        input_filepath = self.directory + input_filename
+        with open(input_filepath, 'r') as f:
+            inputs = yaml.safe_load(f)
+        return inputs
+
+
+
+class Layout:
+    """
+    Layout class for interacting with the SPI2py API.
+    """
+    pass
+
+
+class Analysis:
+    """
+    Analysis class for interacting with the SPI2py API.
+    """
+    pass
+
+
+class Optimize:
+    """
+    Optimize class for interacting with the SPI2py API.
+    """
+    pass
+
+
+class Result:
+    pass
+
+
+class EntryPoint(Data, Layout, Analysis, Optimize, Result):
     """EntryPoint class for interacting with the SPI2py API.
     """
     def __init__(self,
                  directory,
                  input_file):
 
+        # Initialize the Data class
+        Data.__init__(self, directory, input_file)
+
+        # Initialize the Layout class
+        Layout.__init__(self)
+
+        # Initialize the Analysis class
+        Analysis.__init__(self)
+
+        # Initialize the Optimize class
+        Optimize.__init__(self)
+
+        # Initialize the Result class
+        Result.__init__(self)
+
         # Initialize default configuration
         self._entry_point_directory = os.path.dirname(__file__) + '/'
         self.config = self.read_config_file('data/config.yaml')
 
         # Initialize the parameters
-        self.directory              = directory
+
         self.logger_name            = self.directory + "logger.log"
         self.inputs                 = self.read_input_file(input_file)
         self._component_inputs      = self.inputs['components']
@@ -67,17 +132,7 @@ class EntryPoint:
 
         self.outputs = {}
 
-    def read_config_file(self, config_filepath):
-        config_filepath = self._entry_point_directory + config_filepath
-        with open(config_filepath, 'r') as f:
-            config = yaml.safe_load(f)
-        return config
 
-    def read_input_file(self, input_filename):
-        input_filepath = self.directory + input_filename
-        with open(input_filepath, 'r') as f:
-            inputs = yaml.safe_load(f)
-        return inputs
 
     def initialize_logger(self):
         logging.basicConfig(filename=self.logger_name, encoding='utf-8', level=logging.INFO, filemode='w')

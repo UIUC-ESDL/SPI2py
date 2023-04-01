@@ -20,15 +20,15 @@ classifiers = [
 ]
 
 dependencies = [
-    "scipy~=1.9.0",
+    "scipy",
     "networkx~=2.8.5",
     "matplotlib",
     "PyYAML",
-    "numpy<=1.22.4",
-    "numba>=0.56.0",
+    "numpy",
     "imageio>=2.21.1",
     "jupyter",
     "nbconvert",
+    "autograd",
 ]
 
 [project.optional-dependencies]
@@ -39,13 +39,6 @@ doc = [
     "sphinx",
 ]
 
-[tool.pytest.ini_options]
-pythonpath = [
-    ".",
-    "src/",
-    "src/SPI2py/",
-    "src/SPI2py/utils/",
-]
 
 [project.urls]
 "Homepage" = "https://github.com/SPI2py/SPI2py"

@@ -4,7 +4,6 @@ Provides functions to calculate the distance between classes in various ways.
 """
 
 import autograd.numpy as np
-from numba import njit
 from typing import Union
 from autograd import grad
 
@@ -84,9 +83,11 @@ def signed_distances_spheres_spheres(a:        np.ndarray,
     """
 
     # Reshape radii
+    a_radii = a_radii.reshape(-1, 1)
+    b_radii = b_radii.reshape(-1, 1)
 
     delta_positions = distances_points_points(a, b)
-    delta_radii     = distances_points_points(a_radii.reshape(-1, 1), b_radii.reshape(-1, 1))
+    delta_radii     = distances_points_points(a_radii, b_radii)
 
     signed_distances = delta_radii - delta_positions
 
@@ -95,7 +96,7 @@ def signed_distances_spheres_spheres(a:        np.ndarray,
     return signed_distances
 
 
-@njit(cache=True)
+# @njit(cache=True)
 def minimum_distance_segment_segment(a: np.ndarray,
                                      b: np.ndarray,
                                      c: np.ndarray,
@@ -134,8 +135,6 @@ def minimum_distance_segment_segment(a: np.ndarray,
     (10):
     (11):
     (12):
-
-    TODO Vectorize
 
     :param a: (1,3) numpy array
     :param b: (1,3) numpy array

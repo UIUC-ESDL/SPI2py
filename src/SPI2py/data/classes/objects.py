@@ -7,7 +7,7 @@ import numpy as np
 from scipy.spatial.distance import euclidean
 
 from .input_validation import ObjectValidation
-from ...analysis.transformations import translate, rotate_about_point
+from ...analysis.transformations import translate, rotate
 import logging
 logger = logging.getLogger(__name__)
 
@@ -91,7 +91,7 @@ class Object(ObjectValidation):
 
         if len(design_vector) == 6:
             rotation = design_vector[3:None]
-            new_positions = rotate_about_point(new_positions, rotation)
+            new_positions = rotate(new_positions, rotation)
 
         # TODO Check for constrained movement cases
 
