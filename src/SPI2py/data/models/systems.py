@@ -365,7 +365,6 @@ class SpatialConfiguration:
 
         fig = plot_objects(layout_plot_array, savefig, directory, self.system.config)
 
-        fig.show()
 
     def extract_spatial_graph(self):
         """

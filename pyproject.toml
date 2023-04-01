@@ -29,6 +29,7 @@ dependencies = [
     "jupyter",
     "nbconvert",
     "autograd",
+    "pyvista",
 ]
 
 [project.optional-dependencies]

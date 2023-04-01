@@ -4,6 +4,7 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
+import pyvista as pv
 
 
 def plot_sphere(position, radius, color, ax, resolution):
@@ -32,34 +33,21 @@ def plot_objects(plot_array, savefig, directory, config):
     """
 
     # Unpack plotting config settings
-    xlim = config['results']['plot']['x limits']
-    ylim = config['results']['plot']['y limits']
-    zlim = config['results']['plot']['z limits']
-    resolution = config['results']['plot']['resolution']
+    # xlim = config['results']['plot']['x limits']
+    # ylim = config['results']['plot']['y limits']
+    # zlim = config['results']['plot']['z limits']
+    # resolution = config['results']['plot']['resolution']
 
-
-    fig = plt.figure()
-    ax = fig.add_subplot(projection='3d')
+    p = pv.Plotter(window_size=[1000, 1000])
 
     for positions, radii, color in plot_array:
 
         for position, radius in zip(positions, radii):
-            plot_sphere(position, radius, color, ax, resolution)
 
-    # Format Plot
-    ax.set_xlabel('X Label')
-    ax.set_ylabel('Y Label')
-    ax.set_zlabel('Z Label')
-
-    ax.set_xlim(xlim)
-    ax.set_ylim(ylim)
-    ax.set_zlim(zlim)
+            sphere = pv.Sphere(radius=radius, center=list(position))
+            p.add_mesh(sphere, color=color)
 
 
+    p.show()
 
 
-    # Save Figure for GIF generation
-    if savefig is True:
-        fig.savefig(directory)
-
-    return fig
