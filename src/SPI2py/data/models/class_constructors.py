@@ -2,7 +2,7 @@
 
 """
 
-from ..shape_generation.spherical_decomposition import generate_rectangular_prisms
+from SPI2py.data.shape_generation.spherical_decomposition import generate_rectangular_prisms
 from .objects import Component, Port, Interconnect, Structure
 
 
@@ -30,9 +30,11 @@ def create_components(inputs):
 
         positions, radii = generate_rectangular_prisms(origins, dimensions)
 
-
-        component = Component(name, positions, radii, color, movement_class=movement_class)
-
+        if movement_class != 'static':
+            component = Component(name, positions, radii, color, movement_class=movement_class)
+        elif movement_class == 'static':
+            static_position = component['position']
+            component = Component(name, positions, radii, color, movement_class=movement_class, static_position=static_position)
         # logging.info(' Component: ' + str(component) + ' created.')
         components.append(component)
 
@@ -89,7 +91,7 @@ def create_interconnects(inputs):
         interconnects.append(interconnect)
         interconnect_segments.extend(interconnect.segments)
         nodes.extend(interconnect.interconnect_nodes)
-    
+
     # TODO Unstrip port nodes?
     interconnect_nodes = nodes
 
@@ -114,7 +116,12 @@ def create_structures(inputs):
 
         positions, radii = generate_rectangular_prisms(origins, dimensions)
 
-        structure = Structure(name, positions, radii, color, movement_class=movement_class)
+        if movement_class != 'static':
+            structure = Structure(name, positions, radii, color, movement_class=movement_class)
+        elif movement_class == 'static':
+            static_position = structure['position']
+            structure = Structure(name, positions, radii, color, movement_class=movement_class, static_position=static_position)
+
 
         # logging.info(' Structure: ' + str(structure) + ' created.')
 

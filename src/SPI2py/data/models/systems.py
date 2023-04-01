@@ -38,23 +38,19 @@ class System:
     """
 
     def __init__(self,
-                 components,
-                 ports,
-                 interconnects,
-                 interconnect_nodes,
-                 interconnect_segments,
-                 structures,
                  config: dict):
 
-        self.components = components
-        self.ports = ports
-        self.interconnects = interconnects
-        self.interconnect_nodes = interconnect_nodes
-        self.interconnect_segments = interconnect_segments
-        self.structures = structures
-        self.config = config
+        self.components            = []
+        self.ports                 = []
+        self.interconnects         = []
+        self.interconnect_nodes    = []
+        self.interconnect_segments = []
+        self.structures            = []
+        self.config                = config
 
-        self.objects = components + ports + interconnect_nodes + interconnect_segments + structures
+    @property
+    def objects(self):
+        return self.components + self.ports + self.interconnect_nodes + self.interconnect_segments + self.structures
 
     def _validate_components(self):
         # TODO Implement

@@ -7,14 +7,16 @@ import json
 import logging
 import os
 from datetime import datetime
+from typing import Union
+import numpy as np
 
 import yaml
-
+from .data.shape_generation.spherical_decomposition import generate_rectangular_prisms
+from .analysis import signed_distances, format_constraints
+from .data.models.objects import Component, Port, Interconnect, Structure
+from .data.models.systems import System, SpatialConfiguration
 from .analysis import kreisselmeier_steinhauser, p_norm, induced_exponential, induced_power
 from .analysis import normalized_aggregate_gap_distance
-from .analysis import signed_distances, format_constraints
-from .data.models.class_constructors import create_components, create_ports, create_interconnects, create_structures
-from .data.models.systems import System, SpatialConfiguration
 from .optimize.solvers import run_optimizer
 from .result.visualization.animation import generate_gif
 
@@ -35,17 +37,14 @@ class Data:
         self.config                 = self.read_config_file('data/config.yaml')
 
         self.logger_name            = self.directory + "logger.log"
-        self.inputs                 = self.read_input_file(input_file)
-        self._component_inputs      = self.inputs['components']
-        self._port_inputs           = self.inputs['ports']
-        self._interconnect_inputs   = self.inputs['interconnects']
-        self._structure_inputs      = self.inputs['structures']
 
         # Initialize the logger
         self.initialize_logger()
 
-        # Create objects from the input file
         self.system = self.create_system()
+
+        # Create objects from the input file
+
 
     def read_config_file(self, config_filepath):
         config_filepath = self._entry_point_directory + config_filepath
@@ -59,41 +58,64 @@ class Data:
             inputs = yaml.safe_load(f)
         return inputs
 
-    # def add_object(self, object_type, **kwargs):
-    #     """
-    #     Add an object to the system.
-    #
-    #     :param object_type: str
-    #     :param object_name: str
-    #     :param object_parameters: dict
-    #     :return:
-    #     """
-    #     if object_type == 'component':
-    #         self._component_inputs[object_name] = object_parameters
-    #     elif object_type == 'port':
-    #         self._port_inputs[object_name] = object_parameters
-    #     elif object_type == 'interconnect':
-    #         self._interconnect_inputs[object_name] = object_parameters
-    #     elif object_type == 'structure':
-    #         self._structure_inputs[object_name] = object_parameters
-    #     else:
-    #         raise ValueError('Invalid object type.')
-    #
-    #     # Update the system
-    #     self.system = self.create_system()
+    def add_component(self,
+                      name: str,
+                      color: str,
+                      movement_class: str,
+                      shapes: list):
 
-    # def create_component(self, component_name, component_parameters):
-    #     """
-    #     Add a component to the system.
-    #
-    #     :param component_name: str
-    #     :param component_parameters: dict
-    #     :return:
-    #     """
-    #     self._component_inputs[component_name] = component_parameters
-    #
-    #     # Update the system
-    #     self.system = self.create_system()
+
+        """
+        Add a component to the system.
+
+        :param name:
+        :param color:
+        :param movement_class:
+        :param shapes:
+        :return:
+        """
+
+        origins = []
+        dimensions = []
+        for shape in shapes:
+            origins.append(shape['origin'])
+            dimensions.append(shape['dimensions'])
+
+        positions, radii = generate_rectangular_prisms(origins, dimensions)
+
+        component = Component(name, positions, radii, color, movement_class=movement_class)
+
+        # Update the system
+        self.system.components.append(component)
+
+    def add_port(self, component_name, port_name, color, reference_point_offset, radius):
+        """
+        Add a port to the system.
+
+        :param
+        """
+        port = Port(component_name, port_name, color, reference_point_offset, radius)
+        self.system.ports.append(port)
+
+    def add_interconnect(self, name, component_1, component_1_port, component_2, component_2_port, radius, color, number_of_bends):
+        """
+        Add an interconnect to the system.
+
+        """
+        interconnect = Interconnect(name, component_1, component_1_port, component_2, component_2_port, radius, color, number_of_bends)
+
+        self.system.interconnects.append(interconnect)
+        self.system.interconnect_segments.extend(interconnect.interconnect_segments)
+        self.system.interconnect_nodes.extend(interconnect.interconnect_nodes)
+
+    def add_structure(self, name, color, shapes, movement_class):
+        """
+        Add a structure to the system.
+
+        """
+        structure = Structure(name, color, shapes, movement_class)
+
+        self.system.structures.append(structure)
 
     def initialize_logger(self):
         logging.basicConfig(filename=self.logger_name, encoding='utf-8', level=logging.INFO, filemode='w')
@@ -108,16 +130,8 @@ class Data:
 
         :return:
         """
-
-        components = create_components(self._component_inputs)
-        ports = create_ports(self._port_inputs)
-
-        # TODO switch to just interconnects
-        interconnects, interconnect_nodes, interconnect_segments = create_interconnects(self._interconnect_inputs)
-
-        structures = create_structures(self._structure_inputs)
-
-        system = System(components, ports, interconnects, interconnect_nodes, interconnect_segments, structures, self.config)
+        # TODO Replace all with interconnects
+        system = System(self.config)
 
         return system
 
