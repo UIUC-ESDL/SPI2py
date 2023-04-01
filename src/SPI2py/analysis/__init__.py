@@ -1,3 +1,5 @@
+from .analysis import Analysis
+
 from .objectives import normalized_aggregate_gap_distance
 
 from .constraints import signed_distances, format_constraints
