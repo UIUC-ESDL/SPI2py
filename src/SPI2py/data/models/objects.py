@@ -37,8 +37,7 @@ class Movement:
                  radii:              np.ndarray,
                  movement_class:     str,
                  constraints:        Union[None, dict],
-                 degrees_of_freedom: Union[list[int], None] = ('x', 'y', 'z', 'rx', 'ry', 'rz'),
-                 static_position:    Union[str, None]       = None):
+                 degrees_of_freedom: Union[list[int], None] = ('x', 'y', 'z', 'rx', 'ry', 'rz')):
 
         self.positions          = self._validate_positions(positions)
         self.radii              = self._validate_radii(radii)
@@ -46,7 +45,6 @@ class Movement:
         self.movement_class     = self._validate_movement_class(movement_class)
         self.constraints        = self._validate_constraints(constraints)
         self.degrees_of_freedom = self._validate_degrees_of_freedom(degrees_of_freedom)
-        self.static_position    = static_position
 
         if degrees_of_freedom is not None:
             self.three_d_translation = all([dof in self.degrees_of_freedom for dof in ['x', 'y', 'z']])
@@ -352,11 +350,10 @@ class Object(Geometry, Movement, Material):
                  color:              Union[str, list[str]],
                  movement_class:     str,
                  constraints:        Union[None, dict],
-                 degrees_of_freedom: Union[list[int], None] = ('x', 'y', 'z', 'rx', 'ry', 'rz'),
-                 static_position:    Union[str, None]       = None):
+                 degrees_of_freedom: Union[list[int], None] = ('x', 'y', 'z', 'rx', 'ry', 'rz')):
 
         Geometry.__init__(self)
-        Movement.__init__(self, positions, radii, movement_class, constraints, degrees_of_freedom, static_position)
+        Movement.__init__(self, positions, radii, movement_class, constraints, degrees_of_freedom)
         Material.__init__(self, color)
 
         self.name  = self._validate_name(name)
@@ -446,11 +443,9 @@ class Component(Object):
                  color:                 Union[str, list[str]],
                  movement_class:        str                     = 'independent',
                  constraints:           Union[None, tuple[str]] = None,
-                 degrees_of_freedom:    Union[tuple[str], None] = ('x', 'y', 'z', 'rx', 'ry', 'rz'),
-                 static_position:       Union[np.ndarray, None] = None):
+                 degrees_of_freedom:    Union[tuple[str], None] = ('x', 'y', 'z', 'rx', 'ry', 'rz')):
 
-        Object.__init__(self, name, positions, radii, color, movement_class, constraints, degrees_of_freedom,
-                        static_position)
+        Object.__init__(self, name, positions, radii, color, movement_class, constraints, degrees_of_freedom)
 
 
     @property
@@ -725,10 +720,9 @@ class Structure(Object):
                  color,
                  movement_class: str = 'static',
                  constraints: Union[None, dict] = None,
-                 degrees_of_freedom: Union[tuple[str], None] = None,
-                 static_position=None):
+                 degrees_of_freedom: Union[tuple[str], None] = None):
 
-        super(Structure, self).__init__(name, positions,radii, color, movement_class, constraints, degrees_of_freedom,static_position)
+        super(Structure, self).__init__(name, positions,radii, color, movement_class, constraints, degrees_of_freedom)
 
     def calculate_positions(self,
                             design_vector,
