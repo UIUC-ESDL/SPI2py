@@ -14,7 +14,6 @@ def translate(current_sphere_positions, current_reference_point, new_reference_p
     TODO Vectorize
     TODO Change function to take arguments: current_sphere_positions, current_reference_point, new_reference_point
 
-
     :param current_sphere_positions:
     :param current_reference_point:
     :param new_reference_point:
