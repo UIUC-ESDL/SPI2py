@@ -45,7 +45,7 @@ initial_design_vector = np.concatenate((component_0_position,
                                         interconnect_1_node_0_position))
 
 # noinspection DuplicatedCode
-demo.generate_spatial_configuration(method='manual', inputs=initial_design_vector)
+demo.create_spatial_configuration(method='manual', inputs=initial_design_vector)
 
 # Plot initial spatial configuration
 demo.spatial_configuration.plot()

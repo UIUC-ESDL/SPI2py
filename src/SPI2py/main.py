@@ -3,37 +3,21 @@
 The EntryPoint Class provides the user with a means to interact with the SPI2py API.
 """
 
-# Import standard packages
-import os
 import json
 import logging
+import os
 from datetime import datetime
 
-# Import third-party packages
 import yaml
 
-# Import local packages: Data
-from .data.classes.class_constructors import create_components, create_ports, create_interconnects, create_structures
-from .data.classes.objects import Component, Port, Interconnect, InterconnectNode, InterconnectEdge, Structure
-from .data.classes.systems import System, SpatialConfiguration
-
-# Import local packages: Analysis Objectives
+from .analysis import kreisselmeier_steinhauser
 from .analysis import normalized_aggregate_gap_distance
-
-# Import local packages: Analysis Constraints
 from .analysis import signed_distances, format_constraints
-
-# Import local packages: Analysis Constraint Aggregation
-from .analysis import kreisselmeier_steinhauser, p_norm, induced_exponential, induced_power
-
-# Import local packages: Layout
-from .layout.generation_methods import generate_random_layout
-
-# Import local packages: Optimization
+from .data.classes.class_constructors import create_components, create_ports, create_interconnects, create_structures
+from .data.classes.systems import System, SpatialConfiguration
 from .optimize.solvers import run_optimizer
-
-# Import local packages: Result
 from .result.visualization.animation import generate_gif
+
 
 class Data:
     """
@@ -41,78 +25,14 @@ class Data:
     """
 
     def __init__(self,
-                 directory,
-                 input_file):
+                 directory:  str,
+                 input_file: str):
 
         self.directory  = directory
 
-
-    def read_config_file(self, config_filepath):
-        config_filepath = self._entry_point_directory + config_filepath
-        with open(config_filepath, 'r') as f:
-            config = yaml.safe_load(f)
-        return config
-
-    def read_input_file(self, input_filename):
-        input_filepath = self.directory + input_filename
-        with open(input_filepath, 'r') as f:
-            inputs = yaml.safe_load(f)
-        return inputs
-
-
-
-class Layout:
-    """
-    Layout class for interacting with the SPI2py API.
-    """
-    pass
-
-
-class Analysis:
-    """
-    Analysis class for interacting with the SPI2py API.
-    """
-    pass
-
-
-class Optimize:
-    """
-    Optimize class for interacting with the SPI2py API.
-    """
-    pass
-
-
-class Result:
-    pass
-
-
-class EntryPoint(Data, Layout, Analysis, Optimize, Result):
-    """EntryPoint class for interacting with the SPI2py API.
-    """
-    def __init__(self,
-                 directory,
-                 input_file):
-
-        # Initialize the Data class
-        Data.__init__(self, directory, input_file)
-
-        # Initialize the Layout class
-        Layout.__init__(self)
-
-        # Initialize the Analysis class
-        Analysis.__init__(self)
-
-        # Initialize the Optimize class
-        Optimize.__init__(self)
-
-        # Initialize the Result class
-        Result.__init__(self)
-
         # Initialize default configuration
         self._entry_point_directory = os.path.dirname(__file__) + '/'
-        self.config = self.read_config_file('data/config.yaml')
-
-        # Initialize the parameters
+        self.config                 = self.read_config_file('data/config.yaml')
 
         self.logger_name            = self.directory + "logger.log"
         self.inputs                 = self.read_input_file(input_file)
@@ -127,15 +47,24 @@ class EntryPoint(Data, Layout, Analysis, Optimize, Result):
         # Create objects from the input file
         self.system = self.create_system()
 
-        # Systems do not start with a spatial configuration
-        self.spatial_configuration = None
+    def read_config_file(self, config_filepath):
+        config_filepath = self._entry_point_directory + config_filepath
+        with open(config_filepath, 'r') as f:
+            config = yaml.safe_load(f)
+        return config
 
-        self.outputs = {}
-
-
+    def read_input_file(self, input_filename):
+        input_filepath = self.directory + input_filename
+        with open(input_filepath, 'r') as f:
+            inputs = yaml.safe_load(f)
+        return inputs
 
     def initialize_logger(self):
         logging.basicConfig(filename=self.logger_name, encoding='utf-8', level=logging.INFO, filemode='w')
+
+    def print_log(self):
+        with open(self.logger_name) as f:
+            print(f.read())
 
     def create_system(self):
         """
@@ -156,10 +85,18 @@ class EntryPoint(Data, Layout, Analysis, Optimize, Result):
 
         return system
 
-    def create_spatial_configuration(self):
-        pass
 
-    def generate_spatial_configuration(self, method, inputs=None):
+
+class Layout:
+    """
+    Layout class for interacting with the SPI2py API.
+    """
+    def __init__(self):
+
+        # Systems do not start with a spatial configuration
+        self.spatial_configuration = None
+
+    def _create_spatial_configuration(self, system, method, inputs=None):
         """
         Map the objects to a 3D layout.
 
@@ -168,11 +105,10 @@ class EntryPoint(Data, Layout, Analysis, Optimize, Result):
         :param method:
         :param inputs:
 
-
         TODO implement different layout generation methods
         """
 
-        spatial_configuration = SpatialConfiguration(self.system)
+        spatial_configuration = SpatialConfiguration(system)
 
         spatial_configuration.map_static_objects()
 
@@ -186,13 +122,33 @@ class EntryPoint(Data, Layout, Analysis, Optimize, Result):
         self.spatial_configuration = spatial_configuration
 
 
-    def optimize_spatial_configuration(self):
+class Analysis:
+    """
+    Analysis class for interacting with the SPI2py API.
+    """
+    pass
 
+    def calculate_metrics(self):
+        pass
+
+    def calculate_objective_function(self):
+        pass
+
+    def calculate_constraint_functions(self):
+        pass
+
+
+class Optimize:
+    """
+    Optimize class for interacting with the SPI2py API.
+    """
+
+    def optimize_spatial_configuration(self):
         # TODO Add ability to choose objective function
         objective_function = normalized_aggregate_gap_distance
 
         # TODO Add ability to choose constraint functions
-        constraint_function             = signed_distances
+        constraint_function = signed_distances
         constraint_aggregation_function = kreisselmeier_steinhauser
 
         # TODO Switch config to analysis, simplify
@@ -205,6 +161,16 @@ class EntryPoint(Data, Layout, Analysis, Optimize, Result):
                                                             objective_function,
                                                             nlcs,
                                                             self.config)
+
+
+class Result:
+    """
+    Result class for interacting with the SPI2py API.
+    """
+    def __init__(self):
+        # self.result = None
+        # self.design_vector_log = None
+        self.outputs = {}
 
     def create_gif(self):
         gif_filepath = self.config['results']['GIF Filename']
@@ -220,8 +186,6 @@ class EntryPoint(Data, Layout, Analysis, Optimize, Result):
         # Create a timestamp
         now = datetime.now()
         now_formatted = now.strftime("%d/%m/%Y %H:%M:%S")
-
-        # TODO Create a prompt to ask user for comments on the results
 
         # Convert the design vector log of a list of arrays of list to lists
         # json cannot serialize numpy arrays
@@ -239,6 +203,41 @@ class EntryPoint(Data, Layout, Analysis, Optimize, Result):
         with open(self.directory + report_filename, 'w') as f:
             json.dump(self.outputs, f)
 
-    def print_log(self):
-        with open(self.logger_name) as f:
-            print(f.read())
+
+class EntryPoint(Data, Layout, Analysis, Optimize, Result):
+    """
+    EntryPoint class for interacting with the SPI2py API.
+    """
+    def __init__(self,
+                 directory,
+                 input_file):
+
+        # Initialize the Data class
+        Data.__init__(self, directory, input_file)
+
+        # Initialize the Layout class
+        Layout.__init__(self)
+
+        # Initialize the Analysis class
+        Analysis.__init__(self)
+
+        # Initialize the Optimize class
+        Optimize.__init__(self)
+
+        # Initialize the Result class
+        Result.__init__(self)
+
+    # Define Methods
+
+    def create_spatial_configuration(self, method, inputs=None):
+        self._create_spatial_configuration(self.system, method, inputs)
+
+
+
+
+
+
+
+
+
+

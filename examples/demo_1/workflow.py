@@ -36,7 +36,7 @@ initial_design_vector = np.concatenate((interconnect_0_node_0_position,
                                         interconnect_0_node_1_position,
                                         interconnect_1_node_0_position))
 
-demo.generate_spatial_configuration(method='manual', inputs=initial_design_vector)
+demo.create_spatial_configuration(method='manual', inputs=initial_design_vector)
 
 # Plot initial spatial configuration
 demo.spatial_configuration.plot()
