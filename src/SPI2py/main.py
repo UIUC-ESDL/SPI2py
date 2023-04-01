@@ -88,13 +88,13 @@ class Data:
         # Update the system
         self.system.components.append(component)
 
-    def add_port(self, component_name, port_name, color, reference_point_offset, radius):
+    def add_port(self, component_name, port_name, color, radius,reference_point_offset, movement_class):
         """
         Add a port to the system.
 
         :param
         """
-        port = Port(component_name, port_name, color, reference_point_offset, radius)
+        port = Port(component_name, port_name, color, radius,reference_point_offset, movement_class=movement_class)
         self.system.ports.append(port)
 
     def add_interconnect(self, name, component_1, component_1_port, component_2, component_2_port, radius, color, number_of_bends):
@@ -105,15 +105,24 @@ class Data:
         interconnect = Interconnect(name, component_1, component_1_port, component_2, component_2_port, radius, color, number_of_bends)
 
         self.system.interconnects.append(interconnect)
-        self.system.interconnect_segments.extend(interconnect.interconnect_segments)
+        self.system.interconnect_segments.extend(interconnect.segments)
         self.system.interconnect_nodes.extend(interconnect.interconnect_nodes)
 
-    def add_structure(self, name, color, shapes, movement_class):
+    def add_structure(self, name, color, movement_class, shapes):
         """
         Add a structure to the system.
 
         """
-        structure = Structure(name, color, shapes, movement_class)
+
+        origins = []
+        dimensions = []
+        for shape in shapes:
+            origins.append(shape['origin'])
+            dimensions.append(shape['dimensions'])
+
+        positions, radii = generate_rectangular_prisms(origins, dimensions)
+
+        structure = Structure(name, positions, radii, color, movement_class)
 
         self.system.structures.append(structure)
 

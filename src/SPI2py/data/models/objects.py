@@ -381,8 +381,9 @@ class Port(Object):
                  component_name,
                  port_name,
                  color,
+                 radius,
                  reference_point_offset,
-                 radius):
+                 movement_class='fully dependent'):
 
         self.component_name = component_name
         self.port_name = port_name
@@ -400,7 +401,7 @@ class Port(Object):
 
         self.radius = self._validate_radii(radius)
 
-        self.movement_class = 'fully dependent'
+        self.movement_class = movement_class
 
 
     def __repr__(self):

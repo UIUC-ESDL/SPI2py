@@ -343,7 +343,7 @@ class SpatialConfiguration:
         """
 
         for static_object in self.system.static_objects:
-            pos_dict = static_object.calculate_independent_positions(static_object.positions, {})
+            pos_dict = static_object.calculate_independent_positions(static_object.positions[0], {})
             static_object.set_positions(pos_dict)
 
 
