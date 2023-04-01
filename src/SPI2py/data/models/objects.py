@@ -33,21 +33,20 @@ class Movement:
     """
 
     def __init__(self,
-                 positions: np.ndarray,
-                 radii: np.ndarray,
-                 movement_class: str,
-                 constraints: Union[None, dict],
+                 positions:          np.ndarray,
+                 radii:              np.ndarray,
+                 movement_class:     str,
+                 constraints:        Union[None, dict],
                  degrees_of_freedom: Union[list[int], None] = ('x', 'y', 'z', 'rx', 'ry', 'rz'),
-                 static_position: Union[str, None] = None):
+                 static_position:    Union[str, None]       = None):
 
         self.positions          = self._validate_positions(positions)
         self.radii              = self._validate_radii(radii)
-        self.rotation = np.zeros(3)
-
-        self.movement_class = self._validate_movement_class(movement_class)
-        self.constraints = self._validate_constraints(constraints)
+        self.rotation           = np.zeros(3)
+        self.movement_class     = self._validate_movement_class(movement_class)
+        self.constraints        = self._validate_constraints(constraints)
         self.degrees_of_freedom = self._validate_degrees_of_freedom(degrees_of_freedom)
-        self.static_position = static_position
+        self.static_position    = static_position
 
         if degrees_of_freedom is not None:
             self.three_d_translation = all([dof in self.degrees_of_freedom for dof in ['x', 'y', 'z']])
@@ -173,6 +172,13 @@ class Movement:
     #     else:
     #         logger.warning('This object is fixed')
     #         design_vector = None
+    #
+    #     return design_vector
+
+    # @property
+    # def design_vector(self):
+    #     # TODO Implement a more universal design vector function
+    #     design_vector = np.concatenate((self.reference_position, self.rotation))
     #
     #     return design_vector
 
@@ -443,18 +449,9 @@ class Component(Object):
                  degrees_of_freedom:    Union[tuple[str], None] = ('x', 'y', 'z', 'rx', 'ry', 'rz'),
                  static_position:       Union[np.ndarray, None] = None):
 
-        Object.__init__(self,
-                        name,
-                        positions,
-                        radii,
-                        color,
-                        movement_class,
-                        constraints,
-                        degrees_of_freedom,
+        Object.__init__(self, name, positions, radii, color, movement_class, constraints, degrees_of_freedom,
                         static_position)
 
-        # Initialize the rotation attribute
-        self.rotation = np.array([0, 0, 0])
 
     @property
     def design_vector(self):
