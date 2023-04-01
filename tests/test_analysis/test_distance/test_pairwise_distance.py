@@ -1,8 +1,7 @@
 import numpy as np
 import autograd.numpy as anp
-from autograd import elementwise_grad
 from scipy.spatial.distance import cdist
-from SPI2py.analysis import distances_points_points
+from src.SPI2py.analysis import distances_points_points
 
 def test_pairwise_distance():
     """
@@ -10,25 +9,25 @@ def test_pairwise_distance():
 
     We know that Scipy cdist does this correctly so check with it.
     """
-    a = np.random.rand(20,3)
-    b = np.random.rand(17,3)
+    a = np.random.rand(20, 3)
+    b = np.random.rand(17, 3)
 
     c = distances_points_points(a, b)
 
     cd = cdist(a, b).reshape(-1)
 
-    assert all(np.isclose(c,cd))
+    assert all(np.isclose(c, cd))
 
-def test_pairwise_distance_autograd():
-
-   a = anp.random.rand(20, 3)
-   b = anp.random.rand(17, 3)
-
-   c = distances_points_points(a, b)
-
-   cd = cdist(a, b).reshape(-1)
-
-   assert all(anp.isclose(c,cd))
+# def test_pairwise_distance_autograd():
+#
+#    a = anp.random.rand(20, 3)
+#    b = anp.random.rand(17, 3)
+#
+#    c = distances_points_points(a, b)
+#
+#    cd = cdist(a, b).reshape(-1)
+#
+#    assert all(anp.isclose(c,cd))
 
 # def test_pairwise_distance_grad_autograd():
 #

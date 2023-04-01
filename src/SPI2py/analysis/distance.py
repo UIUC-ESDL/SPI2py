@@ -55,7 +55,7 @@ def distances_points_points(a: np.ndarray,
     c = np.linalg.norm(aa-bb, axis=-1)
 
     # Reshape the output to a 1D array
-    c.reshape(-1)
+    c = c.flatten()
 
     return c
 
