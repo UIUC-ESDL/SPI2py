@@ -18,18 +18,40 @@ logger = logging.getLogger(__name__)
 
 class Geometry:
     """
-    The Object class is the parent class for all objects in the layout.
+    The Geometry class is the base class for all geometry objects.
+    """
 
-    TODO Implement a single class to handle how objects move and update positions... let child classes mutate them
+    def __init__(self):
+        pass
+
+
+
+
+class Movement:
+    """
+    The Movement class is the base class for all movement objects.
     """
 
     def __init__(self,
-                 positions:          np.ndarray,
-                 radii:              np.ndarray):
+                 positions: np.ndarray,
+                 radii: np.ndarray,
+                 movement_class: str,
+                 constraints: Union[None, dict],
+                 degrees_of_freedom: Union[list[int], None] = ('x', 'y', 'z', 'rx', 'ry', 'rz'),
+                 static_position: Union[str, None] = None):
 
         self.positions          = self._validate_positions(positions)
         self.radii              = self._validate_radii(radii)
         self.rotation = np.zeros(3)
+
+        self.movement_class = self._validate_movement_class(movement_class)
+        self.constraints = self._validate_constraints(constraints)
+        self.degrees_of_freedom = self._validate_degrees_of_freedom(degrees_of_freedom)
+        self.static_position = static_position
+
+        if degrees_of_freedom is not None:
+            self.three_d_translation = all([dof in self.degrees_of_freedom for dof in ['x', 'y', 'z']])
+            self.three_d_rotation = all([dof in self.degrees_of_freedom for dof in ['rx', 'ry', 'rz']])
 
     def _validate_positions(self, positions: np.ndarray) -> np.ndarray:
 
@@ -75,111 +97,6 @@ class Geometry:
 
         return radii
 
-
-
-    @property
-    def reference_position(self):
-        return self.positions[0]
-
-    # @property
-    # def design_vector(self):
-    #     """
-    #     TODO Provide a method to reduce the design vector (e.g., not translation along z axis)
-    #     :return:
-    #     """
-    #
-    #     if self.three_d_translation is True and self.three_d_rotation is not True:
-    #         design_vector = self.reference_position
-    #
-    #     elif self.three_d_translation is True and self.three_d_rotation is True:
-    #         design_vector = np.concatenate((self.reference_position, self.rotation))
-    #
-    #     else:
-    #         logger.warning('This object is fixed')
-    #         design_vector = None
-    #
-    #     return design_vector
-
-
-
-
-class Movement:
-    pass
-
-class Material:
-    pass
-
-class Object(Geometry, Movement, Material):
-
-    def __init__(self,
-                 name: str,
-                 positions: np.ndarray,
-                 radii: np.ndarray,
-                 color: Union[str, list[str]],
-                 movement_class: str,
-                 constraints: Union[None, dict],
-                 degrees_of_freedom: Union[list[int], None] = ('x', 'y', 'z', 'rx', 'ry', 'rz'),
-                 static_position: Union[str, None] = None):
-
-        Geometry.__init__(self, positions, radii)
-        Movement.__init__(self)
-        Material.__init__(self)
-
-        self.name = self._validate_name(name)
-        self.color = self._validate_colors(color)
-        self.movement_class = self._validate_movement_class(movement_class)
-        self.constraints = self._validate_constraints(constraints)
-        self.degrees_of_freedom = self._validate_degrees_of_freedom(degrees_of_freedom)
-        self.static_position = static_position
-
-        if degrees_of_freedom is not None:
-            self.three_d_translation = all([dof in self.degrees_of_freedom for dof in ['x', 'y', 'z']])
-            self.three_d_rotation = all([dof in self.degrees_of_freedom for dof in ['rx', 'ry', 'rz']])
-
-    @staticmethod
-    def _validate_name(name: str) -> str:
-        if not isinstance(name, str):
-            raise TypeError('Name must be a string not %s.' % type(name))
-
-        return name
-
-    def _validate_color(self, color):
-
-        if isinstance(color, str):
-            pass
-        else:
-            raise ValueError('Colors must be a string for %s.' % self.name)
-
-        self.valid_colors = {**mcolors.BASE_COLORS, **mcolors.TABLEAU_COLORS, **mcolors.CSS4_COLORS,
-                             **mcolors.XKCD_COLORS}
-
-        if color in self.valid_colors:
-            pass
-
-        else:
-            raise ValueError('Color not recognized for %s. For a list of valid colors inspect the attribute '
-                             'self.valid_colors.keys().' % self.name)
-
-    def _validate_colors(self, colors):
-
-        if colors is None:
-            raise ValueError('Color has not been set for %s.' % self.name)
-
-        if isinstance(colors, list):
-
-            if len(colors) == 1:
-                self._validate_color(colors)
-
-            if len(colors) > 1:
-                for color in colors:
-                    self._validate_color(color)
-
-        elif isinstance(colors, str):
-            self._validate_color(colors)
-        else:
-            raise ValueError('Colors must be a list or string for %s.' % self.name)
-
-        return colors
 
     def _validate_movement_class(self, movement_class):
 
@@ -235,11 +152,31 @@ class Object(Geometry, Movement, Material):
         return degrees_of_freedom
 
 
-    def __repr__(self):
-        return self.name
 
-    def __str__(self):
-        return self.name
+    @property
+    def reference_position(self):
+        return self.positions[0]
+
+    # @property
+    # def design_vector(self):
+    #     """
+    #     TODO Provide a method to reduce the design vector (e.g., not translation along z axis)
+    #     :return:
+    #     """
+    #
+    #     if self.three_d_translation is True and self.three_d_rotation is not True:
+    #         design_vector = self.reference_position
+    #
+    #     elif self.three_d_translation is True and self.three_d_rotation is True:
+    #         design_vector = np.concatenate((self.reference_position, self.rotation))
+    #
+    #     else:
+    #         logger.warning('This object is fixed')
+    #         design_vector = None
+    #
+    #     return design_vector
+
+
 
     def calculate_static_positions(self, positions_dict):
 
@@ -352,7 +289,88 @@ class Object(Geometry, Movement, Material):
         :return:
         """
 
-        self.positions, self.radii = positions_dict[self.name]
+        self.positions, self.radii = positions_dict[self.__repr__()]
+
+
+
+
+class Material:
+    """
+    The Material class is used to define the material properties of an object.
+    """
+    def __init__(self, color):
+
+        self._valid_colors = {**mcolors.BASE_COLORS, **mcolors.TABLEAU_COLORS, **mcolors.CSS4_COLORS,
+                              **mcolors.XKCD_COLORS}
+
+        self.color = self._validate_colors(color)
+
+
+    def _validate_color(self, color):
+
+        if not isinstance(color, str):
+            raise ValueError('Color must be a string.')
+
+        if color not in self._valid_colors:
+            raise ValueError('Color not recognized. For a list of valid colors inspect the attribute '
+                             'self._valid_colors.keys().')
+
+    def _validate_colors(self, colors):
+
+        if colors is None:
+            raise ValueError(f'Color has not been set for {self.__repr__()}')
+
+        if isinstance(colors, list):
+
+            if len(colors) == 1:
+                self._validate_color(colors)
+
+            if len(colors) > 1:
+                for color in colors:
+                    self._validate_color(color)
+
+        elif isinstance(colors, str):
+            self._validate_color(colors)
+        else:
+            raise ValueError('Colors must be a list or string.')
+
+        return colors
+
+
+class Object(Geometry, Movement, Material):
+
+    def __init__(self,
+                 name:               str,
+                 positions:          np.ndarray,
+                 radii:              np.ndarray,
+                 color:              Union[str, list[str]],
+                 movement_class:     str,
+                 constraints:        Union[None, dict],
+                 degrees_of_freedom: Union[list[int], None] = ('x', 'y', 'z', 'rx', 'ry', 'rz'),
+                 static_position:    Union[str, None]       = None):
+
+        Geometry.__init__(self)
+        Movement.__init__(self, positions, radii, movement_class, constraints, degrees_of_freedom, static_position)
+        Material.__init__(self, color)
+
+        self.name  = self._validate_name(name)
+
+
+
+    @staticmethod
+    def _validate_name(name: str) -> str:
+        if not isinstance(name, str):
+            raise TypeError('Name must be a string not %s.' % type(name))
+
+        return name
+
+    def __repr__(self):
+        return self.name
+
+    def __str__(self):
+        return self.name
+
+
 
 class Port(Object):
 
@@ -425,14 +443,15 @@ class Component(Object):
                  degrees_of_freedom:    Union[tuple[str], None] = ('x', 'y', 'z', 'rx', 'ry', 'rz'),
                  static_position:       Union[np.ndarray, None] = None):
 
-        super(Component, self).__init__(name,
-                                        positions,
-                                        radii,
-                                        color,
-                                        movement_class,
-                                        constraints,
-                                        degrees_of_freedom,
-                                        static_position)
+        Object.__init__(self,
+                        name,
+                        positions,
+                        radii,
+                        color,
+                        movement_class,
+                        constraints,
+                        degrees_of_freedom,
+                        static_position)
 
         # Initialize the rotation attribute
         self.rotation = np.array([0, 0, 0])
