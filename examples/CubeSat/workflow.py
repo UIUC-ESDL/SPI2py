@@ -3,19 +3,14 @@ Example 1:  Simple optimization of a 3D layout
 Author:     Chad Peterson
 """
 
-# %% Import packages
-
-import numpy as np
-
-# %% Obtain the local path of this example's directory
-
+# Import packages
 import os
+import numpy as np
+from SPI2py import EntryPoint
+
+# Obtain the local path of this example's directory
 directory = os.path.dirname(__file__) + '/'
 
-# %% Import the SPI2py library
-
-# EntryPoint is the main class for interacting with the SPI2py library
-from SPI2py import EntryPoint
 
 # Initialize the EntryPoint class with your current working directory and input files
 demo = EntryPoint(directory=directory, input_file='input.yaml')
@@ -24,7 +19,7 @@ demo = EntryPoint(directory=directory, input_file='input.yaml')
 demo.config['Username'] = 'Chad Peterson'
 demo.config['Problem Description'] = 'Simple optimization of a 3D layout'
 
-# %% Map the system to a single spatial configuration
+# Map the system to a single spatial configuration
 
 # Define the initial design vector
 component_0_position = np.array([-3., -4.41, -0.24, 0., 0., 0.])
@@ -44,19 +39,19 @@ initial_design_vector = np.concatenate((component_0_position,
                                         interconnect_0_node_1_position,
                                         interconnect_1_node_0_position))
 
-# noinspection DuplicatedCode
-demo.create_spatial_configuration(method='manual', inputs=initial_design_vector)
+demo.create_spatial_configuration(method='manual',
+                                  inputs=initial_design_vector)
 
 # Plot initial spatial configuration
 demo.spatial_configuration.plot()
 
-# %% Perform gradient-based optimization
+# Perform gradient-based optimization
 
 demo.optimize_spatial_configuration(objective_function='normalized aggregate gap distance',
                                     constraint_function='signed distances',
                                     constraint_aggregation_function='induced exponential')
 
-# %% Post-processing
+# Post-processing
 
 # Plot the final spatial configuration
 positions_dict = demo.spatial_configuration.calculate_positions(demo.result.x)

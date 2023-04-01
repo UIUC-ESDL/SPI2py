@@ -1,5 +1,5 @@
 import numpy as np
-from SPI2py.analysis.distance import minimum_distance_segment_segment
+from SPI2py.analysis import minimum_distance_segment_segment
 
 # TODO Add tests for all negative coordinates and mixed coordinates
 
