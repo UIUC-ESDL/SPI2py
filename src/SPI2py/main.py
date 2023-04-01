@@ -13,8 +13,8 @@ import yaml
 from .analysis import kreisselmeier_steinhauser
 from .analysis import normalized_aggregate_gap_distance
 from .analysis import signed_distances, format_constraints
-from .data.classes.class_constructors import create_components, create_ports, create_interconnects, create_structures
-from .data.classes.systems import System, SpatialConfiguration
+from .data.models.class_constructors import create_components, create_ports, create_interconnects, create_structures
+from .data.models.systems import System, SpatialConfiguration
 from .optimize.solvers import run_optimizer
 from .result.visualization.animation import generate_gif
 

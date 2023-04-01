@@ -6,12 +6,11 @@ Docstring
 import numpy as np
 from itertools import combinations, product
 
-from SPI2py.result.visualization.plotting import plot_objects
-
-from src.SPI2py.data.classes.input_validation import SystemsValidation
+from ...result.visualization.plotting import plot_objects
 
 
-class System(SystemsValidation):
+
+class System:
     """
     Defines the associative (non-spatial) aspects of systems.
 
@@ -47,15 +46,44 @@ class System(SystemsValidation):
                  structures,
                  config: dict):
 
-        super().__init__(components,
-                         ports,
-                         interconnects,
-                         interconnect_nodes,
-                         interconnect_segments,
-                         structures,
-                         config)
+        self.components = components
+        self.ports = ports
+        self.interconnects = interconnects
+        self.interconnect_nodes = interconnect_nodes
+        self.interconnect_segments = interconnect_segments
+        self.structures = structures
+        self.config = config
 
         self.objects = components + ports + interconnect_nodes + interconnect_segments + structures
+
+    def _validate_components(self):
+        # TODO Implement
+        pass
+
+    def _validate_ports(self):
+        # TODO Implement
+        pass
+
+    def _validate_interconnects(self):
+        # TODO Implement
+        pass
+
+    def _validate_interconnect_nodes(self):
+        # TODO Implement
+        pass
+
+    def _validate_interconnect_segments(self):
+        # TODO Implement
+        pass
+
+    def _validate_structures(self):
+        # TODO Implement
+        pass
+
+    def _validate_config(self):
+        # TODO Implement
+        pass
+
 
     @property
     def nodes(self):
