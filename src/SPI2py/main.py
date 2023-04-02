@@ -10,9 +10,9 @@ from .optimize import Optimize
 from .result import Result
 
 # TODO Compartmentalize these imports
-from .analysis import signed_distances
-from .analysis import kreisselmeier_steinhauser, p_norm, induced_exponential, induced_power
-from .analysis import normalized_aggregate_gap_distance
+# from .analysis import signed_distances
+# from .analysis import kreisselmeier_steinhauser, p_norm, induced_exponential, induced_power
+# from .analysis import normalized_aggregate_gap_distance
 
 
 class EntryPoint(Data, Layout, Analysis, Optimize, Result):
@@ -47,42 +47,14 @@ class EntryPoint(Data, Layout, Analysis, Optimize, Result):
                                        constraint_function,
                                        constraint_aggregation_function):
 
-        # Set the objective function
-        if objective_function == 'normalized aggregate gap distance':
-            _objective_function = normalized_aggregate_gap_distance
-        else:
-            raise NotImplementedError
-
-        # Set the constraint function
-        if constraint_function == 'signed distances':
-            _constraint_function = signed_distances
-        else:
-            raise NotImplementedError
-
-        # Set the constraint aggregation function if applicable
-        if constraint_aggregation_function == 'kreisselmeier steinhauser':
-            _constraint_aggregation_function = kreisselmeier_steinhauser
-
-        elif constraint_aggregation_function == 'P-norm':
-            _constraint_aggregation_function = p_norm
-
-        elif constraint_aggregation_function == 'induced exponential':
-            _constraint_aggregation_function = induced_exponential
-
-        elif constraint_aggregation_function == 'induced power':
-            _constraint_aggregation_function = induced_power
-
-        elif constraint_aggregation_function == 'None':
-            # TODO Add the ability to not use a constraint aggregation function
-            raise NotImplementedError
-
-        else:
-            raise NotImplementedError
+        self.set_objective_function(objective_function)
+        self.set_constraint_function(constraint_function)
+        self.set_constraint_aggregation_function(constraint_aggregation_function)
 
         self._optimize_spatial_configuration(self.spatial_configuration,
-                                             _objective_function,
-                                             _constraint_function,
-                                             _constraint_aggregation_function,
+                                             self.objective_function,
+                                             self.constraint_function,
+                                             self.constraint_aggregation_function,
                                              self.config)
 
 
