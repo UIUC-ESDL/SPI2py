@@ -1,1 +1,1 @@
-from .data import Data
+from .entry_point_data import Data

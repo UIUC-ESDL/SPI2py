@@ -1,7 +1,7 @@
 import numpy as np
 
 # TODO compartmentalize this dependency
-from ...result.visualization.plotting import plot_objects
+from src.SPI2py.result.visualization.plotting import plot_objects
 
 
 class SpatialConfiguration:

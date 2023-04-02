@@ -4,8 +4,8 @@ import os
 import yaml
 
 from .shape_generation.spherical_decomposition import generate_rectangular_prisms
-from src.SPI2py.data.models.objects import Component, Port, Interconnect, Structure
-from src.SPI2py.data.models.systems import System
+from src.SPI2py.objects import Component, Port, Interconnect, Structure
+from src.SPI2py.systems import System
 
 class Data:
     """

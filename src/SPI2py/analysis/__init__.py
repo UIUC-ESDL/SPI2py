@@ -1,4 +1,4 @@
-from .analysis import Analysis
+from .entry_point_analysis import Analysis
 
 # from .objectives import normalized_aggregate_gap_distance
 #

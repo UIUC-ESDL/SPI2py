@@ -1,1 +1,1 @@
-from .optimize import Optimize
+from .entry_point_optimize import Optimize

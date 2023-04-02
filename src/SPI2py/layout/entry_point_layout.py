@@ -1,4 +1,4 @@
-from .models.spatial_configuration import SpatialConfiguration
+from src.SPI2py.spatial_configuration import SpatialConfiguration
 
 class Layout:
     """

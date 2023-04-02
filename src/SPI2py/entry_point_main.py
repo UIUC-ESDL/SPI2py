@@ -9,12 +9,6 @@ from .analysis import Analysis
 from .optimize import Optimize
 from .result import Result
 
-# TODO Compartmentalize these imports
-# from .analysis import signed_distances
-# from .analysis import kreisselmeier_steinhauser, p_norm, induced_exponential, induced_power
-# from .analysis import normalized_aggregate_gap_distance
-
-
 class EntryPoint(Data, Layout, Analysis, Optimize, Result):
     """
     EntryPoint class for interacting with the SPI2py API.
