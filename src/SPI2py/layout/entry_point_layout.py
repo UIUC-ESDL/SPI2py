@@ -1,4 +1,4 @@
-from src.SPI2py.spatial_configuration import SpatialConfiguration
+from src.SPI2py.analysis.kinematics import SpatialConfiguration
 
 class Layout:
     """
@@ -23,11 +23,12 @@ class Layout:
 
         spatial_configuration = SpatialConfiguration(system)
 
-        spatial_configuration.map_static_objects()
+        spatial_configuration.map_static_objects(inputs)
 
         if method == 'manual':
-            positions_dict = spatial_configuration.calculate_positions(inputs)
-            spatial_configuration.set_positions(positions_dict)
+            spatial_configuration.map_static_objects(inputs)
+            # positions_dict = spatial_configuration.calculate_positions(inputs)
+            # spatial_configuration.set_positions(positions_dict)
 
         else:
             raise NotImplementedError

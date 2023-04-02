@@ -101,7 +101,8 @@ demo.config['Problem Description'] = 'Simple optimization of a 3D layout'
 # Map the system to a single spatial configuration
 
 # Define the initial design vector
-component_0_position = np.array([-3., -4.41, -0.24, 0., 0., 0.])
+# component_0_position = np.array([-3., -4.41, -0.24, 0., 0., 0.])
+component_0_position = np.array([10,10,10, 0., 0., 0.])
 component_1_position = np.array([2., 4.41, 0.24, 0., 0., 0.])
 component_2_position = np.array([5, -3, -1, 0., 0., 0.])
 component_3_position = np.array([-3., -1., 3., 0., 0., 0.])
@@ -110,13 +111,13 @@ interconnect_0_node_0_position = np.array([-3., -2., 2.])
 interconnect_0_node_1_position = np.array([-1., 0., 2.])
 interconnect_1_node_0_position = np.array([4., 0., 1.])
 
-initial_design_vector = np.concatenate((component_0_position,
+initial_design_vector = [component_0_position,
                                         component_1_position,
                                         component_2_position,
                                         component_3_position,
                                         interconnect_0_node_0_position,
                                         interconnect_0_node_1_position,
-                                        interconnect_1_node_0_position))
+                                        interconnect_1_node_0_position]
 
 demo.create_spatial_configuration(method='manual',
                                   inputs=initial_design_vector)
@@ -126,22 +127,22 @@ demo.spatial_configuration.plot()
 
 # Perform gradient-based optimization
 
-demo.optimize_spatial_configuration(objective_function='normalized aggregate gap distance',
-                                    constraint_function='signed distances',
-                                    constraint_aggregation_function='induced exponential')
-
-# Post-processing
-
-# Plot the final spatial configuration
-positions_dict = demo.spatial_configuration.calculate_positions(demo.result.x)
-demo.spatial_configuration.set_positions(positions_dict)
-demo.spatial_configuration.plot()
-
-# Generate GIF animation; caution uncommenting this function call will increase runtime
-# demo.create_gif()
-
-# Write output file
-demo.create_report()
-
-# Print the log to see the optimization results and if any warnings or errors occurred
-demo.print_log()
+# demo.optimize_spatial_configuration(objective_function='normalized aggregate gap distance',
+#                                     constraint_function='signed distances',
+#                                     constraint_aggregation_function='induced exponential')
+#
+# # Post-processing
+#
+# # Plot the final spatial configuration
+# positions_dict = demo.spatial_configuration.calculate_positions(demo.result.x)
+# demo.spatial_configuration.set_positions(positions_dict)
+# demo.spatial_configuration.plot()
+#
+# # Generate GIF animation; caution uncommenting this function call will increase runtime
+# # demo.create_gif()
+#
+# # Write output file
+# demo.create_report()
+#
+# # Print the log to see the optimization results and if any warnings or errors occurred
+# demo.print_log()
