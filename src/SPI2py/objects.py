@@ -10,7 +10,8 @@ import numpy as np
 from scipy.spatial.distance import euclidean
 
 # TODO Compartmentalize this import
-from src.SPI2py.analysis.transformations import translate, rotate
+from .data.geometry.model_geometry import Geometry
+from .analysis.transformations import translate, rotate
 
 from matplotlib import colors as mcolors
 

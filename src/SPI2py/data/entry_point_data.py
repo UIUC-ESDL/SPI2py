@@ -3,7 +3,7 @@ import os
 
 import yaml
 
-from .shape_generation.spherical_decomposition import generate_rectangular_prisms
+from .geometry.spherical_decomposition import generate_rectangular_prisms
 from src.SPI2py.objects import Component, Port, Interconnect, Structure
 from src.SPI2py.systems import System
 
