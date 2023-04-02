@@ -1,13 +1,11 @@
 import logging
 import os
-from typing import Union
-import numpy as np
 
 import yaml
 
 from .shape_generation.spherical_decomposition import generate_rectangular_prisms
-from .models.objects import Component, Port, Interconnect, Structure
-from .models.systems import System
+from src.SPI2py.data.models.objects import Component, Port, Interconnect, Structure
+from src.SPI2py.data.models.systems import System
 
 class Data:
     """
