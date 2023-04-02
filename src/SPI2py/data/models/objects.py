@@ -9,6 +9,7 @@ from typing import Union
 import numpy as np
 from scipy.spatial.distance import euclidean
 
+# TODO Compartmentalize this import
 from ...analysis.transformations import translate, rotate
 
 from matplotlib import colors as mcolors

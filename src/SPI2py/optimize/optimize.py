@@ -3,6 +3,7 @@ from ..analysis import signed_distances, format_constraints
 
 from .solvers import run_optimizer
 
+
 class Optimize:
     """
     Optimize class for interacting with the SPI2py API.
