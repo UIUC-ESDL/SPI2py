@@ -16,12 +16,12 @@ demo = EntryPoint(directory=directory)
 
 demo.add_component(name='control_valve_1',
                    color='aquamarine',
-                   movement_class='static',
+                   movement_class='independent',
                    shapes=[{'type': 'box', 'origin': [0, 0, 0], 'dimensions': [6, 2, 2], 'rotation': [0, 0, 0]}])
 
 demo.add_component(name='actuator_1',
                    color='orange',
-                   movement_class='static',
+                   movement_class='independent',
                    shapes=[{'type': 'box', 'origin': [-3, 0, -6], 'dimensions': [3, 3, 1.5], 'rotation': [0, 0, 0]},
                            {'type': 'box', 'origin': [-3, 0, -4.5], 'dimensions': [3, 3, 1.5], 'rotation': [0, 0, 0]},
                            {'type': 'box', 'origin': [-3, 0, -3], 'dimensions': [3, 3, 1.5], 'rotation': [0, 0, 0]},
@@ -29,12 +29,12 @@ demo.add_component(name='actuator_1',
 
 demo.add_component(name='component_2',
                    color='indigo',
-                   movement_class='static',
+                   movement_class='independent',
                    shapes=[{'type': 'box', 'origin': [0, 0, 0], 'dimensions': [1, 3, 3], 'rotation': [0, 0, 0]}])
 
 demo.add_component(name='component_3',
                    color='olive',
-                   movement_class='static',
+                   movement_class='independent',
                    shapes=[{'type': 'box', 'origin': [0, 0, 0], 'dimensions': [1, 1, 1], 'rotation': [0, 0, 0]},
                            {'type': 'box', 'origin': [1, 0, 0], 'dimensions': [1, 2, 1], 'rotation': [0, 0, 0]},
                            {'type': 'box', 'origin': [1, 1, 0], 'dimensions': [1, 1, 3], 'rotation': [0, 0, 0]},
@@ -101,8 +101,7 @@ demo.config['Problem Description'] = 'Simple optimization of a 3D layout'
 # Map the system to a single spatial configuration
 
 # Define the initial design vector
-# component_0_position = np.array([-3., -4.41, -0.24, 0., 0., 0.])
-component_0_position = np.array([10,10,10, 0., 0., 0.])
+component_0_position = np.array([-3., -4.41, -0.24, 0., 0., 0.])
 component_1_position = np.array([2., 4.41, 0.24, 0., 0., 0.])
 component_2_position = np.array([5, -3, -1, 0., 0., 0.])
 component_3_position = np.array([-3., -1., 3., 0., 0., 0.])
@@ -111,13 +110,13 @@ interconnect_0_node_0_position = np.array([-3., -2., 2.])
 interconnect_0_node_1_position = np.array([-1., 0., 2.])
 interconnect_1_node_0_position = np.array([4., 0., 1.])
 
-initial_design_vector = [component_0_position,
+initial_design_vector = np.concatenate((component_0_position,
                                         component_1_position,
                                         component_2_position,
                                         component_3_position,
                                         interconnect_0_node_0_position,
                                         interconnect_0_node_1_position,
-                                        interconnect_1_node_0_position]
+                                        interconnect_1_node_0_position))
 
 demo.create_spatial_configuration(method='manual',
                                   inputs=initial_design_vector)

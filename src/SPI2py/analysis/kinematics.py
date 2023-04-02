@@ -175,7 +175,7 @@ class SpatialConfiguration:
         for obj in self.system.objects:
             obj.set_positions(positions_dict)
 
-    def map_static_objects(self, design_vectors):
+    def map_static_objects(self):
 
         """
         This method maps static objects to spatial configurations.
@@ -186,9 +186,13 @@ class SpatialConfiguration:
         as a design vector.
         """
 
-        for static_object, design_vector in zip(self.system.static_objects, design_vectors):
-            pos_dict = static_object.calculate_independent_positions(design_vector, {})
+        for static_object in self.system.static_objects:
+            pos_dict = static_object.calculate_independent_positions(static_object.positions[0], {})
             static_object.set_positions(pos_dict)
+
+
+
+
 
 
     def plot(self, savefig=False, directory=None):

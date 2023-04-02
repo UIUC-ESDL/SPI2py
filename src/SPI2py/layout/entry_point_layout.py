@@ -23,12 +23,14 @@ class Layout:
 
         spatial_configuration = SpatialConfiguration(system)
 
-        spatial_configuration.map_static_objects(inputs)
+        spatial_configuration.map_static_objects()
 
         if method == 'manual':
-            spatial_configuration.map_static_objects(inputs)
-            # positions_dict = spatial_configuration.calculate_positions(inputs)
-            # spatial_configuration.set_positions(positions_dict)
+            # TODO Fix this
+            # spatial_configuration.map_static_objects()
+
+            positions_dict = spatial_configuration.calculate_positions(inputs)
+            spatial_configuration.set_positions(positions_dict)
 
         else:
             raise NotImplementedError

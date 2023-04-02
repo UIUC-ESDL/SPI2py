@@ -49,44 +49,44 @@ class Movement:
     def _validate_positions(self, positions: np.ndarray) -> np.ndarray:
 
         if positions is None:
-            raise ValueError('Positions have not been set for %s.' % self.name)
+            raise ValueError('Positions have not been set for %s.' % self.__repr__())
 
         if not isinstance(positions, list) and not isinstance(positions, np.ndarray):
             raise ValueError(
-                'Positions must be a list or numpy array for %s not %s.' % (self.name, type(positions)))
+                'Positions must be a list or numpy array for %s not %s.' % (self.__repr__(), type(positions)))
 
         if isinstance(positions, list):
-            logger.warning('Positions should be a numpy array for %s.' % self.name)
+            logger.warning('Positions should be a numpy array for %s.' % self.__repr__())
             positions = np.array(positions)
 
         if len(positions.shape) == 1:
-            logger.warning('Positions are not 2D for %s.' % self.name)
+            logger.warning('Positions are not 2D for %s.' % self.__repr__())
             positions = positions.reshape(-1, 3)
 
         if positions.shape[1] != 3:
-            raise ValueError('Positions must be 3D for %s.' % self.name)
+            raise ValueError('Positions must be 3D for %s.' % self.__repr__())
 
         return positions
 
     def _validate_radii(self, radii: np.ndarray) -> np.ndarray:
 
         if radii is None:
-            raise ValueError('Radii have not been set for %s.' % self.name)
+            raise ValueError('Radii have not been set for %s.' % self.__repr__())
 
         if isinstance(radii, float):
-            logger.warning('Radii should be a numpy array for %s.' % self.name)
+            logger.warning('Radii should be a numpy array for %s.' % self.__repr__())
             radii = np.array([radii])
 
         if isinstance(radii, list):
-            logger.warning('Radii should be a numpy array for %s.' % self.name)
+            logger.warning('Radii should be a numpy array for %s.' % self.__repr__())
             radii = np.array(radii)
 
         if len(radii.shape) > 1:
-            logger.warning('Radii should be 1D for %s.' % self.name)
+            logger.warning('Radii should be 1D for %s.' % self.__repr__())
             radii = radii.reshape(-1)
 
         if radii.shape[0] != self.positions.shape[0]:
-            raise ValueError('There must be 1 radius for each position row for %s.' % self.name)
+            raise ValueError('There must be 1 radius for each position row for %s.' % self.__repr__())
 
         return radii
 
@@ -94,12 +94,12 @@ class Movement:
     def _validate_movement_class(self, movement_class):
 
         if not isinstance(movement_class, str):
-            raise TypeError('Movement must be a string for %s.' % self.name)
+            raise TypeError('Movement must be a string for %s.' % self.__repr__())
 
         valid_movement_classes = ['static', 'independent', 'partially_dependent', 'fully_dependent']
         if movement_class not in valid_movement_classes:
             raise ValueError('Movement class not recognized for %s. Valid movement classes are: %s' %
-                             (self.name, valid_movement_classes))
+                             (self.__repr__(), valid_movement_classes))
 
         return movement_class
 
@@ -348,11 +348,13 @@ class Object(Geometry, Movement, Material):
                  constraints:        Union[None, dict],
                  degrees_of_freedom: Union[list[int], None] = ('x', 'y', 'z', 'rx', 'ry', 'rz')):
 
+        self.name = self._validate_name(name)
+
         Geometry.__init__(self)
         Movement.__init__(self, positions, radii, movement_class, constraints, degrees_of_freedom)
         Material.__init__(self, color)
 
-        self.name  = self._validate_name(name)
+
 
 
 
@@ -396,6 +398,7 @@ class Port(Object):
         self.positions = self.reference_point_offset
 
         self.radius = self._validate_radii(radius)
+        self.radii = self.radius
 
         self.movement_class = movement_class
 
