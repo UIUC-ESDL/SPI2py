@@ -562,7 +562,8 @@ class InterconnectEdge(Object):
         dist = euclidean(pos_1, pos_2)
 
         # We don't want zero-length interconnects or interconnect segments--they cause problems!
-        num_spheres = int(dist / (self.radius * 2))
+        # num_spheres = int(dist / (self.radius * 2))
+        num_spheres = int(dist / (self.radius*1.5))
         if num_spheres == 0:
             num_spheres = 1
 

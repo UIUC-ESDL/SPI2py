@@ -25,7 +25,7 @@ demo.add_component(name='actuator_1',
                    shapes=[{'type': 'box', 'origin': [-3, 0, -6], 'dimensions': [3, 3, 1.5], 'rotation': [0, 0, 0]},
                            {'type': 'box', 'origin': [-3, 0, -4.5], 'dimensions': [3, 3, 1.5], 'rotation': [0, 0, 0]},
                            {'type': 'box', 'origin': [-3, 0, -3], 'dimensions': [3, 3, 1.5], 'rotation': [0, 0, 0]},
-                           {'type': 'box', 'origin': [-1, -0.5, -1], 'dimensions': [1, 1, 5], 'rotation': [0, 0, 0]}])
+                           {'type': 'box', 'origin': [-2, 1, -2.5], 'dimensions': [1, 1, 5], 'rotation': [0, 0, 0]}])
 
 demo.add_component(name='component_2',
                    color='indigo',
@@ -37,7 +37,7 @@ demo.add_component(name='component_3',
                    movement_class='independent',
                    shapes=[{'type': 'box', 'origin': [0, 0, 0], 'dimensions': [1, 1, 1], 'rotation': [0, 0, 0]},
                            {'type': 'box', 'origin': [1, 0, 0], 'dimensions': [1, 2, 1], 'rotation': [0, 0, 0]},
-                           {'type': 'box', 'origin': [1, 1, 0], 'dimensions': [1, 1, 3], 'rotation': [0, 0, 0]},
+                           {'type': 'box', 'origin': [1, 1, 0.5], 'dimensions': [1, 1, 3], 'rotation': [0, 0, 0]},
                            {'type': 'box', 'origin': [1, 1, 3], 'dimensions': [2, 1, 1], 'rotation': [0, 0, 0]}])
 
 demo.add_port(component_name='control_valve_1',
@@ -124,8 +124,8 @@ demo.create_spatial_configuration(method='manual',
 # Plot initial spatial configuration
 demo.spatial_configuration.plot()
 
-# Perform gradient-based optimization
-
+# # Perform gradient-based optimization
+#
 # demo.optimize_spatial_configuration(objective_function='normalized aggregate gap distance',
 #                                     constraint_function='signed distances',
 #                                     constraint_aggregation_function='induced exponential')
