@@ -9,5 +9,3 @@ from .distance import distances_points_points, signed_distances_spheres_spheres,
 
 from .transformations import rotate, translate
 
-from .kinematics import SpatialConfiguration
-

@@ -10,8 +10,8 @@ import os
 
 import yaml
 
-from .objects import Component, Port, Interconnect, Structure
-from .systems import System
+from .model import Component, Port, Interconnect, Structure, System, SpatialConfiguration
+
 
 # Data Import
 from .data import generate_rectangular_prisms
@@ -22,7 +22,7 @@ from .data import generate_rectangular_prisms
 from .analysis.objectives import normalized_aggregate_gap_distance
 from .analysis.constraints import signed_distances, format_constraints
 from .analysis.constraint_aggregation import kreisselmeier_steinhauser, p_norm, induced_exponential, induced_power
-from .analysis.kinematics import SpatialConfiguration
+# from src.SPI2py.kinematics import ...
 
 # Optimize Imports
 from .optimize.solvers import run_optimizer
