@@ -1,5 +1,5 @@
 import numpy as np
-from .analysis.kinematics import
+from .analysis.kinematics import calculate_static_positions, calculate_independent_positions
 
 from .result.visualization.plotting import plot_objects
 
@@ -186,7 +186,7 @@ class SpatialConfiguration:
         """
 
         for static_object in self.system.static_objects:
-            pos_dict = static_object.calculate_independent_positions(static_object.positions[0], {})
+            pos_dict = calculate_independent_positions(static_object, static_object.positions[0], {})
             static_object.set_positions(pos_dict)
 
 

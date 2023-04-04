@@ -8,8 +8,9 @@ import logging
 from scipy.spatial.distance import euclidean
 
 # TODO Compartmentalize this import
-from src.SPI2py.data.geometry.model_geometry import Geometry
-from src.SPI2py.analysis.transformations import translate, rotate
+from .data.geometry.model_geometry import Geometry
+from .analysis.transformations import translate, rotate
+from .analysis.kinematics import calculate_static_positions, calculate_independent_positions
 
 from matplotlib import colors as mcolors
 
@@ -176,47 +177,6 @@ class Movement:
     #
     #     return design_vector
 
-
-
-    def calculate_static_positions(self, positions_dict):
-
-        positions_dict[str(self)] = (self.positions, self.radii)
-
-        return positions_dict
-
-    def calculate_independent_positions(self,
-                                        design_vector: np.ndarray,
-                                        positions_dict: Union[None, dict] = None) -> dict:
-
-        """
-
-        """
-
-        new_positions = np.copy(self.positions)
-
-        # TODO Fix workaround. For now assume 1x3 = translation nand 1x6 = translation and rotation
-
-        # if self.three_d_translation is True:
-        #     new_reference_position = design_vector[0:3]
-        #     new_positions = translate(new_positions, self.reference_position, new_reference_position)
-        #
-        # if self.three_d_rotation is True:
-        #     rotation = design_vector[3:None]
-        #     new_positions = rotate_about_point(new_positions, rotation)
-
-        if len(design_vector) >= 3:
-            new_reference_position = design_vector[0:3]
-            new_positions = translate(new_positions, self.reference_position, new_reference_position)
-
-        if len(design_vector) == 6:
-            rotation = design_vector[3:None]
-            new_positions = rotate(new_positions, rotation)
-
-        # TODO Check for constrained movement cases
-
-        positions_dict[str(self)] = (new_positions, self.radii)
-
-        return positions_dict
 
     def calculate_dependent_positions(self,
                                       design_vector:  np.ndarray,
@@ -460,9 +420,9 @@ class Component(Object):
                             positions_dict):
         # TODO Add logic to generalize this for all object types
         if self.movement_class == 'static':
-            positions_dict = self.calculate_static_positions(positions_dict)
+            positions_dict = calculate_static_positions(self,positions_dict)
         elif self.movement_class == 'independent':
-            positions_dict = self.calculate_independent_positions(design_vector, positions_dict)
+            positions_dict = calculate_independent_positions(self, design_vector, positions_dict)
         else:
             raise NotImplementedError('This movement type is not implemented yet')
 
@@ -728,7 +688,7 @@ class Structure(Object):
                             design_vector,
                             positions_dict: dict) -> dict:
         # TODO Remove temp design vector argument
-        positions_dict = self.calculate_static_positions(positions_dict)
+        positions_dict = calculate_static_positions(self, positions_dict)
 
         return positions_dict
 
