@@ -12,7 +12,7 @@ from SPI2py import Problem
 directory = os.path.dirname(__file__) + '/'
 
 # Initialize the EntryPoint class with your current working directory and input files
-demo = Problem(directory=directory)
+demo = Problem(directory=directory, system_name='Demo System')
 
 demo.add_component(name='control_valve_1',
                    color='aquamarine',

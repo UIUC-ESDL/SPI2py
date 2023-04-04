@@ -14,6 +14,9 @@ class SpatialConfiguration:
     def __init__(self, system):
         self.system = system
 
+    def __str__(self):
+        return self.system.name
+
     @property
     def design_vector(self):
         """

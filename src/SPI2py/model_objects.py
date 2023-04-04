@@ -7,10 +7,10 @@ import logging
 
 from scipy.spatial.distance import euclidean
 
-# TODO Compartmentalize this import
+
 from .data.geometry.model_geometry import Geometry
 from .analysis.transformations import translate, rotate
-from .analysis.kinematics import calculate_static_positions, calculate_independent_positions
+from .analysis.kinematics import calculate_static_positions, calculate_independent_positions, calculate_dependent_positions
 
 from matplotlib import colors as mcolors
 
@@ -18,8 +18,6 @@ logger = logging.getLogger(__name__)
 
 import numpy as np
 from typing import Union
-
-
 
 
 
@@ -178,42 +176,7 @@ class Movement:
     #     return design_vector
 
 
-    def calculate_dependent_positions(self,
-                                      design_vector:  np.ndarray,
-                                      positions_dict: Union[None, dict] = None) -> dict:
-        """
-        Types of Constrained Motion
 
-        Fully Dependent Constraints
-        1. "offset translation and rotation"
-        2. ...(?)
-
-        #
-        2. "constant translation offset variable rotation"
-        2. "variable translation constant rotation offset
-        2. "colinear" (not implemented)
-        3. "colinear with offset" (not implemented)
-        """
-
-        def offset_translation_and_rotation_(self, positions_dict):
-            # TODO Remove design vector argument
-            # Get the reference point
-            reference_point = positions_dict[self.component_name][0][0]
-
-            # Calculate the port position
-            port_position = reference_point + self.reference_point_offset
-
-            # Add the port position to the positions dictionary
-            positions_dict[str(self)] = (port_position, self.radius)
-
-            return positions_dict
-
-        if self.movement_class == 'offset translation and rotation':
-            positions_dict = offset_translation_and_rotation_(self, positions_dict)
-        else:
-            raise NotImplementedError('This type of constrained motion is not implemented.')
-
-        return positions_dict
     #
     # def calculate_positions(self,
     #                         design_vector: np.ndarray,

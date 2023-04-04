@@ -38,10 +38,11 @@ class Data:
     """
 
     def __init__(self,
-                 directory:  str):
+                 directory:  str,
+                 system_name: str):
 
         self.directory  = directory
-
+        self.system_name = system_name
         # Initialize default configuration
         self._entry_point_directory = os.path.dirname(__file__) + '/'
         self.config                 = self.read_config_file('data/config.yaml')
@@ -51,7 +52,7 @@ class Data:
         # Initialize the logger
         self.initialize_logger()
 
-        self.system = self.create_system()
+        self.system = self.create_system(system_name)
 
         # Create objects from the input file
 
@@ -143,14 +144,14 @@ class Data:
         with open(self.logger_name) as f:
             print(f.read())
 
-    def create_system(self):
+    def create_system(self, name):
         """
         Create the objects from the input files.
 
         :return:
         """
         # TODO Replace all with interconnects
-        system = System(self.config)
+        system = System(name, self.config)
 
         return system
 
@@ -326,10 +327,11 @@ class Problem(Data, Layout, Analysis, Optimize, Result):
     EntryPoint class for interacting with the SPI2py API.
     """
     def __init__(self,
-                 directory):
+                 directory,
+                 system_name):
 
         # Initialize the Data class
-        Data.__init__(self, directory)
+        Data.__init__(self, directory, system_name)
 
         # Initialize the Layout class
         Layout.__init__(self)

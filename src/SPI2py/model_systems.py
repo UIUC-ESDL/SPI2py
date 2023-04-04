@@ -32,8 +32,10 @@ class System:
     """
 
     def __init__(self,
+                 name:   str,
                  config: dict):
 
+        self.name                  = name
         self.components            = []
         self.ports                 = []
         self.interconnects         = []
@@ -41,6 +43,12 @@ class System:
         self.interconnect_segments = []
         self.structures            = []
         self.config                = config
+
+    def __repr__(self):
+        return f'System({self.name})'
+
+    def __str__(self):
+        return self.name
 
     @property
     def objects(self):
