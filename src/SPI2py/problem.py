@@ -10,8 +10,10 @@ import os
 
 import yaml
 
-from .model import Component, Port, Interconnect, Structure, System, SpatialConfiguration
-
+# Import the model
+from .model_objects import Component, Port, Interconnect, Structure
+from .model_systems import System
+from .model_spatial_configurations import SpatialConfiguration
 
 # Data Import
 from .data import generate_rectangular_prisms
@@ -319,7 +321,7 @@ class Result:
         with open(self.directory + report_filename, 'w') as f:
             json.dump(self.outputs, f)
 
-class EntryPoint(Data, Layout, Analysis, Optimize, Result):
+class Problem(Data, Layout, Analysis, Optimize, Result):
     """
     EntryPoint class for interacting with the SPI2py API.
     """

@@ -6,13 +6,13 @@ Author:     Chad Peterson
 # Import packages
 import os
 import numpy as np
-from SPI2py import EntryPoint
+from SPI2py import Problem
 
 # Obtain the local path of this example's directory
 directory = os.path.dirname(__file__) + '/'
 
 # Initialize the EntryPoint class with your current working directory and input files
-demo = EntryPoint(directory=directory)
+demo = Problem(directory=directory)
 
 demo.add_component(name='control_valve_1',
                    color='aquamarine',

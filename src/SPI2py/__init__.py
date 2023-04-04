@@ -1,1 +1,1 @@
-from .entry_point_main import EntryPoint
+from .problem import Problem
