@@ -1,1 +1,1 @@
-from .entry_point_data import Data
+from .geometry.spherical_decomposition import generate_rectangular_prisms

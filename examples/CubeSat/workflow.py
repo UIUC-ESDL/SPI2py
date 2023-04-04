@@ -124,24 +124,24 @@ demo.create_spatial_configuration(method='manual',
 # Plot initial spatial configuration
 demo.spatial_configuration.plot()
 
-# # Perform gradient-based optimization
-#
-# demo.optimize_spatial_configuration(objective_function='normalized aggregate gap distance',
-#                                     constraint_function='signed distances',
-#                                     constraint_aggregation_function='induced exponential')
-#
-# # Post-processing
-#
-# # Plot the final spatial configuration
-# positions_dict = demo.spatial_configuration.calculate_positions(demo.result.x)
-# demo.spatial_configuration.set_positions(positions_dict)
-# demo.spatial_configuration.plot()
-#
-# # Generate GIF animation; caution uncommenting this function call will increase runtime
-# # demo.create_gif()
-#
-# # Write output file
-# demo.create_report()
-#
-# # Print the log to see the optimization results and if any warnings or errors occurred
-# demo.print_log()
+# Perform gradient-based optimization
+
+demo.optimize_spatial_configuration(objective_function='normalized aggregate gap distance',
+                                    constraint_function='signed distances',
+                                    constraint_aggregation_function='induced exponential')
+
+# Post-processing
+
+# Plot the final spatial configuration
+positions_dict = demo.spatial_configuration.calculate_positions(demo.result.x)
+demo.spatial_configuration.set_positions(positions_dict)
+demo.spatial_configuration.plot()
+
+# Generate GIF animation; caution uncommenting this function call will increase runtime
+# demo.create_gif()
+
+# Write output file
+demo.create_report()
+
+# Print the log to see the optimization results and if any warnings or errors occurred
+demo.print_log()
