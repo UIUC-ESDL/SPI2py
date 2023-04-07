@@ -30,6 +30,7 @@ from .analysis.constraint_aggregation import kreisselmeier_steinhauser, p_norm, 
 from .optimize.solvers import run_optimizer
 
 # Result Imports
+from .result.visualization import plot_objects
 from .result.animation import generate_gif
 
 
@@ -291,6 +292,29 @@ class Result:
         # self.result = None
         # self.design_vector_log = None
         self.outputs = {}
+
+
+    def plot(self, x):
+        """
+        Plot the model at a given state.
+
+        TODO require design vector / state
+        TODO add option to plot all design vectors
+
+        :param x: Design vector
+        """
+
+        positions = []
+        radii = []
+        colors = []
+
+        for obj in self.system.objects:
+
+            positions.append(obj.positions)
+            radii.append(obj.radii)
+            colors.append(obj.color)
+
+        fig = plot_objects(positions, radii, colors)
 
     def create_gif(self):
         gif_filepath = self.config['results']['GIF Filename']

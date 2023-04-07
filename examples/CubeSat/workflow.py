@@ -11,92 +11,92 @@ from SPI2py import Problem
 # Obtain the local path of this example's directory
 directory = os.path.dirname(__file__) + '/'
 
-# Initialize the EntryPoint class with your current working directory and input files
-demo = Problem(directory=directory, system_name='Demo System')
+# Initialize the design study
+design_study = Problem(directory=directory, system_name='Demo System')
 
-demo.add_component(name='control_valve_1',
-                   color='aquamarine',
-                   movement_class='independent',
-                   shapes=[{'type': 'box', 'origin': [0, 0, 0], 'dimensions': [6, 2, 2], 'rotation': [0, 0, 0]}])
+design_study.add_component(name='control_valve_1',
+                           color='aquamarine',
+                           movement_class='independent',
+                           shapes=[{'type': 'box', 'origin': [0, 0, 0], 'dimensions': [6, 2, 2], 'rotation': [0, 0, 0]}])
 
-demo.add_component(name='actuator_1',
-                   color='orange',
-                   movement_class='independent',
-                   shapes=[{'type': 'box', 'origin': [-3, 0, -6], 'dimensions': [3, 3, 1.5], 'rotation': [0, 0, 0]},
+design_study.add_component(name='actuator_1',
+                           color='orange',
+                           movement_class='independent',
+                           shapes=[{'type': 'box', 'origin': [-3, 0, -6], 'dimensions': [3, 3, 1.5], 'rotation': [0, 0, 0]},
                            {'type': 'box', 'origin': [-3, 0, -4.5], 'dimensions': [3, 3, 1.5], 'rotation': [0, 0, 0]},
                            {'type': 'box', 'origin': [-3, 0, -3], 'dimensions': [3, 3, 1.5], 'rotation': [0, 0, 0]},
                            {'type': 'box', 'origin': [-2, 1, -2.5], 'dimensions': [1, 1, 5], 'rotation': [0, 0, 0]}])
 
-demo.add_component(name='component_2',
-                   color='indigo',
-                   movement_class='independent',
-                   shapes=[{'type': 'box', 'origin': [0, 0, 0], 'dimensions': [1, 3, 3], 'rotation': [0, 0, 0]}])
+design_study.add_component(name='component_2',
+                           color='indigo',
+                           movement_class='independent',
+                           shapes=[{'type': 'box', 'origin': [0, 0, 0], 'dimensions': [1, 3, 3], 'rotation': [0, 0, 0]}])
 
-demo.add_component(name='component_3',
-                   color='olive',
-                   movement_class='independent',
-                   shapes=[{'type': 'box', 'origin': [0, 0, 0], 'dimensions': [1, 1, 1], 'rotation': [0, 0, 0]},
+design_study.add_component(name='component_3',
+                           color='olive',
+                           movement_class='independent',
+                           shapes=[{'type': 'box', 'origin': [0, 0, 0], 'dimensions': [1, 1, 1], 'rotation': [0, 0, 0]},
                            {'type': 'box', 'origin': [1, 0, 0], 'dimensions': [1, 2, 1], 'rotation': [0, 0, 0]},
                            {'type': 'box', 'origin': [1, 1, 0.5], 'dimensions': [1, 1, 3], 'rotation': [0, 0, 0]},
                            {'type': 'box', 'origin': [1, 1, 3], 'dimensions': [2, 1, 1], 'rotation': [0, 0, 0]}])
 
-demo.add_port(component_name='control_valve_1',
-              port_name='supply',
-              color='red',
-              radius=0.5,
-              reference_point_offset=[0, 0, 1.5],
-              movement_class='fully dependent')
+design_study.add_port(component_name='control_valve_1',
+                      port_name='supply',
+                      color='red',
+                      radius=0.5,
+                      reference_point_offset=[0, 0, 1.5],
+                      movement_class='fully dependent')
 
-demo.add_port(component_name='control_valve_1',
-              port_name='return',
-              color='blue',
-              radius=0.5,
-              reference_point_offset=[2, 0, 1.5],
-              movement_class='fully dependent')
-
-demo.add_port(component_name='actuator_1',
-              port_name='supply',
-              color='red',
-              radius=0.5,
-              reference_point_offset=[0, -1, 0],
-              movement_class='fully dependent')
-
-demo.add_port(component_name='actuator_1',
-              port_name='return',
-              color='blue',
-              radius=0.25,
-              reference_point_offset=[1, -1, 0],
-              movement_class='fully dependent')
-
-demo.add_interconnect(name='hp_cv_to_actuator',
-                      color='black',
-                      component_1='control_valve_1',
-                      component_1_port='supply',
-                      component_2='actuator_1',
-                      component_2_port='supply',
-                      radius=0.25,
-                      number_of_bends=2)
-
-demo.add_interconnect(name='hp_cv_to_actuator2',
+design_study.add_port(component_name='control_valve_1',
+                      port_name='return',
                       color='blue',
-                      component_1='control_valve_1',
-                      component_1_port='return',
-                      component_2='actuator_1',
-                      component_2_port='return',
-                      radius=0.25,
-                      number_of_bends=1)
+                      radius=0.5,
+                      reference_point_offset=[2, 0, 1.5],
+                      movement_class='fully dependent')
 
-demo.add_structure(name='structure_1',
-                   color='gray',
-                   movement_class='static',
-                   shapes=[{'type': 'box', 'origin': [0, 0, 0], 'dimensions': [0.1, 0.1, 0.1], 'rotation': [0, 0, 0]}])
+design_study.add_port(component_name='actuator_1',
+                      port_name='supply',
+                      color='red',
+                      radius=0.5,
+                      reference_point_offset=[0, -1, 0],
+                      movement_class='fully dependent')
+
+design_study.add_port(component_name='actuator_1',
+                      port_name='return',
+                      color='blue',
+                      radius=0.25,
+                      reference_point_offset=[1, -1, 0],
+                      movement_class='fully dependent')
+
+design_study.add_interconnect(name='hp_cv_to_actuator',
+                              color='black',
+                              component_1='control_valve_1',
+                              component_1_port='supply',
+                              component_2='actuator_1',
+                              component_2_port='supply',
+                              radius=0.25,
+                              number_of_bends=2)
+
+design_study.add_interconnect(name='hp_cv_to_actuator2',
+                              color='blue',
+                              component_1='control_valve_1',
+                              component_1_port='return',
+                              component_2='actuator_1',
+                              component_2_port='return',
+                              radius=0.25,
+                              number_of_bends=1)
+
+design_study.add_structure(name='structure_1',
+                           color='gray',
+                           movement_class='static',
+                           shapes=[{'type': 'box', 'origin': [0, 0, 0], 'dimensions': [0.1, 0.1, 0.1], 'rotation': [0, 0, 0]}])
 
 
 
 
 # Define the username and problem description
-demo.config['Username'] = 'Chad Peterson'
-demo.config['Problem Description'] = 'Simple optimization of a 3D layout'
+design_study.config['Username'] = 'Chad Peterson'
+design_study.config['Problem Description'] = 'Simple optimization of a 3D layout'
 
 # Map the system to a single spatial configuration
 
@@ -120,11 +120,11 @@ initial_design_vector = np.concatenate((component_0_position,
 
 
 
-demo.create_spatial_configuration(method='manual',
-                                  inputs=initial_design_vector)
+design_study.create_spatial_configuration(method='manual',
+                                          inputs=initial_design_vector)
 
 # Plot initial spatial configuration
-demo.spatial_configuration.plot()
+design_study.plot(initial_design_vector)
 
 # Perform gradient-based optimization
 
@@ -133,23 +133,23 @@ options = {'maxiter': 1000,
            'objective scaling factor': 1/50,
            'constraint aggregation parameter': 3.0}
 
-demo.optimize_spatial_configuration(objective_function='normalized aggregate gap distance',
-                                    constraint_function='signed distances',
-                                    constraint_aggregation_function='induced exponential',
-                                    options=options)
+design_study.optimize_spatial_configuration(objective_function='normalized aggregate gap distance',
+                                            constraint_function='signed distances',
+                                            constraint_aggregation_function='induced exponential',
+                                            options=options)
 
 # Post-processing
 
 # Plot the final spatial configuration
-positions_dict = demo.spatial_configuration.calculate_positions(demo.result.x)
-demo.spatial_configuration.set_positions(positions_dict)
-demo.spatial_configuration.plot()
+positions_dict = design_study.spatial_configuration.calculate_positions(design_study.result.x)
+design_study.spatial_configuration.set_positions(positions_dict)
+design_study.plot(design_study.result.x)
 
 # Generate GIF animation; caution uncommenting this function call will increase runtime
 # demo.create_gif()
 
 # Write output file
-demo.create_report()
+design_study.create_report()
 
 # Print the log to see the optimization results and if any warnings or errors occurred
-demo.print_log()
+design_study.print_log()

@@ -1,7 +1,7 @@
 import numpy as np
 
 from .analysis.kinematics import calculate_independent_positions
-from .result.plotting import plot_objects
+
 
 class SpatialConfiguration:
     """
@@ -194,19 +194,7 @@ class SpatialConfiguration:
 
 
 
-    def plot(self, savefig=False, directory=None):
 
-        layout_plot_array = []
-
-        for obj in self.system.objects:
-
-            positions = obj.positions
-            radii = obj.radii
-            color = obj.color
-
-            layout_plot_array.append([positions, radii, color])
-
-        fig = plot_objects(layout_plot_array, savefig, directory, self.system.config)
 
 
     def extract_spatial_graph(self):
