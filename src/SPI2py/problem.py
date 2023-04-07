@@ -34,30 +34,42 @@ from .optimize.solvers import run_optimizer
 from .result.visualization import plot_objects
 
 
-class Data:
+class Problem:
     """
-    Data class for interacting with the SPI2py API.
+    EntryPoint class for interacting with the SPI2py API.
     """
-
     def __init__(self,
-                 directory:  str,
-                 system_name: str):
+                 directory,
+                 system_name):
 
-        self.directory  = directory
+        # Initialize the Data class
+        self.directory = directory
         self.system_name = system_name
         # Initialize default configuration
         self._entry_point_directory = os.path.dirname(__file__) + '/'
-        self.config                 = self.read_config_file('config.yaml')
+        self.config = self.read_config_file('config.yaml')
 
-        self.logger_name            = self.directory + "logger.log"
+        self.logger_name = self.directory + "logger.log"
 
-        # Initialize the logger
         self.initialize_logger()
 
         self.system = self.create_system(system_name)
 
-        # Create objects from the input file
+        # Initialize the Layout class
+        self.spatial_configuration = None
 
+        # Initialize the Analysis class
+        self.objective_function = None
+        self.constraint_function = None
+        self.constraint_aggregation_function = None
+
+        # Initialize the Optimize class
+        self._spatial_configuration = None
+
+        # Initialize the Result class
+        self.outputs = {}
+
+    # DATA METHODS
 
     def read_config_file(self, config_filepath):
         config_filepath = self._entry_point_directory + config_filepath
@@ -157,14 +169,7 @@ class Data:
 
         return system
 
-class Layout:
-    """
-    Layout class for interacting with the SPI2py API.
-    """
-    def __init__(self):
-
-        # Systems do not start with a spatial configuration
-        self.spatial_configuration = None
+    # LAYOUT METHODS
 
     def _create_spatial_configuration(self, system, method, inputs=None):
         """
@@ -194,15 +199,10 @@ class Layout:
 
         self.spatial_configuration = spatial_configuration
 
+    def create_spatial_configuration(self, method, inputs=None):
+        self._create_spatial_configuration(self.system, method, inputs)
 
-class Analysis:
-    """
-    Analysis class for interacting with the SPI2py API.
-    """
-    def __init__(self):
-        self.objective_function = None
-        self.constraint_function = None
-        self.constraint_aggregation_function = None
+    # ANALYSIS METHODS
 
     def set_objective_function(self,
                                objective_function,
@@ -267,13 +267,7 @@ class Analysis:
     def calculate_constraint_functions(self):
         pass
 
-
-class Optimize:
-    """
-    Optimize class for interacting with the SPI2py API.
-    """
-    def __init__(self):
-        self._spatial_configuration = None
+    # OPTIMIZE METHODS
 
     def _optimize_spatial_configuration(self,
                                         spatial_configuration,
@@ -293,14 +287,27 @@ class Optimize:
                                                             nlcs,
                                                             options)
 
-class Result:
-    """
-    Result class for interacting with the SPI2py API.
-    """
-    def __init__(self):
-        # self.result = None
-        # self.design_vector_log = None
-        self.outputs = {}
+    def optimize_spatial_configuration(self,
+                                       objective_function,
+                                       constraint_function,
+                                       constraint_aggregation_function,
+                                       options
+                                       ):
+
+        self.set_objective_function(objective_function)
+        self.set_constraint_function(constraint_function)
+        self.set_constraint_aggregation_function(constraint_aggregation_function)
+
+        # if options['objective scaling factor'] is not None:
+
+
+        self._optimize_spatial_configuration(self.spatial_configuration,
+                                             self.objective_function,
+                                             self.constraint_function,
+                                             self.constraint_aggregation_function,
+                                             options)
+
+    # RESULT METHODS
 
 
     def plot(self, x):
@@ -354,58 +361,6 @@ class Result:
 
         with open(self.directory + report_filename, 'w') as f:
             json.dump(self.outputs, f)
-
-class Problem(Data, Layout, Analysis, Optimize, Result):
-    """
-    EntryPoint class for interacting with the SPI2py API.
-    """
-    def __init__(self,
-                 directory,
-                 system_name):
-
-        # Initialize the Data class
-        Data.__init__(self, directory, system_name)
-
-        # Initialize the Layout class
-        Layout.__init__(self)
-
-        # Initialize the Analysis class
-        Analysis.__init__(self)
-
-        # Initialize the Optimize class
-        Optimize.__init__(self)
-
-        # Initialize the Result class
-        Result.__init__(self)
-
-    # Define Methods
-
-    def create_spatial_configuration(self, method, inputs=None):
-        self._create_spatial_configuration(self.system, method, inputs)
-
-    def optimize_spatial_configuration(self,
-                                       objective_function,
-                                       constraint_function,
-                                       constraint_aggregation_function,
-                                       options
-                                       ):
-
-        self.set_objective_function(objective_function)
-        self.set_constraint_function(constraint_function)
-        self.set_constraint_aggregation_function(constraint_aggregation_function)
-
-        # if options['objective scaling factor'] is not None:
-
-
-        self._optimize_spatial_configuration(self.spatial_configuration,
-                                             self.objective_function,
-                                             self.constraint_function,
-                                             self.constraint_aggregation_function,
-                                             options)
-
-
-
-
 
 
 
