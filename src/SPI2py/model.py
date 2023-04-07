@@ -366,78 +366,19 @@ class System:
         # DYNAMIC OBJECTS - Independent then Partially Dependent
         objects = self.independent_objects + self.partially_dependent_objects
         for obj, design_vector_row in zip(objects, design_vectors):
-            positions_dict = obj.calculate_positions(design_vector_row, positions_dict)
+            positions_dict = calculate_independent_positions(obj, design_vector_row, positions_dict)
 
         # DYNAMIC OBJECTS - Fully Dependent
         for obj in self.fully_dependent_objects:
             positions_dict = obj.calculate_positions(design_vector, positions_dict)
 
+        # TODO Add method for partially dependent objects
+        # DYNAMIC OBJECTS - Partially Dependent
+
+
+
         return positions_dict
 
-    # def calculate_static_positions(self, positions_dict):
-    #     positions_dict[str(self)] = (self.positions, self.radii)
-    #
-    #     return positions_dict
-    #
-    # def calculate_dependent_positions(self,
-    #                                   design_vector: np.ndarray,
-    #                                   positions_dict: Union[None, dict] = None) -> dict:
-    #     """
-    #     Types of Constrained Motion
-    #
-    #     Fully Dependent Constraints
-    #     1. "offset translation and rotation"
-    #     2. ...(?)
-    #
-    #     #
-    #     2. "constant translation offset variable rotation"
-    #     2. "variable translation constant rotation offset
-    #     2. "colinear" (not implemented)
-    #     3. "colinear with offset" (not implemented)
-    #     """
-    #
-    #     def offset_translation_and_rotation_(self, positions_dict):
-    #         # TODO Remove design vector argument
-    #         # Get the reference point
-    #         reference_point = positions_dict[self.component_name][0][0]
-    #
-    #         # Calculate the port position
-    #         port_position = reference_point + self.reference_point_offset
-    #
-    #         # Add the port position to the positions dictionary
-    #         positions_dict[str(self)] = (port_position, self.radius)
-    #
-    #         return positions_dict
-    #
-    #     if self.movement_class == 'offset translation and rotation':
-    #         positions_dict = offset_translation_and_rotation_(self, positions_dict)
-    #     else:
-    #         raise NotImplementedError('This type of constrained motion is not implemented.')
-    #
-    #     return positions_dict
-
-    # def calculate_positions(self,
-    #                         design_vector: np.ndarray,
-    #                         positions_dict: Union[None, dict] = None) -> dict:
-    #
-    #     """
-    #
-    #     """
-    #
-    #     if positions_dict is None:
-    #         positions_dict = {}
-    #
-    #     if self.reference_objects is None:
-    #
-    #         # Calculate the independent positions
-    #         positions_dict = self.calculate_independent_positions(design_vector, positions_dict)
-    #
-    #     elif self.reference_objects is not None:
-    #
-    #         # Calculate the dependent positions
-    #         positions_dict = self.calculate_dependent_positions(design_vector, positions_dict)
-    #
-    #     return positions_dict
 
     def set_positions(self, positions_dict):
         """set_positions Sets the positions of the objects in the layout.

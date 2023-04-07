@@ -147,58 +147,6 @@ class Movement:
     def reference_position(self):
         return self.positions[0]
 
-    # @property
-    # def design_vector(self):
-    #     """
-    #     TODO Provide a method to reduce the design vector (e.g., not translation along z axis)
-    #     :return:
-    #     """
-    #
-    #     if self.three_d_translation is True and self.three_d_rotation is not True:
-    #         design_vector = self.reference_position
-    #
-    #     elif self.three_d_translation is True and self.three_d_rotation is True:
-    #         design_vector = np.concatenate((self.reference_position, self.rotation))
-    #
-    #     else:
-    #         logger.warning('This object is fixed')
-    #         design_vector = None
-    #
-    #     return design_vector
-
-    # @property
-    # def design_vector(self):
-    #     # TODO Implement a more universal design vector function
-    #     design_vector = np.concatenate((self.reference_position, self.rotation))
-    #
-    #     return design_vector
-
-
-
-    #
-    # def calculate_positions(self,
-    #                         design_vector: np.ndarray,
-    #                         positions_dict: Union[None, dict] = None) -> dict:
-    #
-    #     """
-    #
-    #     """
-    #
-    #     if positions_dict is None:
-    #         positions_dict = {}
-    #
-    #     if self.reference_objects is None:
-    #
-    #         # Calculate the independent positions
-    #         positions_dict = self.calculate_independent_positions(design_vector, positions_dict)
-    #
-    #     elif self.reference_objects is not None:
-    #
-    #         # Calculate the dependent positions
-    #         positions_dict = self.calculate_dependent_positions(design_vector, positions_dict)
-    #
-    #     return positions_dict
-
 
     def set_positions(self,
                       positions_dict: dict
@@ -274,10 +222,6 @@ class Object(Movement, Material):
         # Geometry.__init__(self)
         Movement.__init__(self, positions, radii, movement_class, constraints, degrees_of_freedom)
         Material.__init__(self, color)
-
-
-
-
 
     @staticmethod
     def _validate_name(name: str) -> str:

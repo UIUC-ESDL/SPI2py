@@ -141,7 +141,7 @@ class DesignStudy:
 
         # Set the objective function
         if objective_function == 'normalized aggregate gap distance':
-            _objective_function = normalized_aggregate_gap_distance
+            _objective_function = lambda x: normalized_aggregate_gap_distance(x, self.system)
         else:
             raise NotImplementedError
 
@@ -196,43 +196,34 @@ class DesignStudy:
 
     # OPTIMIZE METHODS
 
-    def _optimize_spatial_configuration(self,
-                                        system,
-                                        objective_function,
-                                        constraint_function,
-                                        constraint_aggregation_function,
-                                        options):
-
-        # TODO Switch config to analysis, simplify
-        nlcs = format_constraints(system,
-                                  constraint_function,
-                                  constraint_aggregation_function,
-                                  self.config)
-
-        self.result, self.design_vector_log = run_optimizer(system,
-                                                            objective_function,
-                                                            nlcs,
-                                                            options)
 
     def optimize_spatial_configuration(self,
                                        objective_function,
+                                       scale_objective_function,
                                        constraint_function,
                                        constraint_aggregation_function,
                                        options
                                        ):
 
         self.set_objective_function(objective_function)
+
+        # if scale_objective_function:
+        #     self.objective_function = scale_model_based_objective(self.objective_function)
+
         self.set_constraint_function(constraint_function)
         self.set_constraint_aggregation_function(constraint_aggregation_function)
 
         # if options['objective scaling factor'] is not None:
 
+        nlcs = format_constraints(self.system,
+                                  self.constraint_function,
+                                  self.constraint_aggregation_function,
+                                  self.config)
 
-        self._optimize_spatial_configuration(self.system,
-                                             self.objective_function,
-                                             self.constraint_function,
-                                             self.constraint_aggregation_function,
-                                             options)
+        self.result, self.design_vector_log = run_optimizer(self.system,
+                                                            self.objective_function,
+                                                            nlcs,
+                                                            options)
 
     # RESULT METHODS
 
