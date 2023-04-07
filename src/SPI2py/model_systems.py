@@ -2,7 +2,8 @@ from typing import Union
 
 import numpy as np
 from itertools import combinations, product
-
+from .model_objects import Component, Port, Interconnect, Structure
+from .data import generate_rectangular_prisms
 
 class System:
     """
@@ -32,8 +33,7 @@ class System:
     """
 
     def __init__(self,
-                 name:   str,
-                 config: dict):
+                 name:   str):
 
         self.name                  = name
         self.components            = []
@@ -42,13 +42,80 @@ class System:
         self.interconnect_nodes    = []
         self.interconnect_segments = []
         self.structures            = []
-        self.config                = config
 
     def __repr__(self):
         return f'System({self.name})'
 
     def __str__(self):
         return self.name
+
+    def add_component(self,
+                      name: str,
+                      color: str,
+                      movement_class: str,
+                      shapes: list):
+
+
+        """
+        Add a component to the system.
+
+        :param name:
+        :param color:
+        :param movement_class:
+        :param shapes:
+        :return:
+        """
+
+        origins = []
+        dimensions = []
+        for shape in shapes:
+            origins.append(shape['origin'])
+            dimensions.append(shape['dimensions'])
+
+        positions, radii = generate_rectangular_prisms(origins, dimensions)
+
+        component = Component(name, positions, radii, color, movement_class=movement_class)
+
+        # Update the system
+        self.components.append(component)
+
+    def add_port(self, component_name, port_name, color, radius,reference_point_offset, movement_class):
+        """
+        Add a port to the system.
+
+        :param
+        """
+        port = Port(component_name, port_name, color, radius,reference_point_offset, movement_class=movement_class)
+        self.ports.append(port)
+
+    def add_interconnect(self, name, component_1, component_1_port, component_2, component_2_port, radius, color, number_of_bends):
+        """
+        Add an interconnect to the system.
+
+        """
+        interconnect = Interconnect(name, component_1, component_1_port, component_2, component_2_port, radius, color, number_of_bends)
+
+        self.interconnects.append(interconnect)
+        self.interconnect_segments.extend(interconnect.segments)
+        self.interconnect_nodes.extend(interconnect.interconnect_nodes)
+
+    def add_structure(self, name, color, movement_class, shapes):
+        """
+        Add a structure to the system.
+
+        """
+
+        origins = []
+        dimensions = []
+        for shape in shapes:
+            origins.append(shape['origin'])
+            dimensions.append(shape['dimensions'])
+
+        positions, radii = generate_rectangular_prisms(origins, dimensions)
+
+        structure = Structure(name, positions, radii, color, movement_class)
+
+        self.structures.append(structure)
 
     @property
     def objects(self):
@@ -75,10 +142,6 @@ class System:
         pass
 
     def _validate_structures(self):
-        # TODO Implement
-        pass
-
-    def _validate_config(self):
         # TODO Implement
         pass
 

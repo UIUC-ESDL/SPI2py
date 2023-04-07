@@ -1,1 +1,1 @@
-from .problem import Problem
+from .design_study import DesignStudy

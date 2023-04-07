@@ -6,20 +6,23 @@ Author:     Chad Peterson
 # Import packages
 import os
 import numpy as np
-from SPI2py import Problem
+from SPI2py import DesignStudy
 
 # Obtain the local path of this example's directory
 local_directory = os.path.dirname(__file__) + '/'
 
 # Initialize the design study
-design_study = Problem(directory=local_directory, system_name='Demo System')
+study = DesignStudy(directory=local_directory,
+                    study_name='Example 1',
+                    system_name='Demo System')
 
-design_study.add_component(name='control_valve_1',
+# Add objects to the system
+study.system.add_component(name='control_valve_1',
                            color='aquamarine',
                            movement_class='independent',
                            shapes=[{'type': 'box', 'origin': [0, 0, 0], 'dimensions': [6, 2, 2], 'rotation': [0, 0, 0]}])
 
-design_study.add_component(name='actuator_1',
+study.system.add_component(name='actuator_1',
                            color='orange',
                            movement_class='independent',
                            shapes=[{'type': 'box', 'origin': [-3, 0, -6], 'dimensions': [3, 3, 1.5], 'rotation': [0, 0, 0]},
@@ -27,12 +30,12 @@ design_study.add_component(name='actuator_1',
                            {'type': 'box', 'origin': [-3, 0, -3], 'dimensions': [3, 3, 1.5], 'rotation': [0, 0, 0]},
                            {'type': 'box', 'origin': [-2, 1, -2.5], 'dimensions': [1, 1, 5], 'rotation': [0, 0, 0]}])
 
-design_study.add_component(name='component_2',
+study.system.add_component(name='component_2',
                            color='indigo',
                            movement_class='independent',
                            shapes=[{'type': 'box', 'origin': [0, 0, 0], 'dimensions': [1, 3, 3], 'rotation': [0, 0, 0]}])
 
-design_study.add_component(name='component_3',
+study.system.add_component(name='component_3',
                            color='olive',
                            movement_class='independent',
                            shapes=[{'type': 'box', 'origin': [0, 0, 0], 'dimensions': [1, 1, 1], 'rotation': [0, 0, 0]},
@@ -40,35 +43,35 @@ design_study.add_component(name='component_3',
                            {'type': 'box', 'origin': [1, 1, 0.5], 'dimensions': [1, 1, 3], 'rotation': [0, 0, 0]},
                            {'type': 'box', 'origin': [1, 1, 3], 'dimensions': [2, 1, 1], 'rotation': [0, 0, 0]}])
 
-design_study.add_port(component_name='control_valve_1',
+study.system.add_port(component_name='control_valve_1',
                       port_name='supply',
                       color='red',
                       radius=0.5,
                       reference_point_offset=[0, 0, 1.5],
                       movement_class='fully dependent')
 
-design_study.add_port(component_name='control_valve_1',
+study.system.add_port(component_name='control_valve_1',
                       port_name='return',
                       color='blue',
                       radius=0.5,
                       reference_point_offset=[2, 0, 1.5],
                       movement_class='fully dependent')
 
-design_study.add_port(component_name='actuator_1',
+study.system.add_port(component_name='actuator_1',
                       port_name='supply',
                       color='red',
                       radius=0.5,
                       reference_point_offset=[0, -1, 0],
                       movement_class='fully dependent')
 
-design_study.add_port(component_name='actuator_1',
+study.system.add_port(component_name='actuator_1',
                       port_name='return',
                       color='blue',
                       radius=0.25,
                       reference_point_offset=[1, -1, 0],
                       movement_class='fully dependent')
 
-design_study.add_interconnect(name='hp_cv_to_actuator',
+study.system.add_interconnect(name='hp_cv_to_actuator',
                               color='black',
                               component_1='control_valve_1',
                               component_1_port='supply',
@@ -77,7 +80,7 @@ design_study.add_interconnect(name='hp_cv_to_actuator',
                               radius=0.25,
                               number_of_bends=2)
 
-design_study.add_interconnect(name='hp_cv_to_actuator2',
+study.system.add_interconnect(name='hp_cv_to_actuator2',
                               color='blue',
                               component_1='control_valve_1',
                               component_1_port='return',
@@ -86,7 +89,7 @@ design_study.add_interconnect(name='hp_cv_to_actuator2',
                               radius=0.25,
                               number_of_bends=1)
 
-design_study.add_structure(name='structure_1',
+study.system.add_structure(name='structure_1',
                            color='gray',
                            movement_class='static',
                            shapes=[{'type': 'box', 'origin': [0, 0, 0], 'dimensions': [0.1, 0.1, 0.1], 'rotation': [0, 0, 0]}])
@@ -95,8 +98,8 @@ design_study.add_structure(name='structure_1',
 
 
 # Define the username and problem description
-design_study.config['Username'] = 'Chad Peterson'
-design_study.config['Problem Description'] = 'Simple optimization of a 3D layout'
+study.config['Username'] = 'Chad Peterson'
+study.config['Problem Description'] = 'Simple optimization of a 3D layout'
 
 # Map the system to a single spatial configuration
 
@@ -120,11 +123,11 @@ initial_design_vector = np.concatenate((component_0_position,
 
 
 
-design_study.create_spatial_configuration(method='manual',
+study.create_spatial_configuration(method='manual',
                                           inputs=initial_design_vector)
 
 # Plot initial spatial configuration
-design_study.plot(initial_design_vector)
+study.plot(initial_design_vector)
 
 # Perform gradient-based optimization
 
@@ -133,7 +136,7 @@ options = {'maxiter': 1000,
            'objective scaling factor': 1/50,
            'constraint aggregation parameter': 3.0}
 
-design_study.optimize_spatial_configuration(objective_function='normalized aggregate gap distance',
+study.optimize_spatial_configuration(objective_function='normalized aggregate gap distance',
                                             constraint_function='signed distances',
                                             constraint_aggregation_function='induced exponential',
                                             options=options)
@@ -141,10 +144,10 @@ design_study.optimize_spatial_configuration(objective_function='normalized aggre
 # Post-processing
 
 # Plot the final spatial configuration
-design_study.plot(design_study.result.x)
+study.plot(study.result.x)
 
 # Write output file
-design_study.create_report()
+study.create_report()
 
 # Print the log to see the optimization results and if any warnings or errors occurred
-design_study.print_log()
+study.print_log()
