@@ -103,7 +103,7 @@ def run_optimizer(layout,
     x0 = layout.design_vector
 
     convergence_tolerance = options['convergence tolerance']
-
+    max_iter = options['maximum number of iterations']
 
 
     # Run the solver
@@ -111,7 +111,7 @@ def run_optimizer(layout,
                    method='trust-constr',
                    constraints=nonlinear_constraints,
                    tol=convergence_tolerance,
-                   options={'verbose': 3},
+                   options={'verbose': 3, 'maxiter': max_iter},
                    callback=log_design_vector,
                    hess=lambda x: np.zeros((len(x0), len(x0))))
 

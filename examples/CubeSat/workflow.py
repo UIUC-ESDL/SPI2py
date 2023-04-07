@@ -89,7 +89,7 @@ system.add_structure(name='structure_1',
                      color='gray',
                      movement_class='static',
                      shapes=[
-                         {'type': 'box', 'origin': [0, 0, 0], 'dimensions': [0.1, 0.1, 0.1], 'rotation': [0, 0, 0]}])
+                         {'type': 'box', 'origin': [0, 0, -5], 'dimensions': [2, 2, 0.5], 'rotation': [0, 0, 0]}])
 
 # MAP STATIC OBJECTS
 
@@ -98,7 +98,7 @@ system.add_structure(name='structure_1',
 # system.map_object(object_name='component_2', design_vector=[5, -3, -1, 0., 0., 0.])
 # system.map_object(object_name='component_3', design_vector=[-3., -1., 3., 0., 0., 0.])
 
-system.map_object(object_name='structure_1', design_vector=np.array([0, 0, 0, 0, 0, 0]))
+system.map_static_object(object_name='structure_1', design_vector=np.array([0, 0, 0, 0, 0, 0]))
 
 # Define the design study
 
@@ -143,8 +143,8 @@ study.plot(initial_design_vector)
 
 # Perform gradient-based optimization
 
-options = {'maxiter': 1000,
-           'convergence tolerance': 2.5e-2,
+options = {'maximum number of iterations': 10,
+           'convergence tolerance': 1e-1,
            'objective scaling factor': 1 / 50,
            'constraint aggregation parameter': 3.0}
 
@@ -156,6 +156,8 @@ study.optimize_spatial_configuration(objective_function='normalized aggregate ga
 # Post-processing
 
 # Plot the final spatial configuration
+new_positions = system.calculate_positions(study.result.x)
+system.set_positions(new_positions)
 study.plot(study.result.x)
 
 # Write output file

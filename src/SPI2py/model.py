@@ -5,7 +5,7 @@ from itertools import combinations, product
 from .model_objects import Component, Port, Interconnect, Structure
 from .data import generate_rectangular_prisms
 from .analysis.transformations import translate, rotate
-from .analysis.kinematics import calculate_independent_positions
+from .analysis.kinematics import calculate_independent_positions, calculate_dependent_positions, calculate_static_positions
 
 
 class System:
@@ -360,7 +360,8 @@ class System:
 
         # STATIC OBJECTS
         for obj in self.static_objects:
-            positions_dict = obj.calculate_positions(design_vector, positions_dict)
+            # positions_dict = obj.calculate_positions(design_vector, positions_dict)
+            positions_dict = calculate_static_positions(obj, positions_dict)
 
         # DYNAMIC OBJECTS - Independent then Partially Dependent
         objects = self.independent_objects + self.partially_dependent_objects
@@ -450,7 +451,7 @@ class System:
         for obj in self.objects:
             obj.set_positions(positions_dict)
 
-    def map_object(self, object_name, design_vector):
+    def map_static_object(self, object_name, design_vector):
         """
         Maps an object to a spatial configuration.
 
@@ -472,37 +473,22 @@ class System:
 
         return positions_dict
 
-    def map_static_objects(self):
-
-        """
-        This method maps static objects to spatial configurations.
-
-        Although static objects do not move or have design variables, they still need to be mapped
-        to spatial configurations. This method temporarily replaces the default self.calculate_static_positions
-        method with the self.calculate_independent_positions method, treating the self.static_position attribute
-        as a design vector.
-        """
-
-        for static_object in self.static_objects:
-            pos_dict = calculate_independent_positions(static_object, static_object.positions[0], {})
-            static_object.set_positions(pos_dict)
-
-    def extract_spatial_graph(self):
-        """
-        Extracts a spatial graph from the layout.
-
-        TODO Remove unconnected nodes?
-
-        :return:
-        """
-
-        nodes = self.nodes
-        edges = self.edges
-
-        node_positions = []
-
-        positions_dict = self.calculate_positions(self.design_vector)
-
-        # TODO Implement
-
-        return nodes, node_positions, edges
+    # def extract_spatial_graph(self):
+    #     """
+    #     Extracts a spatial graph from the layout.
+    #
+    #     TODO Remove unconnected nodes?
+    #
+    #     :return:
+    #     """
+    #
+    #     nodes = self.nodes
+    #     edges = self.edges
+    #
+    #     node_positions = []
+    #
+    #     positions_dict = self.calculate_positions(self.design_vector)
+    #
+    #     # TODO Implement
+    #
+    #     return nodes, node_positions, edges
