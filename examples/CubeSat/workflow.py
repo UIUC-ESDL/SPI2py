@@ -9,10 +9,10 @@ import numpy as np
 from SPI2py import Problem
 
 # Obtain the local path of this example's directory
-directory = os.path.dirname(__file__) + '/'
+local_directory = os.path.dirname(__file__) + '/'
 
 # Initialize the design study
-design_study = Problem(directory=directory, system_name='Demo System')
+design_study = Problem(directory=local_directory, system_name='Demo System')
 
 design_study.add_component(name='control_valve_1',
                            color='aquamarine',
@@ -141,12 +141,7 @@ design_study.optimize_spatial_configuration(objective_function='normalized aggre
 # Post-processing
 
 # Plot the final spatial configuration
-positions_dict = design_study.spatial_configuration.calculate_positions(design_study.result.x)
-design_study.spatial_configuration.set_positions(positions_dict)
 design_study.plot(design_study.result.x)
-
-# Generate GIF animation; caution uncommenting this function call will increase runtime
-# demo.create_gif()
 
 # Write output file
 design_study.create_report()

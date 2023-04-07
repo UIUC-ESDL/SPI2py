@@ -24,6 +24,7 @@ from .data import generate_rectangular_prisms
 from .analysis.objectives import normalized_aggregate_gap_distance
 from .analysis.constraints import signed_distances, format_constraints
 from .analysis.constraint_aggregation import kreisselmeier_steinhauser, p_norm, induced_exponential, induced_power
+from .analysis.scaling import scale_model_based_objective
 # from src.SPI2py.kinematics import ...
 
 # Optimize Imports
@@ -31,7 +32,6 @@ from .optimize.solvers import run_optimizer
 
 # Result Imports
 from .result.visualization import plot_objects
-from .result.animation import generate_gif
 
 
 class Data:
@@ -204,13 +204,22 @@ class Analysis:
         self.constraint_function = None
         self.constraint_aggregation_function = None
 
-    def set_objective_function(self, objective_function):
+    def set_objective_function(self,
+                               objective_function,
+                               objective_scaling=False,
+                               design_vector_scale_factor=1,
+                               design_vector_scale_type='constant',
+                               objective_scale_factor=1,
+                               objective_scale_type='constant'):
 
         # Set the objective function
         if objective_function == 'normalized aggregate gap distance':
             _objective_function = normalized_aggregate_gap_distance
         else:
             raise NotImplementedError
+
+        # if objective_scaling:
+        #     _objective_function = scale_model_based_objective(_objective_function)
 
         self.objective_function = _objective_function
 
@@ -298,7 +307,6 @@ class Result:
         """
         Plot the model at a given state.
 
-        TODO require design vector / state
         TODO add option to plot all design vectors
 
         :param x: Design vector
