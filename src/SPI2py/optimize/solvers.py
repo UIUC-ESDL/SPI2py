@@ -104,6 +104,8 @@ def run_optimizer(layout,
 
     convergence_tolerance = options['convergence tolerance']
 
+
+
     # Run the solver
     res = minimize(lambda x: objective_function(x, layout), x0,
                    method='trust-constr',
@@ -116,6 +118,9 @@ def run_optimizer(layout,
     # Log the initial and final design vector
     design_vector_log.insert(0, x0)
     design_vector_log.append(res.x)
+
+    print("INITIAL OBJECTIVE: {}".format(objective_function(x0, layout)))
+    print("FINAL OBJECTIVE: {}".format(objective_function(res.x, layout)))
 
     # Log the results
     logger.info('Optimization results: {}'.format(res))

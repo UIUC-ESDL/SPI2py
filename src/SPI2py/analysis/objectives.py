@@ -7,7 +7,7 @@ from itertools import combinations
 from scipy.spatial.distance import cdist
 
 
-def aggregate_pairwise_distance(x, layout):
+def aggregate_pairwise_distance(x, model):
     """
     Aggregates the distance between each 2-pair of classes
 
@@ -16,12 +16,12 @@ def aggregate_pairwise_distance(x, layout):
     several orders of magnitude smaller, even when you force feasibility.
 
     :param x:
-    :param layout:
+    :param model:
     :return:
     """
 
     # Calculate the position of every sphere based on design vector x
-    positions_dict = layout.calculate_positions(x)
+    positions_dict = model.calculate_positions(x)
 
     # Create a list of object pairs
     object_pairs = list(combinations(positions_dict.keys(), 2))
@@ -36,23 +36,21 @@ def aggregate_pairwise_distance(x, layout):
 
         objective += sum(sum(cdist(positions_1, positions_2)))
 
-    # Adding a scaling factor to the objective function helps the solver
-    # objective = objective / 100000
-
     return objective
 
 
-def normalized_aggregate_gap_distance(x, layout):
+def normalized_aggregate_gap_distance(x, model):
     """
     Returns the normalized gap
 
     :param x:
-    :param layout:
+    :param model:
     :return:
     """
 
+    # Evaluate the model at the design vector x
     # Calculate the position of every sphere based on design vector x
-    positions_dict = layout.calculate_positions(x)
+    positions_dict = model.calculate_positions(x)
 
     # Create a list of object pairs
     object_pairs = list(combinations(positions_dict.keys(), 2))
@@ -69,9 +67,5 @@ def normalized_aggregate_gap_distance(x, layout):
 
     # Divide by number of components
     objective = np.sum(objective) / len(objective)
-
-
-    # TODO Add a scaling factor to the objective function to see if it helps
-    objective = objective / 150
 
     return objective

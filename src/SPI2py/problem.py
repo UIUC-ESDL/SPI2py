@@ -30,7 +30,7 @@ from .analysis.constraint_aggregation import kreisselmeier_steinhauser, p_norm, 
 from .optimize.solvers import run_optimizer
 
 # Result Imports
-from src.SPI2py.result.animation import generate_gif
+from .result.animation import generate_gif
 
 
 class Data:
