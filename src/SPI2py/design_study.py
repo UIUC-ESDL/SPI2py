@@ -12,8 +12,7 @@ import yaml
 
 # Import the model
 
-from .model_systems import System
-from .model_spatial_configurations import SpatialConfiguration
+from .model import System
 
 # Data Import
 
@@ -40,16 +39,14 @@ class DesignStudy:
     """
     def __init__(self,
                  directory,
-                 study_name,
-                 system_name):
+                 study_name):
 
         # Initialize the Data class
         self.directory = directory
 
         self.study_name = study_name
 
-        # Initialize the model
-        self.system = System(system_name)
+        self.system = None
 
         self._entry_point_directory = os.path.dirname(__file__) + '/'
         self.config = self.read_config_file('config.yaml')
@@ -96,6 +93,8 @@ class DesignStudy:
         with open(self.logger_name) as f:
             print(f.read())
 
+    def add_system(self, system):
+        self.system = system
 
     # LAYOUT METHODS
 
@@ -111,9 +110,9 @@ class DesignStudy:
         TODO implement different layout generation methods
         """
 
-        spatial_configuration = SpatialConfiguration(system)
+        spatial_configuration = system
 
-        spatial_configuration.map_static_objects()
+        # spatial_configuration.map_static_objects()
 
         if method == 'manual':
             # TODO Fix this
@@ -198,19 +197,19 @@ class DesignStudy:
     # OPTIMIZE METHODS
 
     def _optimize_spatial_configuration(self,
-                                        spatial_configuration,
+                                        system,
                                         objective_function,
                                         constraint_function,
                                         constraint_aggregation_function,
                                         options):
 
         # TODO Switch config to analysis, simplify
-        nlcs = format_constraints(spatial_configuration,
+        nlcs = format_constraints(system,
                                   constraint_function,
                                   constraint_aggregation_function,
                                   self.config)
 
-        self.result, self.design_vector_log = run_optimizer(spatial_configuration,
+        self.result, self.design_vector_log = run_optimizer(system,
                                                             objective_function,
                                                             nlcs,
                                                             options)
@@ -229,7 +228,7 @@ class DesignStudy:
         # if options['objective scaling factor'] is not None:
 
 
-        self._optimize_spatial_configuration(self.spatial_configuration,
+        self._optimize_spatial_configuration(self.system,
                                              self.objective_function,
                                              self.constraint_function,
                                              self.constraint_aggregation_function,
@@ -243,6 +242,7 @@ class DesignStudy:
         Plot the model at a given state.
 
         TODO add option to plot all design vectors
+        TODO add option to plot design vector--> move to system object
 
         :param x: Design vector
         """
@@ -259,9 +259,9 @@ class DesignStudy:
 
         fig = plot_objects(positions, radii, colors)
 
-    def create_gif(self):
-        gif_filepath = self.config['results']['GIF Filename']
-        generate_gif(self.spatial_configuration, self.design_vector_log, 1, self.directory, gif_filepath)
+    # def create_gif(self):
+    #     gif_filepath = self.config['results']['GIF Filename']
+    #     generate_gif(self.spatial_configuration, self.design_vector_log, 1, self.directory, gif_filepath)
 
     def create_report(self):
 

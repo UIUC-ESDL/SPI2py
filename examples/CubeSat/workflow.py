@@ -6,96 +6,110 @@ Author:     Chad Peterson
 # Import packages
 import os
 import numpy as np
-from SPI2py import DesignStudy
+from SPI2py import System, DesignStudy
+
+# Define the system
+
+system = System(name='Demo System')
+
+# Add objects to the system
+system.add_component(name='control_valve_1',
+                     color='aquamarine',
+                     movement_class='independent',
+                     shapes=[{'type': 'box', 'origin': [0, 0, 0], 'dimensions': [6, 2, 2], 'rotation': [0, 0, 0]}])
+
+system.add_component(name='actuator_1',
+                     color='orange',
+                     movement_class='independent',
+                     shapes=[{'type': 'box', 'origin': [-3, 0, -6], 'dimensions': [3, 3, 1.5], 'rotation': [0, 0, 0]},
+                             {'type': 'box', 'origin': [-3, 0, -4.5], 'dimensions': [3, 3, 1.5], 'rotation': [0, 0, 0]},
+                             {'type': 'box', 'origin': [-3, 0, -3], 'dimensions': [3, 3, 1.5], 'rotation': [0, 0, 0]},
+                             {'type': 'box', 'origin': [-2, 1, -2.5], 'dimensions': [1, 1, 5], 'rotation': [0, 0, 0]}])
+
+system.add_component(name='component_2',
+                     color='indigo',
+                     movement_class='independent',
+                     shapes=[{'type': 'box', 'origin': [0, 0, 0], 'dimensions': [1, 3, 3], 'rotation': [0, 0, 0]}])
+
+system.add_component(name='component_3',
+                     color='olive',
+                     movement_class='independent',
+                     shapes=[{'type': 'box', 'origin': [0, 0, 0], 'dimensions': [1, 1, 1], 'rotation': [0, 0, 0]},
+                             {'type': 'box', 'origin': [1, 0, 0], 'dimensions': [1, 2, 1], 'rotation': [0, 0, 0]},
+                             {'type': 'box', 'origin': [1, 1, 0.5], 'dimensions': [1, 1, 3], 'rotation': [0, 0, 0]},
+                             {'type': 'box', 'origin': [1, 1, 3], 'dimensions': [2, 1, 1], 'rotation': [0, 0, 0]}])
+
+system.add_port(component_name='control_valve_1',
+                port_name='supply',
+                color='red',
+                radius=0.5,
+                reference_point_offset=[0, 0, 1.5],
+                movement_class='fully dependent')
+
+system.add_port(component_name='control_valve_1',
+                port_name='return',
+                color='blue',
+                radius=0.5,
+                reference_point_offset=[2, 0, 1.5],
+                movement_class='fully dependent')
+
+system.add_port(component_name='actuator_1',
+                port_name='supply',
+                color='red',
+                radius=0.5,
+                reference_point_offset=[0, -1, 0],
+                movement_class='fully dependent')
+
+system.add_port(component_name='actuator_1',
+                port_name='return',
+                color='blue',
+                radius=0.25,
+                reference_point_offset=[1, -1, 0],
+                movement_class='fully dependent')
+
+system.add_interconnect(name='hp_cv_to_actuator',
+                        color='black',
+                        component_1='control_valve_1',
+                        component_1_port='supply',
+                        component_2='actuator_1',
+                        component_2_port='supply',
+                        radius=0.25,
+                        number_of_bends=2)
+
+system.add_interconnect(name='hp_cv_to_actuator2',
+                        color='blue',
+                        component_1='control_valve_1',
+                        component_1_port='return',
+                        component_2='actuator_1',
+                        component_2_port='return',
+                        radius=0.25,
+                        number_of_bends=1)
+
+system.add_structure(name='structure_1',
+                     color='gray',
+                     movement_class='static',
+                     shapes=[
+                         {'type': 'box', 'origin': [0, 0, 0], 'dimensions': [0.1, 0.1, 0.1], 'rotation': [0, 0, 0]}])
+
+# MAP STATIC OBJECTS
+
+# system.map_object(object_name='control_valve_1', design_vector=[-3., -4.41, -0.24, 0., 0., 0.])
+# system.map_object(object_name='actuator_1', design_vector=[2., 4.41, 0.24, 0., 0., 0.])
+# system.map_object(object_name='component_2', design_vector=[5, -3, -1, 0., 0., 0.])
+# system.map_object(object_name='component_3', design_vector=[-3., -1., 3., 0., 0., 0.])
+
+system.map_object(object_name='structure_1', design_vector=np.array([0, 0, 0, 0, 0, 0]))
+
+# Define the design study
 
 # Obtain the local path of this example's directory
 local_directory = os.path.dirname(__file__) + '/'
 
 # Initialize the design study
 study = DesignStudy(directory=local_directory,
-                    study_name='Example 1',
-                    system_name='Demo System')
+                    study_name='Example 1')
 
-# Add objects to the system
-study.system.add_component(name='control_valve_1',
-                           color='aquamarine',
-                           movement_class='independent',
-                           shapes=[{'type': 'box', 'origin': [0, 0, 0], 'dimensions': [6, 2, 2], 'rotation': [0, 0, 0]}])
-
-study.system.add_component(name='actuator_1',
-                           color='orange',
-                           movement_class='independent',
-                           shapes=[{'type': 'box', 'origin': [-3, 0, -6], 'dimensions': [3, 3, 1.5], 'rotation': [0, 0, 0]},
-                           {'type': 'box', 'origin': [-3, 0, -4.5], 'dimensions': [3, 3, 1.5], 'rotation': [0, 0, 0]},
-                           {'type': 'box', 'origin': [-3, 0, -3], 'dimensions': [3, 3, 1.5], 'rotation': [0, 0, 0]},
-                           {'type': 'box', 'origin': [-2, 1, -2.5], 'dimensions': [1, 1, 5], 'rotation': [0, 0, 0]}])
-
-study.system.add_component(name='component_2',
-                           color='indigo',
-                           movement_class='independent',
-                           shapes=[{'type': 'box', 'origin': [0, 0, 0], 'dimensions': [1, 3, 3], 'rotation': [0, 0, 0]}])
-
-study.system.add_component(name='component_3',
-                           color='olive',
-                           movement_class='independent',
-                           shapes=[{'type': 'box', 'origin': [0, 0, 0], 'dimensions': [1, 1, 1], 'rotation': [0, 0, 0]},
-                           {'type': 'box', 'origin': [1, 0, 0], 'dimensions': [1, 2, 1], 'rotation': [0, 0, 0]},
-                           {'type': 'box', 'origin': [1, 1, 0.5], 'dimensions': [1, 1, 3], 'rotation': [0, 0, 0]},
-                           {'type': 'box', 'origin': [1, 1, 3], 'dimensions': [2, 1, 1], 'rotation': [0, 0, 0]}])
-
-study.system.add_port(component_name='control_valve_1',
-                      port_name='supply',
-                      color='red',
-                      radius=0.5,
-                      reference_point_offset=[0, 0, 1.5],
-                      movement_class='fully dependent')
-
-study.system.add_port(component_name='control_valve_1',
-                      port_name='return',
-                      color='blue',
-                      radius=0.5,
-                      reference_point_offset=[2, 0, 1.5],
-                      movement_class='fully dependent')
-
-study.system.add_port(component_name='actuator_1',
-                      port_name='supply',
-                      color='red',
-                      radius=0.5,
-                      reference_point_offset=[0, -1, 0],
-                      movement_class='fully dependent')
-
-study.system.add_port(component_name='actuator_1',
-                      port_name='return',
-                      color='blue',
-                      radius=0.25,
-                      reference_point_offset=[1, -1, 0],
-                      movement_class='fully dependent')
-
-study.system.add_interconnect(name='hp_cv_to_actuator',
-                              color='black',
-                              component_1='control_valve_1',
-                              component_1_port='supply',
-                              component_2='actuator_1',
-                              component_2_port='supply',
-                              radius=0.25,
-                              number_of_bends=2)
-
-study.system.add_interconnect(name='hp_cv_to_actuator2',
-                              color='blue',
-                              component_1='control_valve_1',
-                              component_1_port='return',
-                              component_2='actuator_1',
-                              component_2_port='return',
-                              radius=0.25,
-                              number_of_bends=1)
-
-study.system.add_structure(name='structure_1',
-                           color='gray',
-                           movement_class='static',
-                           shapes=[{'type': 'box', 'origin': [0, 0, 0], 'dimensions': [0.1, 0.1, 0.1], 'rotation': [0, 0, 0]}])
-
-
-
+study.add_system(system)
 
 # Define the username and problem description
 study.config['Username'] = 'Chad Peterson'
@@ -121,10 +135,8 @@ initial_design_vector = np.concatenate((component_0_position,
                                         interconnect_0_node_1_position,
                                         interconnect_1_node_0_position))
 
-
-
 study.create_spatial_configuration(method='manual',
-                                          inputs=initial_design_vector)
+                                   inputs=initial_design_vector)
 
 # Plot initial spatial configuration
 study.plot(initial_design_vector)
@@ -133,13 +145,13 @@ study.plot(initial_design_vector)
 
 options = {'maxiter': 1000,
            'convergence tolerance': 2.5e-2,
-           'objective scaling factor': 1/50,
+           'objective scaling factor': 1 / 50,
            'constraint aggregation parameter': 3.0}
 
 study.optimize_spatial_configuration(objective_function='normalized aggregate gap distance',
-                                            constraint_function='signed distances',
-                                            constraint_aggregation_function='induced exponential',
-                                            options=options)
+                                     constraint_function='signed distances',
+                                     constraint_aggregation_function='induced exponential',
+                                     options=options)
 
 # Post-processing
 

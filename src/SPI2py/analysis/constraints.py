@@ -51,12 +51,12 @@ def signed_distances(x, spatial_configuration, pairs):
 
     return all_signed_distances
 
-def format_constraints(layout,
+def format_constraints(system,
                        constraint_function,
                        constraint_aggregation_function,
                        config):
 
-    object_pairs = layout.system.object_pairs
+    object_pairs = system.object_pairs
 
     # Unpack the config dictionary
     check_collisions      = list(config['analysis']['check collisions'].values())
@@ -65,19 +65,19 @@ def format_constraints(layout,
     # Add the applicable interference constraints
     nlcs = []
     if check_collisions[0] is True:
-        nlcs.append(NonlinearConstraint(lambda x: constraint_aggregation_function(constraint_function(x, layout, object_pairs[0])), -np.inf,
+        nlcs.append(NonlinearConstraint(lambda x: constraint_aggregation_function(constraint_function(x, system, object_pairs[0])), -np.inf,
                                         collision_tolerances[0]))
     if check_collisions[1] is True:
-        nlcs.append(NonlinearConstraint(lambda x: constraint_aggregation_function(constraint_function(x, layout, object_pairs[1])), -np.inf,
+        nlcs.append(NonlinearConstraint(lambda x: constraint_aggregation_function(constraint_function(x, system, object_pairs[1])), -np.inf,
                                         collision_tolerances[1]))
     if check_collisions[2] is True:
-        nlcs.append(NonlinearConstraint(lambda x: constraint_aggregation_function(constraint_function(x, layout, object_pairs[2])), -np.inf,
+        nlcs.append(NonlinearConstraint(lambda x: constraint_aggregation_function(constraint_function(x, system, object_pairs[2])), -np.inf,
                                         collision_tolerances[2]))
     if check_collisions[3] is True:
-        nlcs.append(NonlinearConstraint(lambda x: constraint_aggregation_function(constraint_function(x, layout, object_pairs[3])), -np.inf,
+        nlcs.append(NonlinearConstraint(lambda x: constraint_aggregation_function(constraint_function(x, system, object_pairs[3])), -np.inf,
                                         collision_tolerances[3]))
     if check_collisions[4] is True:
-        nlcs.append(NonlinearConstraint(lambda x: constraint_aggregation_function(constraint_function(x, layout, object_pairs[4])), -np.inf,
+        nlcs.append(NonlinearConstraint(lambda x: constraint_aggregation_function(constraint_function(x, system, object_pairs[4])), -np.inf,
                                         collision_tolerances[4]))
 
     return nlcs
