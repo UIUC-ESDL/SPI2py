@@ -118,6 +118,8 @@ initial_design_vector = np.concatenate((component_0_position,
                                         interconnect_0_node_1_position,
                                         interconnect_1_node_0_position))
 
+
+
 demo.create_spatial_configuration(method='manual',
                                   inputs=initial_design_vector)
 
@@ -126,9 +128,15 @@ demo.spatial_configuration.plot()
 
 # Perform gradient-based optimization
 
+options = {'maxiter': 1000,
+           'convergence tolerance': 2.5e-2,
+           'objective scaling factor': 1/50,
+           'constraint aggregation parameter': 3.0}
+
 demo.optimize_spatial_configuration(objective_function='normalized aggregate gap distance',
                                     constraint_function='signed distances',
-                                    constraint_aggregation_function='induced exponential')
+                                    constraint_aggregation_function='induced exponential',
+                                    options=options)
 
 # Post-processing
 

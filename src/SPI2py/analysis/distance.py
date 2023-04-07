@@ -213,10 +213,10 @@ def minimum_distance_segment_segment(a: np.ndarray,
 
             u = uf
 
-    min_dist          = np.linalg.norm(d1*t - d2*u - d12)
-    min_dist_position = a + d1*t
+    minimum_distance          = np.linalg.norm(d1*t - d2*u - d12)
+    minimum_distance_position = a + d1*t
 
-    return min_dist, min_dist_position
+    return minimum_distance, minimum_distance_position
 
 
 def minimum_signed_distance_capsule_capsule(a:        np.ndarray,

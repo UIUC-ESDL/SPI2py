@@ -28,7 +28,8 @@ def f(x):
     x = x.reshape(-1, 3)
     a = x[0:100]
     b = x[100:200]
-    return distances_points_points(a, b)
+
+    return np.min(distances_points_points(a, b))
 
 
 df = grad(f)
@@ -40,17 +41,17 @@ def f1(x):
     b = x[100:200]
     return np.min(cdist(a, b))
 
-t1_1 = time_ns()
-ans1 = minimize(f, x0)
-t1_2 = time_ns()
-ans2 = minimize(f1, x0)
-t1_3 = time_ns()
-ans3 = minimize(f, x0, jac=df)
-t1_4 = time_ns()
+# t1_1 = time_ns()
+# ans1 = minimize(f, x0)
+# t1_2 = time_ns()
+# ans2 = minimize(f1, x0)
+# t1_3 = time_ns()
+# ans3 = minimize(f, x0, jac=df)
+# t1_4 = time_ns()
 
-print(f"SPI2py: {t1_2 - t1_1} ns")
-print(f"SciPy: {t1_3 - t1_2} ns")
-print(f"SPI2py with grad: {t1_4 - t1_3} ns")
+# print(f"SPI2py: {t1_2 - t1_1} ns")
+# print(f"SciPy: {t1_3 - t1_2} ns")
+# print(f"SPI2py with grad: {t1_4 - t1_3} ns")
 
 
 

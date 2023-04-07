@@ -1,10 +1,7 @@
 import numpy as np
-from .analysis.kinematics import calculate_static_positions, calculate_independent_positions
 
-from .result.visualization.plotting import plot_objects
-
-
-
+from .analysis.kinematics import calculate_independent_positions
+from .result.plotting import plot_objects
 
 class SpatialConfiguration:
     """

@@ -34,7 +34,7 @@ logger = logging.getLogger(__name__)
 def run_optimizer(layout,
                   objective_function,
                   nonlinear_constraints,
-                  config):
+                  options):
     """
     This is a helper function that runs the optimization solver.
 
@@ -102,18 +102,14 @@ def run_optimizer(layout,
     # Unpack the parameters
     x0 = layout.design_vector
 
-    # Unpack the config dictionary
-    convergence_tolerance = float(config['optimization']['convergence tolerance'])
-
-
-    options = {'verbose': 3}
+    convergence_tolerance = options['convergence tolerance']
 
     # Run the solver
     res = minimize(lambda x: objective_function(x, layout), x0,
                    method='trust-constr',
                    constraints=nonlinear_constraints,
                    tol=convergence_tolerance,
-                   options=options,
+                   options={'verbose': 3},
                    callback=log_design_vector,
                    hess=lambda x: np.zeros((len(x0), len(x0))))
 

@@ -7,8 +7,6 @@ import logging
 
 from scipy.spatial.distance import euclidean
 
-
-from .data.geometry.model_geometry import Geometry
 from .analysis.transformations import translate, rotate
 from .analysis.kinematics import calculate_static_positions, calculate_independent_positions, calculate_dependent_positions
 
@@ -260,7 +258,7 @@ class Material:
         return colors
 
 
-class Object(Geometry, Movement, Material):
+class Object(Movement, Material):
 
     def __init__(self,
                  name:               str,
@@ -273,7 +271,7 @@ class Object(Geometry, Movement, Material):
 
         self.name = self._validate_name(name)
 
-        Geometry.__init__(self)
+        # Geometry.__init__(self)
         Movement.__init__(self, positions, radii, movement_class, constraints, degrees_of_freedom)
         Material.__init__(self, color)
 

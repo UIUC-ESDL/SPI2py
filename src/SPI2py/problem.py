@@ -30,7 +30,8 @@ from .analysis.constraint_aggregation import kreisselmeier_steinhauser, p_norm, 
 from .optimize.solvers import run_optimizer
 
 # Result Imports
-from .result.visualization.animation import generate_gif
+from src.SPI2py.result.animation import generate_gif
+
 
 class Data:
     """
@@ -45,7 +46,7 @@ class Data:
         self.system_name = system_name
         # Initialize default configuration
         self._entry_point_directory = os.path.dirname(__file__) + '/'
-        self.config                 = self.read_config_file('data/config.yaml')
+        self.config                 = self.read_config_file('config.yaml')
 
         self.logger_name            = self.directory + "logger.log"
 
@@ -269,18 +270,18 @@ class Optimize:
                                         objective_function,
                                         constraint_function,
                                         constraint_aggregation_function,
-                                        config):
+                                        options):
 
         # TODO Switch config to analysis, simplify
         nlcs = format_constraints(spatial_configuration,
                                   constraint_function,
                                   constraint_aggregation_function,
-                                  config)
+                                  self.config)
 
         self.result, self.design_vector_log = run_optimizer(spatial_configuration,
                                                             objective_function,
                                                             nlcs,
-                                                            config)
+                                                            options)
 
 class Result:
     """
@@ -353,17 +354,22 @@ class Problem(Data, Layout, Analysis, Optimize, Result):
     def optimize_spatial_configuration(self,
                                        objective_function,
                                        constraint_function,
-                                       constraint_aggregation_function):
+                                       constraint_aggregation_function,
+                                       options
+                                       ):
 
         self.set_objective_function(objective_function)
         self.set_constraint_function(constraint_function)
         self.set_constraint_aggregation_function(constraint_aggregation_function)
 
+        # if options['objective scaling factor'] is not None:
+
+
         self._optimize_spatial_configuration(self.spatial_configuration,
                                              self.objective_function,
                                              self.constraint_function,
                                              self.constraint_aggregation_function,
-                                             self.config)
+                                             options)
 
 
 
