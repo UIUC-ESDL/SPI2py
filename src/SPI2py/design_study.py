@@ -132,23 +132,31 @@ class DesignStudy:
     # ANALYSIS METHODS
 
     def set_objective_function(self,
-                               objective_function,
-                               objective_scaling=False,
+                               model_based_objective_function,
                                design_vector_scale_factor=1,
                                design_vector_scale_type='constant',
                                objective_scale_factor=1,
                                objective_scale_type='constant'):
 
-        # Set the objective function
-        if objective_function == 'normalized aggregate gap distance':
-            _objective_function = lambda x: normalized_aggregate_gap_distance(x, self.system)
+
+        # SELECT THE OBJECTIVE FUNCTION
+
+        if model_based_objective_function == 'normalized aggregate gap distance':
+            _objective_function = normalized_aggregate_gap_distance
         else:
             raise NotImplementedError
 
-        # if objective_scaling:
-        #     _objective_function = scale_model_based_objective(_objective_function)
 
-        self.objective_function = _objective_function
+        # SCALE THE OBJECTIVE FUNCTION
+
+        def objective_function(x):
+            return scale_model_based_objective(x, _objective_function, self.system,
+                                               design_vector_scale_factor=design_vector_scale_factor,
+                                               design_vector_scale_type=design_vector_scale_type,
+                                               objective_scale_factor=objective_scale_factor,
+                                               objective_scale_type=objective_scale_type)
+
+        self.objective_function = objective_function
 
     def set_constraint_function(self, constraint_function):
 
@@ -199,21 +207,21 @@ class DesignStudy:
 
     def optimize_spatial_configuration(self,
                                        objective_function,
-                                       scale_objective_function,
                                        constraint_function,
                                        constraint_aggregation_function,
                                        options
                                        ):
 
-        self.set_objective_function(objective_function)
 
-        # if scale_objective_function:
-        #     self.objective_function = scale_model_based_objective(self.objective_function)
+
+        self.set_objective_function(objective_function,
+                                    design_vector_scale_factor=1,
+                                    design_vector_scale_type='constant',
+                                    objective_scale_factor=0.1,
+                                    objective_scale_type='constant')
 
         self.set_constraint_function(constraint_function)
         self.set_constraint_aggregation_function(constraint_aggregation_function)
-
-        # if options['objective scaling factor'] is not None:
 
         nlcs = format_constraints(self.system,
                                   self.constraint_function,

@@ -149,7 +149,6 @@ options = {'maximum number of iterations': 10,
            'constraint aggregation parameter': 3.0}
 
 study.optimize_spatial_configuration(objective_function='normalized aggregate gap distance',
-                                     scale_objective_function=True,
                                      constraint_function='signed distances',
                                      constraint_aggregation_function='induced exponential',
                                      options=options)

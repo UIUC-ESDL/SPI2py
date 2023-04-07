@@ -83,7 +83,7 @@ def unscale_design_vector(x,
     return unscaled_design_vector
 
 def scale_model_based_objective(x,
-                                objective_function,
+                                model_based_objective_function,
                                 model,
                                 design_vector_scale_factor=1,
                                 design_vector_scale_type='constant',
@@ -98,7 +98,7 @@ def scale_model_based_objective(x,
     TODO Add options for scaling types.
 
     :param x: The design vector
-    :param objective_function: The objective function to scale
+    :param model_based_objective_function: The objective function to scale
     :param model: The model object
     :param design_vector_scale_factor: The scale factor for the design vector
     :param design_vector_scale_type: The type of scaling for the design vector
@@ -113,7 +113,7 @@ def scale_model_based_objective(x,
                                                    design_vector_scale_type=design_vector_scale_type)
 
     # Evaluate the objective function
-    unscaled_objective = objective_function(unscaled_design_vector, model)
+    unscaled_objective = model_based_objective_function(unscaled_design_vector, model)
 
     # Scale the objective function
     scaled_objective = unscaled_objective * objective_scale_factor
