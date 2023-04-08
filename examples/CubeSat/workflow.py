@@ -142,6 +142,21 @@ options = {'maximum number of iterations': 1000,
            'objective scaling factor': 1 / 500,
            'constraint aggregation parameter': 3.0}
 
+
+study.add_objective(objective='normalized aggregate gap distance',
+                    model=system,
+                    options={'design vector scaling type': 'constant',
+                             'design vector scaling factor': 1,
+                             'objective scaling type': 'constant',
+                             'objective scaling factor': 1 / 500})
+
+# study.add_constraint
+# study.add_constraint
+# study.add_constraint
+# study.add_constraint
+# study.add_constraint
+# study.add_constraint
+
 study.optimize_spatial_configuration(objective_function='normalized aggregate gap distance',
                                      constraint_function='signed distances',
                                      constraint_aggregation_function='induced exponential',

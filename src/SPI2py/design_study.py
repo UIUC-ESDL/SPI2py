@@ -60,8 +60,11 @@ class DesignStudy:
 
         # Initialize the Analysis class
         self.objective_function = None
-        self.constraint_function = None
+        self.constraint_functions = None
         self.constraint_aggregation_function = None
+
+        self.objectives = []
+        self.constraints = []
 
         # Initialize the Optimize class
         self._spatial_configuration = None
@@ -122,17 +125,29 @@ class DesignStudy:
 
     # ANALYSIS METHODS
 
-    def set_objective_function(self,
-                               model_based_objective_function,
-                               design_vector_scale_factor=1,
-                               design_vector_scale_type='constant',
-                               objective_scale_factor=1,
-                               objective_scale_type='constant'):
+    def add_objective(self,
+                      objective,
+                      model,
+                      options):
+
+        """
+        Add an objective to the design study.
+
+        :param objective: The objective function to be added.
+        :param options: The options for the objective function.
+        """
+
+        # UNPACK THE OPTIONS
+
+        design_vector_scaling_type   = options['design vector scaling type']
+        design_vector_scaling_factor = options['design vector scaling factor']
+        objective_scaling_type       = options['objective scaling type']
+        objective_scaling_factor     = options['objective scaling factor']
 
 
-        # SELECT THE OBJECTIVE FUNCTION
+        # SELECT THE OBJECTIVE FUNCTION HANDLE
 
-        if model_based_objective_function == 'normalized aggregate gap distance':
+        if objective == 'normalized aggregate gap distance':
             _objective_function = normalized_aggregate_gap_distance
         else:
             raise NotImplementedError
@@ -140,14 +155,44 @@ class DesignStudy:
 
         # SCALE THE OBJECTIVE FUNCTION
 
-        def objective_function(x):
-            return scale_model_based_objective(x, _objective_function, self.system,
-                                               design_vector_scale_factor=design_vector_scale_factor,
-                                               design_vector_scale_type=design_vector_scale_type,
-                                               objective_scale_factor=objective_scale_factor,
-                                               objective_scale_type=objective_scale_type)
 
-        self.objective_function = objective_function
+        def objective_function(x):
+            return scale_model_based_objective(x, _objective_function, model,
+                                               design_vector_scale_type=design_vector_scaling_type,
+                                               design_vector_scale_factor=design_vector_scaling_factor,
+                                               objective_scale_type=objective_scaling_type,
+                                               objective_scale_factor=objective_scaling_factor)
+
+        self.objectives.append(objective_function)
+
+
+
+    # def set_objective_function(self,
+    #                            model_based_objective_function,
+    #                            design_vector_scale_factor=1,
+    #                            design_vector_scale_type='constant',
+    #                            objective_scale_factor=1,
+    #                            objective_scale_type='constant'):
+    #
+    #
+    #     # SELECT THE OBJECTIVE FUNCTION
+    #
+    #     if model_based_objective_function == 'normalized aggregate gap distance':
+    #         _objective_function = normalized_aggregate_gap_distance
+    #     else:
+    #         raise NotImplementedError
+    #
+    #
+    #     # SCALE THE OBJECTIVE FUNCTION
+    #
+    #     def objective_function(x):
+    #         return scale_model_based_objective(x, _objective_function, self.system,
+    #                                            design_vector_scale_factor=design_vector_scale_factor,
+    #                                            design_vector_scale_type=design_vector_scale_type,
+    #                                            objective_scale_factor=objective_scale_factor,
+    #                                            objective_scale_type=objective_scale_type)
+    #
+    #     self.objective_function = objective_function
 
     # def set_constraints(self, constraints):
     #     self.constraints = constraints
@@ -212,11 +257,11 @@ class DesignStudy:
                                        constraint_aggregation_function: str,
                                        options:                         dict):
 
-        self.set_objective_function(objective_function,
-                                    design_vector_scale_factor=1,
-                                    design_vector_scale_type='constant',
-                                    objective_scale_factor=0.1,
-                                    objective_scale_type='constant')
+        # self.set_objective_function(objective_function,
+        #                             design_vector_scale_factor=1,
+        #                             design_vector_scale_type='constant',
+        #                             objective_scale_factor=0.1,
+        #                             objective_scale_type='constant')
 
         self.set_constraint_function(constraint_function)
         self.set_constraint_aggregation_function(constraint_aggregation_function)
@@ -226,8 +271,9 @@ class DesignStudy:
                                   self.constraint_aggregation_function,
                                   self.config)
 
+        # TODO Remove objective indexing...
         self.result, self.design_vector_log = run_optimizer(self.system,
-                                                            self.objective_function,
+                                                            self.objectives[0],
                                                             nlcs,
                                                             options)
 

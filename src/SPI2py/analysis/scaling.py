@@ -85,10 +85,10 @@ def unscale_design_vector(x,
 def scale_model_based_objective(x,
                                 model_based_objective_function,
                                 model,
-                                design_vector_scale_factor=1,
                                 design_vector_scale_type='constant',
-                                objective_scale_factor=1,
-                                objective_scale_type='constant'):
+                                design_vector_scale_factor=1,
+                                objective_scale_type='constant',
+                                objective_scale_factor=1):
     """
     A function that applies scaling for the objective function of a model-based simulation.
 
