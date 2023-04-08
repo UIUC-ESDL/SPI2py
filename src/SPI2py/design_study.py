@@ -98,7 +98,7 @@ class DesignStudy:
 
     # LAYOUT METHODS
 
-    def _create_spatial_configuration(self, system, method, inputs=None):
+    def map_objects_to_design_vectors(self, method, design_vectors=None):
         """
         Map the objects to a 3D layout.
 
@@ -110,24 +110,15 @@ class DesignStudy:
         TODO implement different layout generation methods
         """
 
-        spatial_configuration = system
-
-        # spatial_configuration.map_static_objects()
-
         if method == 'manual':
-            # TODO Fix this
-            # spatial_configuration.map_static_objects()
-
-            positions_dict = spatial_configuration.calculate_positions(inputs)
-            spatial_configuration.set_positions(positions_dict)
+            positions_dict = self.system.calculate_positions(design_vectors)
+            self.system.set_positions(positions_dict)
 
         else:
             raise NotImplementedError
 
-        self.spatial_configuration = spatial_configuration
+        self.spatial_configuration = self.system
 
-    def create_spatial_configuration(self, method, inputs=None):
-        self._create_spatial_configuration(self.system, method, inputs)
 
     # ANALYSIS METHODS
 
@@ -158,6 +149,9 @@ class DesignStudy:
 
         self.objective_function = objective_function
 
+    # def set_constraints(self, constraints):
+    #     self.constraints = constraints
+
     def set_constraint_function(self, constraint_function):
 
         # Set the constraint function
@@ -167,6 +161,8 @@ class DesignStudy:
             raise NotImplementedError
 
         self.constraint_function = _constraint_function
+
+
 
     def set_constraint_aggregation_function(self, constraint_aggregation_function):
 
@@ -193,8 +189,13 @@ class DesignStudy:
         self.constraint_aggregation_function = _constraint_aggregation_function
 
 
-    def calculate_metrics(self):
-        pass
+    def calculate_metrics(self, x):
+        """
+        Calculate the objective function and constraint functions.
+
+        """
+        objective = self.objective_function(x)
+        constraints = self.constraint_function(x, self.system)
 
     def calculate_objective_function(self):
         pass
@@ -206,13 +207,10 @@ class DesignStudy:
 
 
     def optimize_spatial_configuration(self,
-                                       objective_function,
-                                       constraint_function,
-                                       constraint_aggregation_function,
-                                       options
-                                       ):
-
-
+                                       objective_function:              str,
+                                       constraint_function:             str,
+                                       constraint_aggregation_function: str,
+                                       options:                         dict):
 
         self.set_objective_function(objective_function,
                                     design_vector_scale_factor=1,

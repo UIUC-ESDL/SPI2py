@@ -8,7 +8,7 @@ from .distance import distances_points_points, signed_distances_spheres_spheres
 from scipy.optimize import NonlinearConstraint
 
 
-def signed_distances(x, spatial_configuration, pairs):
+def signed_distances(x, model, object_pair):
     """
     Returns the signed distances between all pairs of objects in the layout.
 
@@ -20,22 +20,24 @@ def signed_distances(x, spatial_configuration, pairs):
     TODO Write unit tests
 
     :param x: Design vector (1D array)
-    :param spatial_configuration: The SpatialConfiguration object used to query positions at x
-    :param pairs: The list of object pairs to calculate the signed distance between
+    :param model: The SpatialConfiguration object used to query positions at x
+    :param object_pair: The list of object pairs to calculate the signed distance between
     :return: An array of signed distances between each object pair
     """
     # Calculate the positions of all spheres in layout given design vector x
-    positions_dict = spatial_configuration.calculate_positions(x)
+    positions_dict = model.calculate_positions(x)
 
     # Calculate the interferences between each sphere of each object pair
     all_signed_distances = []
 
-    for obj1, obj2 in pairs:
+    for obj1, obj2 in object_pair:
         positions_a = positions_dict[str(obj1)][0]
         radii_a = positions_dict[str(obj1)][1]
 
         positions_b = positions_dict[str(obj2)][0]
         radii_b = positions_dict[str(obj2)][1]
+
+        # If line line vs cdist
 
         # # TODO Reformat Radii shape so we don't have to keep reshaping it
         # dPositions = distances_points_points(positions_a, positions_b)

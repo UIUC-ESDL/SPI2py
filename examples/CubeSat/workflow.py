@@ -92,12 +92,6 @@ system.add_structure(name='structure_1',
                          {'type': 'box', 'origin': [0, 0, -5], 'dimensions': [2, 2, 0.5], 'rotation': [0, 0, 0]}])
 
 # MAP STATIC OBJECTS
-
-# system.map_object(object_name='control_valve_1', design_vector=[-3., -4.41, -0.24, 0., 0., 0.])
-# system.map_object(object_name='actuator_1', design_vector=[2., 4.41, 0.24, 0., 0., 0.])
-# system.map_object(object_name='component_2', design_vector=[5, -3, -1, 0., 0., 0.])
-# system.map_object(object_name='component_3', design_vector=[-3., -1., 3., 0., 0., 0.])
-
 system.map_static_object(object_name='structure_1', design_vector=np.array([0, 0, 0, 0, 0, 0]))
 
 # Define the design study
@@ -135,17 +129,17 @@ initial_design_vector = np.concatenate((component_0_position,
                                         interconnect_0_node_1_position,
                                         interconnect_1_node_0_position))
 
-study.create_spatial_configuration(method='manual',
-                                   inputs=initial_design_vector)
+study.map_objects_to_design_vectors(method='manual',
+                                    design_vectors=initial_design_vector)
 
 # Plot initial spatial configuration
 study.plot(initial_design_vector)
 
 # Perform gradient-based optimization
 
-options = {'maximum number of iterations': 10,
-           'convergence tolerance': 1e-1,
-           'objective scaling factor': 1 / 50,
+options = {'maximum number of iterations': 1000,
+           'convergence tolerance': 1e-2,
+           'objective scaling factor': 1 / 500,
            'constraint aggregation parameter': 3.0}
 
 study.optimize_spatial_configuration(objective_function='normalized aggregate gap distance',

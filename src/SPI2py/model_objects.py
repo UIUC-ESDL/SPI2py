@@ -18,20 +18,18 @@ import numpy as np
 from typing import Union
 
 
-
-
-class Movement:
-    """
-    The Movement class is the base class for all movement objects.
-    """
+class Object:
 
     def __init__(self,
+                 name:               str,
                  positions:          np.ndarray,
                  radii:              np.ndarray,
+                 color:              Union[str, list[str]],
                  movement_class:     str,
                  constraints:        Union[None, dict],
                  degrees_of_freedom: Union[list[int], None] = ('x', 'y', 'z', 'rx', 'ry', 'rz')):
 
+        self.name               = self._validate_name(name)
         self.positions          = self._validate_positions(positions)
         self.radii              = self._validate_radii(radii)
         self.rotation           = np.zeros(3)
@@ -42,6 +40,19 @@ class Movement:
         if degrees_of_freedom is not None:
             self.three_d_translation = all([dof in self.degrees_of_freedom for dof in ['x', 'y', 'z']])
             self.three_d_rotation = all([dof in self.degrees_of_freedom for dof in ['rx', 'ry', 'rz']])
+
+        self._valid_colors = {**mcolors.BASE_COLORS, **mcolors.TABLEAU_COLORS, **mcolors.CSS4_COLORS,
+                              **mcolors.XKCD_COLORS}
+
+        self.color = self._validate_colors(color)
+
+    @staticmethod
+    def _validate_name(name: str) -> str:
+        if not isinstance(name, str):
+            raise TypeError('Name must be a string not %s.' % type(name))
+        return name
+
+
 
     def _validate_positions(self, positions: np.ndarray) -> np.ndarray:
 
@@ -86,7 +97,6 @@ class Movement:
             raise ValueError('There must be 1 radius for each position row for %s.' % self.__repr__())
 
         return radii
-
 
     def _validate_movement_class(self, movement_class):
 
@@ -141,40 +151,6 @@ class Movement:
 
         return degrees_of_freedom
 
-
-
-    @property
-    def reference_position(self):
-        return self.positions[0]
-
-
-    def set_positions(self,
-                      positions_dict: dict
-                      ):
-        """
-        Update positions of object spheres given a design vector
-
-        :param positions_dict:
-        :return:
-        """
-
-        self.positions, self.radii = positions_dict[self.__repr__()]
-
-
-
-
-class Material:
-    """
-    The Material class is used to define the material properties of an object.
-    """
-    def __init__(self, color):
-
-        self._valid_colors = {**mcolors.BASE_COLORS, **mcolors.TABLEAU_COLORS, **mcolors.CSS4_COLORS,
-                              **mcolors.XKCD_COLORS}
-
-        self.color = self._validate_colors(color)
-
-
     def _validate_color(self, color):
 
         if not isinstance(color, str):
@@ -205,36 +181,26 @@ class Material:
 
         return colors
 
-
-class Object(Movement, Material):
-
-    def __init__(self,
-                 name:               str,
-                 positions:          np.ndarray,
-                 radii:              np.ndarray,
-                 color:              Union[str, list[str]],
-                 movement_class:     str,
-                 constraints:        Union[None, dict],
-                 degrees_of_freedom: Union[list[int], None] = ('x', 'y', 'z', 'rx', 'ry', 'rz')):
-
-        self.name = self._validate_name(name)
-
-        # Geometry.__init__(self)
-        Movement.__init__(self, positions, radii, movement_class, constraints, degrees_of_freedom)
-        Material.__init__(self, color)
-
-    @staticmethod
-    def _validate_name(name: str) -> str:
-        if not isinstance(name, str):
-            raise TypeError('Name must be a string not %s.' % type(name))
-
-        return name
-
     def __repr__(self):
         return self.name
 
     def __str__(self):
         return self.name
+
+    @property
+    def reference_position(self):
+        return self.positions[0]
+
+    def set_positions(self,
+                      positions_dict: dict):
+        """
+        Update positions of object spheres given a design vector
+
+        :param positions_dict:
+        :return:
+        """
+
+        self.positions, self.radii = positions_dict[self.__repr__()]
 
 
 
