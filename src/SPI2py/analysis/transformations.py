@@ -4,18 +4,15 @@
 
 import numpy as np
 from numpy import sin, cos
-from numba import njit
 
 
-# @njit(cache=True)
 def translate(current_sphere_positions, current_reference_point, new_reference_point):
     """
     Translates a set of points based on the change in position of a reference point
 
     TODO Write unit tests for this function
-    TODO Vectorize?
+    TODO Vectorize
     TODO Change function to take arguments: current_sphere_positions, current_reference_point, new_reference_point
-
 
     :param current_sphere_positions:
     :param current_reference_point:
@@ -31,7 +28,7 @@ def translate(current_sphere_positions, current_reference_point, new_reference_p
 
 
 # @njit(cache=True)
-def rotate_about_point(positions, rotation):
+def rotate(positions, rotation):
     """
     Rotates a set of points about the first 3D point in the array.
 
@@ -51,25 +48,32 @@ def rotate_about_point(positions, rotation):
 
     # Shift the object to origin
     reference_position = positions[0]
-    origin_positions = positions - reference_position
+    origin_positions   = positions - reference_position
 
-    alpha, beta, gamma = rotation
+    # Unpack rotation angles
+    # alpha, beta, gamma
+    a, b, g = rotation
 
     # Rotation matrix Euler angle convention r = r_z(gamma) @ r_y(beta) @ r_x(alpha)
+    #
+    # r_x = np.array([[1., 0., 0.],
+    #                 [0., cos(a), -sin(a)],
+    #                 [0., sin(a), cos(a)]])
+    #
+    # r_y = np.array([[cos(b), 0., sin(b)],
+    #                 [0., 1., 0.],
+    #                 [-sin(b), 0., cos(b)]])
+    #
+    # r_z = np.array([[cos(g), -sin(g), 0.],
+    #                 [sin(g), cos(g), 0.],
+    #                 [0., 0., 1.]])
+    #
+    # r = r_z @ r_y @ r_x
 
-    r_x = np.array([[1., 0., 0.],
-                    [0., cos(alpha), -sin(alpha)],
-                    [0., sin(alpha), cos(alpha)]])
-
-    r_y = np.array([[cos(beta), 0., sin(beta)],
-                    [0., 1., 0.],
-                    [-sin(beta), 0., cos(beta)]])
-
-    r_z = np.array([[cos(gamma), -sin(gamma), 0.],
-                    [sin(gamma), cos(gamma), 0.],
-                    [0., 0., 1.]])
-
-    r = r_z @ r_y @ r_x
+    # Reassemble rotation matrix
+    r = np.array([[cos(b)*cos(g),  sin(a)*sin(b)*cos(g)-cos(a)*sin(g),   cos(a)*sin(b)*cos(g) + sin(a)*sin(g)],
+                  [cos(b)*sin(g),  sin(a)*sin(b)*sin(g) + cos(a)*cos(g), cos(a)*sin(b)*sin(g) - sin(a)*cos(g)],
+                  [-sin(b),        sin(a)*cos(b),                        cos(a)*cos(b)]])
 
     # Transpose positions from [[x1,y1,z1],[x2... ] to [[x1,x2,x3],[y1,... ]
     rotated_origin_positions = (r @ origin_positions.T).T

@@ -70,3 +70,13 @@ SPI2Py is primarily developed in Python 3.10. We recommend using the base Python
    `>>> pip install -e .`
 
 5. Code!
+
+## Cite Us
+
+@software{SPI2py2023github,\
+  author = {Chad Peterson},\
+  title = {SPI2py: The Spatial Packaging of Interconnected Systems with Physical Interactions},\
+  url = {https://github.com/SPI2py/SPI2py},\
+  version = {0.0.1},\
+  year = {2023},
+}

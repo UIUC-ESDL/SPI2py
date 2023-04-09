@@ -6,13 +6,13 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "SPI2py"
-version = "0.0.1"
+version = "0.1.0"
 authors = [
   { name="Chad Peterson", email="cp44@illinois.edu" },
 ]
 description = "Spatial packaging of interconnected systems with physical interactions"
 readme = "README.md"
-requires-python = ">=3.7"
+requires-python = ">=3.9"
 classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: MIT License",
@@ -20,22 +20,26 @@ classifiers = [
 ]
 
 dependencies = [
-"scipy~=1.9.0", 
-"networkx~=2.8.5", 
-"matplotlib==3.5.3", 
-"PyYAML~=6.0",
-"numpy<=1.22.4",
-"numba>=0.56.0",
-"imageio>=2.21.1",
-"pytest",
-"sphinx",
-"cypari~=2.4.1"
+    "scipy",
+    "networkx~=2.8.5",
+    "matplotlib",
+    "PyYAML",
+    "numpy",
+    "imageio>=2.21.1",
+    "jupyter",
+    "nbconvert",
+    "autograd",
+    "pyvista",
 ]
 
-[tool.pytest.ini_options]
-pythonpath = [
-  ".","src/","src/SPI2Py/","src/SPI2Py/utils/",
+[project.optional-dependencies]
+test = [
+    "pytest",
 ]
+doc = [
+    "sphinx",
+]
+
 
 [project.urls]
 "Homepage" = "https://github.com/SPI2py/SPI2py"

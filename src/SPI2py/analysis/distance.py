@@ -1,224 +1,297 @@
 """Distance calculations
 
-Provides functions to calculate the distance between classes in various ways...
-
-TODO I think it makes sense to get rid of the calculate gap function and to work it into the existing functions
-    This will require adding the radii as an additional argument. It works now for uniform spheres, but MDBD will
-    have different sized spheres.
+Provides functions to calculate the distance between classes in various ways.
 """
 
-import numpy as np
-from numba import njit
-from scipy.spatial.distance import cdist
+import autograd.numpy as np
+from typing import Union
+from autograd import grad
 
-
-def max_spheres_spheres_interference(positions_a, radii_a, positions_b, radii_b):
+def distances_points_points(a: np.ndarray,
+                            b: np.ndarray) -> np.ndarray:
     """
-    Computes the minimum distance between two sets of spheres.
+    Calculates the pairwise distance between two sets of 3D points.
 
-    interference<0 means no overlap
-    interference=0 means tangent
-    interference>0 means overlap
+    This implementation utilizes array broadcasting to calculate the pairwise distance between two sets of points.
+    Specifically, it uses array broadcasting to generate the outer (Cartesian) product of each set of points. It then
+    calculates the elementwise Euclidean distance between the two outer product matrices (the norm of a_i - b_i).
 
-    TODO Complete documentation
-    TODO Write unit tests
-    TODO Vectorize?
+    Example:
 
-    :param radii_b:
-    :param positions_b:
-    :param radii_a:
-    :param positions_a:
-    :return:
-    """
+    a = np.array([[11, 12, 13], [21, 22, 23], [31, 32, 33]])
+    b = np.array([[41, 42, 43], [51, 52, 53]])
 
-    pairwise_distances = cdist(positions_a, positions_b)
+    aa = a[:, None, :] = array([[[11, 12, 13]],
+                                [[21, 22, 23]],
+                                [[31, 32, 33]]])
 
-    # TODO Reshape radii to 2D
-    radii_a = radii_a.reshape(-1, 1)
-    radii_b = radii_b.reshape(-1, 1)
+    bb = b[None, :, :] = array([[[41, 42, 43],
+                                 [51, 52, 53]]])
 
-    # TODO Shouldn't I be adding these... (?)
-    pairwise_radii = cdist(radii_a, radii_b)
+    c = np.linalg.norm(aa - bb, axis=-1) = array([[[-30, -30, -30],
+                                                   [-40, -40, -40]],
+                                                  [[-20, -20, -20],
+                                                   [-30, -30, -30]],
+                                                  [[-10, -10, -10],
+                                                   [-20, -20, -20]]])
 
-    pairwise_interferences = pairwise_radii - pairwise_distances
-
-    max_interference = np.max(pairwise_interferences)
-
-    return max_interference
-
-
-def min_kdtree_distance(tree, positions):
-    """
-    Returns the minimum distance between a KD-Tree and object.
-
-    In some cases, we need to check the distance between two sets of points, but one
-    set is extremely large (e.g., a complex structure) and thus the number of distance
-    calculations combinatorially grows and becomes prohibitive.
-
-    For static structures (e.g., a structure) we can construct a data structure (i.e., KD Tree)
-    once and then use it to efficiently perform distance calculations. Since the cost of
-    constructing a KD Tree is relatively high, and you must reconstruct it every time positions
-    change we do not use this for moving classes.
-
-    This function presumes the KD Tree is created when the object is initialized and thus
-    takes the tree as an argument instead of trying to create a tree from points every
-    function call.
-
-    interference<0 means no overlap
-    interference=0 means tangent
-    interference>0 means overlap
-
-    TODO Complete documentation
-    TODO Write unit tests
-
-    :param tree:
-    :param positions:
-    :return:
+    :param a: Set of 3D points, (-1, 3) ndarray
+    :param b: Set of 3D points, (-1, 3) ndarray
+    :return: Euclidean distances, (-1,) np.ndarray
     """
 
-    # tree.query returns distances and IDs. We only care about the distances
-    dist, _ = tree.query(positions)
-    min_dist = np.min(dist)
+    # # Reshape the arrays for broadcasting
 
-    return min_dist
+    # Radii
+    if a.shape[1] != 3 or b.shape[1] != 3:
+        aa = a.reshape(-1, 1, 1)
+        bb = b.reshape(1, -1, 1)
+
+    # Points
+    else:
+        aa = a.reshape(-1, 1, 3)
+        bb = b.reshape(1, -1, 3)
+
+    c = np.linalg.norm(aa-bb, axis=-1)
+
+    # Reshape the output to a 1D array
+    c = c.flatten()
+
+    return c
 
 
-@njit(cache=True)
-def min_spheres_linesegment_distance(points, a, b):
+def signed_distances_spheres_spheres(a:        np.ndarray,
+                                     a_radii:  np.ndarray,
+                                     b:        np.ndarray,
+                                     b_radii:  np.ndarray) -> np.ndarray:
     """
-    Finds the minimum distance between a set 3D point and a line segment [a,b].
+    Calculates the pairwise signed distance between two sets of spheres.
 
-    With hierarchical collision detection we represent classes as recursive sphere trees.
-    First,
-
-    interference<0 means no overlap
-    interference=0 means tangent
-    interference>0 means overlap
-
-    TODO Modify function calls to provide a list of point(s) instead of a single point
-    TODO Fix documentation
-    TODO Vectorize
-
-    :param points: list of
-    :param a: (3,)
-    :param b: (3,)
-    :return:
-    """
-
-    min_distances = []
-    for point in points:
-        min_point_distance = np.linalg.norm(np.dot(point - b, a - b) / np.dot(a - b, a - b) * (a - b) + b - point)
-        min_distances.append(min_point_distance)
-
-    min_distance = np.min(min_distances)
-
-    return min_distance
-
-
-@njit(cache=True)
-def min_linesegment_linesegment_distance(a0, a1, b0, b1):
-    """
-    Returns the minimum distance between two line segments.
-
-    Given two lines defined by numpy.array pairs (a0,a1,b0,b1)
-    Return the closest points on each segment and their distance
-
-    interference<0 means no overlap
-    interference=0 means tangent
-    interference>0 means overlap
+    Convention:
+    Signed Distance < 0 means no overlap
+    Signed Distance = 0 means tangent
+    Signed Distance > 0 means overlap
 
     TODO Write unit tests
-    TODO Document function logic more clearly
-    TODO Vectorize
+    TODO Reformat Radii shape so we don't have to keep reshaping it
+
+    :param a: Set of 3D points, (-1, 3) ndarray
+    :param a_radii: Set of radii, (-1) ndarray
+    :param b: Set of 3D points, (-1, 3) ndarray
+    :param b_radii: Set of radii, (-1) ndarray
+    :return: Signed distance, float
     """
 
-    # Calculate denominator
-    A = a1 - a0
-    B = b1 - b0
-    magA = np.linalg.norm(A)
-    magB = np.linalg.norm(B)
+    # Reshape radii
+    a_radii = a_radii.reshape(-1, 1)
+    b_radii = b_radii.reshape(-1, 1)
 
-    _A = A / magA
-    _B = B / magB
+    delta_positions = distances_points_points(a, b)
+    delta_radii     = distances_points_points(a_radii, b_radii)
 
-    cross = np.cross(_A, _B)
-    denom = np.linalg.norm(cross) ** 2
+    signed_distances = delta_radii - delta_positions
 
-    # If lines are parallel (denom=0) test if lines overlap.
-    # If they don't overlap then there is a closest point solution.
-    # If they do overlap, there are infinite closest positions, but there is a closest distance
+    signed_distances.flatten()
 
-    if not denom:
-        d0 = np.dot(_A, (b0 - a0))
+    return signed_distances
 
-        # Overlap only possible with clamping
 
-        d1 = np.dot(_A, (b1 - a0))
+# @njit(cache=True)
+def minimum_distance_segment_segment(a: np.ndarray,
+                                     b: np.ndarray,
+                                     c: np.ndarray,
+                                     d: np.ndarray) -> tuple[float, np.ndarray]:
+    """
+    Returns the minimum Euclidean distance between two line segments.
 
-        # Is segment B before A?
-        if d0 <= 0 >= d1:
+    This function also works for calculating the distance between a line segment and a point and a point and point.
 
-            if np.absolute(d0) < np.absolute(d1):
-                # Explain case
-                return np.linalg.norm(a0 - b0)
+    Based on the algorithm described in:
 
-            # Explain case
-            return np.linalg.norm(a0 - b1)
+    Vladimir J. Lumelsky,
+    "On Fast Computation of Distance Between Line Segments",
+    Information Processing Letters 21 (1985) 55-61
+    https://doi.org/10.1016/0020-0190(85)90032-8
 
-        # Is segment B after A?
-        elif d0 >= magA <= d1:
+    Values 0 <= t <= 1 correspond to points being inside segment AB whereas values < 0  correspond to being 'left' of AB
+    and values > 1 correspond to being 'right' of AB.
 
-            if np.absolute(d0) < np.absolute(d1):
-                # Explain case
-                return np.linalg.norm(a1 - b0)
+    Values 0 <= u <= 1 correspond to points being inside segment CD whereas values < 0  correspond to being 'left' of CD
+    and values > 1 correspond to being 'right' of CD.
 
-            # Explain case
-            return np.linalg.norm(a1 - b1)
+    Step 1: Check for special cases; compute D1, D2, and the denominator in (11)
+        (a) If one of the two segments degenerates into a point, assume that this segment corresponds to the parameter
+        u, take u=0, and go to Step 4.
+        (b) If both segments degenerate into points, take t=u=0, and go to Step 5.
+        (c) If neither of two segments degenerates into a point and the denominator in (11) is zero, take t=0 and go to
+        Step 3.
+        (d) If none of (a), (b), (c) takes place, go to Step 2.
+    Step 2: Using (11) compute t. If t is not in the range [0,1], modify t using (12).
+    Step 3: Using (10) compute u. If u is not in the range [0,1], modify u using (12); otherwise, go to Step 5.
+    Step 4: Using (10) compute t. If t is not in the range [0,1], modify t using (12).
+    Step 5: With current values of t and u, compute the actual MinD using (7).
 
-        # Case: Segments overlap --> Return distance between parallel segments
-        return np.linalg.norm(((d0 * _A) + a0) - b0)
+    (7):
+    (10):
+    (11):
+    (12):
 
-    # Lines criss-cross: Calculate the projected closest points
+    :param a: (1,3) numpy array
+    :param b: (1,3) numpy array
+    :param c: (1,3) numpy array
+    :param d: (1,3) numpy array
 
-    t = (b0 - a0)
-    detA = np.linalg.det([t, _B, cross])
-    detB = np.linalg.det([t, _A, cross])
+    :return: Minimum distance between line segments, float
+    """
 
-    t0 = detA / denom
-    t1 = detB / denom
+    def clamp_bound(num):
+        """
+        If the number is outside the range [0,1] then clamp it to the nearest boundary.
+        """
+        if num < 0.:
+            return 0.
+        elif num > 1.:
+            return 1.
+        else:
+            return num
 
-    pA = a0 + (_A * t0)  # Projected closest point on segment A
-    pB = b0 + (_B * t1)  # Projected closest point on segment B
+    d1  = b - a
+    d2  = d - c
+    d12 = c - a
 
-    # Clamp projections
+    D1  = np.dot(d1, d1.T)
+    D2  = np.dot(d2, d2.T)
+    S1  = np.dot(d1, d12.T)
+    S2  = np.dot(d2, d12.T)
+    R   = np.dot(d1, d2.T)
+    den = D1 * D2 - R**2
 
-    if t0 < 0:
-        pA = a0
-    elif t0 > magA:
-        pA = a1
+    # Check if one or both line segments are points
+    if D1 == 0. or D2 == 0.:
 
-    if t1 < 0:
-        pB = b0
-    elif t1 > magB:
-        pB = b1
+        # Both AB and CD are points
+        if D1 == 0. and D2 == 0.:
+            t = 0.
+            u = 0.
 
-    # Clamp projection A
-    if (t0 < 0) or (t0 > magA):
-        dot = np.dot(_B, (pA - b0))
-        if dot < 0:
-            dot = 0
-        elif dot > magB:
-            dot = magB
-        pB = b0 + (_B * dot)
+        # AB is a line segment and CD is a point
+        elif D1 != 0.:
+            u = 0.
+            t = S1/D1
+            t = clamp_bound(t)
 
-    # Clamp projection B
-    if (t1 < 0) or (t1 > magB):
-        dot = np.dot(_A, (pB - a0))
-        if dot < 0:
-            dot = 0
-        elif dot > magA:
-            dot = magA
-        pA = a0 + (_A * dot)
+        # AB is a point and CD is a line segment
+        elif D2 != 0.:
+            t = 0.
+            u = -S2/D2
+            u = clamp_bound(u)
 
-    return np.linalg.norm(pA - pB)
+    # Check if line segments are parallel
+    elif den == 0.:
+        t = 0.
+        u = -S2/D2
+        uf = clamp_bound(u)
+
+        if uf != u:
+            t = (uf*R + S1)/D1
+            t = clamp_bound(t)
+            u = uf
+
+    # General case for calculating the minimum distance between two line segments
+    else:
+
+        t = (S1 * D2 - S2 * R) / den
+
+        t = clamp_bound(t)
+
+        u = (t * R - S2) / D2
+        uf = clamp_bound(u)
+
+        if uf != u:
+            t = (uf * R + S1) / D1
+            t = clamp_bound(t)
+
+            u = uf
+
+    minimum_distance          = np.linalg.norm(d1*t - d2*u - d12)
+    minimum_distance_position = a + d1*t
+
+    return minimum_distance, minimum_distance_position
+
+
+def minimum_signed_distance_capsule_capsule(a:        np.ndarray,
+                                            b:        np.ndarray,
+                                            ab_radii: np.ndarray,
+                                            c:        np.ndarray,
+                                            d:        np.ndarray,
+                                            cd_radii: np.ndarray) -> float:
+    """
+    Returns the minimum signed distance between two capsules.
+
+    Since we approximate objects such as line segments with a collection of spheres, approximating a line segment with a
+    large number of spheres will begin to resemble a capsule.
+
+    Convention:
+    Signed Distance < 0 means no overlap
+    Signed Distance = 0 means tangent
+    Signed Distance > 0 means overlap
+
+    Assumes:
+    1. All radii in line AB are the same and all radii in line CD are the same
+
+    TODO Validate that this function works
+    TODO Write unit tests
+    TODO Enable NJIT
+    """
+
+    # Verify assumption 1
+    assert np.all(ab_radii == ab_radii[0])
+    assert np.all(cd_radii == cd_radii[0])
+
+    minimum_distance, _ = minimum_distance_segment_segment(a, b, c, d)
+
+    # TODO Verify this is the correct convention
+    minimum_signed_distance = minimum_distance - (ab_radii[0] + cd_radii[0])
+
+    return minimum_signed_distance
+
+
+
+# TODO Implement KD Tree distance
+# def min_kdtree_distance(tree, positions):
+#     """
+#     Returns the minimum distance between a KD-Tree and object.
+#
+#     In some cases, we need to check the distance between two sets of points, but one
+#     set is extremely large (e.g., a complex structure) and thus the number of distance
+#     calculations combinatorially grows and becomes prohibitive.
+#
+#     For static structures (e.g., a structure) we can construct a data structure (i.e., KD Tree)
+#     once and then use it to efficiently perform distance calculations. Since the cost of
+#     constructing a KD Tree is relatively high, and you must reconstruct it every time positions
+#     change we do not use this for moving classes.
+#
+#     This function presumes the KD Tree is created when the object is initialized and thus
+#     takes the tree as an argument instead of trying to create a tree from points every
+#     function call.
+#
+#     interference<0 means no overlap
+#     interference=0 means tangent
+#     interference>0 means overlap
+#
+#     TODO Complete documentation
+#     TODO Write unit tests
+#
+#     :param tree:
+#     :param positions:
+#     :return:
+#     """
+#
+#     # tree.query returns distances and IDs. We only care about the distances
+#     dist, _ = tree.query(positions)
+#     min_dist = np.min(dist)
+#
+#     return min_dist
+
+
 

@@ -12,3 +12,10 @@ venv/*
 SPI2Py.egg-info/
 .gif
 .vscodecounter/
+/UNKNOWN.egg-info/dependency_links.txt
+**/geometric_optimization.gif
+**/logger.log
+/UNKNOWN.egg-info/PKG-INFO
+**/report.json
+/UNKNOWN.egg-info/SOURCES.txt
+/UNKNOWN.egg-info/top_level.txt

@@ -1,17 +1,14 @@
-"""Module...
-Docstring
+from typing import Union
 
-"""
-
-
-from itertools import combinations, product
 import numpy as np
-from SPI2py.result.visualization.plotting import plot_objects
+from itertools import combinations, product
+from .model_objects import Component, Port, Interconnect, Structure
+from .data import generate_rectangular_prisms
+from .analysis.transformations import translate, rotate
+from .analysis.kinematics import calculate_independent_positions, calculate_dependent_positions, calculate_static_positions
 
-from src.SPI2py.data.classes.input_validation import SystemsValidation
 
-
-class System(SystemsValidation):
+class System:
     """
     Defines the associative (non-spatial) aspects of systems.
 
@@ -39,23 +36,133 @@ class System(SystemsValidation):
     """
 
     def __init__(self,
-                 components,
-                 ports,
-                 interconnects,
-                 interconnect_nodes,
-                 interconnect_segments,
-                 structures,
-                 config: dict):
+                 name: str):
 
-        super().__init__(components,
-                         ports,
-                         interconnects,
-                         interconnect_nodes,
-                         interconnect_segments,
-                         structures,
-                         config)
+        self.name = name
+        self.components = []
+        self.ports = []
+        self.interconnects = []
+        self.interconnect_nodes = []
+        self.interconnect_segments = []
+        self.structures = []
 
-        self.objects = components + ports + interconnect_nodes + interconnect_segments + structures
+    def __repr__(self):
+        return f'System({self.name})'
+
+    def __str__(self):
+        return self.name
+
+    def add_component(self,
+                      name: str,
+                      color: str,
+                      movement_class: str,
+                      shapes: list):
+
+        """
+        Add a component to the system.
+
+        :param name:
+        :param color:
+        :param movement_class:
+        :param shapes:
+        :return:
+        """
+
+        origins = []
+        dimensions = []
+        for shape in shapes:
+            origins.append(shape['origin'])
+            dimensions.append(shape['dimensions'])
+
+        positions, radii = generate_rectangular_prisms(origins, dimensions)
+
+        component = Component(name, positions, radii, color, movement_class=movement_class)
+
+        # Update the system
+        self.components.append(component)
+
+    def add_port(self, component_name, port_name, color, radius, reference_point_offset, movement_class):
+        """
+        Add a port to the system.
+
+        :param
+        """
+        port = Port(component_name, port_name, color, radius, reference_point_offset, movement_class=movement_class)
+        self.ports.append(port)
+
+    def add_interconnect(self, name, component_1, component_1_port, component_2, component_2_port, radius, color,
+                         number_of_bends):
+        """
+        Add an interconnect to the system.
+
+        """
+        interconnect = Interconnect(name, component_1, component_1_port, component_2, component_2_port, radius, color,
+                                    number_of_bends)
+
+        self.interconnects.append(interconnect)
+        self.interconnect_segments.extend(interconnect.segments)
+        self.interconnect_nodes.extend(interconnect.interconnect_nodes)
+
+    def add_structure(self, name, color, movement_class, shapes):
+        """
+        Add a structure to the system.
+
+        """
+
+        origins = []
+        dimensions = []
+        for shape in shapes:
+            origins.append(shape['origin'])
+            dimensions.append(shape['dimensions'])
+
+        positions, radii = generate_rectangular_prisms(origins, dimensions)
+
+        structure = Structure(name, positions, radii, color, movement_class)
+
+        self.structures.append(structure)
+
+    @property
+    def objects(self):
+        return self.components + self.ports + self.interconnect_nodes + self.interconnect_segments + self.structures
+
+    def _validate_components(self):
+        # TODO Implement
+        pass
+
+    def _validate_ports(self):
+        # TODO Implement
+        pass
+
+    def _validate_interconnects(self):
+        # TODO Implement
+        pass
+
+    def _validate_interconnect_nodes(self):
+        # TODO Implement
+        pass
+
+    def _validate_interconnect_segments(self):
+        # TODO Implement
+        pass
+
+    def _validate_structures(self):
+        # TODO Implement
+        pass
+
+    @property
+    def nodes(self):
+        return [str(obj) for obj in self.components + self.interconnect_nodes]
+
+    @property
+    def edges(self):
+        edges = []
+        for segment in self.interconnect_segments:
+            # Split with "-" to just get component (not port name)
+            # TODO Create a more reliable way to get the component name
+            edge = (str(segment.object_1).split('-')[0], str(segment.object_2).split('-')[0])
+            edges.append(edge)
+
+        return edges
 
     @property
     def static_objects(self):
@@ -109,8 +216,8 @@ class System(SystemsValidation):
 
     @property
     def component_component_pairs(self):
+        """TODO Vectorize with cartesian product"""
         return list(combinations(self.components, 2))
-
 
     @property
     def component_interconnect_pairs(self):
@@ -119,6 +226,7 @@ class System(SystemsValidation):
         1. Don't check for collision between a component and the interconnect that is attached to it.
 
         TODO Write unit tests to ensure it creates the correct pairs
+        TODO Vectorize with cartesian product
 
         :return:
         """
@@ -134,6 +242,7 @@ class System(SystemsValidation):
 
     @property
     def component_structure_pairs(self):
+        """TODO Vectorize with cartesian product"""
         return list(product(self.components, self.structures))
 
     @property
@@ -143,6 +252,7 @@ class System(SystemsValidation):
         1. Don't check for collision between two segments of the same interconnect.
 
         TODO Write unit tests to ensure it creates the correct pairs
+        TODO Vectorize with cartesian product
 
         :return:
         """
@@ -150,19 +260,17 @@ class System(SystemsValidation):
         # Create a list of all interconnect pairs
         pairs = list(combinations(self.interconnect_segments, 2))
 
-
         # Remove segments that are from the same interconnect
         # If a pipe intersects itself, usually the pipe can just be made shorter...
         # TODO implement this feature
 
         return pairs
 
-
-
     @property
     def interconnect_structure_pairs(self):
         """
         TODO Write unit tests to ensure it creates the correct pairs
+        TODO Vectorize with cartesian product
 
         :return:
         """
@@ -182,15 +290,6 @@ class System(SystemsValidation):
 
         return object_pairs
 
-
-class SpatialConfiguration:
-    """
-    When creating a spatial configuration, we must automatically map static objects
-    TODO Add an update order...
-    """
-    def __init__(self, system):
-        self.system = system
-
     @property
     def design_vector(self):
         """
@@ -203,10 +302,10 @@ class SpatialConfiguration:
 
         design_vector = np.empty(0)
 
-        for obj in self.system.independent_objects:
+        for obj in self.independent_objects:
             design_vector = np.concatenate((design_vector, obj.design_vector))
 
-        for obj in self.system.partially_dependent_objects:
+        for obj in self.partially_dependent_objects:
             design_vector = np.concatenate((design_vector, obj.design_vector))
 
         return design_vector
@@ -223,10 +322,10 @@ class SpatialConfiguration:
 
         # Get the size of the design vector for each design vector object
         design_vector_sizes = []
-        for i, obj in enumerate(self.system.independent_objects):
+        for i, obj in enumerate(self.independent_objects):
             design_vector_sizes.append(obj.design_vector.size)
 
-        for i, obj in enumerate(self.system.partially_dependent_objects):
+        for i, obj in enumerate(self.partially_dependent_objects):
             design_vector_sizes.append(obj.design_vector.size)
 
         # Index values
@@ -260,19 +359,26 @@ class SpatialConfiguration:
         design_vectors = self.slice_design_vector(design_vector)
 
         # STATIC OBJECTS
-        for obj in self.system.static_objects:
-            positions_dict = obj.calculate_positions(design_vector,positions_dict)
+        for obj in self.static_objects:
+            # positions_dict = obj.calculate_positions(design_vector, positions_dict)
+            positions_dict = calculate_static_positions(obj, positions_dict)
 
         # DYNAMIC OBJECTS - Independent then Partially Dependent
-        objects = self.system.independent_objects + self.system.partially_dependent_objects
+        objects = self.independent_objects + self.partially_dependent_objects
         for obj, design_vector_row in zip(objects, design_vectors):
-            positions_dict = obj.calculate_positions(design_vector_row, positions_dict)
+            positions_dict = calculate_independent_positions(obj, design_vector_row, positions_dict)
 
         # DYNAMIC OBJECTS - Fully Dependent
-        for obj in self.system.fully_dependent_objects:
-            positions_dict = obj.calculate_positions(design_vector,positions_dict)
+        for obj in self.fully_dependent_objects:
+            positions_dict = obj.calculate_positions(design_vector, positions_dict)
+
+        # TODO Add method for partially dependent objects
+        # DYNAMIC OBJECTS - Partially Dependent
+
+
 
         return positions_dict
+
 
     def set_positions(self, positions_dict):
         """set_positions Sets the positions of the objects in the layout.
@@ -283,38 +389,47 @@ class SpatialConfiguration:
         :type positions_dict: dict
         """
 
-        for obj in self.system.objects:
+        for obj in self.objects:
             obj.set_positions(positions_dict)
 
-    def map_static_objects(self):
-
+    def map_static_object(self, object_name, design_vector):
         """
-        This method maps static objects to spatial configurations.
+        Maps an object to a spatial configuration.
 
-        Although static objects do not move or have design variables, they still need to be mapped
-        to spatial configurations. This method temporarily replaces the default self.calculate_static_positions
-        method with the self.calculate_independent_positions method, treating the self.static_position attribute
-        as a design vector.
+        :param obj: The object to be mapped.
+        :type obj: Object
+        :param design_vector: The design vector; must be a (1, 6) array for x, y, z, rx, ry, rz.
         """
 
-        for static_object in self.system.static_objects:
-            pos_dict = static_object.calculate_independent_positions(static_object.static_position, {})
-            static_object.set_positions(pos_dict)
+        obj = next(obj for obj in self.objects if obj.__repr__() == object_name)
 
+        # Get the positions of the object
+        positions = obj.positions
+        radii = obj.radii
 
-    def plot(self, savefig=False, directory=None):
+        positions_dict = calculate_independent_positions(obj, design_vector, {})
 
-        layout_plot_array = []
+        # Set the positions of the object
+        obj.set_positions(positions_dict)
 
-        for obj in self.system.objects:
+        return positions_dict
 
-            positions = obj.positions
-            radii = obj.radii
-            color = obj.color
-
-            layout_plot_array.append([positions, radii, color])
-
-        fig = plot_objects(layout_plot_array, savefig, directory, self.system.config)
-
-        fig.show()
-
+    # def extract_spatial_graph(self):
+    #     """
+    #     Extracts a spatial graph from the layout.
+    #
+    #     TODO Remove unconnected nodes?
+    #
+    #     :return:
+    #     """
+    #
+    #     nodes = self.nodes
+    #     edges = self.edges
+    #
+    #     node_positions = []
+    #
+    #     positions_dict = self.calculate_positions(self.design_vector)
+    #
+    #     # TODO Implement
+    #
+    #     return nodes, node_positions, edges
