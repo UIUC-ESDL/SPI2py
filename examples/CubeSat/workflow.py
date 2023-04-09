@@ -137,12 +137,6 @@ study.plot(initial_design_vector)
 
 # Perform gradient-based optimization
 
-options = {'maximum number of iterations': 1000,
-           'convergence tolerance': 1e-2,
-           'objective scaling factor': 1 / 500,
-           'constraint aggregation parameter': 3.0}
-
-
 study.add_objective(objective='normalized aggregate gap distance',
                     model=system,
                     options={'design vector scaling type': 'constant',
@@ -171,19 +165,33 @@ study.add_constraint(constraint='signed distances',
 study.add_constraint(constraint='signed distances',
                      model=system,
                      options={'type': 'collision',
+                              'object class 1': 'component',
+                              'object class 2': 'structure',
+                              'constraint tolerance': 0.01,
+                              'constraint aggregation': 'induced exponential',
+                              'constraint aggregation parameter': 3.0})
+
+study.add_constraint(constraint='signed distances',
+                     model=system,
+                     options={'type': 'collision',
                               'object class 1': 'interconnect',
                               'object class 2': 'interconnect',
                               'constraint tolerance': 0.01,
                               'constraint aggregation': 'induced exponential',
                               'constraint aggregation parameter': 3.0})
 
-# study.add_constraint
-# study.add_constraint
-# study.add_constraint
-# study.add_constraint
-# study.add_constraint
+study.add_constraint(constraint='signed distances',
+                     model=system,
+                     options={'type': 'collision',
+                              'object class 1': 'interconnect',
+                              'object class 2': 'structure',
+                              'constraint tolerance': 0.01,
+                              'constraint aggregation': 'induced exponential',
+                              'constraint aggregation parameter': 3.0})
 
-study.optimize_spatial_configuration(options=options)
+
+study.optimize_spatial_configuration(options={'maximum number of iterations': 1000,
+                                              'convergence tolerance': 1e-2})
 
 # Post-processing
 
