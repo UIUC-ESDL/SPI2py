@@ -204,7 +204,7 @@ class DesignStudy:
 
         # SELECT THE CONSTRAINT FUNCTION HANDLE
         if constraint == 'signed distances':
-            def _constraint_function(x): signed_distances(x, model, object_pair)
+            def _constraint_function(x): return signed_distances(x, model, object_pair)
         else:
             raise NotImplementedError
 
@@ -224,62 +224,61 @@ class DesignStudy:
 
         # TODO SCALE THE CONSTRAINT FUNCTION
 
-        # TODO finish this
         if constraint_aggregation is None:
             nlc = NonlinearConstraint(_constraint_function, -np.inf, constraint_tolerance)
             self.constraints.append(nlc)
         else:
             def constraint_aggregation_function(x):
-                return _constraint_aggregation_function(_constraint_function(x), constraint_aggregation_parameter)
+                return _constraint_aggregation_function(_constraint_function(x), rho=constraint_aggregation_parameter)
             nlc = NonlinearConstraint(constraint_aggregation_function, -np.inf, constraint_tolerance)
             self.constraints.append(nlc)
 
 
 
-    def set_constraint_function(self, constraint_function):
-
-        # Set the constraint function
-        if constraint_function == 'signed distances':
-            _constraint_function = signed_distances
-        else:
-            raise NotImplementedError
-
-        self.constraint_function = _constraint_function
-
-
-
-    def set_constraint_aggregation_function(self, constraint_aggregation_function):
-
-        # Set the constraint aggregation function if applicable
-        if constraint_aggregation_function == 'kreisselmeier steinhauser':
-            _constraint_aggregation_function = kreisselmeier_steinhauser
-
-        elif constraint_aggregation_function == 'P-norm':
-            _constraint_aggregation_function = p_norm
-
-        elif constraint_aggregation_function == 'induced exponential':
-            _constraint_aggregation_function = induced_exponential
-
-        elif constraint_aggregation_function == 'induced power':
-            _constraint_aggregation_function = induced_power
-
-        elif constraint_aggregation_function == 'None':
-            # TODO Add the ability to not use a constraint aggregation function
-            raise NotImplementedError
-
-        else:
-            raise NotImplementedError
-
-        self.constraint_aggregation_function = _constraint_aggregation_function
+    # def set_constraint_function(self, constraint_function):
+    #
+    #     # Set the constraint function
+    #     if constraint_function == 'signed distances':
+    #         _constraint_function = signed_distances
+    #     else:
+    #         raise NotImplementedError
+    #
+    #     self.constraint_function = _constraint_function
 
 
-    def calculate_metrics(self, x):
-        """
-        Calculate the objective function and constraint functions.
 
-        """
-        objective = self.objective_function(x)
-        constraints = self.constraint_function(x, self.system)
+    # def set_constraint_aggregation_function(self, constraint_aggregation_function):
+    #
+    #     # Set the constraint aggregation function if applicable
+    #     if constraint_aggregation_function == 'kreisselmeier steinhauser':
+    #         _constraint_aggregation_function = kreisselmeier_steinhauser
+    #
+    #     elif constraint_aggregation_function == 'P-norm':
+    #         _constraint_aggregation_function = p_norm
+    #
+    #     elif constraint_aggregation_function == 'induced exponential':
+    #         _constraint_aggregation_function = induced_exponential
+    #
+    #     elif constraint_aggregation_function == 'induced power':
+    #         _constraint_aggregation_function = induced_power
+    #
+    #     elif constraint_aggregation_function == 'None':
+    #         # TODO Add the ability to not use a constraint aggregation function
+    #         raise NotImplementedError
+    #
+    #     else:
+    #         raise NotImplementedError
+    #
+    #     self.constraint_aggregation_function = _constraint_aggregation_function
+
+
+    # def calculate_metrics(self, x):
+    #     """
+    #     Calculate the objective function and constraint functions.
+    #
+    #     """
+    #     objective = self.objective_function(x)
+    #     constraints = self.constraint_function(x, self.system)
 
     def calculate_objective_function(self):
         pass
@@ -302,18 +301,18 @@ class DesignStudy:
         #                             objective_scale_factor=0.1,
         #                             objective_scale_type='constant')
 
-        self.set_constraint_function(constraint_function)
-        self.set_constraint_aggregation_function(constraint_aggregation_function)
+        # self.set_constraint_function(constraint_function)
+        # self.set_constraint_aggregation_function(constraint_aggregation_function)
 
-        nlcs = format_constraints(self.system,
-                                  self.constraint_function,
-                                  self.constraint_aggregation_function,
-                                  self.config)
+        # nlcs = format_constraints(self.system,
+        #                           self.constraint_function,
+        #                           self.constraint_aggregation_function,
+        #                           self.config)
 
         # TODO Remove objective indexing...
         self.result, self.design_vector_log = run_optimizer(self.system,
                                                             self.objectives[0],
-                                                            nlcs,
+                                                            self.constraints,
                                                             options)
 
     # RESULT METHODS
