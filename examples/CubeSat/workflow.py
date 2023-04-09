@@ -150,7 +150,33 @@ study.add_objective(objective='normalized aggregate gap distance',
                              'objective scaling type': 'constant',
                              'objective scaling factor': 1 / 500})
 
-# study.add_constraint
+study.add_constraint(constraint='signed distances',
+                     model=system,
+                     options={'type': 'collision',
+                              'object class 1': 'component',
+                              'object class 2': 'component',
+                              'constraint tolerance': 0.01,
+                              'constraint aggregation': 'induced exponential',
+                              'constraint aggregation parameter': 3.0})
+
+study.add_constraint(constraint='signed distances',
+                     model=system,
+                     options={'type': 'collision',
+                              'object class 1': 'component',
+                              'object class 2': 'interconnect',
+                              'constraint tolerance': 0.01,
+                              'constraint aggregation': 'induced exponential',
+                              'constraint aggregation parameter': 3.0})
+
+study.add_constraint(constraint='signed distances',
+                     model=system,
+                     options={'type': 'collision',
+                              'object class 1': 'interconnect',
+                              'object class 2': 'interconnect',
+                              'constraint tolerance': 0.01,
+                              'constraint aggregation': 'induced exponential',
+                              'constraint aggregation parameter': 3.0})
+
 # study.add_constraint
 # study.add_constraint
 # study.add_constraint

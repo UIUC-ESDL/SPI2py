@@ -7,10 +7,12 @@ from datetime import datetime
 
 import logging
 import os
+import numpy as np
 
 import yaml
+from scipy.optimize import NonlinearConstraint
 
-# Import the model
+# TODO Import the model
 
 from .model import System
 
@@ -165,37 +167,74 @@ class DesignStudy:
 
         self.objectives.append(objective_function)
 
+    def add_constraint(self,
+                       constraint,
+                       model,
+                       options):
+
+        """
+        Add a constraint to the design study.
+        """
+
+        # UNPACK THE OPTIONS
+        type = options['type']
+        object_class_1 = options['object class 1']
+        object_class_2 = options['object class 2']
+        constraint_tolerance = options['constraint tolerance']
+        constraint_aggregation = options['constraint aggregation']
+        constraint_aggregation_parameter = options['constraint aggregation parameter']
+
+        # SELECT THE OBJECT PAIR
+
+        if object_class_1 == 'component' and object_class_2 == 'component':
+            object_pair = model.component_component_pairs
+        elif object_class_1 == 'component' and object_class_2 == 'interconnect' or \
+                object_class_1 == 'interconnect' and object_class_2 == 'component':
+            object_pair = model.component_interconnect_pairs
+        elif object_class_1 == 'component' and object_class_2 == 'structure' or \
+                object_class_1 == 'structure' and object_class_2 == 'component':
+            object_pair = model.component_structure_pairs
+        elif object_class_1 == 'interconnect' and object_class_2 == 'interconnect':
+            object_pair = model.interconnect_interconnect_pairs
+        elif object_class_1 == 'interconnect' and object_class_2 == 'structure' or \
+                object_class_1 == 'structure' and object_class_2 == 'interconnect':
+            object_pair = model.interconnect_structure_pairs
+        else:
+            raise NotImplementedError
+
+        # SELECT THE CONSTRAINT FUNCTION HANDLE
+        if constraint == 'signed distances':
+            def _constraint_function(x): signed_distances(x, model, object_pair)
+        else:
+            raise NotImplementedError
+
+        # SELECT THE CONSTRAINT AGGREGATION FUNCTION HANDLE
+        if constraint_aggregation is None:
+            pass
+        elif constraint_aggregation == 'kreisselmeier steinhauser':
+            _constraint_aggregation_function = kreisselmeier_steinhauser
+        elif constraint_aggregation == 'P-norm':
+            _constraint_aggregation_function = p_norm
+        elif constraint_aggregation == 'induced exponential':
+            _constraint_aggregation_function = induced_exponential
+        elif constraint_aggregation == 'induced power':
+            _constraint_aggregation_function = induced_power
+        else:
+            raise NotImplementedError
+
+        # TODO SCALE THE CONSTRAINT FUNCTION
+
+        # TODO finish this
+        if constraint_aggregation is None:
+            nlc = NonlinearConstraint(_constraint_function, -np.inf, constraint_tolerance)
+            self.constraints.append(nlc)
+        else:
+            def constraint_aggregation_function(x):
+                return _constraint_aggregation_function(_constraint_function(x), constraint_aggregation_parameter)
+            nlc = NonlinearConstraint(constraint_aggregation_function, -np.inf, constraint_tolerance)
+            self.constraints.append(nlc)
 
 
-    # def set_objective_function(self,
-    #                            model_based_objective_function,
-    #                            design_vector_scale_factor=1,
-    #                            design_vector_scale_type='constant',
-    #                            objective_scale_factor=1,
-    #                            objective_scale_type='constant'):
-    #
-    #
-    #     # SELECT THE OBJECTIVE FUNCTION
-    #
-    #     if model_based_objective_function == 'normalized aggregate gap distance':
-    #         _objective_function = normalized_aggregate_gap_distance
-    #     else:
-    #         raise NotImplementedError
-    #
-    #
-    #     # SCALE THE OBJECTIVE FUNCTION
-    #
-    #     def objective_function(x):
-    #         return scale_model_based_objective(x, _objective_function, self.system,
-    #                                            design_vector_scale_factor=design_vector_scale_factor,
-    #                                            design_vector_scale_type=design_vector_scale_type,
-    #                                            objective_scale_factor=objective_scale_factor,
-    #                                            objective_scale_type=objective_scale_type)
-    #
-    #     self.objective_function = objective_function
-
-    # def set_constraints(self, constraints):
-    #     self.constraints = constraints
 
     def set_constraint_function(self, constraint_function):
 
