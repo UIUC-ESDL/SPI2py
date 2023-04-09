@@ -183,10 +183,7 @@ study.add_constraint(constraint='signed distances',
 # study.add_constraint
 # study.add_constraint
 
-study.optimize_spatial_configuration(objective_function='normalized aggregate gap distance',
-                                     constraint_function='signed distances',
-                                     constraint_aggregation_function='induced exponential',
-                                     options=options)
+study.optimize_spatial_configuration(options=options)
 
 # Post-processing
 

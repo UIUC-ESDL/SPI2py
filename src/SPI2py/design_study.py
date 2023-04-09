@@ -61,12 +61,10 @@ class DesignStudy:
         self.spatial_configuration = None
 
         # Initialize the Analysis class
-        self.objective_function = None
-        self.constraint_functions = None
-        self.constraint_aggregation_function = None
 
         self.objectives = []
         self.constraints = []
+        self.constraint_functions = []
 
         # Initialize the Optimize class
         self._spatial_configuration = None
@@ -226,59 +224,26 @@ class DesignStudy:
 
         if constraint_aggregation is None:
             nlc = NonlinearConstraint(_constraint_function, -np.inf, constraint_tolerance)
+            self.constraint_functions.append(_constraint_function)
             self.constraints.append(nlc)
         else:
             def constraint_aggregation_function(x):
                 return _constraint_aggregation_function(_constraint_function(x), rho=constraint_aggregation_parameter)
             nlc = NonlinearConstraint(constraint_aggregation_function, -np.inf, constraint_tolerance)
+            self.constraint_functions.append(constraint_aggregation_function)
             self.constraints.append(nlc)
 
 
+    def calculate_metrics(self, x):
+        """
+        Calculate the objective function and constraint functions.
 
-    # def set_constraint_function(self, constraint_function):
-    #
-    #     # Set the constraint function
-    #     if constraint_function == 'signed distances':
-    #         _constraint_function = signed_distances
-    #     else:
-    #         raise NotImplementedError
-    #
-    #     self.constraint_function = _constraint_function
+        """
+        objective = self.objective_function(x)
 
+        constraints = [constraint_function(x) for constraint_function in self.constraint_functions]
 
-
-    # def set_constraint_aggregation_function(self, constraint_aggregation_function):
-    #
-    #     # Set the constraint aggregation function if applicable
-    #     if constraint_aggregation_function == 'kreisselmeier steinhauser':
-    #         _constraint_aggregation_function = kreisselmeier_steinhauser
-    #
-    #     elif constraint_aggregation_function == 'P-norm':
-    #         _constraint_aggregation_function = p_norm
-    #
-    #     elif constraint_aggregation_function == 'induced exponential':
-    #         _constraint_aggregation_function = induced_exponential
-    #
-    #     elif constraint_aggregation_function == 'induced power':
-    #         _constraint_aggregation_function = induced_power
-    #
-    #     elif constraint_aggregation_function == 'None':
-    #         # TODO Add the ability to not use a constraint aggregation function
-    #         raise NotImplementedError
-    #
-    #     else:
-    #         raise NotImplementedError
-    #
-    #     self.constraint_aggregation_function = _constraint_aggregation_function
-
-
-    # def calculate_metrics(self, x):
-    #     """
-    #     Calculate the objective function and constraint functions.
-    #
-    #     """
-    #     objective = self.objective_function(x)
-    #     constraints = self.constraint_function(x, self.system)
+        return objective, constraints
 
     def calculate_objective_function(self):
         pass
@@ -289,25 +254,7 @@ class DesignStudy:
     # OPTIMIZE METHODS
 
 
-    def optimize_spatial_configuration(self,
-                                       objective_function:              str,
-                                       constraint_function:             str,
-                                       constraint_aggregation_function: str,
-                                       options:                         dict):
-
-        # self.set_objective_function(objective_function,
-        #                             design_vector_scale_factor=1,
-        #                             design_vector_scale_type='constant',
-        #                             objective_scale_factor=0.1,
-        #                             objective_scale_type='constant')
-
-        # self.set_constraint_function(constraint_function)
-        # self.set_constraint_aggregation_function(constraint_aggregation_function)
-
-        # nlcs = format_constraints(self.system,
-        #                           self.constraint_function,
-        #                           self.constraint_aggregation_function,
-        #                           self.config)
+    def optimize_spatial_configuration(self, options: dict):
 
         # TODO Remove objective indexing...
         self.result, self.design_vector_log = run_optimizer(self.system,
