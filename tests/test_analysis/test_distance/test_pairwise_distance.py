@@ -1,7 +1,6 @@
 import numpy as np
-import autograd.numpy as anp
 from scipy.spatial.distance import cdist
-from src.SPI2py.analysis import distances_points_points
+from src.SPI2py.driver.analysis import distances_points_points
 
 def test_pairwise_distance():
     """

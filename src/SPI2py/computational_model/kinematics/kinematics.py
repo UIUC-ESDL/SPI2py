@@ -4,7 +4,7 @@ TODO Replace object calls with functional programming
 
 import numpy as np
 from typing import Union
-from .transformations import translate, rotate
+from src.SPI2py.computational_model.kinematics.transformations import translate, rotate
 
 def calculate_static_positions(self, positions_dict):
     positions_dict[str(self)] = (self.positions, self.radii)

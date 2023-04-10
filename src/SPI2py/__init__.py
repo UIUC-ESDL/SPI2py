@@ -1,2 +1,2 @@
-from .design_study import DesignStudy
+from .main import DesignStudy
 from .model import System

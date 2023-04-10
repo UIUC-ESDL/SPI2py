@@ -14,25 +14,23 @@ from scipy.optimize import NonlinearConstraint
 
 # TODO Import the model
 
-from .model import System
-
 # Data Import
 
 
 # Layout Imports
 
 # Analysis Imports
-from .analysis.objectives import normalized_aggregate_gap_distance
-from .analysis.constraints import signed_distances, format_constraints
-from .analysis.constraint_aggregation import kreisselmeier_steinhauser, p_norm, induced_exponential, induced_power
-from .analysis.scaling import scale_model_based_objective
+from src.SPI2py.driver.analysis import normalized_aggregate_gap_distance
+from src.SPI2py.driver.analysis.constraints import signed_distances
+from src.SPI2py.driver.analysis.constraint_aggregation import kreisselmeier_steinhauser, p_norm, induced_exponential, induced_power
+from src.SPI2py.driver.analysis import scale_model_based_objective
 # from analysis.kinematics import ...
 
 # Optimize Imports
-from .optimize.solvers import run_optimizer
+from src.SPI2py.driver.optimize.solvers import run_optimizer
 
 # Result Imports
-from .result.visualization import plot_objects
+from src.SPI2py.design_study.result.visualization import plot_objects
 
 
 class DesignStudy:

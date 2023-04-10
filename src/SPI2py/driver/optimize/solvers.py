@@ -24,9 +24,7 @@ and are not allowed to build from the source (or it just adds another level of d
 """
 
 import numpy as np
-from scipy.optimize import minimize, NonlinearConstraint
-from ..analysis.constraints import format_constraints
-from ..analysis.constraint_aggregation import kreisselmeier_steinhauser
+from scipy.optimize import minimize
 import logging
 logger = logging.getLogger(__name__)
 

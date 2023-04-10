@@ -3,7 +3,7 @@ TODO write tests to ensure negative values are same e.g., 90 degrees ccw (-90) =
 """
 
 import numpy as np
-from src.SPI2py.analysis import rotate
+from src.SPI2py.driver.analysis import rotate
 
 
 def test_rotate_x_90():

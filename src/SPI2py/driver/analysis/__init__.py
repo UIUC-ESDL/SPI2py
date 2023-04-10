@@ -7,5 +7,4 @@ from .constraint_aggregation import kreisselmeier_steinhauser, p_norm, induced_e
 from .distance import distances_points_points, signed_distances_spheres_spheres, minimum_distance_segment_segment, \
     minimum_signed_distance_capsule_capsule
 
-from .transformations import rotate, translate
-
+from .scaling import scale_model_based_objective

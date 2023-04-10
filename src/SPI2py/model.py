@@ -1,11 +1,8 @@
-from typing import Union
-
 import numpy as np
 from itertools import combinations, product
 from .model_objects import Component, Port, Interconnect, Structure
-from .data import generate_rectangular_prisms
-from .analysis.transformations import translate, rotate
-from .analysis.kinematics import calculate_independent_positions, calculate_dependent_positions, calculate_static_positions
+from .computational_model.geometry.spherical_decomposition import generate_rectangular_prisms
+from src.SPI2py.computational_model.kinematics.kinematics import calculate_independent_positions, calculate_static_positions
 
 
 class System:
