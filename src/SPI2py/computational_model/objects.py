@@ -7,8 +7,8 @@ import logging
 
 from scipy.spatial.distance import euclidean
 
-from src.SPI2py.computational_model.kinematics.transformations import translate
-from src.SPI2py.computational_model.kinematics.kinematics import calculate_static_positions, calculate_independent_positions
+from .kinematics.transformations import translate
+from .kinematics.depricated_kinematics import calculate_static_positions, calculate_independent_positions
 
 from matplotlib import colors as mcolors
 

@@ -30,7 +30,7 @@ from src.SPI2py.driver.analysis import scale_model_based_objective
 from src.SPI2py.driver.optimize.solvers import run_optimizer
 
 # Result Imports
-from src.SPI2py.design_study.result.visualization import plot_objects
+from src.SPI2py.design_study.visualization.visualization import plot_objects
 
 
 class DesignStudy:

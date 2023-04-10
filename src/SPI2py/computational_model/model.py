@@ -1,8 +1,8 @@
 import numpy as np
 from itertools import combinations, product
-from .model_objects import Component, Port, Interconnect, Structure
-from .computational_model.geometry.spherical_decomposition import generate_rectangular_prisms
-from src.SPI2py.computational_model.kinematics.kinematics import calculate_independent_positions, calculate_static_positions
+from .objects import Component, Port, Interconnect, Structure
+from .geometry.spherical_decomposition import generate_rectangular_prisms
+from .kinematics.depricated_kinematics import calculate_independent_positions, calculate_static_positions
 
 
 class System:

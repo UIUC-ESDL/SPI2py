@@ -48,7 +48,7 @@ def rotate(positions, rotation):
 
     # Shift the object to origin
     reference_position = positions[0]
-    origin_positions   = positions - reference_position
+    origin_positions = positions - reference_position
 
     # Unpack rotation angles
     # alpha, beta, gamma
@@ -71,9 +71,10 @@ def rotate(positions, rotation):
     # r = r_z @ r_y @ r_x
 
     # Reassemble rotation matrix
-    r = np.array([[cos(b)*cos(g),  sin(a)*sin(b)*cos(g)-cos(a)*sin(g),   cos(a)*sin(b)*cos(g) + sin(a)*sin(g)],
-                  [cos(b)*sin(g),  sin(a)*sin(b)*sin(g) + cos(a)*cos(g), cos(a)*sin(b)*sin(g) - sin(a)*cos(g)],
-                  [-sin(b),        sin(a)*cos(b),                        cos(a)*cos(b)]])
+    r = np.array(
+        [[cos(b) * cos(g), sin(a) * sin(b) * cos(g) - cos(a) * sin(g), cos(a) * sin(b) * cos(g) + sin(a) * sin(g)],
+         [cos(b) * sin(g), sin(a) * sin(b) * sin(g) + cos(a) * cos(g), cos(a) * sin(b) * sin(g) - sin(a) * cos(g)],
+         [-sin(b), sin(a) * cos(b), cos(a) * cos(b)]])
 
     # Transpose positions from [[x1,y1,z1],[x2... ] to [[x1,x2,x3],[y1,... ]
     rotated_origin_positions = (r @ origin_positions.T).T
@@ -83,3 +84,31 @@ def rotate(positions, rotation):
 
     return new_positions
 
+
+def rigid_transformation(reference_point,
+                         positions,
+                         x=0,
+                         y=0,
+                         z=0,
+                         rx=0,
+                         ry=0,
+                         rz=0,
+                         reference_coordinate_system='origin'):
+    """
+    Apply translation and rotation to an object.
+
+    TODO Evaluate lower dimensional representations, e.g. screw
+    <https://en.wikipedia.org/wiki/Chasles%27_theorem_(kinematics)>
+
+    TODO Add support for non-origin coordinate systems (e.g., object dependencies)
+
+
+    """
+
+    # copy
+
+    # if x != 0 or
+
+
+
+    return 1
