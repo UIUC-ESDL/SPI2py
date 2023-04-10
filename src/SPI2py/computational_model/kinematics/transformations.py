@@ -105,10 +105,11 @@ def rigid_transformation(reference_point,
 
     """
 
-    # copy
+    translation = np.array([[x, y, z]])
+    rotation    = np.array([rx, ry, rz])
 
-    # if x != 0 or
+    translated_positions = positions + translation
 
+    rotated_positions = rotate(translated_positions, rotation)
 
-
-    return 1
+    return rotated_positions
