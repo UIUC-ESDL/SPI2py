@@ -18,7 +18,9 @@ system.add_component(name='control_valve_1',
                      color='aquamarine',
                      movement_class='independent',
                      degrees_of_freedom=('x', 'y', 'z', 'rx', 'ry', 'rz'),
-                     shapes=[{'type': 'box', 'origin': [0, 0, 0], 'dimensions': [6, 2, 2], 'rotation': [0, 0, 0]}])
+                     shapes=[{'type': 'box', 'origin': [0, 0, 0], 'dimensions': [6, 2, 2], 'rotation': [0, 0, 0]}],
+                     ports=[{'name': 'supply', 'origin': [0, 0, 1.5], 'radius': 0.5},
+                            {'name': 'return', 'origin': [2, 0, 1.5], 'radius': 0.5}])
 
 system.add_component(name='actuator_1',
                      color='orange',
@@ -27,7 +29,9 @@ system.add_component(name='actuator_1',
                      shapes=[{'type': 'box', 'origin': [-3, 0, -6], 'dimensions': [3, 3, 1.5], 'rotation': [0, 0, 0]},
                              {'type': 'box', 'origin': [-3, 0, -4.5], 'dimensions': [3, 3, 1.5], 'rotation': [0, 0, 0]},
                              {'type': 'box', 'origin': [-3, 0, -3], 'dimensions': [3, 3, 1.5], 'rotation': [0, 0, 0]},
-                             {'type': 'box', 'origin': [-2, 1, -2.5], 'dimensions': [1, 1, 5], 'rotation': [0, 0, 0]}])
+                             {'type': 'box', 'origin': [-2, 1, -2.5], 'dimensions': [1, 1, 5], 'rotation': [0, 0, 0]}],
+                     ports=[{'name': 'supply', 'origin': [0, -1, 0], 'radius': 0.5},
+                            {'name': 'return', 'origin': [1, -1, 0], 'radius': 0.25}])
 
 system.add_component(name='component_2',
                      color='indigo',
@@ -50,34 +54,6 @@ system.add_component(name='structure_1',
                      degrees_of_freedom=None,
                      shapes=[
                          {'type': 'box', 'origin': [0, 0, -5], 'dimensions': [2, 2, 0.5], 'rotation': [0, 0, 0]}])
-
-system.add_port(component_name='control_valve_1',
-                port_name='supply',
-                color='red',
-                radius=0.5,
-                reference_point_offset=[0, 0, 1.5],
-                movement_class='fully dependent')
-
-system.add_port(component_name='control_valve_1',
-                port_name='return',
-                color='blue',
-                radius=0.5,
-                reference_point_offset=[2, 0, 1.5],
-                movement_class='fully dependent')
-
-system.add_port(component_name='actuator_1',
-                port_name='supply',
-                color='red',
-                radius=0.5,
-                reference_point_offset=[0, -1, 0],
-                movement_class='fully dependent')
-
-system.add_port(component_name='actuator_1',
-                port_name='return',
-                color='blue',
-                radius=0.25,
-                reference_point_offset=[1, -1, 0],
-                movement_class='fully dependent')
 
 system.add_interconnect(name='hp_cv_to_actuator',
                         color='black',

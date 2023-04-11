@@ -39,17 +39,37 @@ class Object:
         self.movement_class = self._validate_movement_class(movement_class)
         self.degrees_of_freedom = self._validate_degrees_of_freedom(degrees_of_freedom)
         self.ports = self._validate_ports(ports)
+        self.port_names = []
+        self.port_indices = []
 
         self._valid_colors = {**mcolors.BASE_COLORS, **mcolors.TABLEAU_COLORS, **mcolors.CSS4_COLORS,
                               **mcolors.XKCD_COLORS}
 
         self.color = self._validate_colors(color)
 
+        if self.ports is not None:
+            for port in self.ports:
+                self.port_names.append(port['name'])
+                self.positions = np.vstack((self.positions, port['origin']))
+                self.radii = np.concatenate((self.radii, [port['radius']]))
+                self.port_indices.append(len(self.positions) - 1)
+
+
     @staticmethod
     def _validate_name(name: str) -> str:
         if not isinstance(name, str):
             raise TypeError('Name must be a string not %s.' % type(name))
         return name
+
+    def port_index(self, port_name: str) -> int:
+        if port_name not in self.port_names:
+            raise ValueError('Port name %s is not in %s.' % (port_name, self.name))
+        return self.port_indices[self.port_names.index(port_name)]
+
+    def port_position(self, port_name: str) -> np.ndarray:
+        if port_name not in self.port_names:
+            raise ValueError('Port name %s is not in %s.' % (port_name, self.name))
+        return self.positions[self.port_indices[self.port_names.index(port_name)]]
 
     def _validate_positions(self, positions: np.ndarray) -> np.ndarray:
 
@@ -186,9 +206,9 @@ class Object:
         if not isinstance(ports, list):
             raise TypeError('Ports must be a list.')
 
-        for port in ports:
-            if not isinstance(port, Port):
-                raise TypeError('Ports must be a list of Port objects.')
+        # for port in ports:
+        #     if not isinstance(port, Port):
+        #         raise TypeError('Ports must be a list of Port objects.')
 
         return ports
 
@@ -311,64 +331,6 @@ class Object:
         self.positions, self.radii = positions_dict[self.__repr__()]
 
 
-class Port(Object):
-
-    def __init__(self,
-                 component_name,
-                 port_name,
-                 color,
-                 radius,
-                 reference_point_offset,
-                 movement_class='fully dependent'):
-        self.component_name = component_name
-        self.port_name = port_name
-
-        self.name = self.component_name + '-' + self.port_name + '_port'
-
-        self.color = color
-
-        # TODO Add reference object and set DOF to None?
-
-        self.reference_point_offset = self._validate_positions(reference_point_offset)
-
-        # Initialize position as the offset from the reference point
-        self.positions = self.reference_point_offset
-
-        self.radius = self._validate_radii(radius)
-        self.radii = self.radius
-
-        self.movement_class = movement_class
-
-    def __repr__(self):
-        return self.component_name + '-' + self.port_name + '_port'
-
-    def __str__(self):
-        return self.component_name + '-' + self.port_name + '_port'
-
-    def calculate_positions(self, design_vector, positions_dict):
-        # TODO Remove design vector argument
-        # Get the reference point
-        reference_point = positions_dict[self.component_name][0][0]
-
-        # Calculate the port position
-        port_position = reference_point + self.reference_point_offset
-
-        # Add the port position to the positions dictionary
-        positions_dict[str(self)] = (port_position, self.radius)
-
-        return positions_dict
-
-    def set_positions(self, positions_dict: dict) -> dict:
-        """
-        Update positions of object spheres given a design vector
-
-        :param positions_dict:
-        :return:
-        """
-
-        self.positions, self.radii = positions_dict[self.name]
-
-
 class InterconnectWaypoint(Object):
     def __init__(self,
                  node,
@@ -389,20 +351,18 @@ class InterconnectWaypoint(Object):
         self.degrees_of_freedom = degrees_of_freedom
         self.reference_objects = constraints
 
-    def calculate_positions(self,
-                            design_vector,
-                            positions_dict):
-        # TODO Add functionality to accept positions_dict and work for InterconnectSegments
-
-        new_positions = self.positions
-
-        new_reference_position = design_vector[0:3]
-        new_positions = translate(new_positions, self.reference_position, new_reference_position)
-
-        # TODO Should we
-        positions_dict[str(self)] = (new_positions, self.radii)
-
-        return positions_dict
+    # def calculate_positions(self, design_vector, positions_dict):
+    #     # TODO Add functionality to accept positions_dict and work for InterconnectSegments
+    #
+    #     new_positions = self.positions
+    #
+    #     new_reference_position = design_vector[0:3]
+    #     new_positions = translate(new_positions, self.reference_position, new_reference_position)
+    #
+    #     # TODO Should we
+    #     positions_dict[str(self)] = (new_positions, self.radii)
+    #
+    #     return positions_dict
 
 
 """
@@ -422,11 +382,16 @@ class InterconnectEdge(Object):
                  object_2,
                  radius,
                  color,
+                 port_1=None,
+                 port_2=None,
                  degrees_of_freedom: Union[tuple[str], None] = None,
                  constraints: Union[None, tuple[str]] = None):
+
         self.name = name
         self.object_1 = object_1
+        self.port_1   = port_1
         self.object_2 = object_2
+        self.port_2   = port_2
 
         self.radius = radius
         self.color = color
@@ -434,8 +399,8 @@ class InterconnectEdge(Object):
         self.degrees_of_freedom = degrees_of_freedom
         self.reference_objects = constraints
 
-        # Create edge tuple for NetworkX graphs
-        self.edge = (self.object_1, self.object_2)
+        # # Create edge tuple for NetworkX graphs
+        # self.edge = (self.object_1, self.object_2)
 
         # Placeholder for plot test functionality, random positions
         # self.positions = None
@@ -444,17 +409,24 @@ class InterconnectEdge(Object):
 
         self.movement_class = 'fully dependent'
 
-    def calculate_positions(self,
-                            design_vector,
-                            positions_dict: dict) -> dict:
+    def calculate_positions(self, _, positions_dict):
         # TODO Remove temp design vector argument
         # TODO revise logic for getting the reference point instead of object's first sphere
         # Address varying number of spheres
 
         # TODO FIX THIS?
         # Design vector not used
-        pos_1 = positions_dict[self.object_1][0][0]
-        pos_2 = positions_dict[self.object_2][0][0]
+        if isinstance(self.object_1, Object):
+            object_1_port_index = self.object_1.port_index(self.port_1)
+            pos_1 = positions_dict[self.object_1][0][object_1_port_index]
+        else:
+            pos_1 = positions_dict[self.object_1][0]
+
+        if isinstance(self.object_2, Object):
+            object_2_port_index = self.object_2.port_index(self.port_2)
+            pos_2 = positions_dict[self.object_2][0][object_2_port_index]
+        else:
+            pos_2 = positions_dict[self.object_2][0]
 
         # Replace with pure-python implementation for Numba
         dist = euclidean(pos_1, pos_2)
@@ -521,8 +493,8 @@ class Interconnect(InterconnectWaypoint, InterconnectEdge):
         self.component_1_port = component_1_port
         self.component_2_port = component_2_port
 
-        self.object_1 = self.component_1 + '-' + self.component_1_port + '_port'
-        self.object_2 = self.component_2 + '-' + self.component_2_port + '_port'
+        # self.object_1 = self.component_1 + '-' + self.component_1_port + '_port'
+        # self.object_2 = self.component_2 + '-' + self.component_2_port + '_port'
 
         self.radius = radius
         self.color = color
@@ -544,27 +516,31 @@ class Interconnect(InterconnectWaypoint, InterconnectEdge):
         """
         Consideration: if I include the component nodes then... ?
 
+        TODO replace node names w/ objects!
+
         :return:
         """
         # TODO Make sure nodes are 2D and not 1D!
 
         # Create the nodes list and add component 1
-        nodes = [self.object_1]
-        node_names = [self.object_1]
+        nodes = [self.component_1]
+        node_names = [self.component_1]
+
+        # nodes = []
+        # node_names = []
 
         # Add the interconnect nodes
         for i in range(self.number_of_bends):
             # Each node should have unique identifier
-            node_prefix = self.component_1 + '-' + self.component_1_port + '_' + self.component_2 + '-' + self.component_2_port + '_node_'
-            node = node_prefix + str(i)
+            node_name = self.name + '_node_' + str(i)
 
-            interconnect_node = InterconnectWaypoint(node, self.radius, self.color)
+            interconnect_node = InterconnectWaypoint(node_name, self.radius, self.color)
             nodes.append(interconnect_node)
-            node_names.append(str(interconnect_node))
+            node_names.append(node_name)
 
         # Add component 2
-        nodes.append(self.object_2)
-        node_names.append(self.object_2)
+        nodes.append(self.component_2)
+        node_names.append(self.component_2)
 
         return nodes, node_names
 
@@ -582,10 +558,21 @@ class Interconnect(InterconnectWaypoint, InterconnectEdge):
         for object_1, object_2 in self.node_pairs:
             name = self.component_1 + '-' + self.component_2 + '_edge_' + str(i)
             i += 1
-            segments.append(InterconnectEdge(name, object_1, object_2, self.radius, self.color))
+
+            if isinstance(object_1, Object):
+                port_1 = self.port_1
+            else:
+                port_1 = None
+
+            if isinstance(object_2, Object):
+                port_2 = self.port_2
+            else:
+                port_2 = None
+
+            segments.append(InterconnectEdge(name, object_1, object_2, self.radius, self.color,port_1=port_1, port_2=port_2))
 
         return segments
 
-    @property
-    def edges(self):
-        return [segment.edge for segment in self.segments]
+    # @property
+    # def edges(self):
+    #     return [segment.edge for segment in self.segments]

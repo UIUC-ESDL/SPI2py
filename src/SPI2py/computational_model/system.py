@@ -54,7 +54,8 @@ class System:
                       color: str,
                       movement_class: str,
                       degrees_of_freedom,
-                      shapes: list):
+                      shapes: list,
+                      ports: list = None):
 
         """
         Add a component to the system.
@@ -74,19 +75,13 @@ class System:
 
         positions, radii = generate_rectangular_prisms(origins, dimensions)
 
-        component = Object(name, positions, radii, color, movement_class=movement_class, degrees_of_freedom=degrees_of_freedom)
+        component = Object(name, positions, radii, color,
+                           movement_class=movement_class,
+                           degrees_of_freedom=degrees_of_freedom,
+                           ports=ports)
 
         # Update the system
         self.components.append(component)
-
-    def add_port(self, component_name, port_name, color, radius, reference_point_offset, movement_class):
-        """
-        Add a port to the system.
-
-        :param
-        """
-        port = Port(component_name, port_name, color, radius, reference_point_offset, movement_class=movement_class)
-        self.ports.append(port)
 
     def add_interconnect(self, name, component_1, component_1_port, component_2, component_2_port, radius, color,
                          number_of_bends):
