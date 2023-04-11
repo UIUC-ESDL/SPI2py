@@ -115,6 +115,17 @@ study.config['Problem Description'] = 'Simple optimization of a 3D layout'
 # Map the system to a single spatial configuration
 
 # TODO Set initial design vector, including the static object... enter as dict arguments to manual
+study.add_initial_design_vector('control_valve_1', [-3., -4.41, -0.24, 0., 0., 0.])
+study.add_initial_design_vector('actuator_1', [2., 4.41, 0.24, 0., 0., 0.])
+study.add_initial_design_vector('component_2', [5, -3, -1, 0., 0., 0.])
+study.add_initial_design_vector('component_3', [-3., -1., 3., 0., 0., 0.])
+study.add_initial_design_vector('control_valve_1-supply_actuator_1-supply_node_0', [-3., -2., 2.])
+study.add_initial_design_vector('control_valve_1-return_actuator_1-return_node_0', [-1., 0., 2.])
+study.add_initial_design_vector('control_valve_1-return_actuator_1-return_node_0', [4., 0., 1.])
+
+
+study.add_initial_design_vector('structure_1', [0, 0, 0, 0, 0, 0])
+
 # Define the initial design vector
 component_0_position = np.array([-3., -4.41, -0.24, 0., 0., 0.])
 component_1_position = np.array([2., 4.41, 0.24, 0., 0., 0.])
@@ -133,8 +144,8 @@ initial_design_vector = np.concatenate((component_0_position,
                                         interconnect_0_node_1_position,
                                         interconnect_1_node_0_position))
 
-study.map_objects_to_design_vectors(method='manual',
-                                    design_vectors=initial_design_vector)
+study.generate_spatial_configuration(method='manual',
+                                     design_vectors=initial_design_vector)
 
 # Plot initial spatial configuration
 study.plot(initial_design_vector)
@@ -175,9 +186,6 @@ study.add_constraint(constraint='signed distances',
                               'constraint aggregation': 'induced exponential',
                               'constraint aggregation parameter': 3.0})
 
-
-
-system.interconnect_nodes[0].design_vector_dict
 
 study.optimize_spatial_configuration(options={'maximum number of iterations': 10,
                                               'convergence tolerance': 1e-2})

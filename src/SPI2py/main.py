@@ -69,6 +69,9 @@ class DesignStudy:
         # Initialize the Result class
         self.outputs = {}
 
+        self.initial_design_vectors = {}
+
+
     def __repr__(self):
         return str(self.study_name)
 
@@ -98,7 +101,14 @@ class DesignStudy:
 
     # LAYOUT METHODS
 
-    def map_objects_to_design_vectors(self, method, design_vectors=None):
+    def add_initial_design_vector(self, name, design_vector):
+
+        if name not in list(self.initial_design_vectors.keys()):
+            self.initial_design_vectors[name] = [design_vector]
+        else:
+            self.initial_design_vectors[name].append(design_vector)
+
+    def generate_spatial_configuration(self, method, design_vectors=None):
         """
         Map the objects to a 3D layout.
 
@@ -111,6 +121,9 @@ class DesignStudy:
         """
 
         if method == 'manual':
+
+
+
             positions_dict = self.system.calculate_positions(design_vectors)
             self.system.set_positions(positions_dict)
 
@@ -129,6 +142,8 @@ class DesignStudy:
 
         """
         Add an objective to the design study.
+
+        TODO Move objective to the model module...?
 
         :param objective: The objective function to be added.
         :param options: The options for the objective function.
