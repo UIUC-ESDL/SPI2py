@@ -126,28 +126,10 @@ study.add_initial_design_vector('control_valve_1-supply_actuator_1-supply_node_1
 study.add_initial_design_vector('control_valve_1-return_actuator_1-return_node_0', 'spatial_config_1', [4., 0., 1.])
 # study.add_initial_design_vector('structure_1', 'spatial_configuration_1', [0, 0, 0, 0, 0, 0])
 
-# Define the initial design vector
-component_0_position = np.array([-3., -4.41, -0.24, 0., 0., 0.])
-component_1_position = np.array([2., 4.41, 0.24, 0., 0., 0.])
-component_2_position = np.array([5, -3, -1, 0., 0., 0.])
-component_3_position = np.array([-3., -1., 3., 0., 0., 0.])
-
-interconnect_0_node_0_position = np.array([-3., -2., 2.])
-interconnect_0_node_1_position = np.array([-1., 0., 2.])
-interconnect_1_node_0_position = np.array([4., 0., 1.])
-
-initial_design_vector = np.concatenate((component_0_position,
-                                        component_1_position,
-                                        component_2_position,
-                                        component_3_position,
-                                        interconnect_0_node_0_position,
-                                        interconnect_0_node_1_position,
-                                        interconnect_1_node_0_position))
-
-study.generate_spatial_configuration(name='spatial_config_1',method='manual')
+study.generate_spatial_configuration(name='spatial_config_1', method='manual')
 
 # Plot initial spatial configuration
-study.plot(initial_design_vector)
+study.plot()
 
 # Perform gradient-based optimization
 
@@ -194,7 +176,7 @@ study.optimize_spatial_configuration(options={'maximum number of iterations': 10
 # Plot the final spatial configuration
 new_positions = system.calculate_positions(study.result.x)
 system.set_positions(new_positions)
-study.plot(study.result.x)
+study.plot()
 
 # Write output file
 study.create_report()

@@ -271,7 +271,7 @@ class DesignStudy:
     # RESULT METHODS
 
 
-    def plot(self, x):
+    def plot(self):
         """
         Plot the model at a given state.
 
