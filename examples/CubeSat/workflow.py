@@ -17,11 +17,13 @@ system = System(name='Demo System')
 system.add_component(name='control_valve_1',
                      color='aquamarine',
                      movement_class='independent',
+                     degrees_of_freedom=('x', 'y', 'z', 'rx', 'ry', 'rz'),
                      shapes=[{'type': 'box', 'origin': [0, 0, 0], 'dimensions': [6, 2, 2], 'rotation': [0, 0, 0]}])
 
 system.add_component(name='actuator_1',
                      color='orange',
                      movement_class='independent',
+                     degrees_of_freedom=('x', 'y', 'z', 'rx', 'ry', 'rz'),
                      shapes=[{'type': 'box', 'origin': [-3, 0, -6], 'dimensions': [3, 3, 1.5], 'rotation': [0, 0, 0]},
                              {'type': 'box', 'origin': [-3, 0, -4.5], 'dimensions': [3, 3, 1.5], 'rotation': [0, 0, 0]},
                              {'type': 'box', 'origin': [-3, 0, -3], 'dimensions': [3, 3, 1.5], 'rotation': [0, 0, 0]},
@@ -30,11 +32,13 @@ system.add_component(name='actuator_1',
 system.add_component(name='component_2',
                      color='indigo',
                      movement_class='independent',
+                     degrees_of_freedom=('x', 'y', 'z', 'rx', 'ry', 'rz'),
                      shapes=[{'type': 'box', 'origin': [0, 0, 0], 'dimensions': [1, 3, 3], 'rotation': [0, 0, 0]}])
 
 system.add_component(name='component_3',
                      color='olive',
                      movement_class='independent',
+                     degrees_of_freedom=('x', 'y', 'z', 'rx', 'ry', 'rz'),
                      shapes=[{'type': 'box', 'origin': [0, 0, 0], 'dimensions': [1, 1, 1], 'rotation': [0, 0, 0]},
                              {'type': 'box', 'origin': [1, 0, 0], 'dimensions': [1, 2, 1], 'rotation': [0, 0, 0]},
                              {'type': 'box', 'origin': [1, 1, 0.5], 'dimensions': [1, 1, 3], 'rotation': [0, 0, 0]},
@@ -43,6 +47,7 @@ system.add_component(name='component_3',
 system.add_component(name='structure_1',
                      color='gray',
                      movement_class='static',
+                     degrees_of_freedom=None,
                      shapes=[
                          {'type': 'box', 'origin': [0, 0, -5], 'dimensions': [2, 2, 0.5], 'rotation': [0, 0, 0]}])
 
@@ -94,8 +99,7 @@ system.add_interconnect(name='hp_cv_to_actuator2',
 
 
 
-# MAP STATIC OBJECTS
-system.map_static_object(object_name='structure_1', design_vector=np.array([0, 0, 0, 0, 0, 0]))
+
 
 # Define the design study
 
@@ -124,7 +128,8 @@ study.add_initial_design_vector('component_3', 'spatial_config_1', [-3., -1., 3.
 study.add_initial_design_vector('control_valve_1-supply_actuator_1-supply_node_0', 'spatial_config_1', [-3., -2., 2.])
 study.add_initial_design_vector('control_valve_1-supply_actuator_1-supply_node_1', 'spatial_config_1', [-1., 0., 2.])
 study.add_initial_design_vector('control_valve_1-return_actuator_1-return_node_0', 'spatial_config_1', [4., 0., 1.])
-# study.add_initial_design_vector('structure_1', 'spatial_configuration_1', [0, 0, 0, 0, 0, 0])
+
+system.map_static_object(object_name='structure_1', design_vector=np.array([0, 0, 0, 0, 0, 0]))
 
 study.generate_spatial_configuration(name='spatial_config_1', method='manual')
 

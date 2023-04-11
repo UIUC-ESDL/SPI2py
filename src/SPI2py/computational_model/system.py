@@ -53,6 +53,7 @@ class System:
                       name: str,
                       color: str,
                       movement_class: str,
+                      degrees_of_freedom,
                       shapes: list):
 
         """
@@ -73,7 +74,7 @@ class System:
 
         positions, radii = generate_rectangular_prisms(origins, dimensions)
 
-        component = Object(name, positions, radii, color, movement_class=movement_class)
+        component = Object(name, positions, radii, color, movement_class=movement_class, degrees_of_freedom=degrees_of_freedom)
 
         # Update the system
         self.components.append(component)
@@ -149,6 +150,11 @@ class System:
         for obj in self.objects:
             if obj.movement_class == 'static':
                 objects.append(obj)
+
+        # # TODO UPDATE
+        # for obj in self.objects:
+        #     if obj.degrees_of_freedom is None:
+        #         objects.append(obj)
 
         return objects
 

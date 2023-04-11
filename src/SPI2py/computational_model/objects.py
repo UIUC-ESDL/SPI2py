@@ -21,30 +21,29 @@ from typing import Union
 class Object:
 
     def __init__(self,
-                 name:               str,
-                 positions:          np.ndarray,
-                 radii:              np.ndarray,
-                 color:              str,
-                 movement_class:     str,
-                 reference_axes:     str = 'origin',
+                 name: str,
+                 positions: np.ndarray,
+                 radii: np.ndarray,
+                 color: str,
+                 movement_class: str,
+                 reference_axes: str = 'origin',
                  degrees_of_freedom: Union[tuple[str], None] = ('x', 'y', 'z', 'rx', 'ry', 'rz'),
-                 ports:              Union[None, list[dict]] = None):
+                 ports: Union[None, list[dict]] = None):
 
-        self.name               = self._validate_name(name)
-        self.positions          = self._validate_positions(positions)
-        self.radii              = self._validate_radii(radii)
+        self.name = self._validate_name(name)
+        self.positions = self._validate_positions(positions)
+        self.radii = self._validate_radii(radii)
         # TODO Remove rotation...
-        self.rotation           = np.zeros(3)
-        self.reference_axes     = self._validate_reference_axes(reference_axes)
-        self.movement_class     = self._validate_movement_class(movement_class)
+        self.rotation = np.zeros(3)
+        self.reference_axes = self._validate_reference_axes(reference_axes)
+        self.movement_class = self._validate_movement_class(movement_class)
         self.degrees_of_freedom = self._validate_degrees_of_freedom(degrees_of_freedom)
-        self.ports              = self._validate_ports(ports)
+        self.ports = self._validate_ports(ports)
 
         self._valid_colors = {**mcolors.BASE_COLORS, **mcolors.TABLEAU_COLORS, **mcolors.CSS4_COLORS,
                               **mcolors.XKCD_COLORS}
 
         self.color = self._validate_colors(color)
-
 
     @staticmethod
     def _validate_name(name: str) -> str:
@@ -257,39 +256,42 @@ class Object:
 
     def calculate_positions(self, design_vector, positions_dict=None):
 
+        # If the object has no degrees of freedom, then return its current position
+        if self.degrees_of_freedom is None:
+            return self.positions
+
         # Extract the design variables from the design vector
         design_vector_dict = self.decompose_design_vector(design_vector)
 
         if 'x' in self.degrees_of_freedom:
-            x=design_vector_dict['x']
+            x = design_vector_dict['x']
         else:
-            x=0
+            x = 0
 
         if 'y' in self.degrees_of_freedom:
-            y=design_vector_dict['y']
+            y = design_vector_dict['y']
         else:
-            y=0
+            y = 0
 
         if 'z' in self.degrees_of_freedom:
-            z=design_vector_dict['z']
+            z = design_vector_dict['z']
         else:
-            z=0
+            z = 0
 
         if 'rx' in self.degrees_of_freedom:
-            rx=design_vector_dict['rx']
+            rx = design_vector_dict['rx']
         else:
-            rx=0
+            rx = 0
 
         if 'ry' in self.degrees_of_freedom:
-            ry=design_vector_dict['ry']
+            ry = design_vector_dict['ry']
         else:
-            ry=0
+            ry = 0
 
         if 'rz' in self.degrees_of_freedom:
-            rz=design_vector_dict['rz']
+            rz = design_vector_dict['rz']
         else:
-            rz=0
-
+            rz = 0
 
         # TODO Add reference axes argument
         # Calculate the new positions
@@ -309,7 +311,6 @@ class Object:
         self.positions, self.radii = positions_dict[self.__repr__()]
 
 
-
 class Port(Object):
 
     def __init__(self,
@@ -319,7 +320,6 @@ class Port(Object):
                  radius,
                  reference_point_offset,
                  movement_class='fully dependent'):
-
         self.component_name = component_name
         self.port_name = port_name
 
@@ -339,7 +339,6 @@ class Port(Object):
 
         self.movement_class = movement_class
 
-
     def __repr__(self):
         return self.component_name + '-' + self.port_name + '_port'
 
@@ -347,7 +346,6 @@ class Port(Object):
         return self.component_name + '-' + self.port_name + '_port'
 
     def calculate_positions(self, design_vector, positions_dict):
-
         # TODO Remove design vector argument
         # Get the reference point
         reference_point = positions_dict[self.component_name][0][0]
@@ -378,7 +376,6 @@ class InterconnectWaypoint(Object):
                  color,
                  degrees_of_freedom: Union[tuple[str], None] = ('x', 'y', 'z'),
                  constraints: Union[None, tuple[str]] = None):
-
         self.name = node
         self.node = node
         self.radius = radius
@@ -395,11 +392,9 @@ class InterconnectWaypoint(Object):
     def calculate_positions(self,
                             design_vector,
                             positions_dict):
-
         # TODO Add functionality to accept positions_dict and work for InterconnectSegments
 
         new_positions = self.positions
-
 
         new_reference_position = design_vector[0:3]
         new_positions = translate(new_positions, self.reference_position, new_reference_position)
@@ -408,6 +403,7 @@ class InterconnectWaypoint(Object):
         positions_dict[str(self)] = (new_positions, self.radii)
 
         return positions_dict
+
 
 """
 TODO
@@ -418,6 +414,7 @@ Interconnect should be a single object, not subclasses
 
 """
 
+
 class InterconnectEdge(Object):
     def __init__(self,
                  name,
@@ -427,7 +424,6 @@ class InterconnectEdge(Object):
                  color,
                  degrees_of_freedom: Union[tuple[str], None] = None,
                  constraints: Union[None, tuple[str]] = None):
-
         self.name = name
         self.object_1 = object_1
         self.object_2 = object_2
@@ -464,7 +460,7 @@ class InterconnectEdge(Object):
         dist = euclidean(pos_1, pos_2)
 
         # We don't want zero-length interconnects or interconnect segments--they cause problems!
-        num_spheres = 10 #int(dist / (self.radius*1.5))
+        num_spheres = 10  # int(dist / (self.radius*1.5))
         # if num_spheres == 0:
         #     num_spheres = 1
 
@@ -478,16 +474,13 @@ class InterconnectEdge(Object):
 
     def set_positions(self,
                       positions_dict: dict) -> dict:
-
         # self.positions, self.radii = positions_dict[self.name]
 
         # TODO Remove dummy input for design vector
-        self.positions = self.calculate_positions([],positions_dict)[str(self)][0]  # index zero for tuple
+        self.positions = self.calculate_positions([], positions_dict)[str(self)][0]  # index zero for tuple
 
         # TODO Separate this into a different function?
         self.radii = np.repeat(self.radius, self.positions.shape[0])
-
-
 
 
 class Interconnect(InterconnectWaypoint, InterconnectEdge):
@@ -596,5 +589,3 @@ class Interconnect(InterconnectWaypoint, InterconnectEdge):
     @property
     def edges(self):
         return [segment.edge for segment in self.segments]
-
-
