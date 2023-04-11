@@ -279,7 +279,7 @@ class Component:
 
         # If the object has no degrees of freedom, then return its current position
         if self.degrees_of_freedom is None:
-            return {self.__repr__(): self.positions}
+            return {self.__repr__(): (self.positions, self.radii)}
 
         # Extract the design variables from the design vector
         design_vector_dict = self.decompose_design_vector(design_vector)
@@ -319,22 +319,24 @@ class Component:
         new_positions = rigid_transformation(self.reference_position, self.positions, x, y, z, rx, ry, rz)
 
         if self.ports is None:
-            return {self.__repr__(): new_positions}
+            return {self.__repr__(): (new_positions, self.radii)}
         else:
 
-            dict = {}
+            new_dict = {}
 
             # Get non-port positions
-            non_port_positions = new_positions[0:self.port_indices[0]]
-            dict[self.__repr__()] = non_port_positions
+            # non_port_positions = new_positions[0:self.port_indices[0]]
+            all_positions = new_positions[0:self.port_indices[0]]
+            new_dict[self.__repr__()] = (all_positions, self.radii)
 
             # Get port positions
             for i, port in enumerate(self.ports):
                 port_positions = new_positions[self.port_indices[i]]
                 port_name = self.__repr__() + '_' + port['name']
-                dict[port_name] = port_positions.reshape(1, 3)
+                port_radius = np.array([port['radius']])
+                new_dict[port_name] = (port_positions.reshape(1, 3), port_radius)
 
-            return dict
+            return new_dict
 
 
 
@@ -438,10 +440,10 @@ class InterconnectEdge(Component):
 
         new_dict = {}
 
-        pos_1 = positions_dict[self.object_1][0]
+        pos_1 = positions_dict[self.object_1][0][0]
 
 
-        pos_2 = positions_dict[self.object_2][0]
+        pos_2 = positions_dict[self.object_2][0][0]
 
         # Replace with pure-python implementation for Numba
         dist = euclidean(pos_1, pos_2)
