@@ -146,10 +146,11 @@ class System:
             if obj.movement_class == 'static':
                 objects.append(obj)
 
-        # # TODO UPDATE
+        # other_objects=[]
+        # # TODO UPDATE and ref is global
         # for obj in self.objects:
         #     if obj.degrees_of_freedom is None:
-        #         objects.append(obj)
+        #         other_objects.append(obj)
 
         return objects
 

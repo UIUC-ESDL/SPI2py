@@ -383,19 +383,6 @@ class InterconnectWaypoint(Component):
         self.degrees_of_freedom = degrees_of_freedom
         self.reference_objects = constraints
 
-    # def calculate_positions(self, design_vector, positions_dict):
-    #     # TODO Add functionality to accept positions_dict and work for InterconnectSegments
-    #
-    #     new_positions = self.positions
-    #
-    #     new_reference_position = design_vector[0:3]
-    #     new_positions = translate(new_positions, self.reference_position, new_reference_position)
-    #
-    #     # TODO Should we
-    #     positions_dict[str(self)] = (new_positions, self.radii)
-    #
-    #     return positions_dict
-
 
 """
 TODO
@@ -428,9 +415,6 @@ class InterconnectEdge(Component):
         self.degrees_of_freedom = degrees_of_freedom
         self.reference_objects = constraints
 
-        # # Create edge tuple for NetworkX graphs
-        # self.edge = (self.object_1, self.object_2)
-
         # Placeholder for plot test functionality, random positions
         # self.positions = None
         self.positions = np.empty((0, 3))
@@ -449,17 +433,9 @@ class InterconnectEdge(Component):
         new_dict = {}
 
         pos_1 = positions_dict[self.object_1][0][0]
-
-
         pos_2 = positions_dict[self.object_2][0][0]
 
-        # Replace with pure-python implementation for Numba
-        dist = euclidean(pos_1, pos_2)
-
-        # We don't want zero-length interconnects or interconnect segments--they cause problems!
-        num_spheres = 10  # int(dist / (self.radius*1.5))
-        # if num_spheres == 0:
-        #     num_spheres = 1
+        num_spheres = 10
 
         positions = np.linspace(pos_1, pos_2, num_spheres)
         radii = np.repeat(self.radius, num_spheres)

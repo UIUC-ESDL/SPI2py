@@ -24,6 +24,7 @@ def plot_objects(positions, radii, colors):
     p.view_vector((5.0, 2, 3))
     p.add_floor('-z', lighting=True, color='tan', pad=1.0)
     p.enable_shadows()
+    p.show_axes()
     p.show()
 
 

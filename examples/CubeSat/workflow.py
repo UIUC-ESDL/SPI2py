@@ -19,19 +19,19 @@ system.add_component(name='control_valve_1',
                      movement_class='independent',
                      degrees_of_freedom=('x', 'y', 'z', 'rx', 'ry', 'rz'),
                      shapes=[{'type': 'box', 'origin': [0, 0, 0], 'dimensions': [6, 2, 2], 'rotation': [0, 0, 0]}],
-                     ports=[{'name': 'supply', 'origin': [0, 0, 1.5], 'radius': 0.5},
-                            {'name': 'return', 'origin': [2, 0, 1.5], 'radius': 0.5}])
+                     ports=[{'name': 'supply', 'origin': [2, 1, 2.5], 'radius': 0.5},
+                            {'name': 'return', 'origin': [4, 1, 2.5], 'radius': 0.5}])
 
 system.add_component(name='actuator_1',
                      color='orange',
                      movement_class='independent',
                      degrees_of_freedom=('x', 'y', 'z', 'rx', 'ry', 'rz'),
-                     shapes=[{'type': 'box', 'origin': [-3, 0, -6], 'dimensions': [3, 3, 1.5], 'rotation': [0, 0, 0]},
-                             {'type': 'box', 'origin': [-3, 0, -4.5], 'dimensions': [3, 3, 1.5], 'rotation': [0, 0, 0]},
-                             {'type': 'box', 'origin': [-3, 0, -3], 'dimensions': [3, 3, 1.5], 'rotation': [0, 0, 0]},
-                             {'type': 'box', 'origin': [-2, 1, -2.5], 'dimensions': [1, 1, 5], 'rotation': [0, 0, 0]}],
-                     ports=[{'name': 'supply', 'origin': [0, -1, 0], 'radius': 0.5},
-                            {'name': 'return', 'origin': [1, -1, 0], 'radius': 0.25}])
+                     shapes=[{'type': 'box', 'origin': [0, 0, 0], 'dimensions': [3, 3, 1.5], 'rotation': [0, 0, 0]},
+                             {'type': 'box', 'origin': [0, 0, 1.5], 'dimensions': [3, 3, 1.5], 'rotation': [0, 0, 0]},
+                             {'type': 'box', 'origin': [0, 0, 3], 'dimensions': [3, 3, 1.5], 'rotation': [0, 0, 0]},
+                             {'type': 'box', 'origin': [1, 1, 3.5], 'dimensions': [1, 1, 5], 'rotation': [0, 0, 0]}],
+                     ports=[{'name': 'supply', 'origin': [1, 0, 1], 'radius': 0.5},
+                            {'name': 'return', 'origin': [2, 0, 1], 'radius': 0.5}])
 
 system.add_component(name='component_2',
                      color='indigo',
@@ -53,7 +53,7 @@ system.add_component(name='structure_1',
                      movement_class='static',
                      degrees_of_freedom=None,
                      shapes=[
-                         {'type': 'box', 'origin': [0, 0, -5], 'dimensions': [2, 2, 0.5], 'rotation': [0, 0, 0]}])
+                         {'type': 'box', 'origin': [0, 0, 0], 'dimensions': [2, 2, 0.5], 'rotation': [0, 0, 0]}])
 
 system.add_interconnect(name='hp_cv_to_actuator',
                         color='black',
@@ -86,8 +86,6 @@ local_directory = os.path.dirname(__file__) + '/'
 study = DesignStudy(directory=local_directory,
                     study_name='Example 1')
 
-aa = system.components[0].calculate_positions([-3., -4.41, -0.24, 0., 0., 0.])
-
 study.add_system(system)
 
 # Define the username and problem description
@@ -107,7 +105,7 @@ study.add_initial_design_vector('control_valve_1-supply_actuator_1-supply_node_0
 study.add_initial_design_vector('control_valve_1-supply_actuator_1-supply_node_1', 'spatial_config_1', [-1., 0., 2.])
 study.add_initial_design_vector('control_valve_1-return_actuator_1-return_node_0', 'spatial_config_1', [4., 0., 1.])
 
-system.map_static_object(object_name='structure_1', design_vector=np.array([0, 0, 0, 0, 0, 0]))
+system.map_static_object(object_name='structure_1', design_vector=[0, 0, -1, 0, 0, 0])
 
 study.generate_spatial_configuration(name='spatial_config_1', method='manual')
 
@@ -116,55 +114,55 @@ study.generate_spatial_configuration(name='spatial_config_1', method='manual')
 # Plot initial spatial configuration
 study.plot()
 
-# Perform gradient-based optimization
-
-study.add_objective(objective='normalized aggregate gap distance',
-                    model=system,
-                    options={'design vector scaling type': 'constant',
-                             'design vector scaling factor': 1,
-                             'objective scaling type': 'constant',
-                             'objective scaling factor': 1 / 500})
-
-study.add_constraint(constraint='signed distances',
-                     model=system,
-                     options={'type': 'collision',
-                              'object class 1': 'component',
-                              'object class 2': 'component',
-                              'constraint tolerance': 0.01,
-                              'constraint aggregation': 'induced exponential',
-                              'constraint aggregation parameter': 3.0})
-
-study.add_constraint(constraint='signed distances',
-                     model=system,
-                     options={'type': 'collision',
-                              'object class 1': 'component',
-                              'object class 2': 'interconnect',
-                              'constraint tolerance': 0.01,
-                              'constraint aggregation': 'induced exponential',
-                              'constraint aggregation parameter': 3.0})
-
-study.add_constraint(constraint='signed distances',
-                     model=system,
-                     options={'type': 'collision',
-                              'object class 1': 'interconnect',
-                              'object class 2': 'interconnect',
-                              'constraint tolerance': 0.01,
-                              'constraint aggregation': 'induced exponential',
-                              'constraint aggregation parameter': 3.0})
-
-
-study.optimize_spatial_configuration(options={'maximum number of iterations': 10,
-                                              'convergence tolerance': 1e-2})
-
-# Post-processing
-
-# Plot the final spatial configuration
-new_positions = system.calculate_positions(study.result.x)
-system.set_positions(new_positions)
-study.plot()
-
-# Write output file
-study.create_report()
-
-# Print the log to see the optimization results and if any warnings or errors occurred
-study.print_log()
+# # Perform gradient-based optimization
+#
+# study.add_objective(objective='normalized aggregate gap distance',
+#                     model=system,
+#                     options={'design vector scaling type': 'constant',
+#                              'design vector scaling factor': 1,
+#                              'objective scaling type': 'constant',
+#                              'objective scaling factor': 1 / 500})
+#
+# study.add_constraint(constraint='signed distances',
+#                      model=system,
+#                      options={'type': 'collision',
+#                               'object class 1': 'component',
+#                               'object class 2': 'component',
+#                               'constraint tolerance': 0.01,
+#                               'constraint aggregation': 'induced exponential',
+#                               'constraint aggregation parameter': 3.0})
+#
+# study.add_constraint(constraint='signed distances',
+#                      model=system,
+#                      options={'type': 'collision',
+#                               'object class 1': 'component',
+#                               'object class 2': 'interconnect',
+#                               'constraint tolerance': 0.01,
+#                               'constraint aggregation': 'induced exponential',
+#                               'constraint aggregation parameter': 3.0})
+#
+# study.add_constraint(constraint='signed distances',
+#                      model=system,
+#                      options={'type': 'collision',
+#                               'object class 1': 'interconnect',
+#                               'object class 2': 'interconnect',
+#                               'constraint tolerance': 0.01,
+#                               'constraint aggregation': 'induced exponential',
+#                               'constraint aggregation parameter': 3.0})
+#
+#
+# study.optimize_spatial_configuration(options={'maximum number of iterations': 10,
+#                                               'convergence tolerance': 1e-2})
+#
+# # Post-processing
+#
+# # Plot the final spatial configuration
+# new_positions = system.calculate_positions(study.result.x)
+# system.set_positions(new_positions)
+# study.plot()
+#
+# # Write output file
+# study.create_report()
+#
+# # Print the log to see the optimization results and if any warnings or errors occurred
+# study.print_log()
