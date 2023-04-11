@@ -1,6 +1,6 @@
 import numpy as np
 from itertools import combinations, product
-from .objects import Object, Port, Interconnect
+from .objects import Component, Interconnect
 from .geometry.geometric_representation import generate_rectangular_prisms
 from .kinematics.depricated_kinematics import calculate_independent_positions, calculate_static_positions
 
@@ -75,10 +75,10 @@ class System:
 
         positions, radii = generate_rectangular_prisms(origins, dimensions)
 
-        component = Object(name, positions, radii, color,
-                           movement_class=movement_class,
-                           degrees_of_freedom=degrees_of_freedom,
-                           ports=ports)
+        component = Component(name, positions, radii, color,
+                              movement_class=movement_class,
+                              degrees_of_freedom=degrees_of_freedom,
+                              ports=ports)
 
         # Update the system
         self.components.append(component)
@@ -364,7 +364,7 @@ class System:
         Maps an object to a spatial configuration.
 
         :param obj: The object to be mapped.
-        :type obj: Object
+        :type obj: Component
         :param design_vector: The design vector; must be a (1, 6) array for x, y, z, rx, ry, rz.
         """
 

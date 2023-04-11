@@ -86,6 +86,8 @@ local_directory = os.path.dirname(__file__) + '/'
 study = DesignStudy(directory=local_directory,
                     study_name='Example 1')
 
+aa = system.components[0].calculate_positions([-3., -4.41, -0.24, 0., 0., 0.])
+
 study.add_system(system)
 
 # Define the username and problem description
@@ -108,6 +110,8 @@ study.add_initial_design_vector('control_valve_1-return_actuator_1-return_node_0
 system.map_static_object(object_name='structure_1', design_vector=np.array([0, 0, 0, 0, 0, 0]))
 
 study.generate_spatial_configuration(name='spatial_config_1', method='manual')
+
+
 
 # Plot initial spatial configuration
 study.plot()

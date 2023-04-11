@@ -18,7 +18,7 @@ import numpy as np
 from typing import Union
 
 
-class Object:
+class Component:
 
     def __init__(self,
                  name: str,
@@ -276,9 +276,10 @@ class Object:
 
     def calculate_positions(self, design_vector, positions_dict=None):
 
+
         # If the object has no degrees of freedom, then return its current position
         if self.degrees_of_freedom is None:
-            return self.positions
+            return {self.__repr__(): self.positions}
 
         # Extract the design variables from the design vector
         design_vector_dict = self.decompose_design_vector(design_vector)
@@ -317,7 +318,25 @@ class Object:
         # Calculate the new positions
         new_positions = rigid_transformation(self.reference_position, self.positions, x, y, z, rx, ry, rz)
 
-        return new_positions
+        if self.ports is None:
+            return {self.__repr__(): new_positions}
+        else:
+
+            dict = {}
+
+            # Get non-port positions
+            non_port_positions = new_positions[0:self.port_indices[0]]
+            dict[self.__repr__()] = non_port_positions
+
+            # Get port positions
+            for i, port in enumerate(self.ports):
+                port_positions = new_positions[self.port_indices[i]]
+                port_name = self.__repr__() + '_' + port['name']
+                dict[port_name] = port_positions.reshape(1, 3)
+
+            return dict
+
+
 
     def set_positions(self,
                       positions_dict: dict):
@@ -331,7 +350,7 @@ class Object:
         self.positions, self.radii = positions_dict[self.__repr__()]
 
 
-class InterconnectWaypoint(Object):
+class InterconnectWaypoint(Component):
     def __init__(self,
                  node,
                  radius,
@@ -375,7 +394,7 @@ Interconnect should be a single object, not subclasses
 """
 
 
-class InterconnectEdge(Object):
+class InterconnectEdge(Component):
     def __init__(self,
                  name,
                  object_1,
@@ -416,13 +435,13 @@ class InterconnectEdge(Object):
 
         # TODO FIX THIS?
         # Design vector not used
-        if isinstance(self.object_1, Object):
+        if isinstance(self.object_1, Component):
             object_1_port_index = self.object_1.port_index(self.port_1)
             pos_1 = positions_dict[self.object_1][0][object_1_port_index]
         else:
             pos_1 = positions_dict[self.object_1][0]
 
-        if isinstance(self.object_2, Object):
+        if isinstance(self.object_2, Component):
             object_2_port_index = self.object_2.port_index(self.port_2)
             pos_2 = positions_dict[self.object_2][0][object_2_port_index]
         else:
@@ -559,12 +578,12 @@ class Interconnect(InterconnectWaypoint, InterconnectEdge):
             name = self.component_1 + '-' + self.component_2 + '_edge_' + str(i)
             i += 1
 
-            if isinstance(object_1, Object):
+            if isinstance(object_1, Component):
                 port_1 = self.port_1
             else:
                 port_1 = None
 
-            if isinstance(object_2, Object):
+            if isinstance(object_2, Component):
                 port_2 = self.port_2
             else:
                 port_2 = None
