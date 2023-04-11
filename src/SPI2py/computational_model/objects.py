@@ -64,7 +64,7 @@ class Object:
         return design_vector_dict
 
     @property
-    def design_vector_test(self):
+    def design_vector(self):
         design_vector = np.array(list(self.design_vector_dict.values()))
         return design_vector
 
@@ -284,12 +284,8 @@ class Port(Object):
 
         self.positions, self.radii = positions_dict[self.name]
 
-"""
-TODO
 
-Add ports as attribute of component...
 
-"""
 class Component(Object):
 
     def __init__(self,
@@ -304,26 +300,6 @@ class Component(Object):
 
         Object.__init__(self, name, positions, radii, color, movement_class, reference_axes, degrees_of_freedom)
 
-
-    @property
-    def design_vector(self):
-        # TODO Implement a more universal design vector function
-        design_vector = np.concatenate((self.reference_position, self.rotation))
-
-        return design_vector
-
-    def calculate_positions(self,
-                            design_vector,
-                            positions_dict):
-        # TODO Add logic to generalize this for all object types
-        if self.movement_class == 'static':
-            positions_dict = calculate_static_positions(self,positions_dict)
-        elif self.movement_class == 'independent':
-            positions_dict = calculate_independent_positions(self, design_vector, positions_dict)
-        else:
-            raise NotImplementedError('This movement type is not implemented yet')
-
-        return positions_dict
 
 
 class InterconnectNode(Object):
@@ -346,14 +322,6 @@ class InterconnectNode(Object):
         self.movement_class = 'independent'
         self.degrees_of_freedom = degrees_of_freedom
         self.reference_objects = constraints
-
-    @property
-    def reference_position(self):
-        return self.positions[0]
-
-    @property
-    def design_vector(self):
-        return self.positions.flatten()
 
     def calculate_positions(self,
                             design_vector,
