@@ -285,23 +285,6 @@ class Port(Object):
         self.positions, self.radii = positions_dict[self.name]
 
 
-
-class Component(Object):
-
-    def __init__(self,
-                 name:                  str,
-                 positions:             np.ndarray,
-                 radii:                 np.ndarray,
-                 color:                 Union[str, list[str]],
-                 movement_class:        str                     = 'independent',
-                 reference_axes:        str = 'origin',
-                 degrees_of_freedom:    Union[tuple[str], None] = ('x', 'y', 'z', 'rx', 'ry', 'rz')):
-
-
-        Object.__init__(self, name, positions, radii, color, movement_class, reference_axes, degrees_of_freedom)
-
-
-
 class InterconnectNode(Object):
     def __init__(self,
                  node,

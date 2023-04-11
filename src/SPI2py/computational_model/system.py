@@ -1,6 +1,6 @@
 import numpy as np
 from itertools import combinations, product
-from .objects import Component, Port, Interconnect, Structure
+from .objects import Object, Port, Interconnect, Structure
 from .geometry.spherical_decomposition import generate_rectangular_prisms
 from .kinematics.depricated_kinematics import calculate_independent_positions, calculate_static_positions
 
@@ -73,7 +73,7 @@ class System:
 
         positions, radii = generate_rectangular_prisms(origins, dimensions)
 
-        component = Component(name, positions, radii, color, movement_class=movement_class)
+        component = Object(name, positions, radii, color, movement_class=movement_class)
 
         # Update the system
         self.components.append(component)

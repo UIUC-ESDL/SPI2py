@@ -27,10 +27,10 @@ from .driver.analysis import scale_model_based_objective
 # from analysis.kinematics import ...
 
 # Optimize Imports
-from src.SPI2py.driver.optimize.solvers import run_optimizer
+from .driver.optimize.solvers import run_optimizer
 
 # Result Imports
-from src.SPI2py.design_study.visualization.visualization import plot_objects
+from .design_study.visualization.visualization import plot_objects
 
 
 class DesignStudy:
