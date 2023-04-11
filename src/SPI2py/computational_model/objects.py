@@ -362,6 +362,9 @@ class InterconnectWaypoint(Component):
         self.radius = radius
         self.color = color
 
+        # TODO Temp
+        self.ports = None
+
         # delete this redundant (used for plotting)
         self.radii = np.array([radius])
         # TODO Sort out None value vs dummy values
@@ -433,6 +436,8 @@ class InterconnectEdge(Component):
         # TODO FIX THIS?
         # Design vector not used
 
+        new_dict = {}
+
         pos_1 = positions_dict[self.object_1][0]
 
 
@@ -449,10 +454,10 @@ class InterconnectEdge(Component):
         positions = np.linspace(pos_1, pos_2, num_spheres)
         radii = np.repeat(self.radius, num_spheres)
 
-        positions_dict[str(self)] = (positions, radii)
+        new_dict[str(self)] = (positions, radii)
 
         # TODO Change positions_dict to include kwarg and return addition?
-        return positions_dict
+        return new_dict
 
     def set_positions(self,
                       positions_dict: dict) -> dict:
@@ -508,6 +513,7 @@ class Interconnect(InterconnectWaypoint, InterconnectEdge):
 
         self.radius = radius
         self.color = color
+
 
         # self.number_of_bends = number_of_bends
 

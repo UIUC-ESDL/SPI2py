@@ -328,16 +328,17 @@ class System:
         # STATIC OBJECTS
         for obj in self.static_objects:
             # positions_dict = obj.calculate_positions(design_vector, positions_dict)
-            positions_dict = {**positions_dict, **obj.calculate_static_positions(i, positions_dict)}
+            positions_dict = {**positions_dict, **obj.calculate_positions(None, positions_dict=positions_dict)}
 
         # DYNAMIC OBJECTS - Independent then Partially Dependent
         objects = self.independent_objects + self.partially_dependent_objects
         for obj, design_vector_row in zip(objects, design_vectors):
-            positions_dict = calculate_independent_positions(obj, design_vector_row, positions_dict)
+            positions_dict = {**positions_dict, **obj.calculate_positions(design_vector_row, positions_dict=positions_dict)}
 
         # DYNAMIC OBJECTS - Fully Dependent
+        # TODO remove updating edges...? just use lines
         for obj in self.fully_dependent_objects:
-            positions_dict = obj.calculate_positions(design_vector, positions_dict)
+            positions_dict = {**positions_dict, **obj.calculate_positions(design_vector, positions_dict=positions_dict)}
 
         # TODO Add method for partially dependent objects
         # DYNAMIC OBJECTS - Partially Dependent
