@@ -27,7 +27,8 @@ class Object:
                  color:              str,
                  movement_class:     str,
                  reference_axes:     str = 'origin',
-                 degrees_of_freedom: Union[tuple[str], None] = ('x', 'y', 'z', 'rx', 'ry', 'rz')):
+                 degrees_of_freedom: Union[tuple[str], None] = ('x', 'y', 'z', 'rx', 'ry', 'rz'),
+                 ports:              Union[None, list[dict]] = None):
 
         self.name               = self._validate_name(name)
         self.positions          = self._validate_positions(positions)
@@ -37,36 +38,14 @@ class Object:
         self.reference_axes     = self._validate_reference_axes(reference_axes)
         self.movement_class     = self._validate_movement_class(movement_class)
         self.degrees_of_freedom = self._validate_degrees_of_freedom(degrees_of_freedom)
+        self.ports              = self._validate_ports(ports)
 
         self._valid_colors = {**mcolors.BASE_COLORS, **mcolors.TABLEAU_COLORS, **mcolors.CSS4_COLORS,
                               **mcolors.XKCD_COLORS}
 
         self.color = self._validate_colors(color)
 
-    @property
-    def design_vector_dict(self) -> dict:
 
-        design_vector_dict = {}
-
-        if 'x' in self.degrees_of_freedom:
-            design_vector_dict['x'] = self.reference_position[0]
-        if 'y' in self.degrees_of_freedom:
-            design_vector_dict['y'] = self.reference_position[1]
-        if 'z' in self.degrees_of_freedom:
-            design_vector_dict['z'] = self.reference_position[2]
-        if 'rx' in self.degrees_of_freedom:
-            design_vector_dict['rx'] = self.rotation[0]
-        if 'ry' in self.degrees_of_freedom:
-            design_vector_dict['ry'] = self.rotation[1]
-        if 'rz' in self.degrees_of_freedom:
-            design_vector_dict['rz'] = self.rotation[2]
-
-        return design_vector_dict
-
-    @property
-    def design_vector(self):
-        design_vector = np.array(list(self.design_vector_dict.values()))
-        return design_vector
 
     @staticmethod
     def _validate_name(name: str) -> str:
@@ -201,6 +180,20 @@ class Object:
 
         return colors
 
+    def _validate_ports(self, ports):
+
+        if ports is None:
+            return ports
+
+        if not isinstance(ports, list):
+            raise TypeError('Ports must be a list.')
+
+        for port in ports:
+            if not isinstance(port, Port):
+                raise TypeError('Ports must be a list of Port objects.')
+
+        return ports
+
     def __repr__(self):
         return self.name
 
@@ -210,6 +203,31 @@ class Object:
     @property
     def reference_position(self):
         return self.positions[0]
+
+    @property
+    def design_vector_dict(self) -> dict:
+
+        design_vector_dict = {}
+
+        if 'x' in self.degrees_of_freedom:
+            design_vector_dict['x'] = self.reference_position[0]
+        if 'y' in self.degrees_of_freedom:
+            design_vector_dict['y'] = self.reference_position[1]
+        if 'z' in self.degrees_of_freedom:
+            design_vector_dict['z'] = self.reference_position[2]
+        if 'rx' in self.degrees_of_freedom:
+            design_vector_dict['rx'] = self.rotation[0]
+        if 'ry' in self.degrees_of_freedom:
+            design_vector_dict['ry'] = self.rotation[1]
+        if 'rz' in self.degrees_of_freedom:
+            design_vector_dict['rz'] = self.rotation[2]
+
+        return design_vector_dict
+
+    @property
+    def design_vector(self):
+        design_vector = np.array(list(self.design_vector_dict.values()))
+        return design_vector
 
     def set_positions(self,
                       positions_dict: dict):
