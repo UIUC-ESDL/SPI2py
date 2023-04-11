@@ -93,7 +93,7 @@ def rigid_transformation(reference_point,
                          rx=0,
                          ry=0,
                          rz=0,
-                         reference_coordinate_system='origin'):
+                         reference_axes='origin'):
     """
     Apply translation and rotation to an object.
 

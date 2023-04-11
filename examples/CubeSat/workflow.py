@@ -190,6 +190,8 @@ study.add_constraint(constraint='signed distances',
                               'constraint aggregation parameter': 3.0})
 
 
+system.interconnect_nodes[0].design_vector_dict
+
 study.optimize_spatial_configuration(options={'maximum number of iterations': 10,
                                               'convergence tolerance': 1e-2})
 

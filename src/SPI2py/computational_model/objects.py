@@ -24,35 +24,55 @@ class Object:
                  name:               str,
                  positions:          np.ndarray,
                  radii:              np.ndarray,
-                 color:              Union[str, list[str]],
+                 color:              str,
                  movement_class:     str,
-                 constraints:        Union[None, dict],
-                 degrees_of_freedom: Union[list[int], None] = ('x', 'y', 'z', 'rx', 'ry', 'rz')):
+                 reference_axes:     str = 'origin',
+                 degrees_of_freedom: Union[tuple[str], None] = ('x', 'y', 'z', 'rx', 'ry', 'rz')):
 
         self.name               = self._validate_name(name)
         self.positions          = self._validate_positions(positions)
         self.radii              = self._validate_radii(radii)
+        # TODO Remove rotation...
         self.rotation           = np.zeros(3)
+        self.reference_axes     = self._validate_reference_axes(reference_axes)
         self.movement_class     = self._validate_movement_class(movement_class)
-        self.constraints        = self._validate_constraints(constraints)
         self.degrees_of_freedom = self._validate_degrees_of_freedom(degrees_of_freedom)
-
-        if degrees_of_freedom is not None:
-            self.three_d_translation = all([dof in self.degrees_of_freedom for dof in ['x', 'y', 'z']])
-            self.three_d_rotation = all([dof in self.degrees_of_freedom for dof in ['rx', 'ry', 'rz']])
 
         self._valid_colors = {**mcolors.BASE_COLORS, **mcolors.TABLEAU_COLORS, **mcolors.CSS4_COLORS,
                               **mcolors.XKCD_COLORS}
 
         self.color = self._validate_colors(color)
 
+    @property
+    def design_vector_dict(self) -> dict:
+
+        design_vector_dict = {}
+
+        if 'x' in self.degrees_of_freedom:
+            design_vector_dict['x'] = self.reference_position[0]
+        if 'y' in self.degrees_of_freedom:
+            design_vector_dict['y'] = self.reference_position[1]
+        if 'z' in self.degrees_of_freedom:
+            design_vector_dict['z'] = self.reference_position[2]
+        if 'rx' in self.degrees_of_freedom:
+            design_vector_dict['rx'] = self.rotation[0]
+        if 'ry' in self.degrees_of_freedom:
+            design_vector_dict['ry'] = self.rotation[1]
+        if 'rz' in self.degrees_of_freedom:
+            design_vector_dict['rz'] = self.rotation[2]
+
+        return design_vector_dict
+
+    @property
+    def design_vector_test(self):
+        design_vector = np.array(list(self.design_vector_dict.values()))
+        return design_vector
+
     @staticmethod
     def _validate_name(name: str) -> str:
         if not isinstance(name, str):
             raise TypeError('Name must be a string not %s.' % type(name))
         return name
-
-
 
     def _validate_positions(self, positions: np.ndarray) -> np.ndarray:
 
@@ -110,7 +130,7 @@ class Object:
 
         return movement_class
 
-    def _validate_constraints(self, constraints):
+    def _validate_reference_axes(self, reference_axes):
         # TODO Ensure that is no reference objects are not specified that movement class isn't dependent
         # TODO Add logic to ensure dynamic fully dependent objects don't reference other dynamic fully dependent objects
         # TODO Update for dictionary and None...
@@ -137,7 +157,7 @@ class Object:
         # else:
         #     raise TypeError('Reference objects must be NoneType, a string or a list for %s.' % self.name)
 
-        return constraints
+        return reference_axes
 
     def _validate_degrees_of_freedom(self, degrees_of_freedom):
 
@@ -264,7 +284,12 @@ class Port(Object):
 
         self.positions, self.radii = positions_dict[self.name]
 
+"""
+TODO
 
+Add ports as attribute of component...
+
+"""
 class Component(Object):
 
     def __init__(self,
@@ -273,10 +298,11 @@ class Component(Object):
                  radii:                 np.ndarray,
                  color:                 Union[str, list[str]],
                  movement_class:        str                     = 'independent',
-                 constraints:           Union[None, tuple[str]] = None,
+                 reference_axes:        str = 'origin',
                  degrees_of_freedom:    Union[tuple[str], None] = ('x', 'y', 'z', 'rx', 'ry', 'rz')):
 
-        Object.__init__(self, name, positions, radii, color, movement_class, constraints, degrees_of_freedom)
+
+        Object.__init__(self, name, positions, radii, color, movement_class, reference_axes, degrees_of_freedom)
 
 
     @property
@@ -305,7 +331,7 @@ class InterconnectNode(Object):
                  node,
                  radius,
                  color,
-                 degrees_of_freedom: Union[tuple[str], None] = ('x', 'y', 'z', 'rx', 'ry', 'rz'),
+                 degrees_of_freedom: Union[tuple[str], None] = ('x', 'y', 'z'),
                  constraints: Union[None, tuple[str]] = None):
 
         self.name = node
@@ -323,7 +349,7 @@ class InterconnectNode(Object):
 
     @property
     def reference_position(self):
-        return self.positions
+        return self.positions[0]
 
     @property
     def design_vector(self):
@@ -346,6 +372,14 @@ class InterconnectNode(Object):
 
         return positions_dict
 
+"""
+TODO
+Interconnect should be a single object, not subclasses
+-represent as bar
+-calculate interference as bars
+-plot as bars
+
+"""
 
 class InterconnectEdge(Object):
     def __init__(self,
@@ -465,8 +499,6 @@ class Interconnect(InterconnectNode, InterconnectEdge):
 
         # self.number_of_bends = number_of_bends
 
-        # Per configuration file
-        # TODO connect this setting to the config file
         self.number_of_bends = number_of_bends
         self.number_of_edges = self.number_of_bends + 1
 
