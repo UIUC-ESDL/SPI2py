@@ -314,17 +314,15 @@ class System:
         TODO get positions for interconnects, structures, etc
         TODO Remove unnecessary design vector arguments
         """
-        if design_vector is None:
-            design_vector_list = list(design_vector_dict.values())
-            design_vector = [item for sublist in design_vector_list for item in sublist]
 
-        # design_vector = np.array()
-        # design_vector = np.flatten(design_vector)
+        if design_vector is not None:
+            design_vectors = self.slice_design_vector(design_vector)
+        else:
+            design_vectors = list(design_vector_dict.values())
 
 
         positions_dict = {}
 
-        design_vectors = self.slice_design_vector(design_vector)
 
         # STATIC OBJECTS
         for obj in self.static_objects:
