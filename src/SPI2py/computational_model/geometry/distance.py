@@ -5,7 +5,11 @@ Provides functions to calculate the distance between classes in various ways.
 
 import autograd.numpy as np
 from typing import Union
+
+import numpy as np
 from autograd import grad
+from itertools import combinations
+from scipy.spatial.distance import cdist
 
 def distances_points_points(a: np.ndarray,
                             b: np.ndarray) -> np.ndarray:
@@ -293,5 +297,111 @@ def minimum_signed_distance_capsule_capsule(a:        np.ndarray,
 #
 #     return min_dist
 
+def aggregate_pairwise_distance(x, model):
+    """
+    Aggregates the distance between each 2-pair of classes
+
+    This function does not work well because its value becomes very large very quickly.
+    The gradient-based solver tends to "ignore" constraint functions that produce consraints
+    several orders of magnitude smaller, even when you force feasibility.
+
+    :param x:
+    :param model:
+    :return:
+    """
+
+    # Calculate the position of every sphere based on design vector x
+    positions_dict = model.calculate_positions(x)
+
+    # Create a list of object pairs
+    object_pairs = list(combinations(positions_dict.keys(), 2))
+
+    objective = 0
+    for object_pair in object_pairs:
+        object_1 = object_pair[0]
+        object_2 = object_pair[1]
+
+        positions_1 = positions_dict[object_1][0]
+        positions_2 = positions_dict[object_2][0]
+
+        objective += sum(sum(cdist(positions_1, positions_2)))
+
+    return objective
 
 
+def normalized_aggregate_gap_distance(x, model):
+    """
+    Returns the normalized gap
+
+    :param x:
+    :param model:
+    :return:
+    """
+
+    # Evaluate the model at the design vector x
+    # Calculate the position of every sphere based on design vector x
+    positions_dict = model.calculate_positions(x)
+
+    # Create a list of object pairs
+    object_pairs = list(combinations(positions_dict.keys(), 2))
+
+    objective = []
+    for object_pair in object_pairs:
+        object_1 = object_pair[0]
+        object_2 = object_pair[1]
+
+        positions_1 = positions_dict[object_1][0]
+        positions_2 = positions_dict[object_2][0]
+
+        objective.append(sum(sum(cdist(positions_1, positions_2))))
+
+    # Divide by number of components
+    objective = np.sum(objective) / len(objective)
+
+    return objective
+
+
+def signed_distances(x, model, object_pair):
+    """
+    Returns the signed distances between all pairs of objects in the layout.
+
+    To be consistent with constraint function notation, this function returns negative values
+    for objects that are not interfering with each other, and positive values for objects that
+    are interfering with each other.
+
+    TODO Preallocate array and vectorize this function
+    TODO Write unit tests
+
+    :param x: Design vector (1D array)
+    :param model: The SpatialConfiguration object used to query positions at x
+    :param object_pair: The list of object pairs to calculate the signed distance between
+    :return: An array of signed distances between each object pair
+    """
+    # Calculate the positions of all spheres in layout given design vector x
+    positions_dict = model.calculate_positions(x)
+
+    # Calculate the interferences between each sphere of each object pair
+    all_signed_distances = []
+
+    for obj1, obj2 in object_pair:
+        positions_a = positions_dict[str(obj1)][0]
+        radii_a = positions_dict[str(obj1)][1]
+
+        positions_b = positions_dict[str(obj2)][0]
+        radii_b = positions_dict[str(obj2)][1]
+
+        # If line line vs cdist
+
+        # # TODO Reformat Radii shape so we don't have to keep reshaping it
+        # dPositions = distances_points_points(positions_a, positions_b)
+        # dRadii     = distances_points_points(radii_a.reshape(-1, 1), radii_b.reshape(-1, 1))
+        #
+        # all_signed_distances.append(dRadii - dPositions)
+        signed_distances = signed_distances_spheres_spheres(positions_a, radii_a, positions_b, radii_b).flatten()
+
+
+        all_signed_distances.append(signed_distances)
+
+    all_signed_distances = np.concatenate(all_signed_distances, axis=0)
+
+    return all_signed_distances

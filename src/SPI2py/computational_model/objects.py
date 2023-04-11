@@ -211,6 +211,13 @@ class Object:
     @property
     def design_vector_dict(self) -> dict:
 
+        """
+        Returns a dictionary of the design vector components.
+
+        An object's design vector is encoded as a reference position and rotation. Since objects are rigid bodies,
+        all other geometric properties are a function of the reference position and rotation.
+        """
+
         design_vector_dict = {}
 
         if 'x' in self.degrees_of_freedom:
@@ -232,6 +239,26 @@ class Object:
     def design_vector(self):
         design_vector = np.array(list(self.design_vector_dict.values()))
         return design_vector
+
+    def decompose_design_vector(self, design_vector: np.ndarray) -> dict
+        """
+        Takes a 1D design vector and decomposes it into a dictionary of design variables.
+        """
+
+        if len(design_vector) != len(self.degrees_of_freedom):
+            raise ValueError('The specified design vector must be the same length as the degrees of freedom.')
+
+        design_vector_dict = {}
+
+        for i, dof in enumerate(self.degrees_of_freedom):
+            design_vector_dict[dof] = design_vector[i]
+
+        return design_vector_dict
+
+
+
+    def calculate_positions(self, design_vector):
+        pass
 
     def set_positions(self,
                       positions_dict: dict):
@@ -400,9 +427,9 @@ class InterconnectEdge(Object):
         dist = euclidean(pos_1, pos_2)
 
         # We don't want zero-length interconnects or interconnect segments--they cause problems!
-        num_spheres = int(dist / (self.radius*1.5))
-        if num_spheres == 0:
-            num_spheres = 1
+        num_spheres = 10 #int(dist / (self.radius*1.5))
+        # if num_spheres == 0:
+        #     num_spheres = 1
 
         positions = np.linspace(pos_1, pos_2, num_spheres)
         radii = np.repeat(self.radius, num_spheres)

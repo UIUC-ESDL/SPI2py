@@ -1,7 +1,7 @@
 import numpy as np
 from itertools import combinations, product
 from .objects import Object, Port, Interconnect
-from .geometry.spherical_decomposition import generate_rectangular_prisms
+from .geometry.geometric_representation import generate_rectangular_prisms
 from .kinematics.depricated_kinematics import calculate_independent_positions, calculate_static_positions
 
 

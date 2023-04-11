@@ -20,8 +20,7 @@ from scipy.optimize import NonlinearConstraint
 # Layout Imports
 
 # Analysis Imports
-from .driver.analysis import normalized_aggregate_gap_distance
-from .driver.analysis.constraints import signed_distances
+from src.SPI2py.computational_model.geometry.distance import normalized_aggregate_gap_distance, signed_distances
 from .driver.analysis.constraint_aggregation import kreisselmeier_steinhauser, p_norm, induced_exponential, induced_power
 from .driver.analysis import scale_model_based_objective
 # from analysis.kinematics import ...
