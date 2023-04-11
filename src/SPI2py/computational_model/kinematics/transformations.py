@@ -38,6 +38,7 @@ def rotate(positions, rotation):
     At the time being, I do not believe AD would be compatible with scipy functions that are compiled
     in a different langauge (most of SciPy is actually written in other languages).
 
+    TODO TAKE REFERENCE POINT
     TODO Write unit tests for this function
     TODO Vectorize?
 
@@ -85,15 +86,7 @@ def rotate(positions, rotation):
     return new_positions
 
 
-def rigid_transformation(reference_point,
-                         positions,
-                         x=0,
-                         y=0,
-                         z=0,
-                         rx=0,
-                         ry=0,
-                         rz=0,
-                         reference_axes='origin'):
+def rigid_transformation(reference_position, positions, x, y, z, rx, ry, rz, reference_axes='origin'):
     """
     Apply translation and rotation to an object.
 

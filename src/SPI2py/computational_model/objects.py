@@ -240,7 +240,7 @@ class Object:
         design_vector = np.array(list(self.design_vector_dict.values()))
         return design_vector
 
-    def decompose_design_vector(self, design_vector: np.ndarray) -> dict
+    def decompose_design_vector(self, design_vector: np.ndarray) -> dict:
         """
         Takes a 1D design vector and decomposes it into a dictionary of design variables.
         """
@@ -255,10 +255,47 @@ class Object:
 
         return design_vector_dict
 
+    def calculate_positions(self, design_vector, positions_dict=None):
+
+        # Extract the design variables from the design vector
+        design_vector_dict = self.decompose_design_vector(design_vector)
+
+        if 'x' in self.degrees_of_freedom:
+            x=design_vector_dict['x']
+        else:
+            x=0
+
+        if 'y' in self.degrees_of_freedom:
+            y=design_vector_dict['y']
+        else:
+            y=0
+
+        if 'z' in self.degrees_of_freedom:
+            z=design_vector_dict['z']
+        else:
+            z=0
+
+        if 'rx' in self.degrees_of_freedom:
+            rx=design_vector_dict['rx']
+        else:
+            rx=0
+
+        if 'ry' in self.degrees_of_freedom:
+            ry=design_vector_dict['ry']
+        else:
+            ry=0
+
+        if 'rz' in self.degrees_of_freedom:
+            rz=design_vector_dict['rz']
+        else:
+            rz=0
 
 
-    def calculate_positions(self, design_vector):
-        pass
+        # TODO Add reference axes argument
+        # Calculate the new positions
+        new_positions = rigid_transformation(self.reference_position, self.positions, x, y, z, rx, ry, rz)
+
+        return new_positions
 
     def set_positions(self,
                       positions_dict: dict):
