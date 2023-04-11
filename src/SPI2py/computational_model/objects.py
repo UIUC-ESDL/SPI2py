@@ -55,6 +55,7 @@ class Component:
                 self.port_indices.append(len(self.positions) - 1)
 
 
+
     @staticmethod
     def _validate_name(name: str) -> str:
         if not isinstance(name, str):
@@ -318,25 +319,21 @@ class Component:
         # Calculate the new positions
         new_positions = rigid_transformation(self.reference_position, self.positions, x, y, z, rx, ry, rz)
 
-        if self.ports is None:
-            return {self.__repr__(): (new_positions, self.radii)}
-        else:
+        new_dict = {}
 
-            new_dict = {}
 
-            # Get non-port positions
-            # non_port_positions = new_positions[0:self.port_indices[0]]
-            all_positions = new_positions[0:self.port_indices[0]]
-            new_dict[self.__repr__()] = (all_positions, self.radii)
+        new_dict[self.__repr__()] = (new_positions, self.radii)
 
-            # Get port positions
+        if self.ports is not None:
+
             for i, port in enumerate(self.ports):
-                port_positions = new_positions[self.port_indices[i]]
                 port_name = self.__repr__() + '_' + port['name']
+                port_positions = new_positions[self.port_index(port['name'])]
                 port_radius = np.array([port['radius']])
                 new_dict[port_name] = (port_positions.reshape(1, 3), port_radius)
 
-            return new_dict
+
+        return new_dict
 
 
 
