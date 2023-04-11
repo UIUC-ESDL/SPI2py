@@ -187,14 +187,8 @@ class DesignStudy:
         elif object_class_1 == 'component' and object_class_2 == 'interconnect' or \
                 object_class_1 == 'interconnect' and object_class_2 == 'component':
             object_pair = model.component_interconnect_pairs
-        elif object_class_1 == 'component' and object_class_2 == 'structure' or \
-                object_class_1 == 'structure' and object_class_2 == 'component':
-            object_pair = model.component_structure_pairs
         elif object_class_1 == 'interconnect' and object_class_2 == 'interconnect':
             object_pair = model.interconnect_interconnect_pairs
-        elif object_class_1 == 'interconnect' and object_class_2 == 'structure' or \
-                object_class_1 == 'structure' and object_class_2 == 'interconnect':
-            object_pair = model.interconnect_structure_pairs
         else:
             raise NotImplementedError
 

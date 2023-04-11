@@ -1,6 +1,6 @@
 import numpy as np
 from itertools import combinations, product
-from .objects import Object, Port, Interconnect, Structure
+from .objects import Object, Port, Interconnect
 from .geometry.spherical_decomposition import generate_rectangular_prisms
 from .kinematics.depricated_kinematics import calculate_independent_positions, calculate_static_positions
 
@@ -41,7 +41,7 @@ class System:
         self.interconnects = []
         self.interconnect_nodes = []
         self.interconnect_segments = []
-        self.structures = []
+
 
     def __repr__(self):
         return f'System({self.name})'
@@ -100,27 +100,9 @@ class System:
         self.interconnect_segments.extend(interconnect.segments)
         self.interconnect_nodes.extend(interconnect.interconnect_nodes)
 
-    def add_structure(self, name, color, movement_class, shapes):
-        """
-        Add a structure to the system.
-
-        """
-
-        origins = []
-        dimensions = []
-        for shape in shapes:
-            origins.append(shape['origin'])
-            dimensions.append(shape['dimensions'])
-
-        positions, radii = generate_rectangular_prisms(origins, dimensions)
-
-        structure = Structure(name, positions, radii, color, movement_class)
-
-        self.structures.append(structure)
-
     @property
     def objects(self):
-        return self.components + self.ports + self.interconnect_nodes + self.interconnect_segments + self.structures
+        return self.components + self.ports + self.interconnect_nodes + self.interconnect_segments
 
     def _validate_components(self):
         # TODO Implement
@@ -237,10 +219,6 @@ class System:
 
         return pairs
 
-    @property
-    def component_structure_pairs(self):
-        """TODO Vectorize with cartesian product"""
-        return list(product(self.components, self.structures))
 
     @property
     def interconnect_interconnect_pairs(self):
@@ -264,26 +242,11 @@ class System:
         return pairs
 
     @property
-    def interconnect_structure_pairs(self):
-        """
-        TODO Write unit tests to ensure it creates the correct pairs
-        TODO Vectorize with cartesian product
-
-        :return:
-        """
-
-        interconnect_structure_pairs = list(product(self.interconnect_segments, self.structures))
-
-        return interconnect_structure_pairs
-
-    @property
     def object_pairs(self):
         object_pairs = []
         object_pairs += [self.component_component_pairs]
         object_pairs += [self.component_interconnect_pairs]
-        object_pairs += [self.component_structure_pairs]
         object_pairs += [self.interconnect_interconnect_pairs]
-        object_pairs += [self.interconnect_structure_pairs]
 
         return object_pairs
 

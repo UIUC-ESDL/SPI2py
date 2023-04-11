@@ -540,30 +540,3 @@ class Interconnect(InterconnectNode, InterconnectEdge):
         return [segment.edge for segment in self.segments]
 
 
-
-class Structure(Object):
-    """
-    A structure is a static object that is not a component or interconnect.
-    """
-    def __init__(self,
-                 name,
-                 positions,
-                 radii,
-                 color,
-                 movement_class: str = 'static',
-                 constraints: Union[None, dict] = None,
-                 degrees_of_freedom: Union[tuple[str], None] = None):
-
-        super(Structure, self).__init__(name, positions,radii, color, movement_class, constraints, degrees_of_freedom)
-
-    def calculate_positions(self,
-                            design_vector,
-                            positions_dict: dict) -> dict:
-        # TODO Remove temp design vector argument
-        positions_dict = calculate_static_positions(self, positions_dict)
-
-        return positions_dict
-
-
-
-

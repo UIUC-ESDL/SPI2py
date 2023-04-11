@@ -39,6 +39,12 @@ system.add_component(name='component_3',
                              {'type': 'box', 'origin': [1, 1, 0.5], 'dimensions': [1, 1, 3], 'rotation': [0, 0, 0]},
                              {'type': 'box', 'origin': [1, 1, 3], 'dimensions': [2, 1, 1], 'rotation': [0, 0, 0]}])
 
+system.add_component(name='structure_1',
+                     color='gray',
+                     movement_class='static',
+                     shapes=[
+                         {'type': 'box', 'origin': [0, 0, -5], 'dimensions': [2, 2, 0.5], 'rotation': [0, 0, 0]}])
+
 system.add_port(component_name='control_valve_1',
                 port_name='supply',
                 color='red',
@@ -85,11 +91,7 @@ system.add_interconnect(name='hp_cv_to_actuator2',
                         radius=0.25,
                         number_of_bends=1)
 
-system.add_structure(name='structure_1',
-                     color='gray',
-                     movement_class='static',
-                     shapes=[
-                         {'type': 'box', 'origin': [0, 0, -5], 'dimensions': [2, 2, 0.5], 'rotation': [0, 0, 0]}])
+
 
 # MAP STATIC OBJECTS
 system.map_static_object(object_name='structure_1', design_vector=np.array([0, 0, 0, 0, 0, 0]))
@@ -165,29 +167,12 @@ study.add_constraint(constraint='signed distances',
 study.add_constraint(constraint='signed distances',
                      model=system,
                      options={'type': 'collision',
-                              'object class 1': 'component',
-                              'object class 2': 'structure',
-                              'constraint tolerance': 0.01,
-                              'constraint aggregation': 'induced exponential',
-                              'constraint aggregation parameter': 3.0})
-
-study.add_constraint(constraint='signed distances',
-                     model=system,
-                     options={'type': 'collision',
                               'object class 1': 'interconnect',
                               'object class 2': 'interconnect',
                               'constraint tolerance': 0.01,
                               'constraint aggregation': 'induced exponential',
                               'constraint aggregation parameter': 3.0})
 
-study.add_constraint(constraint='signed distances',
-                     model=system,
-                     options={'type': 'collision',
-                              'object class 1': 'interconnect',
-                              'object class 2': 'structure',
-                              'constraint tolerance': 0.01,
-                              'constraint aggregation': 'induced exponential',
-                              'constraint aggregation parameter': 3.0})
 
 
 system.interconnect_nodes[0].design_vector_dict
