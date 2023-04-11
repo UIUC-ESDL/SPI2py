@@ -2,7 +2,7 @@ import numpy as np
 from itertools import combinations, product
 from .objects import Component, Interconnect
 from .geometry.geometric_representation import generate_rectangular_prisms
-from .kinematics.depricated_kinematics import calculate_independent_positions, calculate_static_positions
+# from .kinematics.depricated_kinematics import calculate_independent_positions, calculate_static_positions
 
 
 class System:
@@ -375,7 +375,7 @@ class System:
         positions = obj.positions
         radii = obj.radii
 
-        positions_dict = calculate_independent_positions(obj, design_vector, {})
+        positions_dict = obj.calculate_positions(design_vector, force_update=True)
 
         # Set the positions of the object
         obj.set_positions(positions_dict)

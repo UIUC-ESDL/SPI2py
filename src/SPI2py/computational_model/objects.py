@@ -8,7 +8,6 @@ import logging
 from scipy.spatial.distance import euclidean
 
 from .kinematics.transformations import translate, rotate, rigid_transformation
-from .kinematics.depricated_kinematics import calculate_static_positions, calculate_independent_positions
 
 from matplotlib import colors as mcolors
 
@@ -275,45 +274,57 @@ class Component:
 
         return design_vector_dict
 
-    def calculate_positions(self, design_vector, positions_dict=None):
+    def calculate_positions(self, design_vector, positions_dict=None, force_update=False):
 
+        dof = self.degrees_of_freedom
 
-        # If the object has no degrees of freedom, then return its current position
-        if self.degrees_of_freedom is None:
-            return {self.__repr__(): (self.positions, self.radii)}
+        if force_update is True:
+            dof = ('x', 'y', 'z', 'rx', 'ry', 'rz')
+            x=design_vector[0]
+            y=design_vector[1]
+            z=design_vector[2]
+            rx=design_vector[3]
+            ry=design_vector[4]
+            rz=design_vector[5]
 
-        # Extract the design variables from the design vector
-        design_vector_dict = self.decompose_design_vector(design_vector)
-
-        if 'x' in self.degrees_of_freedom:
-            x = design_vector_dict['x']
         else:
-            x = 0
 
-        if 'y' in self.degrees_of_freedom:
-            y = design_vector_dict['y']
-        else:
-            y = 0
+            # If the object has no degrees of freedom, then return its current position
+            if dof is None:
+                return {self.__repr__(): (self.positions, self.radii)}
 
-        if 'z' in self.degrees_of_freedom:
-            z = design_vector_dict['z']
-        else:
-            z = 0
+            # Extract the design variables from the design vector
+            design_vector_dict = self.decompose_design_vector(design_vector)
 
-        if 'rx' in self.degrees_of_freedom:
-            rx = design_vector_dict['rx']
-        else:
-            rx = 0
+            if 'x' in dof:
+                x = design_vector_dict['x']
+            else:
+                x = 0
 
-        if 'ry' in self.degrees_of_freedom:
-            ry = design_vector_dict['ry']
-        else:
-            ry = 0
+            if 'y' in dof:
+                y = design_vector_dict['y']
+            else:
+                y = 0
 
-        if 'rz' in self.degrees_of_freedom:
-            rz = design_vector_dict['rz']
-        else:
-            rz = 0
+            if 'z' in dof:
+                z = design_vector_dict['z']
+            else:
+                z = 0
+
+            if 'rx' in dof:
+                rx = design_vector_dict['rx']
+            else:
+                rx = 0
+
+            if 'ry' in dof:
+                ry = design_vector_dict['ry']
+            else:
+                ry = 0
+
+            if 'rz' in dof:
+                rz = design_vector_dict['rz']
+            else:
+                rz = 0
 
         # TODO Add reference axes argument
         # Calculate the new positions
