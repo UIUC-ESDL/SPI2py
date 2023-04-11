@@ -1,5 +1,5 @@
 """
-
+TODO Can I remove movement classes if I just use degrees of freedom and reference axes?
 
 """
 
@@ -7,7 +7,7 @@ import logging
 
 from scipy.spatial.distance import euclidean
 
-from .kinematics.transformations import translate
+from .kinematics.transformations import translate, rotate, rigid_transformation
 from .kinematics.depricated_kinematics import calculate_static_positions, calculate_independent_positions
 
 from matplotlib import colors as mcolors
@@ -44,7 +44,6 @@ class Object:
                               **mcolors.XKCD_COLORS}
 
         self.color = self._validate_colors(color)
-
 
 
     @staticmethod
@@ -202,6 +201,11 @@ class Object:
 
     @property
     def reference_position(self):
+        """
+        Returns the reference position of the object.
+
+        TODO Replace with a signed distance function that is consistent regardless of the number of spheres used.
+        """
         return self.positions[0]
 
     @property
@@ -303,7 +307,7 @@ class Port(Object):
         self.positions, self.radii = positions_dict[self.name]
 
 
-class InterconnectNode(Object):
+class InterconnectWaypoint(Object):
     def __init__(self,
                  node,
                  radius,
@@ -422,7 +426,7 @@ class InterconnectEdge(Object):
 
 
 
-class Interconnect(InterconnectNode, InterconnectEdge):
+class Interconnect(InterconnectWaypoint, InterconnectEdge):
     """
     Interconnects are made of one or more non-zero-length segments and connect two components.
 
@@ -479,12 +483,6 @@ class Interconnect(InterconnectNode, InterconnectEdge):
         self.node_pairs = self.create_node_pairs()
         self.segments = self.create_segments()
 
-    def __repr__(self):
-        return self.name
-
-    def __str__(self):
-        return self.name
-
     def create_nodes(self):
         """
         Consideration: if I include the component nodes then... ?
@@ -503,7 +501,7 @@ class Interconnect(InterconnectNode, InterconnectEdge):
             node_prefix = self.component_1 + '-' + self.component_1_port + '_' + self.component_2 + '-' + self.component_2_port + '_node_'
             node = node_prefix + str(i)
 
-            interconnect_node = InterconnectNode(node, self.radius, self.color)
+            interconnect_node = InterconnectWaypoint(node, self.radius, self.color)
             nodes.append(interconnect_node)
             node_names.append(str(interconnect_node))
 
@@ -515,8 +513,6 @@ class Interconnect(InterconnectNode, InterconnectEdge):
 
     def create_node_pairs(self):
 
-        #
-
         node_pairs = [(self.node_names[i], self.node_names[i + 1]) for i in range(len(self.node_names) - 1)]
 
         return node_pairs
@@ -525,8 +521,6 @@ class Interconnect(InterconnectNode, InterconnectEdge):
 
         segments = []
 
-        # TODO Implement
-        # TODO Check...
         i = 0
         for object_1, object_2 in self.node_pairs:
             name = self.component_1 + '-' + self.component_2 + '_edge_' + str(i)

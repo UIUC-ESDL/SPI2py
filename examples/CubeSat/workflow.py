@@ -13,6 +13,7 @@ from SPI2py import System, DesignStudy
 system = System(name='Demo System')
 
 # Add objects to the system
+# TODO Add ports...
 system.add_component(name='control_valve_1',
                      color='aquamarine',
                      movement_class='independent',
@@ -113,6 +114,7 @@ study.config['Problem Description'] = 'Simple optimization of a 3D layout'
 
 # Map the system to a single spatial configuration
 
+# TODO Set initial design vector, including the static object... enter as dict arguments to manual
 # Define the initial design vector
 component_0_position = np.array([-3., -4.41, -0.24, 0., 0., 0.])
 component_1_position = np.array([2., 4.41, 0.24, 0., 0., 0.])
