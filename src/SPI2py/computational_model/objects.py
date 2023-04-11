@@ -401,16 +401,13 @@ class InterconnectEdge(Component):
                  object_2,
                  radius,
                  color,
-                 port_1=None,
-                 port_2=None,
+
                  degrees_of_freedom: Union[tuple[str], None] = None,
                  constraints: Union[None, tuple[str]] = None):
 
         self.name = name
         self.object_1 = object_1
-        self.port_1   = port_1
         self.object_2 = object_2
-        self.port_2   = port_2
 
         self.radius = radius
         self.color = color
@@ -435,17 +432,11 @@ class InterconnectEdge(Component):
 
         # TODO FIX THIS?
         # Design vector not used
-        if isinstance(self.object_1, Component):
-            object_1_port_index = self.object_1.port_index(self.port_1)
-            pos_1 = positions_dict[self.object_1][0][object_1_port_index]
-        else:
-            pos_1 = positions_dict[self.object_1][0]
 
-        if isinstance(self.object_2, Component):
-            object_2_port_index = self.object_2.port_index(self.port_2)
-            pos_2 = positions_dict[self.object_2][0][object_2_port_index]
-        else:
-            pos_2 = positions_dict[self.object_2][0]
+        pos_1 = positions_dict[self.object_1][0]
+
+
+        pos_2 = positions_dict[self.object_2][0]
 
         # Replace with pure-python implementation for Numba
         dist = euclidean(pos_1, pos_2)
@@ -496,24 +487,24 @@ class Interconnect(InterconnectWaypoint, InterconnectEdge):
 
     def __init__(self,
                  name,
-                 component_1,
-                 component_1_port,
-                 component_2,
-                 component_2_port,
+                 component_1_name,
+                 component_1_port_name,
+                 component_2_name,
+                 component_2_port_name,
                  radius,
                  color,
                  number_of_bends):
 
         self.name = name
 
-        self.component_1 = component_1
-        self.component_2 = component_2
+        self.component_1_name = component_1_name
+        self.component_2_name = component_2_name
 
-        self.component_1_port = component_1_port
-        self.component_2_port = component_2_port
+        self.component_1_port_name = component_1_port_name
+        self.component_2_port_name = component_2_port_name
 
-        # self.object_1 = self.component_1 + '-' + self.component_1_port + '_port'
-        # self.object_2 = self.component_2 + '-' + self.component_2_port + '_port'
+        self.object_1 = self.component_1_name + '_' + self.component_1_port_name
+        self.object_2 = self.component_2_name + '_' + self.component_2_port_name
 
         self.radius = radius
         self.color = color
@@ -542,11 +533,8 @@ class Interconnect(InterconnectWaypoint, InterconnectEdge):
         # TODO Make sure nodes are 2D and not 1D!
 
         # Create the nodes list and add component 1
-        nodes = [self.component_1]
-        node_names = [self.component_1]
-
-        # nodes = []
-        # node_names = []
+        nodes = [self.object_1]
+        node_names = [self.object_1]
 
         # Add the interconnect nodes
         for i in range(self.number_of_bends):
@@ -558,8 +546,8 @@ class Interconnect(InterconnectWaypoint, InterconnectEdge):
             node_names.append(node_name)
 
         # Add component 2
-        nodes.append(self.component_2)
-        node_names.append(self.component_2)
+        nodes.append(self.object_2)
+        node_names.append(self.object_2)
 
         return nodes, node_names
 
@@ -575,20 +563,9 @@ class Interconnect(InterconnectWaypoint, InterconnectEdge):
 
         i = 0
         for object_1, object_2 in self.node_pairs:
-            name = self.component_1 + '-' + self.component_2 + '_edge_' + str(i)
+            name = self.component_1_name + '-' + self.component_2_name + '_edge_' + str(i)
+            segments.append(InterconnectEdge(name, object_1, object_2, self.radius, self.color))
             i += 1
-
-            if isinstance(object_1, Component):
-                port_1 = self.port_1
-            else:
-                port_1 = None
-
-            if isinstance(object_2, Component):
-                port_2 = self.port_2
-            else:
-                port_2 = None
-
-            segments.append(InterconnectEdge(name, object_1, object_2, self.radius, self.color,port_1=port_1, port_2=port_2))
 
         return segments
 

@@ -328,7 +328,7 @@ class System:
         # STATIC OBJECTS
         for obj in self.static_objects:
             # positions_dict = obj.calculate_positions(design_vector, positions_dict)
-            positions_dict = calculate_static_positions(obj, positions_dict)
+            positions_dict = {**positions_dict, **obj.calculate_static_positions(i, positions_dict)}
 
         # DYNAMIC OBJECTS - Independent then Partially Dependent
         objects = self.independent_objects + self.partially_dependent_objects
