@@ -101,14 +101,14 @@ class DesignStudy:
 
     # LAYOUT METHODS
 
-    def add_initial_design_vector(self, name, design_vector):
+    def add_initial_design_vector(self, object_name, spatial_config_name, design_vector):
 
-        if name not in list(self.initial_design_vectors.keys()):
-            self.initial_design_vectors[name] = [design_vector]
-        else:
-            self.initial_design_vectors[name].append(design_vector)
+        if spatial_config_name not in list(self.initial_design_vectors.keys()):
+            self.initial_design_vectors[spatial_config_name] = {}
 
-    def generate_spatial_configuration(self, method, design_vectors=None):
+        self.initial_design_vectors[spatial_config_name][object_name] = design_vector
+
+    def generate_spatial_configuration(self, name, method):
         """
         Map the objects to a 3D layout.
 
@@ -122,9 +122,9 @@ class DesignStudy:
 
         if method == 'manual':
 
+            design_vector_dict = self.initial_design_vectors[name]
 
-
-            positions_dict = self.system.calculate_positions(design_vectors)
+            positions_dict = self.system.calculate_positions(design_vector_dict=design_vector_dict)
             self.system.set_positions(positions_dict)
 
         else:

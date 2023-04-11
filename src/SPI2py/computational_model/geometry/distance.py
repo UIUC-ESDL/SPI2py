@@ -311,7 +311,7 @@ def aggregate_pairwise_distance(x, model):
     """
 
     # Calculate the position of every sphere based on design vector x
-    positions_dict = model.calculate_positions(x)
+    positions_dict = model.calculate_positions(design_vector=x)
 
     # Create a list of object pairs
     object_pairs = list(combinations(positions_dict.keys(), 2))
@@ -340,7 +340,7 @@ def normalized_aggregate_gap_distance(x, model):
 
     # Evaluate the model at the design vector x
     # Calculate the position of every sphere based on design vector x
-    positions_dict = model.calculate_positions(x)
+    positions_dict = model.calculate_positions(design_vector=x)
 
     # Create a list of object pairs
     object_pairs = list(combinations(positions_dict.keys(), 2))
@@ -378,7 +378,7 @@ def signed_distances(x, model, object_pair):
     :return: An array of signed distances between each object pair
     """
     # Calculate the positions of all spheres in layout given design vector x
-    positions_dict = model.calculate_positions(x)
+    positions_dict = model.calculate_positions(design_vector=x)
 
     # Calculate the interferences between each sphere of each object pair
     all_signed_distances = []

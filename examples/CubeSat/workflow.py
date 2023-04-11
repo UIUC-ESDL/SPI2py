@@ -114,17 +114,17 @@ study.config['Problem Description'] = 'Simple optimization of a 3D layout'
 
 # Map the system to a single spatial configuration
 
+# TODO replace add initial design vector to set_position
 # TODO Set initial design vector, including the static object... enter as dict arguments to manual
-study.add_initial_design_vector('control_valve_1', [-3., -4.41, -0.24, 0., 0., 0.])
-study.add_initial_design_vector('actuator_1', [2., 4.41, 0.24, 0., 0., 0.])
-study.add_initial_design_vector('component_2', [5, -3, -1, 0., 0., 0.])
-study.add_initial_design_vector('component_3', [-3., -1., 3., 0., 0., 0.])
-study.add_initial_design_vector('control_valve_1-supply_actuator_1-supply_node_0', [-3., -2., 2.])
-study.add_initial_design_vector('control_valve_1-return_actuator_1-return_node_0', [-1., 0., 2.])
-study.add_initial_design_vector('control_valve_1-return_actuator_1-return_node_0', [4., 0., 1.])
-
-
-study.add_initial_design_vector('structure_1', [0, 0, 0, 0, 0, 0])
+# Specify for interconnect, have multiple waypoints
+study.add_initial_design_vector('control_valve_1', 'spatial_config_1', [-3., -4.41, -0.24, 0., 0., 0.])
+study.add_initial_design_vector('actuator_1', 'spatial_config_1', [2., 4.41, 0.24, 0., 0., 0.])
+study.add_initial_design_vector('component_2', 'spatial_config_1', [5, -3, -1, 0., 0., 0.])
+study.add_initial_design_vector('component_3', 'spatial_config_1', [-3., -1., 3., 0., 0., 0.])
+study.add_initial_design_vector('control_valve_1-supply_actuator_1-supply_node_0', 'spatial_config_1', [-3., -2., 2.])
+study.add_initial_design_vector('control_valve_1-supply_actuator_1-supply_node_1', 'spatial_config_1', [-1., 0., 2.])
+study.add_initial_design_vector('control_valve_1-return_actuator_1-return_node_0', 'spatial_config_1', [4., 0., 1.])
+# study.add_initial_design_vector('structure_1', 'spatial_configuration_1', [0, 0, 0, 0, 0, 0])
 
 # Define the initial design vector
 component_0_position = np.array([-3., -4.41, -0.24, 0., 0., 0.])
@@ -144,8 +144,7 @@ initial_design_vector = np.concatenate((component_0_position,
                                         interconnect_0_node_1_position,
                                         interconnect_1_node_0_position))
 
-study.generate_spatial_configuration(method='manual',
-                                     design_vectors=initial_design_vector)
+study.generate_spatial_configuration(name='spatial_config_1',method='manual')
 
 # Plot initial spatial configuration
 study.plot(initial_design_vector)

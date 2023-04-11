@@ -303,16 +303,24 @@ class System:
 
         return design_vectors
 
-    def calculate_positions(self, design_vector):
+    def calculate_positions(self, design_vector=None, design_vector_dict=None):
         """
 
         :param design_vector:
         :param design_vector:
         :return:
 
+        TODO handle both design vector and design vector dict
         TODO get positions for interconnects, structures, etc
         TODO Remove unnecessary design vector arguments
         """
+        if design_vector is None:
+            design_vector_list = list(design_vector_dict.values())
+            design_vector = [item for sublist in design_vector_list for item in sublist]
+
+        # design_vector = np.array()
+        # design_vector = np.flatten(design_vector)
+
 
         positions_dict = {}
 
