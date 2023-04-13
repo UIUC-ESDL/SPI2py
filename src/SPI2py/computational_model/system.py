@@ -323,33 +323,33 @@ class System:
             design_vectors = list(design_vector_dict.values())
 
 
-        positions_dict = {}
+        objects_dict = {}
 
 
         # STATIC OBJECTS
         for obj in self.static_objects:
-            # positions_dict = obj.calculate_positions(design_vector, positions_dict)
-            positions_dict = {**positions_dict, **obj.calculate_positions(None, positions_dict=positions_dict)}
+            # objects_dict = obj.calculate_positions(design_vector, objects_dict)
+            objects_dict = {**objects_dict, **obj.calculate_positions(None, objects_dict=objects_dict)}
 
         # DYNAMIC OBJECTS - Independent then Partially Dependent
         objects = self.independent_objects + self.partially_dependent_objects
         for obj, design_vector_row in zip(objects, design_vectors):
-            positions_dict = {**positions_dict, **obj.calculate_positions(design_vector_row, positions_dict=positions_dict)}
+            objects_dict = {**objects_dict, **obj.calculate_positions(design_vector_row, objects_dict=objects_dict)}
 
         # DYNAMIC OBJECTS - Fully Dependent
         # TODO remove updating edges...? just use lines
         for obj in self.fully_dependent_objects:
-            positions_dict = {**positions_dict, **obj.calculate_positions(design_vector, positions_dict=positions_dict)}
+            objects_dict = {**objects_dict, **obj.calculate_positions(design_vector, objects_dict=objects_dict)}
 
         # TODO Add method for partially dependent objects
         # DYNAMIC OBJECTS - Partially Dependent
 
 
 
-        return positions_dict
+        return objects_dict
 
 
-    def set_positions(self, positions_dict):
+    def set_positions(self, objects_dict):
         """set_positions Sets the positions of the objects in the layout.
 
         Takes a flattened design vector and sets the positions of the objects in the layout.
@@ -359,7 +359,7 @@ class System:
         """
 
         for obj in self.objects:
-            obj.set_positions(positions_dict)
+            obj.set_positions(objects_dict)
 
     def map_static_object(self, object_name, design_vector):
         """
@@ -370,18 +370,19 @@ class System:
         :param design_vector: The design vector; must be a (1, 6) array for x, y, z, rx, ry, rz.
         """
 
+        # Get the object given its name as a string
         obj = next(obj for obj in self.objects if obj.__repr__() == object_name)
 
         # Get the positions of the object
         positions = obj.positions
         radii = obj.radii
 
-        positions_dict = obj.calculate_positions(design_vector, force_update=True)
+        objects_dict = obj.calculate_positions(design_vector, force_update=True)
 
         # Set the positions of the object
-        obj.set_positions(positions_dict)
+        obj.set_positions(objects_dict)
 
-        return positions_dict
+        return objects_dict
 
     # def extract_spatial_graph(self):
     #     """

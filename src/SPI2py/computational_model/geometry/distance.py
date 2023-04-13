@@ -350,8 +350,8 @@ def normalized_aggregate_gap_distance(x, model):
         object_1 = object_pair[0]
         object_2 = object_pair[1]
 
-        positions_1 = positions_dict[object_1][0]
-        positions_2 = positions_dict[object_2][0]
+        positions_1 = positions_dict[object_1]['positions']
+        positions_2 = positions_dict[object_2]['positions']
 
         objective.append(sum(sum(cdist(positions_1, positions_2))))
 
@@ -384,11 +384,11 @@ def signed_distances(x, model, object_pair):
     all_signed_distances = []
 
     for obj1, obj2 in object_pair:
-        positions_a = positions_dict[str(obj1)][0]
-        radii_a = positions_dict[str(obj1)][1]
+        positions_a = positions_dict[str(obj1)]['positions']
+        radii_a = positions_dict[str(obj1)]['radii']
 
-        positions_b = positions_dict[str(obj2)][0]
-        radii_b = positions_dict[str(obj2)][1]
+        positions_b = positions_dict[str(obj2)]['positions']
+        radii_b = positions_dict[str(obj2)]['radii']
 
         # If line line vs cdist
 

@@ -126,8 +126,8 @@ class DesignStudy:
 
             design_vector_dict = self.initial_design_vectors[name]
 
-            positions_dict = self.system.calculate_positions(design_vector_dict=design_vector_dict)
-            self.system.set_positions(positions_dict)
+            objects_dict = self.system.calculate_positions(design_vector_dict=design_vector_dict)
+            self.system.set_positions(objects_dict)
 
         else:
             raise NotImplementedError

@@ -274,7 +274,7 @@ class Component:
 
         return design_vector_dict
 
-    def calculate_positions(self, design_vector, positions_dict=None, force_update=False):
+    def calculate_positions(self, design_vector, objects_dict=None, force_update=False):
 
         dof = self.degrees_of_freedom
 
@@ -291,7 +291,7 @@ class Component:
 
             # If the object has no degrees of freedom, then return its current position
             if dof is None:
-                return {self.__repr__(): (self.positions, self.radii)}
+                return {self.__repr__(): {'type': 'spheres', 'positions': self.positions, 'radii': self.radii}}
 
             # Extract the design variables from the design vector
             design_vector_dict = self.decompose_design_vector(design_vector)
@@ -330,34 +330,32 @@ class Component:
         # Calculate the new positions
         new_positions = rigid_transformation(self.reference_position, self.positions, x, y, z, rx, ry, rz)
 
-        new_dict = {}
-
-
-        new_dict[self.__repr__()] = (new_positions, self.radii)
+        object_dict = {self.__repr__(): {'type': 'spheres', 'positions': new_positions, 'radii': self.radii}}
 
         if self.ports is not None:
 
             for i, port in enumerate(self.ports):
                 port_name = self.__repr__() + '_' + port['name']
                 port_positions = new_positions[self.port_index(port['name'])]
+                port_positions = port_positions.reshape(1, 3)
                 port_radius = np.array([port['radius']])
-                new_dict[port_name] = (port_positions.reshape(1, 3), port_radius)
+                object_dict[port_name] = {'type': 'spheres', 'positions': port_positions, 'radii': port_radius}
 
-
-        return new_dict
+        return object_dict
 
 
 
     def set_positions(self,
-                      positions_dict: dict):
+                      objects_dict: dict):
         """
         Update positions of object spheres given a design vector
 
-        :param positions_dict:
+        :param objects_dict:
         :return:
         """
 
-        self.positions, self.radii = positions_dict[self.__repr__()]
+        self.positions = objects_dict[self.__repr__()]['positions']
+        self.radii = objects_dict[self.__repr__()]['radii']
 
 
 class InterconnectWaypoint(Component):
@@ -422,7 +420,7 @@ class InterconnectEdge(Component):
 
         self.movement_class = 'fully dependent'
 
-    def calculate_positions(self, _, positions_dict):
+    def calculate_positions(self, _, objects_dict):
         # TODO Remove temp design vector argument
         # TODO revise logic for getting the reference point instead of object's first sphere
         # Address varying number of spheres
@@ -430,27 +428,25 @@ class InterconnectEdge(Component):
         # TODO FIX THIS?
         # Design vector not used
 
-        new_dict = {}
+        object_dict = {}
 
-        pos_1 = positions_dict[self.object_1][0][0]
-        pos_2 = positions_dict[self.object_2][0][0]
+        pos_1 = objects_dict[self.object_1]['positions'][0]
+        pos_2 = objects_dict[self.object_2]['positions'][0]
 
         num_spheres = 10
 
         positions = np.linspace(pos_1, pos_2, num_spheres)
         radii = np.repeat(self.radius, num_spheres)
 
-        new_dict[str(self)] = (positions, radii)
+        object_dict[str(self)] = {'type': 'bar', 'positions': positions, 'radii': radii}
 
-        # TODO Change positions_dict to include kwarg and return addition?
-        return new_dict
+        # TODO Change objects_dict  to include kwarg and return addition?
+        return object_dict
 
-    def set_positions(self,
-                      positions_dict: dict) -> dict:
-        # self.positions, self.radii = positions_dict[self.name]
+    def set_positions(self, objects_dict: dict):
 
         # TODO Remove dummy input for design vector
-        self.positions = self.calculate_positions([], positions_dict)[str(self)][0]  # index zero for tuple
+        self.positions = self.calculate_positions([], objects_dict)[str(self)]['positions']  # index zero for tuple
 
         # TODO Separate this into a different function?
         self.radii = np.repeat(self.radius, self.positions.shape[0])
