@@ -34,8 +34,14 @@ def plot_3d(types, positions, radii, colors):
             height = np.linalg.norm(direction)
             center = obj_positions[0] + direction / 2
 
+            sphere1 = pv.Sphere(radius=obj_radii[0], center=list(obj_positions[0]))
+            p.add_mesh(sphere1, color=color)
+
             cylinder = pv.Cylinder(radius=obj_radii[0], height=height, center=list(center), direction=list(direction))
             p.add_mesh(cylinder, color=color)
+
+            sphere2 = pv.Sphere(radius=obj_radii[0], center=list(obj_positions[-1]))
+            p.add_mesh(sphere2, color=color)
 
         else:
             raise NotImplementedError
