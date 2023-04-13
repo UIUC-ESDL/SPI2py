@@ -20,7 +20,9 @@ from scipy.optimize import NonlinearConstraint
 # Layout Imports
 
 # Analysis Imports
-from src.SPI2py.computational_model.geometry.distance import normalized_aggregate_gap_distance, signed_distances
+from .computational_model.geometry.distance import normalized_aggregate_gap_distance, signed_distances
+from .computational_model.visualization.plotting import plot_3d
+
 from .driver.analysis.constraint_aggregation import kreisselmeier_steinhauser, p_norm, induced_exponential, induced_power
 from .driver.analysis import scale_model_based_objective
 # from analysis.kinematics import ...
@@ -29,7 +31,7 @@ from .driver.analysis import scale_model_based_objective
 from .driver.optimize.solvers import run_optimizer
 
 # Result Imports
-from .design_study.visualization.visualization import plot_objects
+
 
 
 class DesignStudy:
@@ -291,7 +293,7 @@ class DesignStudy:
             radii.append(obj.radii)
             colors.append(obj.color)
 
-        fig = plot_objects(positions, radii, colors)
+        fig = plot_3d(positions, radii, colors)
 
     # def create_gif(self):
     #     gif_filepath = self.config['results']['GIF Filename']

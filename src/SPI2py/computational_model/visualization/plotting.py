@@ -5,7 +5,11 @@
 import pyvista as pv
 
 
-def plot_objects(positions, radii, colors):
+def plot_2d():
+    pass
+
+
+def plot_3d(positions, radii, colors):
     """
 
     TODO Overlay the plot with the original image

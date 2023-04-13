@@ -114,55 +114,55 @@ study.generate_spatial_configuration(name='spatial_config_1', method='manual')
 # Plot initial spatial configuration
 study.plot()
 
-# # Perform gradient-based optimization
-#
-# study.add_objective(objective='normalized aggregate gap distance',
-#                     model=system,
-#                     options={'design vector scaling type': 'constant',
-#                              'design vector scaling factor': 1,
-#                              'objective scaling type': 'constant',
-#                              'objective scaling factor': 1 / 500})
-#
-# study.add_constraint(constraint='signed distances',
-#                      model=system,
-#                      options={'type': 'collision',
-#                               'object class 1': 'component',
-#                               'object class 2': 'component',
-#                               'constraint tolerance': 0.01,
-#                               'constraint aggregation': 'induced exponential',
-#                               'constraint aggregation parameter': 3.0})
-#
-# study.add_constraint(constraint='signed distances',
-#                      model=system,
-#                      options={'type': 'collision',
-#                               'object class 1': 'component',
-#                               'object class 2': 'interconnect',
-#                               'constraint tolerance': 0.01,
-#                               'constraint aggregation': 'induced exponential',
-#                               'constraint aggregation parameter': 3.0})
-#
-# study.add_constraint(constraint='signed distances',
-#                      model=system,
-#                      options={'type': 'collision',
-#                               'object class 1': 'interconnect',
-#                               'object class 2': 'interconnect',
-#                               'constraint tolerance': 0.01,
-#                               'constraint aggregation': 'induced exponential',
-#                               'constraint aggregation parameter': 3.0})
-#
-#
-# study.optimize_spatial_configuration(options={'maximum number of iterations': 10,
-#                                               'convergence tolerance': 1e-2})
-#
-# # Post-processing
-#
-# # Plot the final spatial configuration
-# new_positions = system.calculate_positions(study.result.x)
-# system.set_positions(new_positions)
-# study.plot()
-#
-# # Write output file
-# study.create_report()
-#
-# # Print the log to see the optimization results and if any warnings or errors occurred
-# study.print_log()
+# Perform gradient-based optimization
+
+study.add_objective(objective='normalized aggregate gap distance',
+                    model=system,
+                    options={'design vector scaling type': 'constant',
+                             'design vector scaling factor': 1,
+                             'objective scaling type': 'constant',
+                             'objective scaling factor': 1 / 500})
+
+study.add_constraint(constraint='signed distances',
+                     model=system,
+                     options={'type': 'collision',
+                              'object class 1': 'component',
+                              'object class 2': 'component',
+                              'constraint tolerance': 0.01,
+                              'constraint aggregation': 'induced exponential',
+                              'constraint aggregation parameter': 3.0})
+
+study.add_constraint(constraint='signed distances',
+                     model=system,
+                     options={'type': 'collision',
+                              'object class 1': 'component',
+                              'object class 2': 'interconnect',
+                              'constraint tolerance': 0.01,
+                              'constraint aggregation': 'induced exponential',
+                              'constraint aggregation parameter': 3.0})
+
+study.add_constraint(constraint='signed distances',
+                     model=system,
+                     options={'type': 'collision',
+                              'object class 1': 'interconnect',
+                              'object class 2': 'interconnect',
+                              'constraint tolerance': 0.01,
+                              'constraint aggregation': 'induced exponential',
+                              'constraint aggregation parameter': 3.0})
+
+
+study.optimize_spatial_configuration(options={'maximum number of iterations': 10,
+                                              'convergence tolerance': 1e-2})
+
+# Post-processing
+
+# Plot the final spatial configuration
+new_positions = system.calculate_positions(study.result.x)
+system.set_positions(new_positions)
+study.plot()
+
+# Write output file
+study.create_report()
+
+# Print the log to see the optimization results and if any warnings or errors occurred
+study.print_log()

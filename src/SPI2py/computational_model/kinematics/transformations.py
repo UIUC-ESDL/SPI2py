@@ -106,3 +106,10 @@ def rigid_transformation(reference_position, positions, x, y, z, rx, ry, rz, ref
     rotated_positions = rotate(translated_positions, rotation)
 
     return rotated_positions
+
+
+def test_rotate():
+    data = np.array(...)
+    answer=runfunction(data)
+
+    assert answer == expected_answer_calculatedbyhand
