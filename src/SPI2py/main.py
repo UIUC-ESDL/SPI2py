@@ -21,7 +21,7 @@ from scipy.optimize import NonlinearConstraint
 
 # Analysis Imports
 from .computational_model.geometry.distance import normalized_aggregate_gap_distance, signed_distances
-from .computational_model.visualization.plotting import plot_3d
+
 
 from .driver.analysis.constraint_aggregation import kreisselmeier_steinhauser, p_norm, induced_exponential, induced_power
 from .driver.analysis import scale_model_based_objective
@@ -273,31 +273,8 @@ class DesignStudy:
     # RESULT METHODS
 
 
-    def plot(self):
-        """
-        Plot the model at a given state.
 
-        TODO add option to plot all design vectors
-        TODO add option to plot design vector--> move to system object
 
-        :param x: Design vector
-        """
-
-        positions = []
-        radii = []
-        colors = []
-
-        for obj in self.system.objects:
-
-            positions.append(obj.positions)
-            radii.append(obj.radii)
-            colors.append(obj.color)
-
-        fig = plot_3d(positions, radii, colors)
-
-    # def create_gif(self):
-    #     gif_filepath = self.config['results']['GIF Filename']
-    #     generate_gif(self.spatial_configuration, self.design_vector_log, 1, self.directory, gif_filepath)
 
     def create_report(self):
 

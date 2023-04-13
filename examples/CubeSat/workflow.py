@@ -112,7 +112,7 @@ study.generate_spatial_configuration(name='spatial_config_1', method='manual')
 
 
 # Plot initial spatial configuration
-study.plot()
+system.plot()
 
 # Perform gradient-based optimization
 
@@ -159,7 +159,7 @@ study.optimize_spatial_configuration(options={'maximum number of iterations': 10
 # Plot the final spatial configuration
 new_positions = system.calculate_positions(study.result.x)
 system.set_positions(new_positions)
-study.plot()
+system.plot()
 
 # Write output file
 study.create_report()

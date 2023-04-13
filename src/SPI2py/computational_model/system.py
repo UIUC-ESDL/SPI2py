@@ -1,9 +1,8 @@
 import numpy as np
 from itertools import combinations, product
-from .objects import Component, Interconnect
+from .objects import Component, Interconnect, InterconnectEdge
 from .geometry.geometric_representation import generate_rectangular_prisms
-# from .kinematics.depricated_kinematics import calculate_independent_positions, calculate_static_positions
-
+from .visualization.plotting import plot_3d
 
 class System:
     """
@@ -403,3 +402,33 @@ class System:
     #     # TODO Implement
     #
     #     return nodes, node_positions, edges
+
+    def plot(self):
+        """
+        Plot the model at a given state.
+
+        TODO add option to plot all design vectors
+        TODO add option to plot design vector--> move to system object
+
+        :param x: Design vector
+        """
+
+        types = []
+        positions = []
+        radii = []
+        colors = []
+
+        for obj in self.objects:
+
+            if obj.type == 'component':
+                types.append('component')
+            elif obj.type == 'edge':
+                types.append('interconnect')
+            else:
+                raise ValueError('Object type not recognized.')
+
+            positions.append(obj.positions)
+            radii.append(obj.radii)
+            colors.append(obj.color)
+
+        fig = plot_3d(types, positions, radii, colors)

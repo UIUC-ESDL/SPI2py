@@ -30,6 +30,7 @@ class Component:
                  ports: Union[None, list[dict]] = None):
 
         self.name = self._validate_name(name)
+        self.type= 'component'
         self.positions = self._validate_positions(positions)
         self.radii = self._validate_radii(radii)
         # TODO Remove rotation...
@@ -366,6 +367,7 @@ class InterconnectWaypoint(Component):
                  degrees_of_freedom: Union[tuple[str], None] = ('x', 'y', 'z'),
                  constraints: Union[None, tuple[str]] = None):
         self.name = node
+        self.type = 'component'
         self.node = node
         self.radius = radius
         self.color = color
@@ -404,6 +406,7 @@ class InterconnectEdge(Component):
                  constraints: Union[None, tuple[str]] = None):
 
         self.name = name
+        self.type = 'edge'
         self.object_1 = object_1
         self.object_2 = object_2
 
@@ -413,6 +416,7 @@ class InterconnectEdge(Component):
         self.degrees_of_freedom = degrees_of_freedom
         self.reference_objects = constraints
 
+        # TODO REMOVE this
         # Placeholder for plot test functionality, random positions
         # self.positions = None
         self.positions = np.empty((0, 3))
@@ -435,10 +439,12 @@ class InterconnectEdge(Component):
 
         num_spheres = 10
 
-        positions = np.linspace(pos_1, pos_2, num_spheres)
-        radii = np.repeat(self.radius, num_spheres)
+        # positions = np.linspace(pos_1, pos_2, num_spheres)
+        # radii = np.repeat(self.radius, num_spheres)
+        positions = np.vstack((pos_1, pos_2))
+        radii = np.array([self.radius, self.radius])
 
-        object_dict[str(self)] = {'type': 'bar', 'positions': positions, 'radii': radii}
+        object_dict[str(self)] = {'type': 'interconnect', 'positions': positions, 'radii': radii}
 
         # TODO Change objects_dict  to include kwarg and return addition?
         return object_dict
