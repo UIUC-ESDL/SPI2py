@@ -1,6 +1,6 @@
 import numpy as np
 from scipy.spatial.distance import cdist
-from src.SPI2py.driver.analysis import distances_points_points
+from src.SPI2py.computational_model.analysis import distances_points_points
 
 def test_pairwise_distance():
     """

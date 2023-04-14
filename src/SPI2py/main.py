@@ -7,10 +7,10 @@ from datetime import datetime
 
 import logging
 import os
-import numpy as np
+
 
 import yaml
-from scipy.optimize import NonlinearConstraint
+
 
 # TODO Import the model
 
@@ -23,8 +23,8 @@ from scipy.optimize import NonlinearConstraint
 from .computational_model.geometry.distance import normalized_aggregate_gap_distance
 from .computational_model.geometry.collision_detection import signed_distances
 
-from .driver.analysis.constraint_aggregation import kreisselmeier_steinhauser, p_norm, induced_exponential, induced_power
-from .driver.analysis import scale_model_based_objective
+from src.SPI2py.computational_model.analysis.constraint_aggregation import kreisselmeier_steinhauser, p_norm, induced_exponential, induced_power
+from src.SPI2py.computational_model.analysis import scale_model_based_objective
 
 
 # Optimize Imports
@@ -137,109 +137,7 @@ class DesignStudy:
 
     # ANALYSIS METHODS
 
-    def add_objective(self,
-                      objective,
-                      model,
-                      options):
 
-        """
-        Add an objective to the design study.
-
-        TODO Move objective to the model module...?
-
-        :param objective: The objective function to be added.
-        :param options: The options for the objective function.
-        """
-
-        # UNPACK THE OPTIONS
-
-        design_vector_scaling_type   = options['design vector scaling type']
-        design_vector_scaling_factor = options['design vector scaling factor']
-        objective_scaling_type       = options['objective scaling type']
-        objective_scaling_factor     = options['objective scaling factor']
-
-
-        # SELECT THE OBJECTIVE FUNCTION HANDLE
-
-        if objective == 'normalized aggregate gap distance':
-            _objective_function = normalized_aggregate_gap_distance
-        else:
-            raise NotImplementedError
-
-
-        # SCALE THE OBJECTIVE FUNCTION
-
-
-        def objective_function(x):
-            return scale_model_based_objective(x, _objective_function, model,
-                                               design_vector_scale_type=design_vector_scaling_type,
-                                               design_vector_scale_factor=design_vector_scaling_factor,
-                                               objective_scale_type=objective_scaling_type,
-                                               objective_scale_factor=objective_scaling_factor)
-
-        self.objectives.append(objective_function)
-
-    def add_constraint(self,
-                       constraint,
-                       model,
-                       options):
-
-        """
-        Add a constraint to the design study.
-        """
-
-        # UNPACK THE OPTIONS
-        type = options['type']
-        object_class_1 = options['object class 1']
-        object_class_2 = options['object class 2']
-        constraint_tolerance = options['constraint tolerance']
-        constraint_aggregation = options['constraint aggregation']
-        constraint_aggregation_parameter = options['constraint aggregation parameter']
-
-        # SELECT THE OBJECT PAIR
-
-        if object_class_1 == 'component' and object_class_2 == 'component':
-            object_pair = model.component_component_pairs
-        elif object_class_1 == 'component' and object_class_2 == 'interconnect' or \
-                object_class_1 == 'interconnect' and object_class_2 == 'component':
-            object_pair = model.component_interconnect_pairs
-        elif object_class_1 == 'interconnect' and object_class_2 == 'interconnect':
-            object_pair = model.interconnect_interconnect_pairs
-        else:
-            raise NotImplementedError
-
-        # SELECT THE CONSTRAINT FUNCTION HANDLE
-        if constraint == 'signed distances':
-            def _constraint_function(x): return signed_distances(x, model, object_pair)
-        else:
-            raise NotImplementedError
-
-        # SELECT THE CONSTRAINT AGGREGATION FUNCTION HANDLE
-        if constraint_aggregation is None:
-            pass
-        elif constraint_aggregation == 'kreisselmeier steinhauser':
-            _constraint_aggregation_function = kreisselmeier_steinhauser
-        elif constraint_aggregation == 'P-norm':
-            _constraint_aggregation_function = p_norm
-        elif constraint_aggregation == 'induced exponential':
-            _constraint_aggregation_function = induced_exponential
-        elif constraint_aggregation == 'induced power':
-            _constraint_aggregation_function = induced_power
-        else:
-            raise NotImplementedError
-
-        # TODO SCALE THE CONSTRAINT FUNCTION
-
-        if constraint_aggregation is None:
-            nlc = NonlinearConstraint(_constraint_function, -np.inf, constraint_tolerance)
-            self.constraint_functions.append(_constraint_function)
-            self.constraints.append(nlc)
-        else:
-            def constraint_aggregation_function(x):
-                return _constraint_aggregation_function(_constraint_function(x), rho=constraint_aggregation_parameter)
-            nlc = NonlinearConstraint(constraint_aggregation_function, -np.inf, constraint_tolerance)
-            self.constraint_functions.append(constraint_aggregation_function)
-            self.constraints.append(nlc)
 
 
     def calculate_metrics(self, x):
@@ -266,8 +164,8 @@ class DesignStudy:
 
         # TODO Remove objective indexing...
         self.result, self.design_vector_log = run_optimizer(self.system,
-                                                            self.objectives[0],
-                                                            self.constraints,
+                                                            self.system.objectives[0],
+                                                            self.system.constraints,
                                                             options)
 
     # RESULT METHODS

@@ -276,17 +276,34 @@ class Component:
         return design_vector_dict
 
     def calculate_positions(self, design_vector, objects_dict=None, force_update=False):
+        """
+        Calculates the positions of the object's spheres.
+
+        Considerations
+        6 DOF: x, y, z, rx, ry, rz
+        n references axes
+
+        1. Pure translation
+        2. Pure rotation
+        3. Translation and rotation
+        4. Translation/rotation about a reference axis
+            -Adopts the reference axis angles and origin position
+        5. Translation/rotation about two reference axes (colinear motion)
+            -Ignores axes angles, just creates a line between the two axes
+        6. Translation/rotation about three reference axes (coplanar motion)
+            -Ignores axes angles, just triangulates 3D coordinates into a plane
+        """
 
         dof = self.degrees_of_freedom
 
         if force_update is True:
             dof = ('x', 'y', 'z', 'rx', 'ry', 'rz')
-            x=design_vector[0]
-            y=design_vector[1]
-            z=design_vector[2]
-            rx=design_vector[3]
-            ry=design_vector[4]
-            rz=design_vector[5]
+            x  = design_vector[0]
+            y  = design_vector[1]
+            z  = design_vector[2]
+            rx = design_vector[3]
+            ry = design_vector[4]
+            rz = design_vector[5]
 
         else:
 
@@ -401,7 +418,6 @@ class InterconnectEdge(Component):
                  object_2,
                  radius,
                  color,
-
                  degrees_of_freedom: Union[tuple[str], None] = None,
                  constraints: Union[None, tuple[str]] = None):
 
@@ -416,45 +432,27 @@ class InterconnectEdge(Component):
         self.degrees_of_freedom = degrees_of_freedom
         self.reference_objects = constraints
 
-        # TODO REMOVE this
-        # Placeholder for plot test functionality, random positions
-        # self.positions = None
-        self.positions = np.empty((0, 3))
-        self.radii = None
-
         self.movement_class = 'fully dependent'
 
     def calculate_positions(self, _, objects_dict):
-        # TODO Remove temp design vector argument
-        # TODO revise logic for getting the reference point instead of object's first sphere
-        # Address varying number of spheres
-
-        # TODO FIX THIS?
-        # Design vector not used
 
         object_dict = {}
 
         pos_1 = objects_dict[self.object_1]['positions'][0]
         pos_2 = objects_dict[self.object_2]['positions'][0]
 
-        num_spheres = 10
-
-        # positions = np.linspace(pos_1, pos_2, num_spheres)
-        # radii = np.repeat(self.radius, num_spheres)
         positions = np.vstack((pos_1, pos_2))
         radii = np.array([self.radius, self.radius])
 
         object_dict[str(self)] = {'type': 'interconnect', 'positions': positions, 'radii': radii}
 
-        # TODO Change objects_dict  to include kwarg and return addition?
         return object_dict
 
     def set_positions(self, objects_dict: dict):
 
-        # TODO Remove dummy input for design vector
-        self.positions = self.calculate_positions([], objects_dict)[str(self)]['positions']  # index zero for tuple
+        object_dict =  self.calculate_positions([], objects_dict)
+        self.positions =object_dict[str(self)]['positions']
 
-        # TODO Separate this into a different function?
         self.radii = np.repeat(self.radius, self.positions.shape[0])
 
 

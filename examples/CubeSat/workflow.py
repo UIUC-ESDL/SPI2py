@@ -116,14 +116,14 @@ system.plot()
 
 # Perform gradient-based optimization
 
-study.add_objective(objective='normalized aggregate gap distance',
+system.add_objective(objective='normalized aggregate gap distance',
                     model=system,
                     options={'design vector scaling type': 'constant',
                              'design vector scaling factor': 1,
                              'objective scaling type': 'constant',
                              'objective scaling factor': 1 / 500})
 
-study.add_constraint(constraint='signed distances',
+system.add_constraint(constraint='signed distances',
                      model=system,
                      options={'type': 'collision',
                               'object class 1': 'component',
@@ -132,7 +132,7 @@ study.add_constraint(constraint='signed distances',
                               'constraint aggregation': 'induced exponential',
                               'constraint aggregation parameter': 3.0})
 
-study.add_constraint(constraint='signed distances',
+system.add_constraint(constraint='signed distances',
                      model=system,
                      options={'type': 'collision',
                               'object class 1': 'component',
@@ -141,7 +141,7 @@ study.add_constraint(constraint='signed distances',
                               'constraint aggregation': 'induced exponential',
                               'constraint aggregation parameter': 3.0})
 
-study.add_constraint(constraint='signed distances',
+system.add_constraint(constraint='signed distances',
                      model=system,
                      options={'type': 'collision',
                               'object class 1': 'interconnect',
