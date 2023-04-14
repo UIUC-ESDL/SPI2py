@@ -21,7 +21,7 @@ import yaml
 
 # Analysis Imports
 from .computational_model.geometry.distance import normalized_aggregate_gap_distance
-from .computational_model.geometry.collision_detection import signed_distances
+from .computational_model.geometry.discrete_collision_detection import signed_distances
 
 from src.SPI2py.computational_model.analysis.constraint_aggregation import kreisselmeier_steinhauser, p_norm, induced_exponential, induced_power
 from src.SPI2py.computational_model.analysis import scale_model_based_objective
@@ -127,7 +127,7 @@ class DesignStudy:
             design_vector_dict = self.initial_design_vectors[name]
 
             objects_dict = self.system.calculate_positions(design_vector_dict=design_vector_dict)
-            self.system.set_positions(objects_dict)
+            self.system.set_positions(objects_dict=objects_dict)
 
         else:
             raise NotImplementedError

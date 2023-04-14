@@ -4,7 +4,7 @@ from itertools import combinations, product
 from .objects import Component, Interconnect, InterconnectEdge
 
 from .geometry.distance import normalized_aggregate_gap_distance
-from .geometry.collision_detection import signed_distances
+from .geometry.discrete_collision_detection import signed_distances
 
 from src.SPI2py.computational_model.analysis.constraint_aggregation import kreisselmeier_steinhauser, p_norm, induced_exponential, induced_power
 from src.SPI2py.computational_model.analysis import scale_model_based_objective

@@ -107,6 +107,8 @@ study.add_initial_design_vector('control_valve_1-return_actuator_1-return_node_0
 
 system.map_static_object(object_name='structure_1', design_vector=[0, 0, -1, 0, 0, 0])
 
+
+
 study.generate_spatial_configuration(name='spatial_config_1', method='manual')
 
 
