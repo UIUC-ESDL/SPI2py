@@ -1,33 +1,14 @@
 import numpy as np
 from typing import Union
 import logging
+from .transformations import rigid_transformation
 logger = logging.getLogger(__name__)
 
-from .transformations import rigid_transformation
 
-class RigidBodyValidation:
-    pass
-
-class RigidBody:
-
-    def __init__(self,
-                 positions: np.ndarray,
-                 radii: np.ndarray,
-                 movement_class: str,
-                 reference_axes: str = 'origin',
-                 degrees_of_freedom: Union[tuple[str], None] = ('x', 'y', 'z', 'rx', 'ry', 'rz')):
-
-        # TODO Remove
-        self.positions = self._validate_positions(positions)
-        self.radii = self._validate_radii(radii)
-
-        # TODO Remove rotation...
-        self.rotation = np.zeros(3)
-        self.reference_axes = self._validate_reference_axes(reference_axes)
-        self.movement_class = self._validate_movement_class(movement_class)
-        self.degrees_of_freedom = self._validate_degrees_of_freedom(degrees_of_freedom)
-
-
+class ValidateRigidBody:
+    """
+    This class is used to validate the inputs for the RigidBody class.
+    """
     def _validate_positions(self, positions: np.ndarray) -> np.ndarray:
 
         if positions is None:
@@ -124,6 +105,25 @@ class RigidBody:
                     raise ValueError('Invalid DOF specified for %s.' % self.name)
 
         return degrees_of_freedom
+
+class RigidBody(ValidateRigidBody):
+
+    def __init__(self,
+                 positions: np.ndarray,
+                 radii: np.ndarray,
+                 movement_class: str,
+                 reference_axes: str = 'origin',
+                 degrees_of_freedom: Union[tuple[str], None] = ('x', 'y', 'z', 'rx', 'ry', 'rz')):
+
+        # TODO Remove
+        self.positions = self._validate_positions(positions)
+        self.radii = self._validate_radii(radii)
+
+        # TODO Remove rotation...
+        self.rotation = np.zeros(3)
+        self.reference_axes = self._validate_reference_axes(reference_axes)
+        self.movement_class = self._validate_movement_class(movement_class)
+        self.degrees_of_freedom = self._validate_degrees_of_freedom(degrees_of_freedom)
 
     @property
     def reference_position(self):
