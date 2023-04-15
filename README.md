@@ -80,3 +80,17 @@ SPI2Py is primarily developed in Python 3.10. We recommend using the base Python
   version = {0.0.1},\
   year = {2023},
 }
+
+## Sponsors
+
+SPI2py is supported both directly and indirectly through university, government, and industry funding.
+
+This work is supported by the National Science Foundation Engineering Research Center for the Power Optimization of
+Electro-Thermal Systems (POETS) with Cooperative Agreement EEC-1449548.
+
+This work is supported by the University of Illinois at Urbana-Champaign Grainger College of Engineering through the
+[SPI2 Strategic Research Initiative](https://grainger.illinois.edu/research/sri/spi2).
+
+![NSF](images/NSF-Symbol.png)
+![NSF_POETS](images/NSF_POETS.png)
+![UIUC](images/UIUC_Logo.png)
