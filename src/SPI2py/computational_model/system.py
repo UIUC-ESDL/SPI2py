@@ -543,22 +543,28 @@ class System:
         :param x: Design vector
         """
 
-        types = []
-        positions = []
-        radii = []
+        # types = []
+        # positions = []
+        # radii = []
+        # colors = []
+        objects = []
         colors = []
 
         for obj in self.objects:
+            objs, cols = obj.plot()
+            objects.extend(objs)
+            colors.extend(cols)
+            # if isinstance(obj, Component):
+            #     types.append('component')
+            #     positions.append(obj.positions)
+            #     radii.append(obj.radii)
+            #     colors.append(obj.color)
+            # elif isinstance(obj, Interconnect):
+            #     types.append('interconnect')
+            #     directions, heights, centers = obj.capsules
+            # else:
+            #     raise ValueError('Object type not recognized.')
 
-            if obj.type == 'component':
-                types.append('component')
-            elif obj.type == 'edge':
-                types.append('interconnect')
-            else:
-                raise ValueError('Object type not recognized.')
 
-            positions.append(obj.positions)
-            radii.append(obj.radii)
-            colors.append(obj.color)
 
-        fig = plot_3d(types, positions, radii, colors)
+        fig = plot_3d(objects, colors)

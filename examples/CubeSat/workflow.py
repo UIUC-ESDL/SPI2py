@@ -122,7 +122,7 @@ study.generate_spatial_configuration(name='spatial_config_1', method='manual')
 
 
 # Plot initial spatial configuration
-# system.plot()
+system.plot()
 
 # # Perform gradient-based optimization
 #

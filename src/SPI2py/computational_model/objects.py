@@ -17,6 +17,7 @@ logger = logging.getLogger(__name__)
 import numpy as np
 from typing import Union
 
+import pyvista as pv
 
 @dataclass
 class ComponentState:
@@ -130,6 +131,16 @@ class Component(RigidBody):
     def __str__(self):
         return self.name
 
+    def plot(self):
+        spheres = []
+        colors = []
+        for i in range(len(self.positions)):
+            spheres.append(pv.Sphere(radius=self.radii[i], center=self.positions[i]))
+            colors.append(self.color)
+
+        return spheres, colors
+
+
 
 
 class Interconnect:
@@ -196,6 +207,30 @@ class Interconnect:
 
         self.dof = 3 * self.number_of_waypoints
 
+    @property
+    def capsules(self):
+        directions = []
+        heights = []
+        centers = []
+
+        for i in range(self.number_of_waypoints):
+            if i == 0:
+                direction = self.positions[i + 1] - self.positions[i]
+            elif i == self.number_of_waypoints - 1:
+                direction = self.positions[i] - self.positions[i - 1]
+            else:
+                direction = self.positions[i + 1] - self.positions[i - 1]
+
+            directions.append(direction)
+
+            height = np.linalg.norm(direction)
+            heights.append(height)
+
+            center = self.positions[i] + direction / 2
+            centers.append(center)
+
+        return directions, heights, centers
+
     def __repr__(self):
         return self.name
 
@@ -260,3 +295,21 @@ class Interconnect:
     # @property
     # def edges(self):
     #     return [segment.edge for segment in self.segments]
+
+    def plot(self):
+        objects= []
+        colors = []
+
+        # Plot spheres at each node
+        for i in range(len(self.positions)):
+            objects.append(pv.Sphere(radius=self.radii[i], center=self.positions[i]))
+            colors.append(self.color)
+
+        directions, heights, centers = self.capsules
+
+        # Plot capsules between nodes
+        for i in range(len(directions)):
+            objects.append(pv.Cylinder(radius=self.radius, direction=directions[i], height=heights[i], center=centers[i]))
+            colors.append(self.color)
+
+        return objects, colors
