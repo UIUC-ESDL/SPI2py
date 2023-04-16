@@ -213,13 +213,9 @@ class Interconnect:
         heights = []
         centers = []
 
-        for i in range(self.number_of_waypoints):
-            if i == 0:
-                direction = self.positions[i + 1] - self.positions[i]
-            elif i == self.number_of_waypoints - 1:
-                direction = self.positions[i] - self.positions[i - 1]
-            else:
-                direction = self.positions[i + 1] - self.positions[i - 1]
+        for i in range(self.number_of_waypoints+1):
+
+            direction = self.positions[i + 1] - self.positions[i]
 
             directions.append(direction)
 
@@ -308,8 +304,8 @@ class Interconnect:
         directions, heights, centers = self.capsules
 
         # Plot capsules between nodes
-        for i in range(len(directions)):
-            objects.append(pv.Cylinder(radius=self.radius, direction=directions[i], height=heights[i], center=centers[i]))
+        for direction, height, center in zip(directions, heights, centers):
+            objects.append(pv.Cylinder(radius=self.radius, direction=direction, height=height, center=center))
             colors.append(self.color)
 
         return objects, colors
