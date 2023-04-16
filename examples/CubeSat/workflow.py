@@ -93,35 +93,35 @@ study = DesignStudy(directory=local_directory,
                     study_name='Example 1')
 
 study.add_system(system)
-#
-# # Define the username and problem description
-# study.config['Username'] = 'Chad Peterson'
-# study.config['Problem Description'] = 'Simple optimization of a 3D layout'
-#
-# # Map the system to a single spatial configuration
-#
-# # TODO replace add initial design vector to set_position
-# # TODO Set initial design vector, including the static object... enter as dict arguments to manual
-# # Specify for interconnect, have multiple waypoints
-# study.add_initial_design_vector('control_valve_1', 'spatial_config_1', [-3., -4.41, -0.24, 0., 0., 0.])
-# study.add_initial_design_vector('actuator_1', 'spatial_config_1', [2., 4.41, 0.24, 0., 0., 0.])
-# study.add_initial_design_vector('component_2', 'spatial_config_1', [5, -3, -1, 0., 0., 0.])
-# study.add_initial_design_vector('component_3', 'spatial_config_1', [-3., -1., 3., 0., 0., 0.])
-# study.add_initial_design_vector('control_valve_1-supply_actuator_1-supply_node_0', 'spatial_config_1', [-3., -2., 2.])
-# study.add_initial_design_vector('control_valve_1-supply_actuator_1-supply_node_1', 'spatial_config_1', [-1., 0., 2.])
-# study.add_initial_design_vector('control_valve_1-return_actuator_1-return_node_0', 'spatial_config_1', [4., 0., 1.])
-#
-# system.map_static_object(object_name='structure_1', design_vector=[0, 0, -1, 0, 0, 0])
-#
-#
-#
-# study.generate_spatial_configuration(name='spatial_config_1', method='manual')
-#
-#
-#
-# # Plot initial spatial configuration
-# system.plot()
-#
+
+# Define the username and problem description
+study.config['Username'] = 'Chad Peterson'
+study.config['Problem Description'] = 'Simple optimization of a 3D layout'
+
+# Map the system to a single spatial configuration
+
+# TODO replace add initial design vector to set_position
+# TODO Set initial design vector, including the static object... enter as dict arguments to manual
+# Specify for interconnect, have multiple waypoints
+study.add_initial_design_vector('control_valve_1', 'spatial_config_1', [-3., -4.41, -0.24, 0., 0., 0.])
+study.add_initial_design_vector('actuator_1', 'spatial_config_1', [2., 4.41, 0.24, 0., 0., 0.])
+study.add_initial_design_vector('component_2', 'spatial_config_1', [5, -3, -1, 0., 0., 0.])
+study.add_initial_design_vector('component_3', 'spatial_config_1', [-3., -1., 3., 0., 0., 0.])
+study.add_initial_design_vector('control_valve_1-supply_actuator_1-supply_node_0', 'spatial_config_1', [-3., -2., 2.])
+study.add_initial_design_vector('control_valve_1-supply_actuator_1-supply_node_1', 'spatial_config_1', [-1., 0., 2.])
+study.add_initial_design_vector('control_valve_1-return_actuator_1-return_node_0', 'spatial_config_1', [4., 0., 1.])
+
+system.map_static_object(object_name='structure_1', design_vector=[0, 0, -1, 0, 0, 0])
+
+
+
+study.generate_spatial_configuration(name='spatial_config_1', method='manual')
+
+
+
+# Plot initial spatial configuration
+system.plot()
+
 # # Perform gradient-based optimization
 #
 # system.add_objective(objective='normalized aggregate gap distance',

@@ -11,7 +11,7 @@ from .geometry.discrete_collision_detection import signed_distances
 from src.SPI2py.computational_model.analysis.constraint_aggregation import kreisselmeier_steinhauser, p_norm, induced_exponential, induced_power
 from src.SPI2py.computational_model.analysis import scale_model_based_objective
 
-# from .geometry.representation import generate_rectangular_prisms
+from .geometry.spherical_decomposition import generate_rectangular_prisms
 from .visualization.plotting import plot_3d
 
 
@@ -293,6 +293,22 @@ class System:
             design_vector = np.concatenate((design_vector, obj.design_vector))
 
         return design_vector
+
+    # TODO Implement
+    # def decompose_design_vector(self, design_vector: np.ndarray) -> dict:
+    #     """
+    #     Takes a 1D design vector and decomposes it into a dictionary of design variables.
+    #     """
+    #
+    #     if len(design_vector) != len(self.degrees_of_freedom):
+    #         raise ValueError('The specified design vector must be the same length as the degrees of freedom.')
+    #
+    #     design_vector_dict = {}
+    #
+    #     for i, dof in enumerate(self.degrees_of_freedom):
+    #         design_vector_dict[dof] = design_vector[i]
+    #
+    #     return design_vector_dict
 
     def slice_design_vector(self, design_vector):
         """

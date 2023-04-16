@@ -37,8 +37,8 @@ class Component(RigidBody):
                  ports: Union[None, list[dict]] = None):
 
         self.name = self._validate_name(name)
-        self.type= 'component'
-        self.rotation = np.array([0,0,0])
+        self.type = 'component'
+        self.rotation = np.array([0, 0, 0])
         self.ports = self._validate_ports(ports)
         self.port_names = []
         self.port_indices = []
