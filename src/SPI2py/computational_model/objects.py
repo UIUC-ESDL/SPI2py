@@ -2,7 +2,7 @@
 TODO Can I remove movement classes if I just use degrees of freedom and reference axes?
 
 """
-
+from dataclasses import dataclass
 import logging
 
 from scipy.spatial.distance import euclidean
@@ -16,6 +16,12 @@ logger = logging.getLogger(__name__)
 
 import numpy as np
 from typing import Union
+
+
+@dataclass
+class ComponentState:
+
+    origin: np.ndarray
 
 
 class Component(RigidBody):

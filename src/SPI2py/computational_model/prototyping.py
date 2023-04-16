@@ -3,7 +3,7 @@ import pyvista as pv
 from scipy.spatial import ConvexHull
 from scipy.optimize import minimize, NonlinearConstraint, Bounds
 
-from .geometry.geometric_representation import pseudo_mdbd
+from .geometry.representation import pseudo_mdbd
 
 
 # TODO Implement a uniformly thick line between two points

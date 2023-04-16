@@ -1,4 +1,6 @@
 import numpy as np
+from dataclasses import dataclass
+
 from scipy.optimize import NonlinearConstraint
 from itertools import combinations, product
 from .objects import Component, Interconnect, InterconnectEdge
@@ -9,8 +11,17 @@ from .geometry.discrete_collision_detection import signed_distances
 from src.SPI2py.computational_model.analysis.constraint_aggregation import kreisselmeier_steinhauser, p_norm, induced_exponential, induced_power
 from src.SPI2py.computational_model.analysis import scale_model_based_objective
 
-from .geometry.geometric_representation import generate_rectangular_prisms
+# from .geometry.representation import generate_rectangular_prisms
 from .visualization.plotting import plot_3d
+
+
+@dataclass
+class SystemState:
+    """
+    Defines the state of a system at a given point in time.
+    """
+    design_vector: np.ndarray
+    objects: str
 
 class System:
     """
