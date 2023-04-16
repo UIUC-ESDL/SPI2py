@@ -57,70 +57,70 @@ system.add_component(name='component_3',
 system.add_component(name='structure_1',
                      color='gray',
                      movement_class='static',
-                     degrees_of_freedom=None,
+                     degrees_of_freedom=(),
                      shapes=[
                          {'type': 'box', 'origin': [0, 0, 0], 'dimensions': [2, 2, 0.5], 'rotation': [0, 0, 0]}])
 
-system.add_interconnect(name='hp_cv_to_actuator',
-                        color='black',
-                        component_1='control_valve_1',
-                        component_1_port='supply',
-                        component_2='actuator_1',
-                        component_2_port='supply',
-                        radius=0.25,
-                        number_of_bends=2)
-
-system.add_interconnect(name='hp_cv_to_actuator2',
-                        color='blue',
-                        component_1='control_valve_1',
-                        component_1_port='return',
-                        component_2='actuator_1',
-                        component_2_port='return',
-                        radius=0.25,
-                        number_of_bends=1)
-
-
-
-
-
-# Define the design study
-
-# Obtain the local path of this example's directory
-local_directory = os.path.dirname(__file__) + '/'
-
-# Initialize the design study
-study = DesignStudy(directory=local_directory,
-                    study_name='Example 1')
-
-study.add_system(system)
-
-# Define the username and problem description
-study.config['Username'] = 'Chad Peterson'
-study.config['Problem Description'] = 'Simple optimization of a 3D layout'
-
-# Map the system to a single spatial configuration
-
-# TODO replace add initial design vector to set_position
-# TODO Set initial design vector, including the static object... enter as dict arguments to manual
-# Specify for interconnect, have multiple waypoints
-study.add_initial_design_vector('control_valve_1', 'spatial_config_1', [-3., -4.41, -0.24, 0., 0., 0.])
-study.add_initial_design_vector('actuator_1', 'spatial_config_1', [2., 4.41, 0.24, 0., 0., 0.])
-study.add_initial_design_vector('component_2', 'spatial_config_1', [5, -3, -1, 0., 0., 0.])
-study.add_initial_design_vector('component_3', 'spatial_config_1', [-3., -1., 3., 0., 0., 0.])
-study.add_initial_design_vector('control_valve_1-supply_actuator_1-supply_node_0', 'spatial_config_1', [-3., -2., 2.])
-study.add_initial_design_vector('control_valve_1-supply_actuator_1-supply_node_1', 'spatial_config_1', [-1., 0., 2.])
-study.add_initial_design_vector('control_valve_1-return_actuator_1-return_node_0', 'spatial_config_1', [4., 0., 1.])
-
-system.map_static_object(object_name='structure_1', design_vector=[0, 0, -1, 0, 0, 0])
-
-
-
-study.generate_spatial_configuration(name='spatial_config_1', method='manual')
-
-
-
-# Plot initial spatial configuration
-system.plot()
+# system.add_interconnect(name='hp_cv_to_actuator',
+#                         color='black',
+#                         component_1='control_valve_1',
+#                         component_1_port='supply',
+#                         component_2='actuator_1',
+#                         component_2_port='supply',
+#                         radius=0.25,
+#                         number_of_bends=2)
+#
+# system.add_interconnect(name='hp_cv_to_actuator2',
+#                         color='blue',
+#                         component_1='control_valve_1',
+#                         component_1_port='return',
+#                         component_2='actuator_1',
+#                         component_2_port='return',
+#                         radius=0.25,
+#                         number_of_bends=1)
+#
+#
+#
+#
+#
+# # Define the design study
+#
+# # Obtain the local path of this example's directory
+# local_directory = os.path.dirname(__file__) + '/'
+#
+# # Initialize the design study
+# study = DesignStudy(directory=local_directory,
+#                     study_name='Example 1')
+#
+# study.add_system(system)
+#
+# # Define the username and problem description
+# study.config['Username'] = 'Chad Peterson'
+# study.config['Problem Description'] = 'Simple optimization of a 3D layout'
+#
+# # Map the system to a single spatial configuration
+#
+# # TODO replace add initial design vector to set_position
+# # TODO Set initial design vector, including the static object... enter as dict arguments to manual
+# # Specify for interconnect, have multiple waypoints
+# study.add_initial_design_vector('control_valve_1', 'spatial_config_1', [-3., -4.41, -0.24, 0., 0., 0.])
+# study.add_initial_design_vector('actuator_1', 'spatial_config_1', [2., 4.41, 0.24, 0., 0., 0.])
+# study.add_initial_design_vector('component_2', 'spatial_config_1', [5, -3, -1, 0., 0., 0.])
+# study.add_initial_design_vector('component_3', 'spatial_config_1', [-3., -1., 3., 0., 0., 0.])
+# study.add_initial_design_vector('control_valve_1-supply_actuator_1-supply_node_0', 'spatial_config_1', [-3., -2., 2.])
+# study.add_initial_design_vector('control_valve_1-supply_actuator_1-supply_node_1', 'spatial_config_1', [-1., 0., 2.])
+# study.add_initial_design_vector('control_valve_1-return_actuator_1-return_node_0', 'spatial_config_1', [4., 0., 1.])
+#
+# system.map_static_object(object_name='structure_1', design_vector=[0, 0, -1, 0, 0, 0])
+#
+#
+#
+# study.generate_spatial_configuration(name='spatial_config_1', method='manual')
+#
+#
+#
+# # Plot initial spatial configuration
+# system.plot()
 
 # # Perform gradient-based optimization
 #

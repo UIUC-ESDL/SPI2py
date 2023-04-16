@@ -50,6 +50,9 @@ class Component(RigidBody):
 
         self.color = self._validate_colors(color)
 
+        # TODO Make tuple len zero not none
+        self.dof = len(self.degrees_of_freedom)
+
         if self.ports is not None:
             for port in self.ports:
                 self.port_names.append(port['name'])
@@ -127,91 +130,7 @@ class Component(RigidBody):
 
 
 
-
-
-
-
-class InterconnectWaypoint(Component):
-    def __init__(self,
-                 node,
-                 radius,
-                 color,
-                 degrees_of_freedom: Union[tuple[str], None] = ('x', 'y', 'z'),
-                 constraints: Union[None, tuple[str]] = None):
-        self.name = node
-        self.type = 'component'
-        self.node = node
-        self.radius = radius
-        self.color = color
-
-        # TODO Temp
-        self.ports = None
-
-        # delete this redundant (used for plotting)
-        self.radii = np.array([radius])
-        # TODO Sort out None value vs dummy values
-        self.positions = np.array([[0., 0., 0.]])  # Initialize a dummy value
-        self.movement_class = 'independent'
-        self.degrees_of_freedom = degrees_of_freedom
-        self.reference_objects = constraints
-
-
-"""
-TODO
-Interconnect should be a single object, not subclasses
--represent as bar
--calculate interference as bars
--plot as bars
-
-"""
-
-
-class InterconnectEdge(Component):
-    def __init__(self,
-                 name,
-                 object_1,
-                 object_2,
-                 radius,
-                 color,
-                 degrees_of_freedom: Union[tuple[str], None] = None,
-                 constraints: Union[None, tuple[str]] = None):
-
-        self.name = name
-        self.type = 'edge'
-        self.object_1 = object_1
-        self.object_2 = object_2
-
-        self.radius = radius
-        self.color = color
-
-        self.degrees_of_freedom = degrees_of_freedom
-        self.reference_objects = constraints
-
-        self.movement_class = 'fully dependent'
-
-    def calculate_positions(self, _, objects_dict):
-
-        object_dict = {}
-
-        pos_1 = objects_dict[self.object_1]['positions'][0]
-        pos_2 = objects_dict[self.object_2]['positions'][0]
-
-        positions = np.vstack((pos_1, pos_2))
-        radii = np.array([self.radius, self.radius])
-
-        object_dict[str(self)] = {'type': 'interconnect', 'positions': positions, 'radii': radii}
-
-        return object_dict
-
-    def set_positions(self, objects_dict: dict):
-
-        object_dict =  self.calculate_positions([], objects_dict)
-        self.positions =object_dict[str(self)]['positions']
-
-        self.radii = np.repeat(self.radius, self.positions.shape[0])
-
-
-class Interconnect(InterconnectWaypoint, InterconnectEdge):
+class Interconnect:
     """
     Interconnects are made of one or more non-zero-length segments and connect two components.
 
@@ -239,7 +158,7 @@ class Interconnect(InterconnectWaypoint, InterconnectEdge):
                  component_2_port_name,
                  radius,
                  color,
-                 number_of_bends):
+                 number_of_waypoints):
 
         self.name = name
 
@@ -255,66 +174,79 @@ class Interconnect(InterconnectWaypoint, InterconnectEdge):
         self.radius = radius
         self.color = color
 
-
+        self.origins = None
         # self.number_of_bends = number_of_bends
 
-        self.number_of_bends = number_of_bends
-        self.number_of_edges = self.number_of_bends + 1
+        self.number_of_waypoints = number_of_waypoints
+        self.number_of_segments = self.number_of_waypoints + 1
 
         # Create InterconnectNode objects
-        self.nodes, self.node_names = self.create_nodes()
+        self.nodes = self.create_nodes()
         self.interconnect_nodes = self.nodes[1:-1]  # trims off components 1 and 2
 
         # Create InterconnectSegment objects
         self.node_pairs = self.create_node_pairs()
-        self.segments = self.create_segments()
+
+        self.movement_class = 'partially dependent'
+
+        self.waypoint_positions = np.zeros((self.number_of_waypoints, 3))
+
+        self.dof = 3 * self.number_of_waypoints
+
+    @property
+    def design_vector(self):
+        return self.waypoint_positions.flatten()
 
     def create_nodes(self):
-        """
-        Consideration: if I include the component nodes then... ?
-
-        TODO replace node names w/ objects!
-
-        :return:
-        """
-        # TODO Make sure nodes are 2D and not 1D!
 
         # Create the nodes list and add component 1
         nodes = [self.object_1]
-        node_names = [self.object_1]
 
         # Add the interconnect nodes
-        for i in range(self.number_of_bends):
+        for i in range(self.number_of_waypoints):
             # Each node should have unique identifier
             node_name = self.name + '_node_' + str(i)
-
-            interconnect_node = InterconnectWaypoint(node_name, self.radius, self.color)
-            nodes.append(interconnect_node)
-            node_names.append(node_name)
+            nodes.append(node_name)
 
         # Add component 2
         nodes.append(self.object_2)
-        node_names.append(self.object_2)
 
-        return nodes, node_names
+        return nodes
 
     def create_node_pairs(self):
 
-        node_pairs = [(self.node_names[i], self.node_names[i + 1]) for i in range(len(self.node_names) - 1)]
+        node_pairs = [(self.nodes[i], self.nodes[i + 1]) for i in range(len(self.nodes) - 1)]
 
         return node_pairs
 
-    def create_segments(self):
+    # def set_origins(self, design_vector, objects_dict):
 
-        segments = []
 
-        i = 0
-        for object_1, object_2 in self.node_pairs:
-            name = self.component_1_name + '-' + self.component_2_name + '_edge_' + str(i)
-            segments.append(InterconnectEdge(name, object_1, object_2, self.radius, self.color))
-            i += 1
 
-        return segments
+    def calculate_positions(self, design_vector, objects_dict):
+
+        # Reshape the design vector to extract xi, yi, and zi positions
+        design_vector.reshape((self.number_of_waypoints, 3))
+
+        object_dict = {}
+
+        pos_1 = objects_dict[self.object_1]['positions'][0]
+        pos_2 = objects_dict[self.object_2]['positions'][0]
+
+        positions = np.vstack((pos_1, pos_2))
+        radii = np.array([self.radius, self.radius])
+
+        object_dict[str(self)] = {'type': 'interconnect', 'positions': positions, 'radii': radii}
+
+        return object_dict
+
+    def set_positions(self, objects_dict: dict):
+
+        object_dict =  self.calculate_positions([], objects_dict)
+        self.positions =object_dict[str(self)]['positions']
+
+        self.radii = np.repeat(self.radius, self.positions.shape[0])
+
 
     # @property
     # def edges(self):

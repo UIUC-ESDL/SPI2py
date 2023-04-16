@@ -3,7 +3,7 @@ from dataclasses import dataclass
 
 from scipy.optimize import NonlinearConstraint
 from itertools import combinations, product
-from .objects import Component, Interconnect, InterconnectEdge
+from .objects import Component, Interconnect
 
 from .geometry.distance import normalized_aggregate_gap_distance
 from .geometry.discrete_collision_detection import signed_distances
@@ -55,11 +55,7 @@ class System:
 
         self.name = name
         self.components = []
-        self.ports = []
         self.interconnects = []
-        self.interconnect_nodes = []
-        self.interconnect_segments = []
-
         self.objectives = []
         self.constraints = []
         self.constraint_functions = []
@@ -115,18 +111,13 @@ class System:
                                     number_of_bends)
 
         self.interconnects.append(interconnect)
-        self.interconnect_segments.extend(interconnect.segments)
-        self.interconnect_nodes.extend(interconnect.interconnect_nodes)
+
 
     @property
     def objects(self):
-        return self.components + self.ports + self.interconnect_nodes + self.interconnect_segments
+        return self.components + self.interconnects
 
     def _validate_components(self):
-        # TODO Implement
-        pass
-
-    def _validate_ports(self):
         # TODO Implement
         pass
 
@@ -134,32 +125,20 @@ class System:
         # TODO Implement
         pass
 
-    def _validate_interconnect_nodes(self):
-        # TODO Implement
-        pass
+    # @property
+    # def nodes(self):
+    #     return [str(obj) for obj in self.components + self.interconnect_nodes]
 
-    def _validate_interconnect_segments(self):
-        # TODO Implement
-        pass
-
-    def _validate_structures(self):
-        # TODO Implement
-        pass
-
-    @property
-    def nodes(self):
-        return [str(obj) for obj in self.components + self.interconnect_nodes]
-
-    @property
-    def edges(self):
-        edges = []
-        for segment in self.interconnect_segments:
-            # Split with "-" to just get component (not port name)
-            # TODO Create a more reliable way to get the component name
-            edge = (str(segment.object_1).split('-')[0], str(segment.object_2).split('-')[0])
-            edges.append(edge)
-
-        return edges
+    # @property
+    # def edges(self):
+    #     edges = []
+    #     for segment in self.interconnect_segments:
+    #         # Split with "-" to just get component (not port name)
+    #         # TODO Create a more reliable way to get the component name
+    #         edge = (str(segment.object_1).split('-')[0], str(segment.object_2).split('-')[0])
+    #         edges.append(edge)
+    #
+    #     return edges
 
     @property
     def static_objects(self):
@@ -234,7 +213,7 @@ class System:
         :return:
         """
 
-        pairs = list(product(self.components, self.interconnect_segments))
+        pairs = list(product(self.components, self.interconnects))
 
         # Remove pairs that contain a component and its own interconnect
         for component, interconnect in pairs:
@@ -257,7 +236,7 @@ class System:
         """
 
         # Create a list of all interconnect pairs
-        pairs = list(combinations(self.interconnect_segments, 2))
+        pairs = list(combinations(self.interconnects, 2))
 
         # Remove segments that are from the same interconnect
         # If a pipe intersects itself, usually the pipe can just be made shorter...
@@ -295,20 +274,27 @@ class System:
         return design_vector
 
     # TODO Implement
-    # def decompose_design_vector(self, design_vector: np.ndarray) -> dict:
-    #     """
-    #     Takes a 1D design vector and decomposes it into a dictionary of design variables.
-    #     """
-    #
-    #     if len(design_vector) != len(self.degrees_of_freedom):
-    #         raise ValueError('The specified design vector must be the same length as the degrees of freedom.')
-    #
-    #     design_vector_dict = {}
-    #
-    #     for i, dof in enumerate(self.degrees_of_freedom):
-    #         design_vector_dict[dof] = design_vector[i]
-    #
-    #     return design_vector_dict
+    def decompose_design_vector(self, design_vector: np.ndarray) -> dict:
+        """
+        Takes a 1D design vector and decomposes it into a dictionary of design variables.
+        """
+
+        system_dof = 0
+        for obj in self.objects:
+            system_dof += obj.dof
+
+        if len(design_vector) != system_dof:
+            raise ValueError('The specified design vector must be the same length as the degrees of freedom.')
+
+
+        design_vector_dict = {}
+
+        for obj in self.objects:
+            design_vector_dict[obj] = design_vector[0:obj.dof]
+            design_vector = design_vector[obj.dof:]
+
+
+        return design_vector_dict
 
     def slice_design_vector(self, design_vector):
         """
