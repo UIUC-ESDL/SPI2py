@@ -158,7 +158,8 @@ class Interconnect:
                  component_2_port_name,
                  radius,
                  color,
-                 number_of_waypoints):
+                 number_of_waypoints,
+                 degrees_of_freedom):
 
         self.name = name
 
@@ -192,6 +193,12 @@ class Interconnect:
         self.waypoint_positions = np.zeros((self.number_of_waypoints, 3))
 
         self.dof = 3 * self.number_of_waypoints
+
+    def __repr__(self):
+        return self.name
+
+    def __str__(self):
+        return self.name
 
     @property
     def design_vector(self):

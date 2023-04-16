@@ -17,6 +17,7 @@ system = System(name='Demo System')
 #
 # pseudo_mdbd(2, 2, 2, 0.5, 0.5)
 
+# TODO Major--reimplement collision detection for interconnect segments.
 
 
 
@@ -61,14 +62,15 @@ system.add_component(name='structure_1',
                      shapes=[
                          {'type': 'box', 'origin': [0, 0, 0], 'dimensions': [2, 2, 0.5], 'rotation': [0, 0, 0]}])
 
-# system.add_interconnect(name='hp_cv_to_actuator',
-#                         color='black',
-#                         component_1='control_valve_1',
-#                         component_1_port='supply',
-#                         component_2='actuator_1',
-#                         component_2_port='supply',
-#                         radius=0.25,
-#                         number_of_bends=2)
+system.add_interconnect(name='hp_cv_to_actuator',
+                        color='black',
+                        component_1='control_valve_1',
+                        component_1_port='supply',
+                        component_2='actuator_1',
+                        component_2_port='supply',
+                        radius=0.25,
+                        number_of_bends=2,
+                        degrees_of_freedom=(('x', 'y', 'z'), ('x', 'y', 'z')))
 #
 # system.add_interconnect(name='hp_cv_to_actuator2',
 #                         color='blue',
@@ -79,10 +81,11 @@ system.add_component(name='structure_1',
 #                         radius=0.25,
 #                         number_of_bends=1)
 #
-#
-#
-#
-#
+
+
+my_dict = system.decompose_design_vector([-3., -4.41, -0.24, 0., 0., 0.,2., 4.41, 0.24, 0., 0., 0.,5, -3, -1, 0., 0., 0.,-3., -1., 3., 0., 0., 0.,-3., -2., 2.,-1., 0., 2.])
+print(my_dict)
+
 # # Define the design study
 #
 # # Obtain the local path of this example's directory

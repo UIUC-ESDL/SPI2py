@@ -102,13 +102,13 @@ class System:
         self.components.append(component)
 
     def add_interconnect(self, name, component_1, component_1_port, component_2, component_2_port, radius, color,
-                         number_of_bends):
+                         number_of_bends, degrees_of_freedom):
         """
         Add an interconnect to the system.
 
         """
         interconnect = Interconnect(name, component_1, component_1_port, component_2, component_2_port, radius, color,
-                                    number_of_bends)
+                                    number_of_bends, degrees_of_freedom)
 
         self.interconnects.append(interconnect)
 
