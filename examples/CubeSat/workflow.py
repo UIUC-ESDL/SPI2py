@@ -13,86 +13,86 @@ from SPI2py import System, DesignStudy
 system = System(name='Demo System')
 
 
-from SPI2py.computational_model.geometry.geometric_representation import pseudo_mdbd
-
-pseudo_mdbd(1, 2, 2)
-
-
+# from SPI2py.computational_model.geometry.geometric_representation import pseudo_mdbd
+#
+# pseudo_mdbd(2, 2, 2, 0.5, 0.5)
 
 
-# system.add_component(name='control_valve_1',
-#                      color='aquamarine',
-#                      movement_class='independent',
-#                      degrees_of_freedom=('x', 'y', 'z', 'rx', 'ry', 'rz'),
-#                      shapes=[{'type': 'box', 'origin': [0, 0, 0], 'dimensions': [6, 2, 2], 'rotation': [0, 0, 0]}],
-#                      ports=[{'name': 'supply', 'origin': [2, 1, 2.5], 'radius': 0.5},
-#                             {'name': 'return', 'origin': [4, 1, 2.5], 'radius': 0.5}])
-#
-# system.add_component(name='actuator_1',
-#                      color='orange',
-#                      movement_class='independent',
-#                      degrees_of_freedom=('x', 'y', 'z', 'rx', 'ry', 'rz'),
-#                      shapes=[{'type': 'box', 'origin': [0, 0, 0], 'dimensions': [3, 3, 1.5], 'rotation': [0, 0, 0]},
-#                              {'type': 'box', 'origin': [0, 0, 1.5], 'dimensions': [3, 3, 1.5], 'rotation': [0, 0, 0]},
-#                              {'type': 'box', 'origin': [0, 0, 3], 'dimensions': [3, 3, 1.5], 'rotation': [0, 0, 0]},
-#                              {'type': 'box', 'origin': [1, 1, 3.5], 'dimensions': [1, 1, 5], 'rotation': [0, 0, 0]}],
-#                      ports=[{'name': 'supply', 'origin': [1, 0, 1], 'radius': 0.5},
-#                             {'name': 'return', 'origin': [2, 0, 1], 'radius': 0.5}])
-#
-# system.add_component(name='component_2',
-#                      color='indigo',
-#                      movement_class='independent',
-#                      degrees_of_freedom=('x', 'y', 'z', 'rx', 'ry', 'rz'),
-#                      shapes=[{'type': 'box', 'origin': [0, 0, 0], 'dimensions': [1, 3, 3], 'rotation': [0, 0, 0]}])
-#
-# system.add_component(name='component_3',
-#                      color='olive',
-#                      movement_class='independent',
-#                      degrees_of_freedom=('x', 'y', 'z', 'rx', 'ry', 'rz'),
-#                      shapes=[{'type': 'box', 'origin': [0, 0, 0], 'dimensions': [1, 1, 1], 'rotation': [0, 0, 0]},
-#                              {'type': 'box', 'origin': [1, 0, 0], 'dimensions': [1, 2, 1], 'rotation': [0, 0, 0]},
-#                              {'type': 'box', 'origin': [1, 1, 0.5], 'dimensions': [1, 1, 3], 'rotation': [0, 0, 0]},
-#                              {'type': 'box', 'origin': [1, 1, 3], 'dimensions': [2, 1, 1], 'rotation': [0, 0, 0]}])
-#
-# system.add_component(name='structure_1',
-#                      color='gray',
-#                      movement_class='static',
-#                      degrees_of_freedom=None,
-#                      shapes=[
-#                          {'type': 'box', 'origin': [0, 0, 0], 'dimensions': [2, 2, 0.5], 'rotation': [0, 0, 0]}])
-#
-# system.add_interconnect(name='hp_cv_to_actuator',
-#                         color='black',
-#                         component_1='control_valve_1',
-#                         component_1_port='supply',
-#                         component_2='actuator_1',
-#                         component_2_port='supply',
-#                         radius=0.25,
-#                         number_of_bends=2)
-#
-# system.add_interconnect(name='hp_cv_to_actuator2',
-#                         color='blue',
-#                         component_1='control_valve_1',
-#                         component_1_port='return',
-#                         component_2='actuator_1',
-#                         component_2_port='return',
-#                         radius=0.25,
-#                         number_of_bends=1)
-#
-#
-#
-#
-#
-# # Define the design study
-#
-# # Obtain the local path of this example's directory
-# local_directory = os.path.dirname(__file__) + '/'
-#
-# # Initialize the design study
-# study = DesignStudy(directory=local_directory,
-#                     study_name='Example 1')
-#
-# study.add_system(system)
+
+
+system.add_component(name='control_valve_1',
+                     color='aquamarine',
+                     movement_class='independent',
+                     degrees_of_freedom=('x', 'y', 'z', 'rx', 'ry', 'rz'),
+                     shapes=[{'type': 'box', 'origin': [0, 0, 0], 'dimensions': [6, 2, 2], 'rotation': [0, 0, 0]}],
+                     ports=[{'name': 'supply', 'origin': [2, 1, 2.5], 'radius': 0.5},
+                            {'name': 'return', 'origin': [4, 1, 2.5], 'radius': 0.5}])
+
+system.add_component(name='actuator_1',
+                     color='orange',
+                     movement_class='independent',
+                     degrees_of_freedom=('x', 'y', 'z', 'rx', 'ry', 'rz'),
+                     shapes=[{'type': 'box', 'origin': [0, 0, 0], 'dimensions': [3, 3, 1.5], 'rotation': [0, 0, 0]},
+                             {'type': 'box', 'origin': [0, 0, 1.5], 'dimensions': [3, 3, 1.5], 'rotation': [0, 0, 0]},
+                             {'type': 'box', 'origin': [0, 0, 3], 'dimensions': [3, 3, 1.5], 'rotation': [0, 0, 0]},
+                             {'type': 'box', 'origin': [1, 1, 3.5], 'dimensions': [1, 1, 5], 'rotation': [0, 0, 0]}],
+                     ports=[{'name': 'supply', 'origin': [1, 0, 1], 'radius': 0.5},
+                            {'name': 'return', 'origin': [2, 0, 1], 'radius': 0.5}])
+
+system.add_component(name='component_2',
+                     color='indigo',
+                     movement_class='independent',
+                     degrees_of_freedom=('x', 'y', 'z', 'rx', 'ry', 'rz'),
+                     shapes=[{'type': 'box', 'origin': [0, 0, 0], 'dimensions': [1, 3, 3], 'rotation': [0, 0, 0]}])
+
+system.add_component(name='component_3',
+                     color='olive',
+                     movement_class='independent',
+                     degrees_of_freedom=('x', 'y', 'z', 'rx', 'ry', 'rz'),
+                     shapes=[{'type': 'box', 'origin': [0, 0, 0], 'dimensions': [1, 1, 1], 'rotation': [0, 0, 0]},
+                             {'type': 'box', 'origin': [1, 0, 0], 'dimensions': [1, 2, 1], 'rotation': [0, 0, 0]},
+                             {'type': 'box', 'origin': [1, 1, 0.5], 'dimensions': [1, 1, 3], 'rotation': [0, 0, 0]},
+                             {'type': 'box', 'origin': [1, 1, 3], 'dimensions': [2, 1, 1], 'rotation': [0, 0, 0]}])
+
+system.add_component(name='structure_1',
+                     color='gray',
+                     movement_class='static',
+                     degrees_of_freedom=None,
+                     shapes=[
+                         {'type': 'box', 'origin': [0, 0, 0], 'dimensions': [2, 2, 0.5], 'rotation': [0, 0, 0]}])
+
+system.add_interconnect(name='hp_cv_to_actuator',
+                        color='black',
+                        component_1='control_valve_1',
+                        component_1_port='supply',
+                        component_2='actuator_1',
+                        component_2_port='supply',
+                        radius=0.25,
+                        number_of_bends=2)
+
+system.add_interconnect(name='hp_cv_to_actuator2',
+                        color='blue',
+                        component_1='control_valve_1',
+                        component_1_port='return',
+                        component_2='actuator_1',
+                        component_2_port='return',
+                        radius=0.25,
+                        number_of_bends=1)
+
+
+
+
+
+# Define the design study
+
+# Obtain the local path of this example's directory
+local_directory = os.path.dirname(__file__) + '/'
+
+# Initialize the design study
+study = DesignStudy(directory=local_directory,
+                    study_name='Example 1')
+
+study.add_system(system)
 #
 # # Define the username and problem description
 # study.config['Username'] = 'Chad Peterson'

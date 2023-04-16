@@ -106,7 +106,7 @@ def generate_rectangular_prisms(origins, dimensions):
     return positions, radii
 
 
-def pseudo_mdbd(a, b, c, n=10):
+def pseudo_mdbd(ax, ay, az, n1, n2, n=10):
     """
     Applies a pseudo maximal disjoint ball decomposition to an ellipsoid.
 
@@ -114,8 +114,47 @@ def pseudo_mdbd(a, b, c, n=10):
     it performs a Monte Carlo simulation where initial points are sequentially chosen, and they are translated
     and inflated until they are maximally disjoint from the other points.
 
-
+    Assume ellipsoid center is at the origin.
     """
+
+    d0 = [0, 0, 0, 0.5]
+
+    points = np.empty((0, 3))
+    radii = np.empty(0)
+
+    def objective(di): return di[3]
+
+    def constraint(di):
+        """
+        The sphere should wholly reside inside the superellipsoid.
+
+        TODO Verify
+
+        The surface of the superellipsoid is defined as:
+        F(x,y,z) = 1
+
+        If a point lies outside the ellipsoid, then F(x,y,z) > 1
+        """
+        x_sphere, y_sphere, z_sphere, r_sphere = di
+        position_sphere = np.array([x_sphere, y_sphere, z_sphere])
+
+        # TODO Use outer points of sphere to check for collision...
+
+        def superellipsoid(x, y, z):
+            return ((x / ax) ** (2/n2) + (y / ay) ** (2/n2)) ** (n2/n1) + (z / az) ** (2/n1)
+
+        # Find the point on the surface of the superellipsoid that is closest to the center of the sphere
+        position_ellipsoid_surface_0 = np.array([1, 1, 1])
+
+
+
+
+        # Constraint
+        # F(x,y,z) > 1
+        constraint_value = superellipsoid(x_sphere, y_sphere, z_sphere) - 1 - r_sphere
+
+        return constraint_value
+
 
 
 
@@ -128,8 +167,8 @@ def pseudo_mdbd(a, b, c, n=10):
 
     p = pv.Plotter()
 
-    ellipsoid = pv.ParametricEllipsoid(a, b, c, center=[0, 0, 0])
-    p.add_mesh(ellipsoid, color="tan", opacity=0.35)
+    super_ellipsoid = pv.ParametricSuperEllipsoid(xradius=ax, yradius=ay, zradius=az, n1=n1, n2=n2, center=[0, 0, 0])
+    p.add_mesh(super_ellipsoid, color="tan", opacity=1)
 
     sphere = pv.Sphere(radius=0.5, center=[3, 0, 0])
     p.add_mesh(sphere, color="red", opacity=1)
