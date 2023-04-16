@@ -25,7 +25,9 @@ class ComponentState:
 
 
 class Component(RigidBody):
-
+    """
+    TODO Update set position to just set the origin.. positions should be a SDF(?)
+    """
     def __init__(self,
                  name: str,
                  positions: np.ndarray,
@@ -231,16 +233,17 @@ class Interconnect:
 
 
     def calculate_positions(self, design_vector, objects_dict):
-
+        # TODO Make this work with design vectors of not length 3
         # Reshape the design vector to extract xi, yi, and zi positions
-        design_vector.reshape((self.number_of_waypoints, 3))
+        design_vector = np.array(design_vector)
+        design_vector = design_vector.reshape((self.number_of_waypoints, 3))
 
         object_dict = {}
 
         pos_1 = objects_dict[self.object_1]['positions'][0]
         pos_2 = objects_dict[self.object_2]['positions'][0]
 
-        positions = np.vstack((pos_1, pos_2))
+        positions = np.vstack((pos_1, design_vector, pos_2))
         radii = np.array([self.radius, self.radius])
 
         object_dict[str(self)] = {'type': 'interconnect', 'positions': positions, 'radii': radii}
@@ -249,8 +252,7 @@ class Interconnect:
 
     def set_positions(self, objects_dict: dict):
 
-        object_dict =  self.calculate_positions([], objects_dict)
-        self.positions =object_dict[str(self)]['positions']
+        self.positions = objects_dict[str(self)]['positions']
 
         self.radii = np.repeat(self.radius, self.positions.shape[0])
 

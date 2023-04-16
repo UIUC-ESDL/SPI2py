@@ -214,7 +214,7 @@ class RigidBody(ValidateRigidBody):
         else:
 
             # If the object has no degrees of freedom, then return its current position
-            if dof is None:
+            if dof is ():
                 return {self.__repr__(): {'type': 'spheres', 'positions': self.positions, 'radii': self.radii}}
 
             # Extract the design variables from the design vector
