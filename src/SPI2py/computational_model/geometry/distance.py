@@ -312,7 +312,7 @@ def signed_distances_spheres_capsule(sphere_positions: np.ndarray,
 
     signed_distances = []
     for position, radius in zip(sphere_positions, sphere_radii):
-        signed_distance = minimum_distance_segment_segment(position, position, capsule_a, capsule_b)[0] - radius - capsule_radii
+        signed_distance = (radius + capsule_radii) - minimum_distance_segment_segment(position, position, capsule_a, capsule_b)[0]
         signed_distances.append(signed_distance)
 
     return np.array(signed_distances)

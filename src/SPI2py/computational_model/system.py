@@ -216,13 +216,13 @@ class System:
         # Create a list of all component-interconnect pairs
 
         pairs = list(product(self.components, self.interconnects))
-
+        check_pairs = []
         # Remove pairs that contain a component and its own interconnect
         for component, interconnect in pairs:
-            if component is interconnect.object_1 or component is interconnect.object_2:
-                pairs.remove((component, interconnect))
+            if component.__repr__() != interconnect.component_1_name and component.__repr__() != interconnect.component_2_name:
+                check_pairs.append((component, interconnect))
 
-        return pairs
+        return check_pairs
 
 
     @property
@@ -233,6 +233,7 @@ class System:
 
         TODO Write unit tests to ensure it creates the correct pairs
         TODO Vectorize with cartesian product
+        TODO unmutate list
 
         :return:
         """
