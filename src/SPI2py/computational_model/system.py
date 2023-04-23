@@ -5,7 +5,7 @@ from scipy.optimize import NonlinearConstraint
 from itertools import combinations, product
 from .objects import Component, Interconnect
 
-from .geometry.distance import normalized_aggregate_gap_distance
+from .analysis.objectives import normalized_aggregate_gap_distance
 from .geometry.discrete_collision_detection import discrete_collision_detection
 
 from src.SPI2py.computational_model.analysis.constraint_aggregation import kreisselmeier_steinhauser, p_norm, induced_exponential, induced_power
@@ -142,18 +142,18 @@ class System:
 
     @property
     def static_objects(self):
-        objects = []
-        for obj in self.objects:
-            if obj.movement_class == 'static':
-                objects.append(obj)
-
-        # other_objects=[]
-        # # TODO UPDATE and ref is global
+        # objects = []
         # for obj in self.objects:
-        #     if obj.degrees_of_freedom is None:
-        #         other_objects.append(obj)
+        #     if obj.movement_class == 'static':
+        #         objects.append(obj)
 
-        return objects
+        other_objects=[]
+        # TODO UPDATE and ref is global
+        for obj in self.objects:
+            if len(obj.degrees_of_freedom) == 0:
+                other_objects.append(obj)
+
+        return other_objects
 
     @property
     def independent_objects(self):
@@ -212,6 +212,8 @@ class System:
 
         :return:
         """
+
+        # Create a list of all component-interconnect pairs
 
         pairs = list(product(self.components, self.interconnects))
 
@@ -533,21 +535,25 @@ class System:
             self.constraint_functions.append(constraint_aggregation_function)
             self.constraints.append(nlc)
 
-    def calculate_metrics(self, x):
+    def calculate_metrics(self,
+                          x,
+                          requested_metrics=('objective', 'constraints')):
         """
         Calculate the objective function and constraint functions.
 
         """
 
-        # if
+        metrics = []
+        if 'objective' in requested_metrics:
+            objective = self.objectives[0](x)
+            metrics.append(objective)
 
-        objective = self.objectives[0](x)
+        if 'constraints' in requested_metrics:
+            constraints = [constraint_function(x) for constraint_function in self.constraint_functions]
+            metrics.append(constraints)
 
-        constraints = [constraint_function(x) for constraint_function in self.constraint_functions]
-        # constraints = []
-        # constraints = self.constraint_functions[1](x)
 
-        return objective, constraints
+        return metrics
 
 
     def plot(self):

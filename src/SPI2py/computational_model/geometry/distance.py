@@ -3,11 +3,14 @@
 Provides functions to calculate the distance between classes in various ways.
 """
 
-import autograd.numpy as np
+# import autograd.numpy as np
 
 import numpy as np
-from itertools import combinations
-from scipy.spatial.distance import cdist
+from itertools import combinations, product
+
+
+class DistanceFunctions2D:
+    pass
 
 def distances_points_points(a: np.ndarray,
                             b: np.ndarray) -> np.ndarray:
@@ -62,40 +65,7 @@ def distances_points_points(a: np.ndarray,
     return c
 
 
-def signed_distances_spheres_spheres(a:        np.ndarray,
-                                     a_radii:  np.ndarray,
-                                     b:        np.ndarray,
-                                     b_radii:  np.ndarray) -> np.ndarray:
-    """
-    Calculates the pairwise signed distance between two sets of spheres.
-
-    Convention:
-    Signed Distance < 0 means no overlap
-    Signed Distance = 0 means tangent
-    Signed Distance > 0 means overlap
-
-    TODO Write unit tests
-    TODO Reformat Radii shape so we don't have to keep reshaping it
-
-    :param a: Set of 3D points, (-1, 3) ndarray
-    :param a_radii: Set of radii, (-1) ndarray
-    :param b: Set of 3D points, (-1, 3) ndarray
-    :param b_radii: Set of radii, (-1) ndarray
-    :return: Signed distance, float
-    """
-
-    # Reshape radii
-    a_radii = a_radii.reshape(-1, 1)
-    b_radii = b_radii.reshape(-1, 1)
-
-    delta_positions = distances_points_points(a, b)
-    delta_radii     = distances_points_points(a_radii, b_radii)
-
-    signed_distances = delta_radii - delta_positions
-
-    signed_distances.flatten()
-
-    return signed_distances
+# 3D Distance Functions
 
 
 # @njit(cache=True)
@@ -221,12 +191,56 @@ def minimum_distance_segment_segment(a: np.ndarray,
     return minimum_distance, minimum_distance_position
 
 
-def minimum_signed_distance_capsule_capsule(a:        np.ndarray,
-                                            b:        np.ndarray,
-                                            ab_radii: np.ndarray,
-                                            c:        np.ndarray,
-                                            d:        np.ndarray,
-                                            cd_radii: np.ndarray) -> float:
+class DistanceFunctions3D:
+    pass
+
+
+
+def signed_distances_spheres_spheres(a:        np.ndarray,
+                                     a_radii:  np.ndarray,
+                                     b:        np.ndarray,
+                                     b_radii:  np.ndarray) -> np.ndarray:
+    """
+    Calculates the pairwise signed distance between two sets of spheres.
+
+    Convention:
+    Signed Distance < 0 means no overlap
+    Signed Distance = 0 means tangent
+    Signed Distance > 0 means overlap
+
+    TODO Write unit tests
+    TODO Reformat Radii shape so we don't have to keep reshaping it
+
+    :param a: Set of 3D points, (-1, 3) ndarray
+    :param a_radii: Set of radii, (-1) ndarray
+    :param b: Set of 3D points, (-1, 3) ndarray
+    :param b_radii: Set of radii, (-1) ndarray
+    :return: Signed distance, float
+    """
+
+    # Reshape radii
+    a_radii = a_radii.reshape(-1, 1)
+    b_radii = b_radii.reshape(-1, 1)
+
+    delta_positions = distances_points_points(a, b)
+    delta_radii     = distances_points_points(a_radii, b_radii)
+
+    signed_distances = delta_radii - delta_positions
+
+    signed_distances.flatten()
+
+    return signed_distances
+
+
+
+
+
+def minimum_distance_capsule_capsule(a:        np.ndarray,
+                                     b:        np.ndarray,
+                                     ab_radii: np.ndarray,
+                                     c:        np.ndarray,
+                                     d:        np.ndarray,
+                                     cd_radii: np.ndarray) -> float:
     """
     Returns the minimum signed distance between two capsules.
 
@@ -246,16 +260,44 @@ def minimum_signed_distance_capsule_capsule(a:        np.ndarray,
     TODO Enable NJIT
     """
 
+    # TODO Reinforce this assumption
     # Verify assumption 1
-    assert np.all(ab_radii == ab_radii[0])
-    assert np.all(cd_radii == cd_radii[0])
+    # assert np.all(ab_radii == ab_radii[0])
+    # assert np.all(cd_radii == cd_radii[0])
 
     minimum_distance, _ = minimum_distance_segment_segment(a, b, c, d)
 
     # TODO Verify this is the correct convention
-    minimum_signed_distance = minimum_distance - (ab_radii[0] + cd_radii[0])
+    minimum_signed_distance = minimum_distance - (ab_radii + cd_radii)
 
     return minimum_signed_distance
+
+
+def signed_distances_capsules_capsules(capsule_positions_1,
+                                       capsule_radii_1,
+                                       capsule_positions_2,
+                                       capsule_radii_2):
+
+    capsule_1_position_pairs = [(capsule_positions_1[i], capsule_positions_1[i + 1]) for i in range(len(capsule_positions_1) - 1)]
+    capsule_2_position_pairs = [(capsule_positions_2[i], capsule_positions_2[i + 1]) for i in range(len(capsule_positions_2) - 1)]
+    # capsule_pairs = list(combinations(capsule_position_pairs, 2))
+    # radii_pairs = list(combinations(capsule_radii_1, 2))
+
+    capsule_position_pairs = list(product(capsule_1_position_pairs, capsule_2_position_pairs))
+    radii_pairs = list(product(capsule_radii_1, capsule_radii_2))
+
+    signed_distances = []
+    for capsule_pair, radii_pair in zip(capsule_position_pairs, radii_pairs):
+        capsule_a = capsule_pair[0]
+        capsule_b = capsule_pair[1]
+        radii_a = radii_pair[0]
+        radii_b = radii_pair[1]
+        minimum_signed_distance = minimum_distance_capsule_capsule(capsule_a[0], capsule_a[1], radii_a,
+                                                                   capsule_b[0], capsule_b[1], radii_b)
+        signed_distances.append(minimum_signed_distance)
+
+    return np.array(signed_distances)
+
 
 
 def signed_distances_spheres_capsule(sphere_positions: np.ndarray,
@@ -271,10 +313,31 @@ def signed_distances_spheres_capsule(sphere_positions: np.ndarray,
 
     signed_distances = []
     for position, radius in zip(sphere_positions, sphere_radii):
-        signed_distance = minimum_distance_segment_segment(position, position, capsule_a, capsule_b)[0] - radius - capsule_radii[0]
+        signed_distance = minimum_distance_segment_segment(position, position, capsule_a, capsule_b)[0] - radius - capsule_radii
         signed_distances.append(signed_distance)
 
     return np.array(signed_distances)
+
+def signed_distances_spheres_capsules(sphere_positions: np.ndarray,
+                                        sphere_radii:     np.ndarray,
+                                        capsule_positions: np.ndarray,
+                                        capsule_radii:    np.ndarray) -> np.ndarray:
+
+    all_signed_distances = []
+
+    capsule_position_pairs = [(capsule_positions[i], capsule_positions[i + 1]) for i in
+                              range(len(capsule_positions) - 1)]
+
+
+    for capsule_pair, radii in zip(capsule_position_pairs, capsule_radii):
+        capsule_a = capsule_pair[0]
+        capsule_b = capsule_pair[1]
+
+        signed_distances = signed_distances_spheres_capsule(sphere_positions, sphere_radii, capsule_a, capsule_b, radii)
+
+        all_signed_distances.append(signed_distances)
+
+    return np.array(all_signed_distances)
 
 
 # TODO Implement KD Tree distance
@@ -312,68 +375,5 @@ def signed_distances_spheres_capsule(sphere_positions: np.ndarray,
 #     min_dist = np.min(dist)
 #
 #     return min_dist
-
-def aggregate_pairwise_distance(x, model):
-    """
-    Aggregates the distance between each 2-pair of classes
-
-    This function does not work well because its value becomes very large very quickly.
-    The gradient-based solver tends to "ignore" constraint functions that produce consraints
-    several orders of magnitude smaller, even when you force feasibility.
-
-    :param x:
-    :param model:
-    :return:
-    """
-
-    # Calculate the position of every sphere based on design vector x
-    positions_dict = model.calculate_positions(design_vector=x)
-
-    # Create a list of object pairs
-    object_pairs = list(combinations(positions_dict.keys(), 2))
-
-    objective = 0
-    for object_pair in object_pairs:
-        object_1 = object_pair[0]
-        object_2 = object_pair[1]
-
-        positions_1 = positions_dict[object_1][0]
-        positions_2 = positions_dict[object_2][0]
-
-        objective += sum(sum(cdist(positions_1, positions_2)))
-
-    return objective
-
-
-def normalized_aggregate_gap_distance(x, model):
-    """
-    Returns the normalized gap
-
-    :param x:
-    :param model:
-    :return:
-    """
-
-    # Evaluate the model at the design vector x
-    # Calculate the position of every sphere based on design vector x
-    positions_dict = model.calculate_positions(design_vector=x)
-
-    # Create a list of object pairs
-    object_pairs = list(combinations(positions_dict.keys(), 2))
-
-    objective = []
-    for object_pair in object_pairs:
-        object_1 = object_pair[0]
-        object_2 = object_pair[1]
-
-        positions_1 = positions_dict[object_1]['positions']
-        positions_2 = positions_dict[object_2]['positions']
-
-        objective.append(sum(sum(cdist(positions_1, positions_2))))
-
-    # Divide by number of components
-    objective = np.sum(objective) / len(objective)
-
-    return objective
 
 

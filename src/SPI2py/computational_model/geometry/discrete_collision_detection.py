@@ -1,6 +1,7 @@
 from autograd import numpy as np
 
-from .distance import signed_distances_spheres_spheres, signed_distances_spheres_capsule, minimum_signed_distance_capsule_capsule
+from .distance import signed_distances_spheres_spheres, signed_distances_spheres_capsule, minimum_distance_capsule_capsule, signed_distances_capsules_capsules, signed_distances_spheres_capsules
+
 
 
 def discrete_collision_detection(x, model, object_pair, object_class_1, object_class_2):
@@ -38,15 +39,19 @@ def discrete_collision_detection(x, model, object_pair, object_class_1, object_c
             all_signed_distances.append(signed_distances)
 
         elif object_class_1 == 'component' and object_class_2 == 'interconnect':
-            signed_distances = signed_distances_spheres_capsule(positions_a, radii_a, positions_b[0],positions_b[-1], radii_b).flatten()
+
+
+            signed_distances = signed_distances_spheres_capsules(positions_a, radii_a, positions_b, radii_b).flatten()
             all_signed_distances.append(signed_distances)
 
         elif object_class_1 == 'interconnect' and object_class_2 == 'component':
-            signed_distances = signed_distances_spheres_capsule(positions_b, radii_b, positions_a[0], positions_a[-1], radii_a).flatten()
+
+            signed_distances = signed_distances_spheres_capsules(positions_b, radii_b, positions_a, radii_a).flatten()
             all_signed_distances.append(signed_distances)
 
         elif object_class_1 == 'interconnect' and object_class_2 == 'interconnect':
-            signed_distance = minimum_signed_distance_capsule_capsule(positions_a[0],positions_a[-1], radii_a, positions_b[0], positions_b[-1], radii_b)
+
+            signed_distance = signed_distances_capsules_capsules(positions_a, radii_a, positions_b, radii_b)
             signed_distance = np.array([signed_distance])
             all_signed_distances.append(signed_distance)
 

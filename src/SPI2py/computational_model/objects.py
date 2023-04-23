@@ -202,6 +202,7 @@ class Interconnect:
         self.node_pairs = self.create_node_pairs()
 
         self.movement_class = 'partially dependent'
+        self.degrees_of_freedom = degrees_of_freedom
 
         self.waypoint_positions = np.zeros((self.number_of_waypoints, 3))
 
@@ -293,7 +294,7 @@ class Interconnect:
     #     return [segment.edge for segment in self.segments]
 
     def plot(self):
-        objects= []
+        objects = []
         colors = []
 
         # Plot spheres at each node
