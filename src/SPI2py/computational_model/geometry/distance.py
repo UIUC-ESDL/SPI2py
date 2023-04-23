@@ -258,6 +258,24 @@ def minimum_signed_distance_capsule_capsule(a:        np.ndarray,
     return minimum_signed_distance
 
 
+def signed_distances_spheres_capsule(sphere_positions: np.ndarray,
+                                     sphere_radii:     np.ndarray,
+                                     capsule_a:        np.ndarray,
+                                     capsule_b:        np.ndarray,
+                                     capsule_radii:    np.ndarray) -> np.ndarray:
+    """
+    Returns the signed distances between spheres and a capsule.
+
+    TODO Vectorize
+    """
+
+    signed_distances = []
+    for position, radius in zip(sphere_positions, sphere_radii):
+        signed_distance = minimum_distance_segment_segment(position, position, capsule_a, capsule_b)[0] - radius - capsule_radii[0]
+        signed_distances.append(signed_distance)
+
+    return np.array(signed_distances)
+
 
 # TODO Implement KD Tree distance
 # def min_kdtree_distance(tree, positions):

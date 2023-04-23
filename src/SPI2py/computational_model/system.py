@@ -6,7 +6,7 @@ from itertools import combinations, product
 from .objects import Component, Interconnect
 
 from .geometry.distance import normalized_aggregate_gap_distance
-from .geometry.discrete_collision_detection import signed_distances
+from .geometry.discrete_collision_detection import discrete_collision_detection
 
 from src.SPI2py.computational_model.analysis.constraint_aggregation import kreisselmeier_steinhauser, p_norm, induced_exponential, induced_power
 from src.SPI2py.computational_model.analysis import scale_model_based_objective
@@ -478,7 +478,7 @@ class System:
         """
 
         # UNPACK THE OPTIONS
-        type = options['type']
+        cd_type = options['type']
         object_class_1 = options['object class 1']
         object_class_2 = options['object class 2']
         constraint_tolerance = options['constraint tolerance']
@@ -489,17 +489,20 @@ class System:
 
         if object_class_1 == 'component' and object_class_2 == 'component':
             object_pair = self.component_component_pairs
+
         elif object_class_1 == 'component' and object_class_2 == 'interconnect' or \
                 object_class_1 == 'interconnect' and object_class_2 == 'component':
             object_pair = self.component_interconnect_pairs
+
         elif object_class_1 == 'interconnect' and object_class_2 == 'interconnect':
             object_pair = self.interconnect_interconnect_pairs
+
         else:
             raise NotImplementedError
 
         # SELECT THE CONSTRAINT FUNCTION HANDLE
         if constraint == 'signed distances':
-            def _constraint_function(x): return signed_distances(x, self, object_pair)
+            def _constraint_function(x): return discrete_collision_detection(x, self, object_pair, object_class_1, object_class_2)
         else:
             raise NotImplementedError
 
@@ -542,7 +545,7 @@ class System:
 
         # constraints = [constraint_function(x) for constraint_function in self.constraint_functions]
         # constraints = []
-        constraints = self.constraint_functions[0](x)
+        constraints = self.constraint_functions[1](x)
 
         return objective, constraints
 

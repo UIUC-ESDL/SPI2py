@@ -21,7 +21,7 @@ import yaml
 
 # Analysis Imports
 from .computational_model.geometry.distance import normalized_aggregate_gap_distance
-from .computational_model.geometry.discrete_collision_detection import signed_distances
+from .computational_model.geometry.discrete_collision_detection import discrete_collision_detection
 
 from src.SPI2py.computational_model.analysis.constraint_aggregation import kreisselmeier_steinhauser, p_norm, induced_exponential, induced_power
 from src.SPI2py.computational_model.analysis import scale_model_based_objective
