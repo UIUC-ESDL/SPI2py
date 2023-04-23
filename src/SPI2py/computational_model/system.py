@@ -543,9 +543,9 @@ class System:
 
         objective = self.objectives[0](x)
 
-        # constraints = [constraint_function(x) for constraint_function in self.constraint_functions]
+        constraints = [constraint_function(x) for constraint_function in self.constraint_functions]
         # constraints = []
-        constraints = self.constraint_functions[1](x)
+        # constraints = self.constraint_functions[1](x)
 
         return objective, constraints
 

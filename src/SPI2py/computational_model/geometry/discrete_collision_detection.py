@@ -47,19 +47,12 @@ def discrete_collision_detection(x, model, object_pair, object_class_1, object_c
 
         elif object_class_1 == 'interconnect' and object_class_2 == 'interconnect':
             signed_distance = minimum_signed_distance_capsule_capsule(positions_a[0],positions_a[-1], radii_a, positions_b[0], positions_b[-1], radii_b)
+            signed_distance = np.array([signed_distance])
             all_signed_distances.append(signed_distance)
 
         else:
             raise ValueError('Invalid object class pair')
 
-
-        # # TODO Reformat Radii shape so we don't have to keep reshaping it
-        # dPositions = distances_points_points(positions_a, positions_b)
-        # dRadii     = distances_points_points(radii_a.reshape(-1, 1), radii_b.reshape(-1, 1))
-        #
-        # all_signed_distances.append(dRadii - dPositions)
-        # signed_distances = signed_distances_spheres_spheres(positions_a, radii_a, positions_b, radii_b).flatten()
-        # all_signed_distances.append(signed_distances)
 
     all_signed_distances = np.concatenate(all_signed_distances, axis=0)
 
