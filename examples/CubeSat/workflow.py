@@ -122,45 +122,49 @@ study.generate_spatial_configuration(name='spatial_config_1', method='manual')
 
 
 # Plot initial spatial configuration
-system.plot()
+# system.plot()
 
-# # Perform gradient-based optimization
-#
-# system.add_objective(objective='normalized aggregate gap distance',
-#                     model=system,
-#                     options={'design vector scaling type': 'constant',
-#                              'design vector scaling factor': 1,
-#                              'objective scaling type': 'constant',
-#                              'objective scaling factor': 1 / 500})
-#
-# system.add_constraint(constraint='signed distances',
-#                      model=system,
-#                      options={'type': 'collision',
-#                               'object class 1': 'component',
-#                               'object class 2': 'component',
-#                               'constraint tolerance': 0.01,
-#                               'constraint aggregation': 'induced exponential',
-#                               'constraint aggregation parameter': 3.0})
-#
-# system.add_constraint(constraint='signed distances',
-#                      model=system,
-#                      options={'type': 'collision',
-#                               'object class 1': 'component',
-#                               'object class 2': 'interconnect',
-#                               'constraint tolerance': 0.01,
-#                               'constraint aggregation': 'induced exponential',
-#                               'constraint aggregation parameter': 3.0})
-#
-# system.add_constraint(constraint='signed distances',
-#                      model=system,
-#                      options={'type': 'collision',
-#                               'object class 1': 'interconnect',
-#                               'object class 2': 'interconnect',
-#                               'constraint tolerance': 0.01,
-#                               'constraint aggregation': 'induced exponential',
-#                               'constraint aggregation parameter': 3.0})
-#
-#
+# Perform gradient-based optimization
+
+system.add_objective(objective='normalized aggregate gap distance',
+                     options={'design vector scaling type': 'constant',
+                              'design vector scaling factor': 1,
+                              'objective scaling type': 'constant',
+                              'objective scaling factor': 1 / 500})
+
+system.add_constraint(constraint='signed distances',
+                      options={'type': 'collision',
+                               'object class 1': 'component',
+                               'object class 2': 'component',
+                               'constraint tolerance': 0.01,
+                               'constraint aggregation': 'induced exponential',
+                               'constraint aggregation parameter': 3.0})
+
+system.add_constraint(constraint='signed distances',
+                      options={'type': 'collision',
+                               'object class 1': 'component',
+                               'object class 2': 'interconnect',
+                               'constraint tolerance': 0.01,
+                               'constraint aggregation': 'induced exponential',
+                               'constraint aggregation parameter': 3.0})
+
+system.add_constraint(constraint='signed distances',
+                      options={'type': 'collision',
+                               'object class 1': 'interconnect',
+                               'object class 2': 'interconnect',
+                               'constraint tolerance': 0.01,
+                               'constraint aggregation': 'induced exponential',
+                               'constraint aggregation parameter': 3.0})
+
+
+x0 = list(study.initial_design_vectors['spatial_config_1'].values())
+x0 = [item for sublist in x0 for item in sublist]
+
+obj, con = system.calculate_metrics(x0)
+
+print(obj)
+print(con)
+
 # study.optimize_spatial_configuration(options={'maximum number of iterations': 10,
 #                                               'convergence tolerance': 1e-2})
 #

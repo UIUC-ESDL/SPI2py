@@ -140,16 +140,7 @@ class DesignStudy:
 
 
 
-    def calculate_metrics(self, x):
-        """
-        Calculate the objective function and constraint functions.
 
-        """
-        objective = self.objective_function(x)
-
-        constraints = [constraint_function(x) for constraint_function in self.constraint_functions]
-
-        return objective, constraints
 
     def calculate_objective_function(self):
         pass

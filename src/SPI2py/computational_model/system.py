@@ -430,7 +430,6 @@ class System:
 
     def add_objective(self,
                       objective,
-                      model,
                       options):
 
         """
@@ -462,7 +461,7 @@ class System:
 
 
         def objective_function(x):
-            return scale_model_based_objective(x, _objective_function, model,
+            return scale_model_based_objective(x, _objective_function, self,
                                                design_vector_scale_type=design_vector_scaling_type,
                                                design_vector_scale_factor=design_vector_scaling_factor,
                                                objective_scale_type=objective_scaling_type,
@@ -472,7 +471,6 @@ class System:
 
     def add_constraint(self,
                        constraint,
-                       model,
                        options):
 
         """
@@ -490,18 +488,18 @@ class System:
         # SELECT THE OBJECT PAIR
 
         if object_class_1 == 'component' and object_class_2 == 'component':
-            object_pair = model.component_component_pairs
+            object_pair = self.component_component_pairs
         elif object_class_1 == 'component' and object_class_2 == 'interconnect' or \
                 object_class_1 == 'interconnect' and object_class_2 == 'component':
-            object_pair = model.component_interconnect_pairs
+            object_pair = self.component_interconnect_pairs
         elif object_class_1 == 'interconnect' and object_class_2 == 'interconnect':
-            object_pair = model.interconnect_interconnect_pairs
+            object_pair = self.interconnect_interconnect_pairs
         else:
             raise NotImplementedError
 
         # SELECT THE CONSTRAINT FUNCTION HANDLE
         if constraint == 'signed distances':
-            def _constraint_function(x): return signed_distances(x, model, object_pair)
+            def _constraint_function(x): return signed_distances(x, self, object_pair)
         else:
             raise NotImplementedError
 
@@ -531,6 +529,22 @@ class System:
             nlc = NonlinearConstraint(constraint_aggregation_function, -np.inf, constraint_tolerance)
             self.constraint_functions.append(constraint_aggregation_function)
             self.constraints.append(nlc)
+
+    def calculate_metrics(self, x):
+        """
+        Calculate the objective function and constraint functions.
+
+        """
+
+        # if
+
+        objective = self.objectives[0](x)
+
+        # constraints = [constraint_function(x) for constraint_function in self.constraint_functions]
+        # constraints = []
+        constraints = self.constraint_functions[0](x)
+
+        return objective, constraints
 
 
     def plot(self):
