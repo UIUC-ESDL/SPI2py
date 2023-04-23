@@ -268,7 +268,7 @@ def minimum_distance_capsule_capsule(a:        np.ndarray,
     minimum_distance, _ = minimum_distance_segment_segment(a, b, c, d)
 
     # TODO Verify this is the correct convention
-    minimum_signed_distance = minimum_distance - (ab_radii + cd_radii)
+    minimum_signed_distance = (ab_radii + cd_radii) - minimum_distance
 
     return minimum_signed_distance
 
@@ -280,8 +280,7 @@ def signed_distances_capsules_capsules(capsule_positions_1,
 
     capsule_1_position_pairs = [(capsule_positions_1[i], capsule_positions_1[i + 1]) for i in range(len(capsule_positions_1) - 1)]
     capsule_2_position_pairs = [(capsule_positions_2[i], capsule_positions_2[i + 1]) for i in range(len(capsule_positions_2) - 1)]
-    # capsule_pairs = list(combinations(capsule_position_pairs, 2))
-    # radii_pairs = list(combinations(capsule_radii_1, 2))
+
 
     capsule_position_pairs = list(product(capsule_1_position_pairs, capsule_2_position_pairs))
     radii_pairs = list(product(capsule_radii_1, capsule_radii_2))
@@ -340,40 +339,5 @@ def signed_distances_spheres_capsules(sphere_positions: np.ndarray,
     return np.array(all_signed_distances)
 
 
-# TODO Implement KD Tree distance
-# def min_kdtree_distance(tree, positions):
-#     """
-#     Returns the minimum distance between a KD-Tree and object.
-#
-#     In some cases, we need to check the distance between two sets of points, but one
-#     set is extremely large (e.g., a complex structure) and thus the number of distance
-#     calculations combinatorially grows and becomes prohibitive.
-#
-#     For static structures (e.g., a structure) we can construct a data structure (i.e., KD Tree)
-#     once and then use it to efficiently perform distance calculations. Since the cost of
-#     constructing a KD Tree is relatively high, and you must reconstruct it every time positions
-#     change we do not use this for moving classes.
-#
-#     This function presumes the KD Tree is created when the object is initialized and thus
-#     takes the tree as an argument instead of trying to create a tree from points every
-#     function call.
-#
-#     interference<0 means no overlap
-#     interference=0 means tangent
-#     interference>0 means overlap
-#
-#     TODO Complete documentation
-#     TODO Write unit tests
-#
-#     :param tree:
-#     :param positions:
-#     :return:
-#     """
-#
-#     # tree.query returns distances and IDs. We only care about the distances
-#     dist, _ = tree.query(positions)
-#     min_dist = np.min(dist)
-#
-#     return min_dist
 
 

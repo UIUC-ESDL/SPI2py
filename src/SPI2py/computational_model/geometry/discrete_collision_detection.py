@@ -40,7 +40,6 @@ def discrete_collision_detection(x, model, object_pair, object_class_1, object_c
 
         elif object_class_1 == 'component' and object_class_2 == 'interconnect':
 
-
             signed_distances = signed_distances_spheres_capsules(positions_a, radii_a, positions_b, radii_b).flatten()
             all_signed_distances.append(signed_distances)
 
