@@ -122,7 +122,7 @@ study.generate_spatial_configuration(name='spatial_config_1', method='manual')
 
 
 # Plot initial spatial configuration
-system.plot()
+# system.plot()
 
 # Perform gradient-based optimization
 
@@ -165,18 +165,35 @@ obj, con = system.calculate_metrics(x0)
 print(obj)
 print(con)
 
-study.optimize_spatial_configuration(options={'maximum number of iterations': 100,
-                                              'convergence tolerance': 1e-3})
+x = np.array([ 1.82515278,  2.00464052, -0.22418859, -1.43902471,  0.25068738,
+        0.71523626, -0.97297035, -3.46762245, -0.67264752,  1.98852344,
+       -0.56104854, -1.08517915, -3.17785899,  2.01990026,  0.30666861,
+       -0.90755342, -0.69943541,  1.22064721,  2.13678219,  0.5635011 ,
+       -1.5059975 , -0.0930473 ,  2.25286219, -0.74430083, -0.57502765,
+       -0.32839024,  0.72500935, -0.49210847, -0.55807707,  0.58709315,
+        1.57458206,  1.05384339,  1.15976194])
 
-# Post-processing
+obj, con = system.calculate_metrics(x)
 
-# Plot the final spatial configuration
-new_positions = system.calculate_positions(study.result.x)
-system.set_positions(new_positions)
+print(obj)
+print(con)
+
+pos_dict = system.calculate_positions(x)
+system.set_positions(pos_dict)
 system.plot()
 
-# Write output file
-study.create_report()
-
-# Print the log to see the optimization results and if any warnings or errors occurred
-study.print_log()
+# study.optimize_spatial_configuration(options={'maximum number of iterations': 100,
+#                                               'convergence tolerance': 1e-3})
+#
+# # Post-processing
+#
+# # Plot the final spatial configuration
+# new_positions = system.calculate_positions(study.result.x)
+# system.set_positions(new_positions)
+# system.plot()
+#
+# # Write output file
+# study.create_report()
+#
+# # Print the log to see the optimization results and if any warnings or errors occurred
+# study.print_log()

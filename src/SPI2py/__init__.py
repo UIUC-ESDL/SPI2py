@@ -1,2 +1,2 @@
 from .main import DesignStudy
-from src.SPI2py.computational_model.system import System
+from .group_model.system import System

@@ -318,9 +318,9 @@ def signed_distances_spheres_capsule(sphere_positions: np.ndarray,
     return np.array(signed_distances)
 
 def signed_distances_spheres_capsules(sphere_positions: np.ndarray,
-                                        sphere_radii:     np.ndarray,
-                                        capsule_positions: np.ndarray,
-                                        capsule_radii:    np.ndarray) -> np.ndarray:
+                                      sphere_radii:     np.ndarray,
+                                      capsule_positions: np.ndarray,
+                                      capsule_radii:    np.ndarray) -> np.ndarray:
 
     all_signed_distances = []
 

@@ -5,14 +5,14 @@ from scipy.optimize import NonlinearConstraint
 from itertools import combinations, product
 from .objects import Component, Interconnect
 
-from .analysis.objectives import normalized_aggregate_gap_distance
-from .geometry.discrete_collision_detection import discrete_collision_detection
+from src.SPI2py.group_model.component_spatial.analysis.objectives import normalized_aggregate_gap_distance
+from src.SPI2py.group_model.component_spatial.discrete_collision_detection import discrete_collision_detection
 
-from src.SPI2py.computational_model.analysis.constraint_aggregation import kreisselmeier_steinhauser, p_norm, induced_exponential, induced_power
-from src.SPI2py.computational_model.analysis import scale_model_based_objective
+from src.SPI2py.group_model.component_spatial.analysis.constraint_aggregation import kreisselmeier_steinhauser, p_norm, induced_exponential, induced_power
+from src.SPI2py.group_model.component_spatial.analysis import scale_model_based_objective
 
-from .geometry.spherical_decomposition import generate_rectangular_prisms
-from .visualization.plotting import plot_3d
+from src.SPI2py.group_model.component_spatial.spherical_decomposition import generate_rectangular_prisms
+from src.SPI2py.group_model.component_spatial.visualization import plot_3d
 
 
 @dataclass
