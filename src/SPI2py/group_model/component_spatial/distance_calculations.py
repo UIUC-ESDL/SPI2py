@@ -222,10 +222,6 @@ def signed_distances_spheres_spheres(centers_a: np.ndarray,
     :return: Signed distance, float
     """
 
-    # Reshape radii
-    # radii_a = radii_a.reshape(-1, 1)
-    # radii_b = radii_b.reshape(-1, 1)
-
     delta_positions = distances_points_points(centers_a, centers_b)
     delta_radii     = sum_radii(radii_a, radii_b)
 

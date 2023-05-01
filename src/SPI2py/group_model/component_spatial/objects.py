@@ -5,7 +5,7 @@ TODO Can I remove movement classes if I just use degrees of freedom and referenc
 from dataclasses import dataclass
 import logging
 
-from .object_kinematics import RigidBody
+from .kinematics import RigidBody
 
 from matplotlib import colors as mcolors
 
@@ -272,10 +272,15 @@ class Interconnect:
         pos_1 = objects_dict[self.object_1]['positions'][0]
         pos_2 = objects_dict[self.object_2]['positions'][0]
 
-        positions = np.vstack((pos_1, design_vector, pos_2))
-        radii = np.array([self.radius, self.radius])
+        node_positions = np.vstack((pos_1, design_vector, pos_2))
 
-        object_dict[str(self)] = {'type': 'interconnect', 'positions': positions, 'radii': radii}
+        # Index the starting and stopping nodes of each segment
+        a = node_positions[0:-1]
+        b = node_positions[1:None]
+
+        radii = np.repeat(self.radius, self.number_of_segments)
+
+        object_dict[str(self)] = {'type': 'interconnect', 'positions': [a, b], 'radii': radii}
 
         return object_dict
 
@@ -283,7 +288,7 @@ class Interconnect:
 
         self.positions = objects_dict[str(self)]['positions']
 
-        self.radii = np.repeat(self.radius, self.positions.shape[0])
+        self.radii = np.repeat(self.radius, self.number_of_segments)
 
 
     # @property

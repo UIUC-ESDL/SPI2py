@@ -15,6 +15,7 @@ def test_sphere_sphere_tangent_1():
 
     assert np.allclose(distances, expected_distances)
 
+
 def test_spheres_spheres_tangent_1():
 
     center_a = np.array([[0., 0., 0.], [0., 0., 0.]])

@@ -39,18 +39,20 @@ def discrete_collision_detection(x, model, object_pair, object_class_1, object_c
             all_signed_distances.append(signed_distances)
 
         elif object_class_1 == 'component' and object_class_2 == 'interconnect':
-
-            signed_distances = signed_distances_spheres_capsules(positions_a, radii_a, positions_b, radii_b).flatten()
+            a, b = positions_b
+            signed_distances = signed_distances_spheres_capsules(positions_a, radii_a, a, b, radii_b).flatten()
             all_signed_distances.append(signed_distances)
 
         elif object_class_1 == 'interconnect' and object_class_2 == 'component':
-
-            signed_distances = signed_distances_spheres_capsules(positions_b, radii_b, positions_a, radii_a).flatten()
+            a, b = positions_a
+            signed_distances = signed_distances_spheres_capsules(positions_b, radii_b, a, b, radii_a).flatten()
             all_signed_distances.append(signed_distances)
 
         elif object_class_1 == 'interconnect' and object_class_2 == 'interconnect':
+            a, b = positions_a
+            c, d = positions_b
 
-            signed_distance = signed_distances_capsules_capsules(positions_a, radii_a, positions_b, radii_b)
+            signed_distance = signed_distances_capsules_capsules(a, b, radii_a, c, d, radii_b)
             signed_distance = np.array([signed_distance])
             all_signed_distances.append(signed_distance)
 
