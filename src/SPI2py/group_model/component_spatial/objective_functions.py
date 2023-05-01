@@ -49,24 +49,25 @@ def normalized_aggregate_gap_distance(x, model):
 
     # Evaluate the model at the design vector x
     # Calculate the position of every sphere based on design vector x
-    # positions_dict = model.calculate_positions(design_vector=x)
-    #
-    # # Create a list of object pairs
-    # object_pairs = list(combinations(positions_dict.keys(), 2))
-    #
-    # objective = []
-    # for object_pair in object_pairs:
-    #     object_1 = object_pair[0]
-    #     object_2 = object_pair[1]
-    #
-    #     positions_1 = positions_dict[object_1]['positions']
-    #     positions_2 = positions_dict[object_2]['positions']
-    #
-    #     objective.append(sum(sum(cdist(positions_1, positions_2))))
-    #
-    # # Divide by number of components
-    # objective = np.sum(objective) / len(objective)
-    #
-    # return objective
+    positions_dict = model.calculate_positions(design_vector=x)
 
-    return 1
+    # Create a list of object pairs
+    # object_pairs = list(combinations(positions_dict.keys(), 2))
+    object_pairs = list(combinations(model.components, 2))
+
+    objective = []
+    for object_pair in object_pairs:
+        object_1 = object_pair[0]
+        object_2 = object_pair[1]
+
+        positions_1 = positions_dict[object_1.__repr__()]['positions']
+        positions_2 = positions_dict[object_2.__repr__()]['positions']
+
+        objective.append(sum(sum(cdist(positions_1, positions_2))))
+
+    # Divide by number of components
+    objective = np.sum(objective) / len(objective)
+
+    return objective
+
+

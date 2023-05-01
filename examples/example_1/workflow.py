@@ -122,7 +122,7 @@ study.generate_spatial_configuration(name='spatial_config_1', method='manual')
 
 
 # Plot initial spatial configuration
-# system.plot()
+system.plot()
 
 # Perform gradient-based optimization
 
@@ -165,26 +165,26 @@ system.add_constraint(constraint='signed distances',
 # print(obj)
 # print(con)
 
-x = np.array([ 1.82515278,  2.00464052, -0.22418859, -1.43902471,  0.25068738,
-        0.71523626, -0.97297035, -3.46762245, -0.67264752,  1.98852344,
-       -0.56104854, -1.08517915, -3.17785899,  2.01990026,  0.30666861,
-       -0.90755342, -0.69943541,  1.22064721,  2.13678219,  0.5635011 ,
-       -1.5059975 , -0.0930473 ,  2.25286219, -0.74430083, -0.57502765,
-       -0.32839024,  0.72500935, -0.49210847, -0.55807707,  0.58709315,
-        1.57458206,  1.05384339,  1.15976194])
-
-obj, con = system.calculate_metrics(x)
-
-print(obj)
-print(con)
+# x = np.array([ 1.82515278,  2.00464052, -0.22418859, -1.43902471,  0.25068738,
+#         0.71523626, -0.97297035, -3.46762245, -0.67264752,  1.98852344,
+#        -0.56104854, -1.08517915, -3.17785899,  2.01990026,  0.30666861,
+#        -0.90755342, -0.69943541,  1.22064721,  2.13678219,  0.5635011 ,
+#        -1.5059975 , -0.0930473 ,  2.25286219, -0.74430083, -0.57502765,
+#        -0.32839024,  0.72500935, -0.49210847, -0.55807707,  0.58709315,
+#         1.57458206,  1.05384339,  1.15976194])
+#
+# obj, con = system.calculate_metrics(x)
+#
+# print(obj)
+# print(con)
 #
 # pos_dict = system.calculate_positions(x)
 # system.set_positions(pos_dict)
 # system.plot()
 
-# study.optimize_spatial_configuration(options={'maximum number of iterations': 100,
-#                                               'convergence tolerance': 1e-3})
-#
+study.optimize_spatial_configuration(options={'maximum number of iterations': 100,
+                                              'convergence tolerance': 1e-3})
+
 # # Post-processing
 #
 # # Plot the final spatial configuration
