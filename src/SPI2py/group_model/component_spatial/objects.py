@@ -207,20 +207,23 @@ class Interconnect:
 
     @property
     def capsules(self):
+
+        a, b = self.positions
+
         directions = []
         heights = []
         centers = []
 
         for i in range(self.number_of_waypoints+1):
 
-            direction = self.positions[i + 1] - self.positions[i]
+            direction = b[i] - a[i]
 
             directions.append(direction)
 
             height = np.linalg.norm(direction)
             heights.append(height)
 
-            center = self.positions[i] + direction / 2
+            center = a[i] + direction / 2
             centers.append(center)
 
         return directions, heights, centers
@@ -299,9 +302,11 @@ class Interconnect:
         objects = []
         colors = []
 
+        a, b = self.positions
+
         # Plot spheres at each node
         for i in range(len(self.positions)):
-            objects.append(pv.Sphere(radius=self.radii[i], center=self.positions[i]))
+            objects.append(pv.Sphere(radius=self.radii[i], center=a[i]))
             colors.append(self.color)
 
         directions, heights, centers = self.capsules

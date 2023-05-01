@@ -185,15 +185,15 @@ system.add_constraint(constraint='signed distances',
 study.optimize_spatial_configuration(options={'maximum number of iterations': 100,
                                               'convergence tolerance': 1e-3})
 
-# # Post-processing
-#
-# # Plot the final spatial configuration
-# new_positions = system.calculate_positions(study.result.x)
-# system.set_positions(new_positions)
-# system.plot()
-#
-# # Write output file
-# study.create_report()
-#
-# # Print the log to see the optimization results and if any warnings or errors occurred
-# study.print_log()
+# Post-processing
+
+# Plot the final spatial configuration
+new_positions = system.calculate_positions(study.result.x)
+system.set_positions(new_positions)
+system.plot()
+
+# Write output file
+study.create_report()
+
+# Print the log to see the optimization results and if any warnings or errors occurred
+study.print_log()
