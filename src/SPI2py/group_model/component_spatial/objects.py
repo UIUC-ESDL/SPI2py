@@ -5,7 +5,7 @@ TODO Can I remove movement classes if I just use degrees of freedom and referenc
 from dataclasses import dataclass
 import logging
 
-from src.SPI2py.group_model.group_spatial.component_kinematics.object_kinematics import RigidBody
+from .object_kinematics import RigidBody
 
 from matplotlib import colors as mcolors
 

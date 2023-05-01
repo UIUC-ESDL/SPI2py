@@ -1,6 +1,6 @@
 import numpy as np
 from scipy.spatial.distance import cdist
-from src.SPI2py.computational_model.analysis import distances_points_points
+from SPI2py.group_model.component_spatial.distance_calculations import distances_points_points
 
 def test_pairwise_distance():
     """
@@ -16,6 +16,3 @@ def test_pairwise_distance():
     cd = cdist(a, b).reshape(-1)
 
     assert all(np.isclose(c, cd))
-
-
-

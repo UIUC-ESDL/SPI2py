@@ -1,5 +1,5 @@
 import numpy as np
-from SPI2py.analysis import minimum_distance_segment_segment
+from SPI2py.group_model.component_spatial.distance_calculations import minimum_distance_segment_segment
 
 # TODO Add tests for all negative coordinates and mixed coordinates
 
@@ -221,8 +221,4 @@ def test_skew():
     dist, _ = minimum_distance_segment_segment(a, b, c, d)
 
     assert np.isclose(dist, 1.0)
-
-
-# Autograd tests
-
 

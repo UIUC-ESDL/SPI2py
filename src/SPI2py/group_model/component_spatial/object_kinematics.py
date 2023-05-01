@@ -1,7 +1,7 @@
 import numpy as np
 from typing import Union
 import logging
-from .transformations import rigid_transformation
+from .spatial_transformations import rigid_transformation
 logger = logging.getLogger(__name__)
 
 

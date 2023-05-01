@@ -235,12 +235,12 @@ def signed_distances_spheres_spheres(a:        np.ndarray,
 
 
 
-def minimum_distance_capsule_capsule(a:        np.ndarray,
-                                     b:        np.ndarray,
-                                     ab_radii: np.ndarray,
-                                     c:        np.ndarray,
-                                     d:        np.ndarray,
-                                     cd_radii: np.ndarray) -> float:
+def minimum_distance_capsule_capsule(a:         np.ndarray,
+                                     b:         np.ndarray,
+                                     ab_radius: np.ndarray,
+                                     c:         np.ndarray,
+                                     d:         np.ndarray,
+                                     cd_radius: np.ndarray) -> np.ndarray:
     """
     Returns the minimum signed distance between two capsules.
 
@@ -268,42 +268,42 @@ def minimum_distance_capsule_capsule(a:        np.ndarray,
     minimum_distance, _ = minimum_distance_segment_segment(a, b, c, d)
 
     # TODO Verify this is the correct convention
-    minimum_signed_distance = (ab_radii + cd_radii) - minimum_distance
+    minimum_signed_distance = (ab_radius + cd_radius) - minimum_distance
 
     return minimum_signed_distance
 
 
-def signed_distances_capsules_capsules(capsule_positions_1,
-                                       capsule_radii_1,
-                                       capsule_positions_2,
-                                       capsule_radii_2):
+def signed_distances_capsules_capsules(a:        np.ndarray,
+                                       b:        np.ndarray,
+                                       ab_radii: np.ndarray,
+                                       c:        np.ndarray,
+                                       d:        np.ndarray,
+                                       cd_radii: np.ndarray) -> np.ndarray:
 
-    capsule_1_position_pairs = [(capsule_positions_1[i], capsule_positions_1[i + 1]) for i in range(len(capsule_positions_1) - 1)]
-    capsule_2_position_pairs = [(capsule_positions_2[i], capsule_positions_2[i + 1]) for i in range(len(capsule_positions_2) - 1)]
+    capsules_ab = [(ai, bi, ab_radius) for ai, bi, ab_radius in zip(a, b, ab_radii)]
+    capsules_cd = [(ci, di, cd_radius) for ci, di, cd_radius in zip(c, d, cd_radii)]
 
-
-    capsule_position_pairs = list(product(capsule_1_position_pairs, capsule_2_position_pairs))
-    radii_pairs = list(product(capsule_radii_1, capsule_radii_2))
+    capsule_pairs = list(product(capsules_ab, capsules_cd))
 
     signed_distances = []
-    for capsule_pair, radii_pair in zip(capsule_position_pairs, radii_pairs):
-        capsule_a = capsule_pair[0]
-        capsule_b = capsule_pair[1]
-        radii_a = radii_pair[0]
-        radii_b = radii_pair[1]
-        minimum_signed_distance = minimum_distance_capsule_capsule(capsule_a[0], capsule_a[1], radii_a,
-                                                                   capsule_b[0], capsule_b[1], radii_b)
+    for capsule_pair in capsule_pairs:
+        ai, bi, ab_radius = capsule_pair[0]
+        ci, di, cd_radius = capsule_pair[1]
+
+        minimum_distance, _ = minimum_distance_segment_segment(ai, bi, ci, di)
+        minimum_signed_distance = (ab_radius + cd_radius) - minimum_distance
+
         signed_distances.append(minimum_signed_distance)
 
     return np.array(signed_distances)
 
 
 
-def signed_distances_spheres_capsule(sphere_positions: np.ndarray,
-                                     sphere_radii:     np.ndarray,
-                                     capsule_a:        np.ndarray,
-                                     capsule_b:        np.ndarray,
-                                     capsule_radii:    np.ndarray) -> np.ndarray:
+def signed_distances_spheres_capsule(centers:  np.ndarray,
+                                     radii:    np.ndarray,
+                                     a:        np.ndarray,
+                                     b:        np.ndarray,
+                                     ab_radii: np.ndarray) -> np.ndarray:
     """
     Returns the signed distances between spheres and a capsule.
 
@@ -311,28 +311,30 @@ def signed_distances_spheres_capsule(sphere_positions: np.ndarray,
     """
 
     signed_distances = []
-    for position, radius in zip(sphere_positions, sphere_radii):
-        signed_distance = (radius + capsule_radii) - minimum_distance_segment_segment(position, position, capsule_a, capsule_b)[0]
+    for position, radius in zip(centers, radii):
+        signed_distance = (radius + ab_radii) - minimum_distance_segment_segment(position, position, a, b)[0]
         signed_distances.append(signed_distance)
 
     return np.array(signed_distances)
 
-def signed_distances_spheres_capsules(sphere_positions: np.ndarray,
-                                      sphere_radii:     np.ndarray,
-                                      capsule_positions: np.ndarray,
-                                      capsule_radii:    np.ndarray) -> np.ndarray:
+
+def signed_distances_spheres_capsules(centers:  np.ndarray,
+                                      radii:    np.ndarray,
+                                      a:        np.ndarray,
+                                      b:        np.ndarray,
+                                      ab_radii: np.ndarray) -> np.ndarray:
 
     all_signed_distances = []
 
-    capsule_position_pairs = [(capsule_positions[i], capsule_positions[i + 1]) for i in
-                              range(len(capsule_positions) - 1)]
+    # capsule_position_pairs = [(a[i], a[i + 1]) for i in
+    #                           range(len(a) - 1)]
 
 
-    for capsule_pair, radii in zip(capsule_position_pairs, capsule_radii):
+    for capsule_pair, radii in zip(capsule_position_pairs, ab_radii):
         capsule_a = capsule_pair[0]
         capsule_b = capsule_pair[1]
 
-        signed_distances = signed_distances_spheres_capsule(sphere_positions, sphere_radii, capsule_a, capsule_b, radii)
+        signed_distances = signed_distances_spheres_capsule(centers, radii, capsule_a, capsule_b, radii)
 
         all_signed_distances.append(signed_distances)
 
