@@ -47,15 +47,9 @@ def distances_points_points(a: np.ndarray,
 
     # # Reshape the arrays for broadcasting
 
-    # Radii
-    if a.shape[1] != 3 or b.shape[1] != 3:
-        aa = a.reshape(-1, 1, 1)
-        bb = b.reshape(1, -1, 1)
 
-    # Points
-    else:
-        aa = a.reshape(-1, 1, 3)
-        bb = b.reshape(1, -1, 3)
+    aa = a.reshape(-1, 1, 3)
+    bb = b.reshape(1, -1, 3)
 
     c = np.linalg.norm(aa-bb, axis=-1)
 
@@ -64,6 +58,16 @@ def distances_points_points(a: np.ndarray,
 
     return c
 
+def sum_radii(a, b):
+    # Sum radii
+    aa = a.reshape(-1, 1, 1)
+    bb = b.reshape(1, -1, 1)
+
+    c = aa + bb
+
+    c = c.flatten()
+
+    return c
 
 # 3D Distance Functions
 
@@ -196,10 +200,10 @@ class DistanceFunctions3D:
 
 
 
-def signed_distances_spheres_spheres(a:        np.ndarray,
-                                     a_radii:  np.ndarray,
-                                     b:        np.ndarray,
-                                     b_radii:  np.ndarray) -> np.ndarray:
+def signed_distances_spheres_spheres(centers_a: np.ndarray,
+                                     radii_a:   np.ndarray,
+                                     centers_b: np.ndarray,
+                                     radii_b:   np.ndarray) -> np.ndarray:
     """
     Calculates the pairwise signed distance between two sets of spheres.
 
@@ -211,66 +215,25 @@ def signed_distances_spheres_spheres(a:        np.ndarray,
     TODO Write unit tests
     TODO Reformat Radii shape so we don't have to keep reshaping it
 
-    :param a: Set of 3D points, (-1, 3) ndarray
-    :param a_radii: Set of radii, (-1) ndarray
-    :param b: Set of 3D points, (-1, 3) ndarray
-    :param b_radii: Set of radii, (-1) ndarray
+    :param centers_a: Set of 3D points, (-1, 3) ndarray
+    :param radii_a: Set of radii, (-1) ndarray
+    :param centers_b: Set of 3D points, (-1, 3) ndarray
+    :param radii_b: Set of radii, (-1) ndarray
     :return: Signed distance, float
     """
 
     # Reshape radii
-    a_radii = a_radii.reshape(-1, 1)
-    b_radii = b_radii.reshape(-1, 1)
+    # radii_a = radii_a.reshape(-1, 1)
+    # radii_b = radii_b.reshape(-1, 1)
 
-    delta_positions = distances_points_points(a, b)
-    delta_radii     = distances_points_points(a_radii, b_radii)
+    delta_positions = distances_points_points(centers_a, centers_b)
+    delta_radii     = sum_radii(radii_a, radii_b)
 
     signed_distances = delta_radii - delta_positions
 
     signed_distances.flatten()
 
     return signed_distances
-
-
-
-
-
-def minimum_distance_capsule_capsule(a:         np.ndarray,
-                                     b:         np.ndarray,
-                                     ab_radius: np.ndarray,
-                                     c:         np.ndarray,
-                                     d:         np.ndarray,
-                                     cd_radius: np.ndarray) -> np.ndarray:
-    """
-    Returns the minimum signed distance between two capsules.
-
-    Since we approximate objects such as line segments with a collection of spheres, approximating a line segment with a
-    large number of spheres will begin to resemble a capsule.
-
-    Convention:
-    Signed Distance < 0 means no overlap
-    Signed Distance = 0 means tangent
-    Signed Distance > 0 means overlap
-
-    Assumes:
-    1. All radii in line AB are the same and all radii in line CD are the same
-
-    TODO Validate that this function works
-    TODO Write unit tests
-    TODO Enable NJIT
-    """
-
-    # TODO Reinforce this assumption
-    # Verify assumption 1
-    # assert np.all(ab_radii == ab_radii[0])
-    # assert np.all(cd_radii == cd_radii[0])
-
-    minimum_distance, _ = minimum_distance_segment_segment(a, b, c, d)
-
-    # TODO Verify this is the correct convention
-    minimum_signed_distance = (ab_radius + cd_radius) - minimum_distance
-
-    return minimum_signed_distance
 
 
 def signed_distances_capsules_capsules(a:        np.ndarray,
@@ -299,46 +262,13 @@ def signed_distances_capsules_capsules(a:        np.ndarray,
 
 
 
-def signed_distances_spheres_capsule(centers:  np.ndarray,
-                                     radii:    np.ndarray,
-                                     a:        np.ndarray,
-                                     b:        np.ndarray,
-                                     ab_radii: np.ndarray) -> np.ndarray:
-    """
-    Returns the signed distances between spheres and a capsule.
-
-    TODO Vectorize
-    """
-
-    signed_distances = []
-    for position, radius in zip(centers, radii):
-        signed_distance = (radius + ab_radii) - minimum_distance_segment_segment(position, position, a, b)[0]
-        signed_distances.append(signed_distance)
-
-    return np.array(signed_distances)
-
-
 def signed_distances_spheres_capsules(centers:  np.ndarray,
                                       radii:    np.ndarray,
                                       a:        np.ndarray,
                                       b:        np.ndarray,
                                       ab_radii: np.ndarray) -> np.ndarray:
 
-    all_signed_distances = []
-
-    # capsule_position_pairs = [(a[i], a[i + 1]) for i in
-    #                           range(len(a) - 1)]
-
-
-    for capsule_pair, radii in zip(capsule_position_pairs, ab_radii):
-        capsule_a = capsule_pair[0]
-        capsule_b = capsule_pair[1]
-
-        signed_distances = signed_distances_spheres_capsule(centers, radii, capsule_a, capsule_b, radii)
-
-        all_signed_distances.append(signed_distances)
-
-    return np.array(all_signed_distances)
+    return signed_distances_capsules_capsules(centers, centers, radii, a, b, ab_radii)
 
 
 
