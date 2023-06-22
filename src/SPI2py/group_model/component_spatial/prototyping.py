@@ -208,18 +208,18 @@ for i in range(30):
     print('point', d_opt[:3])
     print('radius', d_opt[3])
 
-ax.scatter(points[:, 0], points[:, 1], points[:, 2], marker='o', s=300, c='b')
-ax.set_xlim(-2, 2)
-ax.set_ylim(-2, 2)
-ax.set_zlim(-2, 2)
-
-
-
-
-
-
-
-for position, radius in zip(points, radii):
-    plot_sphere(position, radius, 'b', ax, 10)
+# ax.scatter(points[:, 0], points[:, 1], points[:, 2], marker='o', s=300, c='b')
+# ax.set_xlim(-2, 2)
+# ax.set_ylim(-2, 2)
+# ax.set_zlim(-2, 2)
+#
+#
+#
+#
+#
+#
+#
+# for position, radius in zip(points, radii):
+#     plot_sphere(position, radius, 'b', ax, 10)
 
 
