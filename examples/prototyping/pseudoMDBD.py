@@ -44,11 +44,6 @@ filepath = 'C:/Users/cpgui/PycharmProjects/SPI2py/examples/prototyping/files/par
 
 mesh = trimesh.exchange.load.load(filepath)
 
-# Find the first point
-
-p1 = np.array([[5, 5, 5]])
-
-min_dist = trimesh.proximity.signed_distance(mesh, p1)
 
 # Define variable bounds
 
@@ -75,39 +70,48 @@ xx, yy, zz = np.meshgrid(x, y, z)
 # Flatten the meshgrids and conert them to a list of points
 points = np.vstack((xx.flatten(), yy.flatten(), zz.flatten())).T
 
-# Filter out points that are not inside the mesh
-signed_distances = trimesh.proximity.signed_distance(mesh, points)
-points = points[signed_distances > 0]
-
-# Find the point with the greatest minimum distance to the surface
-min_distances = []
-for point in points:
-    point_i = point.reshape(1, 3)
-    min_distance = trimesh.proximity.signed_distance(mesh, point_i)
-    min_distances.append(min_distance)
-
-max_min_distance = max(min_distances)
-
-max_min_point = points[np.argmax(min_distances)]
 
 
+# for i in range(1):
+
+
+# # Filter out points that are not inside the mesh
+# signed_distances = trimesh.proximity.signed_distance(mesh, points)
+# points_filtered = points[signed_distances > 0]
+#
+# # Find the point with the greatest minimum distance to the surface
+# min_distances = []
+# for point in points_filtered:
+#     point_i = point.reshape(1, 3)
+#     min_distance = trimesh.proximity.signed_distance(mesh, point_i)
+#     min_distances.append(min_distance)
+#
+# max_min_distance = max(min_distances)
+#
+# max_min_point = points_filtered[np.argmax(min_distances)]
 
 
 
-bounds = Bounds([x_min, y_min, z_min, r_min], [x_max, y_max, z_max, r_max])
-nlc = NonlinearConstraint(constraint, -np.inf, 2)
 
-x_0, y_0, z_0 = max_min_point
-r_0 = 0.5 * max_min_distance[0]
 
-d_0 = np.array([x_0, y_0, z_0, r_0])
 
-res = minimize(objective, d_0,
-               method='trust-constr',
-               constraints=nlc,
-               bounds=bounds,
-               tol=1e-3)
-
+#
+#
+#
+# bounds = Bounds([x_min, y_min, z_min, r_min], [x_max, y_max, z_max, r_max])
+# nlc = NonlinearConstraint(constraint, -np.inf, 2)
+#
+# x_0, y_0, z_0 = max_min_point
+# r_0 = 0.5 * max_min_distance[0]
+#
+# d_0 = np.array([x_0, y_0, z_0, r_0])
+#
+# res = minimize(objective, d_0,
+#                method='trust-constr',
+#                constraints=nlc,
+#                bounds=bounds,
+#                tol=1e-3)
+#
 
 
 
@@ -116,39 +120,42 @@ res = minimize(objective, d_0,
 
 
 # Plot object with PyVista
-plotter = pv.Plotter()
-
-part2 = pv.read(filepath)
-plotter.add_mesh(part2, color='white', opacity=0.5)
-
-# Plot points
-points = pv.PolyData(points)
-plotter.add_mesh(points, color='red', point_size=10, render_points_as_spheres=True)
-
-# Plot the max min point
-max_min_point = pv.PolyData(max_min_point)
-plotter.add_mesh(max_min_point, color='blue', point_size=20, render_points_as_spheres=True)
-
-
-
-# Plot the sphere
-sphere = pv.Sphere(center=res.x[:3], radius=res.x[3])
-plotter.add_mesh(sphere, color='green', opacity=0.75)
-
-# for i in range(len(points)):
-#     sphere = pv.Sphere(center=points[i], radius=radii[i])
-#     plotter.add_mesh(sphere, color='red', opacity=0.75)
+# plotter = pv.Plotter()
 #
-plotter.show()
+# part2 = pv.read(filepath)
+# plotter.add_mesh(part2, color='white', opacity=0.5)
+
+# # Plot points
+# points_filtered = pv.PolyData(points_filtered)
+# plotter.add_mesh(points_filtered, color='red', point_size=10, render_points_as_spheres=True)
+#
+# # Plot the max min point
+# max_min_point = pv.PolyData(max_min_point)
+# plotter.add_mesh(max_min_point, color='blue', point_size=20, render_points_as_spheres=True)
+#
+# # Plot the sphere
+# sphere = pv.Sphere(center=res.x[:3], radius=res.x[3])
+# plotter.add_mesh(sphere, color='green', opacity=0.75)
+#
+# plotter.show()
 
 
 
 
-sphere = pv.Sphere(center=res.x[:3], radius=res.x[3])
-# sphere = pv.Sphere(radius=50, center=(15, 15, 15))
-# result = cube.boolean_difference(sphere)
-result = part2.boolean_difference(sphere)
-result.plot(color='tan')
+# Create a sphere mesh in trimesh
+# sphere = trimesh.creation.uv_sphere(radius=res.x[3], transform=trimesh.transformations.translation_matrix(res.x[:3]))
+
+# Convert the sphere primitive into a mesh
+
+
+# Remove the sphere from the mesh
+# newmesh = trimesh.boolean.difference([mesh, sphere])
+
+# sphere = pv.Sphere(center=res.x[:3], radius=res.x[3])
+# # # sphere = pv.Sphere(radius=50, center=(15, 15, 15))
+#
+# part3 = part2.boolean_difference(sphere)
+# part3.plot(color='tan')
 
 # sphere = pv.Sphere(center=res.x[:3], radius=res.x[3]).triangulate().subdivide(3)
 #
@@ -167,5 +174,51 @@ result.plot(color='tan')
 
 # # Plot the mesh
 # plotter.add_mesh(mesh, color='white', opacity=0.5)
+
+# plotter.show()
+
+
+
+
+
+
+
+
+# part3_trimesh = trimesh.Trimesh(part3.points, faces=part3.faces)
+
+
+# Filter out points that are not inside the mesh
+# signed_distances = trimesh.proximity.signed_distance(part3_trimesh, points)
+# points_filtered = points[signed_distances > 0]
+
+# # Find the point with the greatest minimum distance to the surface
+# min_distances = []
+# for point in points_filtered:
+#     point_i = point.reshape(1, 3)
+#     min_distance = trimesh.proximity.signed_distance(part3_trimesh, point_i)
+#     min_distances.append(min_distance)
+#
+# max_min_distance = max(min_distances)
+#
+# max_min_point = points_filtered[np.argmax(min_distances)]
+
+
+# # Plot object with PyVista
+# plotter = pv.Plotter()
+#
+# # part2 = pv.read(filepath)
+# plotter.add_mesh(part3, color='white', opacity=0.5)
+#
+# # Plot points
+# points_filtered = pv.PolyData(points_filtered)
+# plotter.add_mesh(points_filtered, color='red', point_size=10, render_points_as_spheres=True)
+#
+# # Plot the max min point
+# max_min_point = pv.PolyData(max_min_point)
+# plotter.add_mesh(max_min_point, color='blue', point_size=20, render_points_as_spheres=True)
+#
+# # Plot the sphere
+# sphere = pv.Sphere(center=res.x[:3], radius=res.x[3])
+# plotter.add_mesh(sphere, color='green', opacity=0.75)
 #
 # plotter.show()
