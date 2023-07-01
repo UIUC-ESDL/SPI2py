@@ -3,18 +3,14 @@ Example 1:  Simple optimization of a 3D layout
 Author:     Chad Peterson
 """
 
-# Import packages
+# %% Import packages
 import os
-import numpy as np
-
-# A special comment telling PyCharm not to raise an (incorrect) warning.
+# Ignore the comment below, it disables an N/A warning in PyCharm
 # noinspection PyUnresolvedReferences
 from SPI2py import System, DesignStudy
 
-# Define the system
-
+# %% Define the system
 system = System(name='Demo System')
-
 
 system.add_component(name='control_valve_1',
                      color='aquamarine',
@@ -78,11 +74,7 @@ system.add_interconnect(name='hp_cv_to_actuator2',
                         number_of_bends=1,
                         degrees_of_freedom=('x', 'y', 'z'))
 
-
-
-
-
-# Define the design study
+# %% Define the design study
 
 # Obtain the local path of this example's directory
 local_directory = os.path.dirname(__file__) + '/'
@@ -102,12 +94,16 @@ study.config['Problem Description'] = 'Simple optimization of a 3D layout'
 # TODO replace add initial design vector to set_position
 # TODO Set initial design vector, including the static object... enter as dict arguments to manual
 # Specify for interconnect, have multiple waypoints
-study.add_initial_design_vector('control_valve_1', 'spatial_config_1', [-3., -4.41, -0.24, 0., 0., 0.])
-study.add_initial_design_vector('actuator_1', 'spatial_config_1', [2., 4.41, 0.24, 0., 0., 0.])
-study.add_initial_design_vector('component_2', 'spatial_config_1', [5, -3, -1, 0., 0., 0.])
-study.add_initial_design_vector('component_3', 'spatial_config_1', [-3., -1., 3., 0., 0., 0.])
-study.add_initial_design_vector('hp_cv_to_actuator', 'spatial_config_1', [-3., -2., 2., -1., 0., 2.])
-study.add_initial_design_vector('hp_cv_to_actuator2', 'spatial_config_1', [4., 0., 1.])
+
+# Set the position of each component and interconnect waypoint
+# For objects with at least one degree of freedom, the position is used as a starting point for the optimization.
+# For objects with no degrees of freedom, the position is fixed.
+study.set_initial_position('control_valve_1', 'spatial_config_1', [-3., -4.41, -0.24, 0., 0., 0.])
+study.set_initial_position('actuator_1', 'spatial_config_1', [2., 4.41, 0.24, 0., 0., 0.])
+study.set_initial_position('component_2', 'spatial_config_1', [5, -3, -1, 0., 0., 0.])
+study.set_initial_position('component_3', 'spatial_config_1', [-3., -1., 3., 0., 0., 0.])
+study.set_initial_position('hp_cv_to_actuator', 'spatial_config_1', [-3., -2., 2., -1., 0., 2.])
+study.set_initial_position('hp_cv_to_actuator2', 'spatial_config_1', [4., 0., 1.])
 
 system.map_static_object(object_name='structure_1', design_vector=[0, 0, -1, 0, 0, 0])
 
@@ -178,60 +174,22 @@ system.add_constraint(constraint='signed distances',
 # system.set_positions(pos_dict)
 # system.plot()
 
-# study.optimize_spatial_configuration(options={'maximum number of iterations': 25,
-#                                               'convergence tolerance': 1e-3})
-#
-# # Post-processing
-#
-# # Plot the final spatial configuration
-# new_positions = system.calculate_positions(study.result.x)
-# system.set_positions(new_positions)
-# system.plot()
-#
-# # Write output file
-# study.create_report()
-#
-# # Print the log to see the optimization results and if any warnings or errors occurred
-# study.print_log()
+study.optimize_spatial_configuration(options={'maximum number of iterations': 25,
+                                              'convergence tolerance': 1e-3})
+
+# Post-processing
+
+# Plot the final spatial configuration
+new_positions = system.calculate_positions(study.result.x)
+system.set_positions(new_positions)
+system.plot()
+
+# Write output file
+study.create_report()
+
+# Print the log to see the optimization results and if any warnings or errors occurred
+study.print_log()
 
 
 
 
-# from scipy.optimize import minimize
-
-# # Define the cache
-# cache = {}
-
-# def objective(x):
-#     # Check if the state is already in the cache
-#     if tuple(x) in cache:
-#         state = cache[tuple(x)]
-#     else:
-#         # Evaluate the model and store the state in the cache
-#         state = evaluate_model(x)
-#         cache[tuple(x)] = state
-
-#     # Calculate the objective function using the model state
-#     obj = calculate_objective(state)
-
-#     return obj
-
-# def constraint(x):
-#     # Check if the state is already in the cache
-#     if tuple(x) in cache:
-#         state = cache[tuple(x)]
-#     else:
-#         # Evaluate the model and store the state in the cache
-#         state = evaluate_model(x)
-#         cache[tuple(x)] = state
-
-#     # Calculate the constraint function using the model state
-#     con = calculate_constraint(state)
-
-#     return con
-
-# # Define the initial design vector
-# x0 = [0, 0, 0]
-
-# # Minimize the objective function subject to the constraint function
-# res = minimize(objective, x0, constraints={'type': 'ineq', 'fun': constraint})

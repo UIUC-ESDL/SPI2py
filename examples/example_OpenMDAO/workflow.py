@@ -106,12 +106,12 @@ study.config['Problem Description'] = 'Simple optimization of a 3D layout'
 # TODO replace add initial design vector to set_position
 # TODO Set initial design vector, including the static object... enter as dict arguments to manual
 # Specify for interconnect, have multiple waypoints
-study.add_initial_design_vector('control_valve_1', 'spatial_config_1', [-3., -4.41, -0.24, 0., 0., 0.])
-study.add_initial_design_vector('actuator_1', 'spatial_config_1', [2., 4.41, 0.24, 0., 0., 0.])
-study.add_initial_design_vector('component_2', 'spatial_config_1', [5, -3, -1, 0., 0., 0.])
-study.add_initial_design_vector('component_3', 'spatial_config_1', [-3., -1., 3., 0., 0., 0.])
-study.add_initial_design_vector('hp_cv_to_actuator', 'spatial_config_1', [-3., -2., 2., -1., 0., 2.])
-study.add_initial_design_vector('hp_cv_to_actuator2', 'spatial_config_1', [4., 0., 1.])
+study.set_initial_position('control_valve_1', 'spatial_config_1', [-3., -4.41, -0.24, 0., 0., 0.])
+study.set_initial_position('actuator_1', 'spatial_config_1', [2., 4.41, 0.24, 0., 0., 0.])
+study.set_initial_position('component_2', 'spatial_config_1', [5, -3, -1, 0., 0., 0.])
+study.set_initial_position('component_3', 'spatial_config_1', [-3., -1., 3., 0., 0., 0.])
+study.set_initial_position('hp_cv_to_actuator', 'spatial_config_1', [-3., -2., 2., -1., 0., 2.])
+study.set_initial_position('hp_cv_to_actuator2', 'spatial_config_1', [4., 0., 1.])
 
 system.map_static_object(object_name='structure_1', design_vector=[0, 0, -1, 0, 0, 0])
 

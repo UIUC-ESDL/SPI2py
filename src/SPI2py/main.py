@@ -23,7 +23,7 @@ import yaml
 
 
 # Optimize Imports
-from .driver.optimize.solvers import run_optimizer
+from .drivers.optimize.solvers import run_optimizer
 
 # Result Imports
 
@@ -98,7 +98,7 @@ class DesignStudy:
 
     # LAYOUT METHODS
 
-    def add_initial_design_vector(self, object_name, spatial_config_name, design_vector):
+    def set_initial_position(self, object_name, spatial_config_name, design_vector):
 
         if spatial_config_name not in list(self.initial_design_vectors.keys()):
             self.initial_design_vectors[spatial_config_name] = {}
@@ -190,4 +190,41 @@ class DesignStudy:
 
 
 
+# from scipy.optimize import minimize
 
+# # Define the cache
+# cache = {}
+
+# def objective(x):
+#     # Check if the state is already in the cache
+#     if tuple(x) in cache:
+#         state = cache[tuple(x)]
+#     else:
+#         # Evaluate the model and store the state in the cache
+#         state = evaluate_model(x)
+#         cache[tuple(x)] = state
+
+#     # Calculate the objective function using the model state
+#     obj = calculate_objective(state)
+
+#     return obj
+
+# def constraint(x):
+#     # Check if the state is already in the cache
+#     if tuple(x) in cache:
+#         state = cache[tuple(x)]
+#     else:
+#         # Evaluate the model and store the state in the cache
+#         state = evaluate_model(x)
+#         cache[tuple(x)] = state
+
+#     # Calculate the constraint function using the model state
+#     con = calculate_constraint(state)
+
+#     return con
+
+# # Define the initial design vector
+# x0 = [0, 0, 0]
+
+# # Minimize the objective function subject to the constraint function
+# res = minimize(objective, x0, constraints={'type': 'ineq', 'fun': constraint})
