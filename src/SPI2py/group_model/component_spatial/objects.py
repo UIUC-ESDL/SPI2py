@@ -34,7 +34,8 @@ class Component(RigidBody):
                  movement_class: str,
                  reference_axes: str = 'origin',
                  degrees_of_freedom: Union[tuple[str], None] = ('x', 'y', 'z', 'rx', 'ry', 'rz'),
-                 ports: Union[None, list[dict]] = None):
+                 ports: Union[None, list[dict]] = None,
+                 cad_file: str = None):
 
         self.name = self._validate_name(name)
         self.type = 'component'
@@ -59,6 +60,8 @@ class Component(RigidBody):
                 self.positions = np.vstack((self.positions, port['origin']))
                 self.radii = np.concatenate((self.radii, [port['radius']]))
                 self.port_indices.append(len(self.positions) - 1)
+
+        self.cad_file = cad_file
 
 
 
@@ -129,13 +132,19 @@ class Component(RigidBody):
         return self.name
 
     def plot(self):
-        spheres = []
+        objects = []
         colors = []
         for i in range(len(self.positions)):
-            spheres.append(pv.Sphere(radius=self.radii[i], center=self.positions[i]))
+            objects.append(pv.Sphere(radius=self.radii[i], center=self.positions[i]))
             colors.append(self.color)
 
-        return spheres, colors
+        if self.cad_file is not None:
+            mesh = pv.read(self.cad_file)
+            mesh = mesh.scale(1/50)
+            objects.append(mesh)
+            colors.append(self.color)
+
+        return objects, colors
 
 
 

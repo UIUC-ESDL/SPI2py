@@ -40,19 +40,19 @@ def constraint(d_i):
 # Load file
 
 filepath = 'C:/Users/cpgui/PycharmProjects/SPI2py/examples/prototyping/files/part2.stl'
+part = pv.read(filepath)
 
-
-mesh = trimesh.exchange.load.load(filepath)
+# mesh = trimesh.exchange.load.load(filepath)
 
 
 # Define variable bounds
 
-x_min = mesh.vertices[:, 0].min()
-x_max = mesh.vertices[:, 0].max()
-y_min = mesh.vertices[:, 1].min()
-y_max = mesh.vertices[:, 1].max()
-z_min = mesh.vertices[:, 2].min()
-z_max = mesh.vertices[:, 2].max()
+x_min = part.points[:, 0].min()
+x_max = part.points[:, 0].max()
+y_min = part.points[:, 1].min()
+y_max = part.points[:, 1].max()
+z_min = part.points[:, 2].min()
+z_max = part.points[:, 2].max()
 r_min = 0.01
 r_max = min([x_max - x_min, y_max - y_min, z_max - z_min]) / 2
 
@@ -75,24 +75,30 @@ points = np.vstack((xx.flatten(), yy.flatten(), zz.flatten())).T
 # for i in range(1):
 
 
-# # Filter out points that are not inside the mesh
+# Filter out points that are not inside the mesh
+
 # signed_distances = trimesh.proximity.signed_distance(mesh, points)
-# points_filtered = points[signed_distances > 0]
+points_filtered = np.array([point for point in points if part.find_containing_cell(point) != -1])
+
+# Find the point with the greatest minimum distance to the surface
+min_distances = []
+for point in points_filtered:
+
+    point_i = point.reshape(1, 3)
+
+    min_distance = trimesh.proximity.signed_distance(mesh, point_i)
+
+    min_distances.append(min_distance)
+
+max_min_distance = max(min_distances)
+
+max_min_point = points_filtered[np.argmax(min_distances)]
+
+# _, min_distance_point = part.find_closest_cell(point_i, return_closest_point=True)
 #
-# # Find the point with the greatest minimum distance to the surface
-# min_distances = []
-# for point in points_filtered:
-#     point_i = point.reshape(1, 3)
-#     min_distance = trimesh.proximity.signed_distance(mesh, point_i)
-#     min_distances.append(min_distance)
+# min_distance = np.linalg.norm(point - min_distance_point, axis=1)
 #
-# max_min_distance = max(min_distances)
-#
-# max_min_point = points_filtered[np.argmax(min_distances)]
-
-
-
-
+# min_distances.append(min_distance)
 
 
 #
@@ -120,24 +126,24 @@ points = np.vstack((xx.flatten(), yy.flatten(), zz.flatten())).T
 
 
 # Plot object with PyVista
-# plotter = pv.Plotter()
-#
-# part2 = pv.read(filepath)
-# plotter.add_mesh(part2, color='white', opacity=0.5)
+plotter = pv.Plotter()
 
-# # Plot points
-# points_filtered = pv.PolyData(points_filtered)
-# plotter.add_mesh(points_filtered, color='red', point_size=10, render_points_as_spheres=True)
-#
+
+plotter.add_mesh(part, color='white', opacity=0.5)
+
+# Plot points
+points_filtered = pv.PolyData(points_filtered)
+plotter.add_mesh(points_filtered, color='red', point_size=10, render_points_as_spheres=True)
+
 # # Plot the max min point
 # max_min_point = pv.PolyData(max_min_point)
 # plotter.add_mesh(max_min_point, color='blue', point_size=20, render_points_as_spheres=True)
-#
-# # Plot the sphere
+
+# Plot the sphere
 # sphere = pv.Sphere(center=res.x[:3], radius=res.x[3])
 # plotter.add_mesh(sphere, color='green', opacity=0.75)
-#
-# plotter.show()
+
+plotter.show()
 
 
 

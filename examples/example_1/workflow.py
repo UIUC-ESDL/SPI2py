@@ -6,6 +6,9 @@ Author:     Chad Peterson
 # Import packages
 import os
 import numpy as np
+
+# A special comment telling PyCharm not to raise an (incorrect) warning.
+# noinspection PyUnresolvedReferences
 from SPI2py import System, DesignStudy
 
 # Define the system
@@ -13,19 +16,12 @@ from SPI2py import System, DesignStudy
 system = System(name='Demo System')
 
 
-# from SPI2py.computational_model.geometry.geometric_representation import pseudo_mdbd
-#
-# pseudo_mdbd(2, 2, 2, 0.5, 0.5)
-
-# TODO Major--reimplement collision detection for interconnect segments.
-
-
-
 system.add_component(name='control_valve_1',
                      color='aquamarine',
                      movement_class='independent',
                      degrees_of_freedom=('x', 'y', 'z', 'rx', 'ry', 'rz'),
-                     shapes=[{'type': 'box', 'origin': [0, 0, 0], 'dimensions': [6, 2, 2], 'rotation': [0, 0, 0]}],
+                     cad_file='part_models/part1.stl',
+                     mdbd_filepath='part_models/part1_mdbd.txt',
                      ports=[{'name': 'supply', 'origin': [2, 1, 2.5], 'radius': 0.5},
                             {'name': 'return', 'origin': [4, 1, 2.5], 'radius': 0.5}])
 
@@ -182,21 +178,21 @@ system.add_constraint(constraint='signed distances',
 # system.set_positions(pos_dict)
 # system.plot()
 
-study.optimize_spatial_configuration(options={'maximum number of iterations': 25,
-                                              'convergence tolerance': 1e-3})
-
-# Post-processing
-
-# Plot the final spatial configuration
-new_positions = system.calculate_positions(study.result.x)
-system.set_positions(new_positions)
-system.plot()
-
-# Write output file
-study.create_report()
-
-# Print the log to see the optimization results and if any warnings or errors occurred
-study.print_log()
+# study.optimize_spatial_configuration(options={'maximum number of iterations': 25,
+#                                               'convergence tolerance': 1e-3})
+#
+# # Post-processing
+#
+# # Plot the final spatial configuration
+# new_positions = system.calculate_positions(study.result.x)
+# system.set_positions(new_positions)
+# system.plot()
+#
+# # Write output file
+# study.create_report()
+#
+# # Print the log to see the optimization results and if any warnings or errors occurred
+# study.print_log()
 
 
 

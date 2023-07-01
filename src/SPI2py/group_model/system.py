@@ -11,7 +11,7 @@ from src.SPI2py.group_model.component_spatial.collision_detection import discret
 from src.SPI2py.group_model.analysis import kreisselmeier_steinhauser, p_norm, induced_exponential, induced_power
 from src.SPI2py.group_model.analysis import scale_model_based_objective
 
-from .component_spatial.geometric_representation import generate_rectangular_prisms
+from .component_spatial.geometric_representation import read_mdbd_file, generate_rectangular_prisms
 from src.SPI2py.group_model.component_spatial.visualization import plot_3d
 
 
@@ -72,7 +72,9 @@ class System:
                       color: str,
                       movement_class: str,
                       degrees_of_freedom,
-                      shapes: list,
+                      cad_file: str = None,
+                      mdbd_filepath: str = None,
+                      shapes: list = None,
                       ports: list = None):
 
         """
@@ -85,17 +87,24 @@ class System:
         :return:
         """
 
-        origins = []
-        dimensions = []
-        for shape in shapes:
-            origins.append(shape['origin'])
-            dimensions.append(shape['dimensions'])
 
-        positions, radii = generate_rectangular_prisms(origins, dimensions)
+
+        if mdbd_filepath is not None:
+            positions, radii = read_mdbd_file(mdbd_filepath)
+        else:
+
+            origins = []
+            dimensions = []
+            for shape in shapes:
+                origins.append(shape['origin'])
+                dimensions.append(shape['dimensions'])
+
+            positions, radii = generate_rectangular_prisms(origins, dimensions)
 
         component = Component(name, positions, radii, color,
                               movement_class=movement_class,
                               degrees_of_freedom=degrees_of_freedom,
+                              cad_file=cad_file,
                               ports=ports)
 
         # Update the system

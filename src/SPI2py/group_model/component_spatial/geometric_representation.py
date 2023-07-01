@@ -22,6 +22,38 @@ class GeometricRepresentation:
         self.signed_distances = None
 
 
+
+def read_mdbd_file(filepath):
+    """
+    Reads a text file where each line contains x, y, z, r separated by spaces.
+    Returns an (n,3) numpy array for x,y,z positions and an (n,1) array for radii.
+
+    TODO Reshape radii from 1D to 2D or vice versa
+    """
+
+    with open(filepath, 'r') as f:
+        lines = f.readlines()
+
+    # TODO allow user to specify number of spheres
+    lines = lines[0:50]
+
+    positions = []
+    radii = []
+
+    for line in lines:
+        x, y, z, r = line.split()
+
+        positions.append([float(x), float(y), float(z)])
+        radii.append(float(r))
+
+    positions = np.array(positions)
+    radii = np.array(radii)
+
+    return positions, radii
+
+
+
+
 def generate_rectangular_prism(origin, dimension):
     """
     Generates...
