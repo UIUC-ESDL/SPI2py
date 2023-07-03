@@ -48,9 +48,9 @@ def constraint_2(d_i):
     radius = np.array([ri])
 
     distances = np.linalg.norm(sphere_points - point, axis=1)
-    gaps = -1 * ( distances - (sphere_radii + radius) )
+    gaps = -1 * ( distances - (sphere_radii.reshape(-1) + radius) )
 
-    return gaps.min()
+    return gaps
 
 # Load file
 
@@ -110,7 +110,7 @@ max_min_point = points_filtered[np.argmax(min_distances)]
 
 
 bounds = Bounds([x_min, y_min, z_min, r_min], [x_max, y_max, z_max, r_max])
-nlc = NonlinearConstraint(constraint, -np.inf, 2)
+nlc = NonlinearConstraint(constraint, -np.inf, 0)
 
 x_0, y_0, z_0 = max_min_point
 r_0 = 0.5 * max_min_distance[0]
@@ -129,10 +129,20 @@ sphere_radii = np.vstack((sphere_radii, res.x[3]))
 # Remove any points that are within the max-min sphere
 points_filtered = points_filtered[np.linalg.norm(points_filtered - res.x[:3], axis=1) > res.x[3]]
 
+min_distances = []
+for point in points_filtered:
+    point_i = point.reshape(1, 3)
+    min_distance = trimesh.proximity.signed_distance(mesh_trimesh, point_i)
+    min_distances.append(min_distance)
+
+max_min_distance = max(min_distances)
+max_min_point = points_filtered[np.argmax(min_distances)]
+
+
 
 bounds = Bounds([x_min, y_min, z_min, r_min], [x_max, y_max, z_max, r_max])
-nlc = NonlinearConstraint(constraint, -np.inf, 2)
-nlc2 = NonlinearConstraint(constraint_2, -np.inf, 2)
+nlc = NonlinearConstraint(constraint, -np.inf, 0)
+nlc2 = NonlinearConstraint(constraint_2, -np.inf, 0)
 
 x_0, y_0, z_0 = max_min_point
 r_0 = 0.5 * max_min_distance[0]
@@ -140,6 +150,38 @@ r_0 = 0.5 * max_min_distance[0]
 d_0 = np.array([x_0, y_0, z_0, r_0])
 
 res2 = minimize(objective, d_0,
+               method='trust-constr',
+               constraints=[nlc, nlc2],
+               bounds=bounds,
+               tol=1e-3)
+
+sphere_points = np.vstack((sphere_points, res2.x[:3]))
+sphere_radii = np.vstack((sphere_radii, res2.x[3]))
+
+
+
+points_filtered = points_filtered[np.linalg.norm(points_filtered - res2.x[:3], axis=1) > res2.x[3]]
+
+min_distances = []
+for point in points_filtered:
+    point_i = point.reshape(1, 3)
+    min_distance = trimesh.proximity.signed_distance(mesh_trimesh, point_i)
+    min_distances.append(min_distance)
+
+max_min_distance = max(min_distances)
+max_min_point = points_filtered[np.argmax(min_distances)]
+
+
+bounds = Bounds([x_min, y_min, z_min, r_min], [x_max, y_max, z_max, r_max])
+nlc = NonlinearConstraint(constraint, -np.inf, 0)
+nlc2 = NonlinearConstraint(constraint_2, -np.inf, 0)
+
+x_0, y_0, z_0 = max_min_point
+r_0 = 0.5 * max_min_distance[0]
+
+d_0 = np.array([x_0, y_0, z_0, r_0])
+
+res3 = minimize(objective, d_0,
                method='trust-constr',
                constraints=[nlc, nlc2],
                bounds=bounds,
@@ -210,6 +252,9 @@ sphere = pv.Sphere(center=res.x[:3], radius=res.x[3])
 plotter.add_mesh(sphere, color='green', opacity=0.75)
 
 sphere = pv.Sphere(center=res2.x[:3], radius=res2.x[3])
+plotter.add_mesh(sphere, color='purple', opacity=0.75)
+
+sphere = pv.Sphere(center=res3.x[:3], radius=res3.x[3])
 plotter.add_mesh(sphere, color='purple', opacity=0.75)
 
 # sphere = pv.Sphere(center=res.x[:3], radius=res.x[3])
