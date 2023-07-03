@@ -9,6 +9,8 @@ Ideas
 5. Calculate the maximum minimum distance --> use this as the starting point and radius (minus a small tolerance)
 6. Remove that sphere from the mesh, repeat for maxiter or a minimum maximum distance toelrance
 
+Cannot choose a point on the surface
+
 """
 
 import numpy as np
@@ -59,9 +61,9 @@ r_min = 0.01
 r_max = min([x_max - x_min, y_max - y_min, z_max - z_min]) / 2
 
 # Create an initial population of sample points
-nx = 12
-ny = 12
-nz = 12
+nx = 15
+ny = 15
+nz = 15
 
 # Create a 3d meshgrid
 x = np.linspace(x_min, x_max, nx)
@@ -72,9 +74,17 @@ xx, yy, zz = np.meshgrid(x, y, z)
 # Flatten the meshgrids and conert them to a list of points
 points_a = np.vstack((xx.flatten(), yy.flatten(), zz.flatten())).T
 
+
+sphere_points = np.empty((0, 3))
+sphere_radii = np.empty((0, 1))
+
+
 # Filter out points that are not inside the mesh
 signed_distances = trimesh.proximity.signed_distance(mesh_trimesh, points_a)
 points_filtered = points_a[signed_distances > 0]
+
+signed_distances_interior = trimesh.proximity.signed_distance(mesh_trimesh, points_filtered)
+points_filtered_interior = points_filtered[signed_distances_interior > 0.01]
 
 # Find the point with the greatest minimum distance to the surface
 min_distances = []
@@ -83,32 +93,47 @@ for point in points_filtered:
     min_distance = trimesh.proximity.signed_distance(mesh_trimesh, point_i)
     min_distances.append(min_distance)
 
-max_min_distance = max(min_distances)
-max_min_point = points_filtered[np.argmax(min_distances)]
+max_min_distance_1 = max(min_distances)
+max_min_point_1 = points_filtered[np.argmax(min_distances)]
+
+sphere_points = np.vstack((sphere_points, max_min_point_1))
+sphere_radii = np.vstack((sphere_radii, max_min_distance_1))
+
+
+# Remove any points that are within the max-min sphere
+points_filtered = points_filtered[np.linalg.norm(points_filtered - max_min_point_1, axis=1) > max_min_distance_1]
+
+
+
+min_distances = []
+for point in points_filtered:
+    point_i = point.reshape(1, 3)
+    min_distance = trimesh.proximity.signed_distance(mesh_trimesh, point_i)
+
+    # Ignore points who min_distance will overlap with existing spheres
+    if np.all(np.linalg.norm(sphere_points - point_i, axis=1) > (sphere_radii + min_distance)):
+        min_distances.append(min_distance)
+
+
+max_min_distance_2 = max(min_distances)
+max_min_point_2 = points_filtered[np.argmax(min_distances)]
 
 
 
 
-
-bounds = Bounds([x_min, y_min, z_min, r_min], [x_max, y_max, z_max, r_max])
-nlc = NonlinearConstraint(constraint, -np.inf, 2)
-
-x_0, y_0, z_0 = max_min_point
-r_0 = 0.5 * max_min_distance[0]
-
-d_0 = np.array([x_0, y_0, z_0, r_0])
-
-res = minimize(objective, d_0,
-               method='trust-constr',
-               constraints=nlc,
-               bounds=bounds,
-               tol=1e-3)
+# Filter out points that are not inside the mesh
+points_filtered = points_filtered[np.linalg.norm(points_filtered - max_min_point_2, axis=1) > max_min_distance_2]
 
 
 
-
-
-
+# min_distances = []
+# for point in points_filtered:
+#     point_i = point.reshape(1, 3)
+#     min_distance = trimesh.proximity.signed_distance(mesh_trimesh, point_i)
+#     min_distances.append(min_distance)
+#
+# max_min_distance_3 = max(min_distances)
+# max_min_point_3 = points_filtered[np.argmax(min_distances)]
 
 
 # Plot object with PyVista
@@ -118,23 +143,27 @@ part2 = pv.read(filepath)
 plotter.add_mesh(part2, color='white', opacity=0.5)
 
 # Plot points
-points = pv.PolyData(points_filtered)
+# points = pv.PolyData(points_filtered)
+points = pv.PolyData(points_filtered_interior)
 plotter.add_mesh(points, color='red', point_size=10, render_points_as_spheres=True)
 
 # Plot the max min point
-max_min_point = pv.PolyData(max_min_point)
+max_min_point = pv.PolyData(max_min_point_1)
 plotter.add_mesh(max_min_point, color='blue', point_size=20, render_points_as_spheres=True)
 
 
 
 # Plot the sphere
-sphere = pv.Sphere(center=res.x[:3], radius=res.x[3])
+# sphere = pv.Sphere(center=res.x[:3], radius=res.x[3])
+sphere = pv.Sphere(center=max_min_point_1, radius=max_min_distance_1)
 plotter.add_mesh(sphere, color='green', opacity=0.75)
 
-# for i in range(len(points)):
-#     sphere = pv.Sphere(center=points[i], radius=radii[i])
-#     plotter.add_mesh(sphere, color='red', opacity=0.75)
-#
+sphere = pv.Sphere(center=max_min_point_2, radius=max_min_distance_2)
+plotter.add_mesh(sphere, color='purple', opacity=0.75)
+
+# sphere = pv.Sphere(center=max_min_point_3, radius=max_min_distance_3)
+# plotter.add_mesh(sphere, color='teal', opacity=0.75)
+
 plotter.show()
 
 
