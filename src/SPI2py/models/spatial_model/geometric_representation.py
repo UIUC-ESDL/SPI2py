@@ -46,8 +46,11 @@ def read_mdbd_file(filepath):
         positions.append([float(x), float(y), float(z)])
         radii.append(float(r))
 
-    positions = np.array(positions)
-    radii = np.array(radii)
+    # TODO Remove scale factor
+    scale_factor = 1
+
+    positions = np.array(positions)*scale_factor
+    radii = np.array(radii)*scale_factor
 
     return positions, radii
 

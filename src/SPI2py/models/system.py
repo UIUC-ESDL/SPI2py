@@ -228,8 +228,11 @@ class System:
         check_pairs = []
         # Remove pairs that contain a component and its own interconnect
         for component, interconnect in pairs:
-            if component.__repr__() != interconnect.component_1_name and component.__repr__() != interconnect.component_2_name:
-                check_pairs.append((component, interconnect))
+
+            check_pairs.append((component, interconnect))
+            # TODO Temporarily disabled
+            # if component.__repr__() != interconnect.component_1_name and component.__repr__() != interconnect.component_2_name:
+            #     check_pairs.append((component, interconnect))
 
         return check_pairs
 

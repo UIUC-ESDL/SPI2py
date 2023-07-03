@@ -4,11 +4,8 @@ The EntryPoint Class provides the user with a means to interact with the SPI2py 
 """
 import json
 from datetime import datetime
-
 import logging
 import os
-
-
 import yaml
 
 

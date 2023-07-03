@@ -26,16 +26,16 @@ def objective(d_i):
     return -ri
 
 
-def constraint(d_i):
-    """The distance from the sphere to the surface must be greater than the radius"""
-
-    xi, yi, zi, ri = d_i
-
-    point = np.array([[xi, yi, zi]])
-
-    min_distance = trimesh.proximity.signed_distance(mesh, point)
-
-    return ri - min_distance
+# def constraint(d_i):
+#     """The distance from the sphere to the surface must be greater than the radius"""
+#
+#     xi, yi, zi, ri = d_i
+#
+#     point = np.array([[xi, yi, zi]])
+#
+#     min_distance = trimesh.proximity.signed_distance(mesh, point)
+#
+#     return ri - min_distance
 
 # Load file
 
@@ -81,24 +81,27 @@ points = np.vstack((xx.flatten(), yy.flatten(), zz.flatten())).T
 points_filtered = np.array([point for point in points if part.find_containing_cell(point) != -1])
 
 # Find the point with the greatest minimum distance to the surface
-min_distances = []
-for point in points_filtered:
-
-    point_i = point.reshape(1, 3)
-
-    min_distance = trimesh.proximity.signed_distance(mesh, point_i)
-
-    min_distances.append(min_distance)
-
-max_min_distance = max(min_distances)
-
-max_min_point = points_filtered[np.argmax(min_distances)]
-
-# _, min_distance_point = part.find_closest_cell(point_i, return_closest_point=True)
+# min_distances = []
+# for point in points_filtered:
 #
-# min_distance = np.linalg.norm(point - min_distance_point, axis=1)
+#     point_i = point.reshape(1, 3)
 #
-# min_distances.append(min_distance)
+#     cell_index, min_distance_point = part.find_closest_cell(point_i, return_closest_point=True)
+#
+#     min_distance = np.linalg.norm(point - min_distance_point, axis=1)
+#
+#     min_distances.append(min_distance)
+
+#
+#     min_distance = trimesh.proximity.signed_distance(mesh, point_i)
+#
+#     min_distances.append(min_distance)
+#
+# max_min_distan ce = max(min_distances)
+#
+# max_min_point = points_filtered[np.argmax(min_distances)]
+
+
 
 
 #
@@ -135,7 +138,7 @@ plotter.add_mesh(part, color='white', opacity=0.5)
 points_filtered = pv.PolyData(points_filtered)
 plotter.add_mesh(points_filtered, color='red', point_size=10, render_points_as_spheres=True)
 
-# # Plot the max min point
+# Plot the max min point
 # max_min_point = pv.PolyData(max_min_point)
 # plotter.add_mesh(max_min_point, color='blue', point_size=20, render_points_as_spheres=True)
 

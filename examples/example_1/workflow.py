@@ -3,21 +3,24 @@ Example 1:  Simple optimization of a 3D layout
 Author:     Chad Peterson
 """
 
+
 # %% Import packages
+
+
 import os
-# Ignore the comment below, it disables an N/A warning in PyCharm
-# noinspection PyUnresolvedReferences
 from SPI2py import System, DesignStudy
 
+
 # %% Define the system
+
+
 system = System(name='Demo System')
 
 system.add_component(name='control_valve_1',
                      color='aquamarine',
                      movement_class='independent',
                      degrees_of_freedom=('x', 'y', 'z', 'rx', 'ry', 'rz'),
-                     cad_file='part_models/part1.stl',
-                     mdbd_filepath='part_models/part1_mdbd.txt',
+                     shapes=[{'type': 'box', 'origin': [0, 0, 0], 'dimensions': [6, 2, 2], 'rotation': [0, 0, 0]}],
                      ports=[{'name': 'supply', 'origin': [2, 1, 2.5], 'radius': 0.5},
                             {'name': 'return', 'origin': [4, 1, 2.5], 'radius': 0.5}])
 
@@ -36,7 +39,8 @@ system.add_component(name='component_2',
                      color='indigo',
                      movement_class='independent',
                      degrees_of_freedom=('x', 'y', 'z', 'rx', 'ry', 'rz'),
-                     shapes=[{'type': 'box', 'origin': [0, 0, 0], 'dimensions': [1, 3, 3], 'rotation': [0, 0, 0]}])
+                     mdbd_filepath='part_models/demo_part_1.stl.txt',
+                     cad_file='part_models/demo_part_1.stl')
 
 system.add_component(name='component_3',
                      color='olive',
@@ -74,7 +78,9 @@ system.add_interconnect(name='hp_cv_to_actuator2',
                         number_of_bends=1,
                         degrees_of_freedom=('x', 'y', 'z'))
 
+
 # %% Define the design study
+
 
 # Obtain the local path of this example's directory
 local_directory = os.path.dirname(__file__) + '/'
@@ -88,6 +94,10 @@ study.add_system(system)
 # Define the username and problem description
 study.config['Username'] = 'Chad Peterson'
 study.config['Problem Description'] = 'Simple optimization of a 3D layout'
+
+
+# %% Define a spatial configuration for the design study
+
 
 # Map the system to a single spatial configuration
 
@@ -128,7 +138,7 @@ system.add_constraint(constraint='signed distances',
                       options={'type': 'collision',
                                'object class 1': 'component',
                                'object class 2': 'component',
-                               'constraint tolerance': 0.01,
+                               'constraint tolerance': 0.0,
                                'constraint aggregation': 'induced exponential',
                                'constraint aggregation parameter': 3.0})
 
@@ -144,38 +154,13 @@ system.add_constraint(constraint='signed distances',
                       options={'type': 'collision',
                                'object class 1': 'interconnect',
                                'object class 2': 'interconnect',
-                               'constraint tolerance': 0.01,
+                               'constraint tolerance': 0.0,
                                'constraint aggregation': 'induced exponential',
                                'constraint aggregation parameter': 3.0})
 
 
-# x0 = list(study.initial_design_vectors['spatial_config_1'].values())
-# x0 = [item for sublist in x0 for item in sublist]
-#
-# obj, con = system.calculate_metrics(x0)
-#
-# print(obj)
-# print(con)
-
-# x = np.array([ 1.82515278,  2.00464052, -0.22418859, -1.43902471,  0.25068738,
-#         0.71523626, -0.97297035, -3.46762245, -0.67264752,  1.98852344,
-#        -0.56104854, -1.08517915, -3.17785899,  2.01990026,  0.30666861,
-#        -0.90755342, -0.69943541,  1.22064721,  2.13678219,  0.5635011 ,
-#        -1.5059975 , -0.0930473 ,  2.25286219, -0.74430083, -0.57502765,
-#        -0.32839024,  0.72500935, -0.49210847, -0.55807707,  0.58709315,
-#         1.57458206,  1.05384339,  1.15976194])
-#
-# obj, con = system.calculate_metrics(x)
-#
-# print(obj)
-# print(con)
-#
-# pos_dict = system.calculate_positions(x)
-# system.set_positions(pos_dict)
-# system.plot()
-
-study.optimize_spatial_configuration(options={'maximum number of iterations': 25,
-                                              'convergence tolerance': 1e-3})
+study.optimize_spatial_configuration(options={'maximum number of iterations': 50,
+                                              'convergence tolerance': 1e-2})
 
 # Post-processing
 
