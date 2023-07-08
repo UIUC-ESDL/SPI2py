@@ -51,10 +51,10 @@ def constraint_nonoverlap(d_i):
 
     xi, yi, zi, ri = d_i
 
-    point = np.array([[xi, yi, zi]])
+    point_i = np.array([[xi, yi, zi]])
     radius = np.array([ri])
 
-    distances = np.linalg.norm(sphere_points - point, axis=1)
+    distances = np.linalg.norm(sphere_points - point_i, axis=1)
 
     # Use -1 to flip the convention (a negative gap means the spheres are overlapping, which violates the constraint
     # but the optimizer follows negative-null form so a negative constraint value means the constraint is satisfied).
@@ -62,27 +62,34 @@ def constraint_nonoverlap(d_i):
 
     return gaps
 
-# USER INPUT
-# Load file
-filepath = 'C:/Users/cpgui/PycharmProjects/SPI2py/examples/prototyping/files/part2.stl'
+
+# USER INPUT: Filepath
+filepath = 'C:/Users/cpgui/PycharmProjects/SPI2py/examples/prototyping/files/model_engine_decimated.stl'
 
 # Create the pyvista and trimesh objects. Both are required.
 mesh_pyvista = pv.read(filepath)
+
+# model_engine = pv.read('C:/Users/cpgui/PycharmProjects/SPI2py/examples/prototyping/files/Motor_final_solid_reducedv4.stl')
+# model_engine_decimated = model_engine.decimate_boundary(target_reduction=0.99)
+# model_engine_decimated.plot()
+# model_engine_decimated.save('C:/Users/cpgui/PycharmProjects/SPI2py/examples/prototyping/files/model_engine_decimated.stl')
+
+
 mesh_trimesh = trimesh.exchange.load.load(filepath)
 
 
-# Define variable bounds
+# Define variable bounds based on the object's bounding box
 x_min = mesh_trimesh.vertices[:, 0].min()
 x_max = mesh_trimesh.vertices[:, 0].max()
 y_min = mesh_trimesh.vertices[:, 1].min()
 y_max = mesh_trimesh.vertices[:, 1].max()
 z_min = mesh_trimesh.vertices[:, 2].min()
 z_max = mesh_trimesh.vertices[:, 2].max()
-r_min = 0.01
-r_max = min([x_max - x_min, y_max - y_min, z_max - z_min]) / 2
+r_min = 0.01  # Lower bound to prevent the nonphysical radius of 0
+r_max = min([x_max - x_min, y_max - y_min, z_max - z_min]) / 2  # The max radius must still fit inside the bounding box
 
-# USER INPUT
-# Create an initial population of sample points
+# USER INPUT: The number of increments for each dimension of the meshgrid.
+num_meshgrid_increments = 15
 nx = 15
 ny = 15
 nz = 15
@@ -132,7 +139,7 @@ res = minimize(objective, d_0,
                method='trust-constr',
                constraints=nlc,
                bounds=bounds,
-               tol=1e-3)
+               tol=1e-1)
 
 # Add the sphere to the list of spheres
 sphere_points = np.vstack((sphere_points, res.x[:3]))
@@ -145,7 +152,7 @@ points_filtered = points_filtered[np.linalg.norm(points_filtered - res.x[:3], ax
 # FURTHER SPHERES
 
 # USER INPUT
-num_spheres = 10
+num_spheres = 20
 
 for i in range(num_spheres):
 
@@ -182,7 +189,7 @@ for i in range(num_spheres):
                    method='trust-constr',
                    constraints=[nlc, nlc2],
                    bounds=bounds,
-                   tol=1e-3)
+                   tol=1e-1)
 
     sphere_points = np.vstack((sphere_points, res.x[:3]))
     sphere_radii = np.vstack((sphere_radii, res.x[3]))
@@ -199,8 +206,8 @@ part2 = pv.read(filepath)
 plotter.add_mesh(part2, color='white', opacity=0.5)
 
 # Plot points
-points = pv.PolyData(points_filtered)
-plotter.add_mesh(points, color='red', point_size=10, render_points_as_spheres=True)
+# points = pv.PolyData(points_filtered)
+# plotter.add_mesh(points, color='red', point_size=10, render_points_as_spheres=True)
 
 
 
