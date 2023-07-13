@@ -3,16 +3,16 @@ from dataclasses import dataclass
 
 from scipy.optimize import NonlinearConstraint
 from itertools import combinations, product
-from src.SPI2py.models.spatial_model.objects import Component, Interconnect
+from .spatial_model.objects import Component, Interconnect
 
-from src.SPI2py.models.spatial_model.objective_functions import normalized_aggregate_gap_distance
-from src.SPI2py.models.spatial_model.collision_detection import discrete_collision_detection
+from .spatial_model.objective_functions import normalized_aggregate_gap_distance
+from .spatial_model.collision_detection import discrete_collision_detection
 
-from src.SPI2py.models.analysis import kreisselmeier_steinhauser, p_norm, induced_exponential, induced_power
-from src.SPI2py.models.analysis import scale_model_based_objective
+from .utilities import kreisselmeier_steinhauser, p_norm, induced_exponential, induced_power
+from .utilities import scale_model_based_objective
 
 from .spatial_model.geometric_representation import read_mdbd_file, generate_rectangular_prisms
-from src.SPI2py.models.spatial_model.visualization import plot_3d
+from .spatial_model.visualization import plot_3d
 
 
 @dataclass

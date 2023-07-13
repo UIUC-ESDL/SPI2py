@@ -64,7 +64,7 @@ def constraint_nonoverlap(d_i):
 
 
 # USER INPUT: Filepath
-filepath = 'C:/Users/cpgui/PycharmProjects/SPI2py/examples/prototyping/files/model_engine_decimated.stl'
+filepath = 'C:/Users/cpgui/PycharmProjects/SPI2py/examples/prototyping/files/part2.stl'
 
 # Create the pyvista and trimesh objects. Both are required.
 mesh_pyvista = pv.read(filepath)

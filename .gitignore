@@ -1,6 +1,6 @@
 dist/*
-src/SPI2py/design_study/result/output/*
-!src/SPI2py/design_study/result/output/.gitkeep
+src/SPI2py/drivers/design_study/result/output/*
+!src/SPI2py/drivers/design_study/result/output/.gitkeep
 venv/*
 .idea
 .vscode

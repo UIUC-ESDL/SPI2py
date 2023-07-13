@@ -20,7 +20,9 @@ system.add_component(name='control_valve_1',
                      color='aquamarine',
                      movement_class='independent',
                      degrees_of_freedom=('x', 'y', 'z', 'rx', 'ry', 'rz'),
+                     # Defining a component geometry using geometric primitives (currently, only 'box' is supported)
                      shapes=[{'type': 'box', 'origin': [0, 0, 0], 'dimensions': [6, 2, 2], 'rotation': [0, 0, 0]}],
+                     # Defining ports; the origin is local WRT the object, not global WRT the axes
                      ports=[{'name': 'supply', 'origin': [2, 1, 2.5], 'radius': 0.5},
                             {'name': 'return', 'origin': [4, 1, 2.5], 'radius': 0.5}])
 
@@ -35,12 +37,13 @@ system.add_component(name='actuator_1',
                      ports=[{'name': 'supply', 'origin': [1, 0, 1], 'radius': 0.5},
                             {'name': 'return', 'origin': [2, 0, 1], 'radius': 0.5}])
 
+
 system.add_component(name='component_2',
                      color='indigo',
                      movement_class='independent',
                      degrees_of_freedom=('x', 'y', 'z', 'rx', 'ry', 'rz'),
-                     mdbd_filepath='part_models/demo_part_1.stl.txt',
-                     cad_file='part_models/demo_part_1.stl')
+                     # Defining a component geometry using a mdbd file (a text file where each line is "x y z radius")
+                     mdbd_filepath='part_models/demo_part_1.txt')
 
 system.add_component(name='component_3',
                      color='olive',
@@ -89,6 +92,7 @@ local_directory = os.path.dirname(__file__) + '/'
 study = DesignStudy(directory=local_directory,
                     study_name='Example 1')
 
+# Add the defined system to the design study
 study.add_system(system)
 
 # Define the username and problem description
@@ -115,10 +119,12 @@ study.set_initial_position('component_3', 'spatial_config_1', [-3., -1., 3., 0.,
 study.set_initial_position('hp_cv_to_actuator', 'spatial_config_1', [-3., -2., 2., -1., 0., 2.])
 study.set_initial_position('hp_cv_to_actuator2', 'spatial_config_1', [4., 0., 1.])
 
+
+# Map static objects to the spatial configuration (they do not have
 system.map_static_object(object_name='structure_1', design_vector=[0, 0, -1, 0, 0, 0])
 
 
-
+# Generate the spatial configuration
 study.generate_spatial_configuration(name='spatial_config_1', method='manual')
 
 

@@ -70,4 +70,23 @@ def normalized_aggregate_gap_distance(x, model):
 
     return objective
 
+# TODO Bounding box
+# aggregated values
+
+def bounding_box_volume(x, model):
+
+    """
+
+    """
+
+    # Evaluate the model at the design vector x
+    # Calculate the position of every sphere based on design vector x
+    positions_dict = model.calculate_positions(design_vector=x)
+
+    # Define the bounding box
+
+
+
+def bounding_box_volume_aggregated(x, model):
+    pass
 
