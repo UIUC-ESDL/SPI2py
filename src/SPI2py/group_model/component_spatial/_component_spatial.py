@@ -1,6 +1,8 @@
 import numpy as np
 from dataclasses import dataclass
 
+import openmdao.api as om
+
 from scipy.optimize import NonlinearConstraint
 from itertools import combinations, product
 from SPI2py.group_model.component_spatial.objects import Component, Interconnect
@@ -16,14 +18,34 @@ from SPI2py.group_model.component_spatial.visualization import plot_3d
 
 
 @dataclass
-class SystemState:
+class SpatialState:
     """
     Defines the state of a system at a given point in time.
     """
     design_vector: np.ndarray
     objects: str
 
-class System:
+
+class SpatialComponent(om.ExplicitComponent):
+
+    def initialize(self):
+        pass
+
+    def setup(self):
+        pass
+
+    def setup_partials(self):
+        pass
+
+    def compute(self, inputs, outputs):
+        pass
+
+    def compute_partials(self, inputs, partials):
+        pass
+
+
+
+class SpatialInterface:
     """
     Defines the associative (non-spatial) aspects of systems.
 
@@ -51,11 +73,13 @@ class System:
     """
 
     def __init__(self,
-                 name: str):
+                 name: str,
+                 components: list = None,
+                 interconnects: list = None):
 
         self.name = name
-        self.components = []
-        self.interconnects = []
+        self.components = components
+        self.interconnects = interconnects
         self.objectives = []
         self.constraints = []
         self.constraint_functions = []

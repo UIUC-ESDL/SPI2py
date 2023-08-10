@@ -8,15 +8,13 @@ Author:     Chad Peterson
 
 
 import os
-from SPI2py import System, DesignStudy
+from SPI2py import (SpatialInterface, Component, Interconnect, DesignStudy)
 
+# %% Define the components
 
-# %% Define the system
+components = []
 
-
-system = System(name='Demo System')
-
-system.add_component(name='control_valve_1',
+c0 = Component(name='control_valve_1',
                      color='aquamarine',
                      movement_class='independent',
                      degrees_of_freedom=('x', 'y', 'z', 'rx', 'ry', 'rz'),
@@ -26,7 +24,7 @@ system.add_component(name='control_valve_1',
                      ports=[{'name': 'supply', 'origin': [2, 1, 2.5], 'radius': 0.5},
                             {'name': 'return', 'origin': [4, 1, 2.5], 'radius': 0.5}])
 
-system.add_component(name='actuator_1',
+c1 = Component(name='actuator_1',
                      color='orange',
                      movement_class='independent',
                      degrees_of_freedom=('x', 'y', 'z', 'rx', 'ry', 'rz'),
@@ -38,14 +36,14 @@ system.add_component(name='actuator_1',
                             {'name': 'return', 'origin': [2, 0, 1], 'radius': 0.5}])
 
 
-system.add_component(name='component_2',
+c2 = Component(name='component_2',
                      color='indigo',
                      movement_class='independent',
                      degrees_of_freedom=('x', 'y', 'z', 'rx', 'ry', 'rz'),
                      # Defining a component geometry using a mdbd file (a text file where each line is "x y z radius")
                      mdbd_filepath='part_models/demo_part_1.txt')
 
-system.add_component(name='component_3',
+c3 = Component(name='component_3',
                      color='olive',
                      movement_class='independent',
                      degrees_of_freedom=('x', 'y', 'z', 'rx', 'ry', 'rz'),
@@ -54,32 +52,57 @@ system.add_component(name='component_3',
                              {'type': 'box', 'origin': [1, 1, 0.5], 'dimensions': [1, 1, 3], 'rotation': [0, 0, 0]},
                              {'type': 'box', 'origin': [1, 1, 3], 'dimensions': [2, 1, 1], 'rotation': [0, 0, 0]}])
 
-system.add_component(name='structure_1',
+c4 = Component(name='structure_1',
                      color='gray',
                      movement_class='static',
                      degrees_of_freedom=(),
                      shapes=[
                          {'type': 'box', 'origin': [0, 0, 0], 'dimensions': [2, 2, 0.5], 'rotation': [0, 0, 0]}])
 
-system.add_interconnect(name='hp_cv_to_actuator',
+components.append(c0)
+components.append(c1)
+components.append(c2)
+components.append(c3)
+components.append(c4)
+
+
+
+# %% Define the interconnects
+
+interconnects = []
+
+ic0 = Interconnect(name='hp_cv_to_actuator',
                         color='black',
-                        component_1='control_valve_1',
-                        component_1_port='supply',
-                        component_2='actuator_1',
-                        component_2_port='supply',
+                        component_1_name='control_valve_1',
+                        component_1_port_name='supply',
+                        component_2_name='actuator_1',
+                        component_2_port_name='supply',
                         radius=0.25,
-                        number_of_bends=2,
+                        number_of_waypoints=2,
                         degrees_of_freedom=(('x', 'y', 'z'), ('x', 'y', 'z')))
 
-system.add_interconnect(name='hp_cv_to_actuator2',
+ic1 = Interconnect(name='hp_cv_to_actuator2',
                         color='blue',
-                        component_1='control_valve_1',
-                        component_1_port='return',
-                        component_2='actuator_1',
-                        component_2_port='return',
+                        component_1_name='control_valve_1',
+                        component_1_port_name='return',
+                        component_2_name='actuator_1',
+                        component_2_port_name='return',
                         radius=0.25,
-                        number_of_bends=1,
+                        number_of_waypoints=1,
                         degrees_of_freedom=('x', 'y', 'z'))
+
+interconnects.append(ic0)
+interconnects.append(ic1)
+
+
+# %% Define the system
+
+
+system = SpatialInterface(name='Demo System',
+                          components=components,
+                          interconnects=interconnects)
+
+
 
 
 # %% Define the design study

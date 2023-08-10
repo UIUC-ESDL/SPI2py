@@ -6,6 +6,7 @@ from dataclasses import dataclass
 import logging
 
 from .kinematics import RigidBody
+from SPI2py.group_model.component_spatial.geometric_representation import read_mdbd_file, generate_rectangular_prisms
 
 from matplotlib import colors as mcolors
 
@@ -28,21 +29,42 @@ class Component(RigidBody):
     """
     def __init__(self,
                  name: str,
-                 positions: np.ndarray,
-                 radii: np.ndarray,
-                 color: str,
-                 movement_class: str,
+                 color: str=None,
+                 movement_class: str=None,
                  reference_axes: str = 'origin',
                  degrees_of_freedom: Union[tuple[str], None] = ('x', 'y', 'z', 'rx', 'ry', 'rz'),
+                 shapes=None,
                  ports: Union[None, list[dict]] = None,
-                 cad_file: str = None):
+                 cad_file: str = None,
+                 mdbd_filepath: str = None):
 
         self.name = self._validate_name(name)
+
+
+
+
         self.type = 'component'
         self.rotation = np.array([0, 0, 0])
         self.ports = self._validate_ports(ports)
         self.port_names = []
         self.port_indices = []
+
+        self.shapes = shapes
+        self.cad_file = cad_file
+        self.mdbd_filepath = mdbd_filepath
+
+        if mdbd_filepath is not None:
+            positions, radii = read_mdbd_file(mdbd_filepath)
+        else:
+
+            origins = []
+            dimensions = []
+            for shape in shapes:
+                origins.append(shape['origin'])
+                dimensions.append(shape['dimensions'])
+
+            positions, radii = generate_rectangular_prisms(origins, dimensions)
+
 
         RigidBody.__init__(self, positions, radii, movement_class, reference_axes, degrees_of_freedom)
 
@@ -54,6 +76,8 @@ class Component(RigidBody):
         # TODO Make tuple len zero not none
         self.dof = len(self.degrees_of_freedom)
 
+
+
         if self.ports is not None:
             for port in self.ports:
                 self.port_names.append(port['name'])
@@ -61,7 +85,8 @@ class Component(RigidBody):
                 self.radii = np.concatenate((self.radii, [port['radius']]))
                 self.port_indices.append(len(self.positions) - 1)
 
-        self.cad_file = cad_file
+
+
 
 
 
