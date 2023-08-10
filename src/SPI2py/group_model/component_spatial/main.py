@@ -10,7 +10,7 @@ from SPI2py.group_model.component_spatial.objects import Component, Interconnect
 from SPI2py.group_model.component_spatial.objective_functions import normalized_aggregate_gap_distance
 from SPI2py.group_model.component_spatial.collision_detection import discrete_collision_detection
 
-from SPI2py.group_model.utilities import kreisselmeier_steinhauser, p_norm, induced_exponential, induced_power
+from SPI2py.group_model.utilities import kreisselmeier_steinhauser
 
 from SPI2py.group_model.component_spatial.bounding_volumes import bounding_box
 from SPI2py.group_model.component_spatial.geometric_representation import read_mdbd_file, generate_rectangular_prisms
@@ -379,9 +379,7 @@ class SpatialInterface:
 
         return objects_dict
 
-    def set_objective(self,
-                      objective,
-                      options):
+    def set_objective(self, objective: str):
 
         """
         Add an objective to the design study.
@@ -401,14 +399,12 @@ class SpatialInterface:
         else:
             raise NotImplementedError
 
-
-        # SCALE THE OBJECTIVE FUNCTION
         def objective_function(x):
             return _objective_function(x, self)
 
         self.objective = objective_function
 
-    def add_constraint(self,
+    def set_constraint(self,
                        constraint,
                        options):
 
@@ -417,11 +413,10 @@ class SpatialInterface:
         """
 
         # UNPACK THE OPTIONS
-        cd_type = options['type']
         object_class_1 = options['object class 1']
         object_class_2 = options['object class 2']
         constraint_tolerance = options['constraint tolerance']
-        constraint_aggregation = options['constraint aggregation']
+
         constraint_aggregation_parameter = options['constraint aggregation parameter']
 
         # SELECT THE OBJECT PAIR
@@ -440,37 +435,24 @@ class SpatialInterface:
             raise NotImplementedError
 
         # SELECT THE CONSTRAINT FUNCTION HANDLE
-        if constraint == 'signed distances':
-            def _constraint_function(x): return discrete_collision_detection(x, self, object_pair, object_class_1, object_class_2)
+        if constraint == 'collision':
+            def _constraint_function(x):
+                return discrete_collision_detection(x, self, object_pair, object_class_1, object_class_2)
+
         else:
             raise NotImplementedError
 
         # SELECT THE CONSTRAINT AGGREGATION FUNCTION HANDLE
-        if constraint_aggregation is None:
-            pass
-        elif constraint_aggregation == 'kreisselmeier steinhauser':
-            _constraint_aggregation_function = kreisselmeier_steinhauser
-        elif constraint_aggregation == 'P-norm':
-            _constraint_aggregation_function = p_norm
-        elif constraint_aggregation == 'induced exponential':
-            _constraint_aggregation_function = induced_exponential
-        elif constraint_aggregation == 'induced power':
-            _constraint_aggregation_function = induced_power
-        else:
-            raise NotImplementedError
 
-        # TODO SCALE THE CONSTRAINT FUNCTION
+        _constraint_aggregation_function = kreisselmeier_steinhauser
 
-        if constraint_aggregation is None:
-            nlc = NonlinearConstraint(_constraint_function, -np.inf, constraint_tolerance)
-            self.constraint_functions.append(_constraint_function)
-            self.constraints.append(nlc)
-        else:
-            def constraint_aggregation_function(x):
-                return _constraint_aggregation_function(_constraint_function(x), rho=constraint_aggregation_parameter)
-            nlc = NonlinearConstraint(constraint_aggregation_function, -np.inf, constraint_tolerance)
-            self.constraint_functions.append(constraint_aggregation_function)
-            self.constraints.append(nlc)
+
+
+
+        def constraint_aggregation_function(x):
+            return _constraint_aggregation_function(_constraint_function(x), rho=constraint_aggregation_parameter)
+
+        self.constraints.append(constraint_aggregation_function)
 
     def calculate_objective(self, x):
         objective = self.objective(x)
@@ -480,7 +462,7 @@ class SpatialInterface:
         return objective
 
     def calculate_constraints(self, x):
-        constraints = [constraint_function(x) for constraint_function in self.constraint_functions]
+        constraints = [constraint_function(x) for constraint_function in self.constraints]
 
         constraints = np.array(constraints)
 

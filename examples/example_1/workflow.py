@@ -162,34 +162,24 @@ study.generate_spatial_configuration(name='spatial_config_1', method='manual')
 
 # Perform gradient-based optimization
 
-system.set_objective(objective='normalized aggregate gap distance',
-                     options={'design vector scaling type': 'constant',
-                              'design vector scaling factor': 1,
-                              'objective scaling type': 'constant',
-                              'objective scaling factor': 1 / 500})
+system.set_objective(objective='normalized aggregate gap distance')
 
-system.add_constraint(constraint='signed distances',
-                      options={'type': 'collision',
-                               'object class 1': 'component',
+system.set_constraint(constraint='collision',
+                      options={'object class 1': 'component',
                                'object class 2': 'component',
                                'constraint tolerance': 0.0,
-                               'constraint aggregation': 'induced exponential',
                                'constraint aggregation parameter': 3.0})
 
-system.add_constraint(constraint='signed distances',
-                      options={'type': 'collision',
-                               'object class 1': 'component',
+system.set_constraint(constraint='collision',
+                      options={'object class 1': 'component',
                                'object class 2': 'interconnect',
                                'constraint tolerance': 0.01,
-                               'constraint aggregation': 'induced exponential',
                                'constraint aggregation parameter': 3.0})
 
-system.add_constraint(constraint='signed distances',
-                      options={'type': 'collision',
-                               'object class 1': 'interconnect',
+system.set_constraint(constraint='collision',
+                      options={'object class 1': 'interconnect',
                                'object class 2': 'interconnect',
                                'constraint tolerance': 0.0,
-                               'constraint aggregation': 'induced exponential',
                                'constraint aggregation parameter': 3.0})
 
 
