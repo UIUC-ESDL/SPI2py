@@ -231,26 +231,20 @@ con0 = system.calculate_constraints(x0)
 # res0 = tryer(x0)
 
 
-
+# TODO Fix interconnect position gradients...
 from SPI2py.group_model.component_spatial.distance_calculations import signed_distances_capsules_capsules, minimum_distance_segment_segment
+from SPI2py.group_model.component_spatial.collision_detection import discrete_collision_detection
 
-a = np.array([[0., 0., 0.]])
-b = np.array([[1., 0., 0.]])
-ab_radii = np.array([[0.5]])
-c = np.array([[0., 1., 0.]])
-d = np.array([[0., 0., 1.]])
-cd_radii = np.array([[0.5]])
 
-x0 = np.array([0., 0., 0., 1., 0., 0., 0., 1., 0., 0., 0., 1.])
+def my_fun(x):
 
-# min_dist, min_point = minimum_distance_segment_segment(a, b, c, d)
-#
-# def my_fun(a, b, ab_radii, c, d, cd_radii):
-#
-#     min_dist = signed_distances_capsules_capsules(a, b, ab_radii, c, d, cd_radii)
-#
-#     return min_dist
-#
+    all_signed_distances = discrete_collision_detection(x, system, system.interconnect_interconnect_pairs, 'interconnect', 'interconnect')
+
+    return np.sum(all_signed_distances)
+
+res0 = my_fun(x0)
+grad0 = grad(my_fun)(x0)
+
 # ans0 = my_fun(a, b, ab_radii, c, d, cd_radii)
 # grad0 = grad(my_fun, argnums=(0,1,2,3,4,5))(a, b, ab_radii, c, d, cd_radii)
 # print(grad(my_fun)((a, b, c, d)))
