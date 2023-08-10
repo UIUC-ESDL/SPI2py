@@ -1,8 +1,6 @@
 [build-system]
-
-requires = ["setuptools>=61.0"] 
-
-build-backend = "setuptools.build_meta"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
 [project]
 name = "SPI2py"
@@ -30,6 +28,7 @@ dependencies = [
     "nbconvert",
     "autograd",
     "pyvista",
+    "openmdao",
 ]
 
 [project.optional-dependencies]

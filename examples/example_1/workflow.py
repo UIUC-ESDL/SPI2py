@@ -130,7 +130,7 @@ study.generate_spatial_configuration(name='spatial_config_1', method='manual')
 
 
 # Plot initial spatial configuration
-system.plot()
+# system.plot()
 
 # Perform gradient-based optimization
 
@@ -165,7 +165,7 @@ system.add_constraint(constraint='signed distances',
                                'constraint aggregation parameter': 3.0})
 
 
-study.optimize_spatial_configuration(options={'maximum number of iterations': 50,
+study.optimize_spatial_configuration(options={'maximum number of iterations': 10,
                                               'convergence tolerance': 1e-2})
 
 # Post-processing
@@ -173,7 +173,7 @@ study.optimize_spatial_configuration(options={'maximum number of iterations': 50
 # Plot the final spatial configuration
 new_positions = system.calculate_positions(study.result.x)
 system.set_positions(new_positions)
-system.plot()
+# system.plot()
 
 # Write output file
 study.create_report()
