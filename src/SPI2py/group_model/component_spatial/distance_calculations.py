@@ -237,7 +237,14 @@ def signed_distances_capsules_capsules(a:        np.ndarray,
     capsules_cd = [(ci, di, cd_radius) for ci, di, cd_radius in zip(c, d, cd_radii)]
 
     # TODO Precalculate this value
-    capsule_pairs = list(product(capsules_ab, capsules_cd))
+
+    # create a list of all possible capsule pairs between ab and cd
+    capsule_pairs = []
+    for capsule_ab in capsules_ab:
+        for capsule_cd in capsules_cd:
+            capsule_pairs.append((capsule_ab, capsule_cd))
+
+    # capsule_pairs = list(product(capsules_ab, capsules_cd))
 
     signed_distances = []
     for capsule_pair in capsule_pairs:

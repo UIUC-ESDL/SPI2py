@@ -243,17 +243,18 @@ cd_radii = np.array([[0.5]])
 
 x0 = np.array([0., 0., 0., 1., 0., 0., 0., 1., 0., 0., 0., 1.])
 
-min_dist, min_point = minimum_distance_segment_segment(a, b, c, d)
-
-def my_fun(a, b, c, d):
-
-    min_dist, min_point = minimum_distance_segment_segment(a, b, c, d)
-
-    return min_dist
-
-
+# min_dist, min_point = minimum_distance_segment_segment(a, b, c, d)
+#
+# def my_fun(a, b, ab_radii, c, d, cd_radii):
+#
+#     min_dist = signed_distances_capsules_capsules(a, b, ab_radii, c, d, cd_radii)
+#
+#     return min_dist
+#
+# ans0 = my_fun(a, b, ab_radii, c, d, cd_radii)
+# grad0 = grad(my_fun, argnums=(0,1,2,3,4,5))(a, b, ab_radii, c, d, cd_radii)
 # print(grad(my_fun)((a, b, c, d)))
-grad0 = grad(my_fun, argnums=(0,1,2,3))(a,b,c,d)
+# grad0 = grad(my_fun, argnums=(0,1,2,3))(a,b,c,d)
 
 
 

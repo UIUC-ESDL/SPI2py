@@ -60,6 +60,7 @@ def discrete_collision_detection(x, model, object_pair, object_class_1, object_c
             raise ValueError('Invalid object class pair')
 
 
+
     all_signed_distances = np.concatenate(all_signed_distances, axis=0)
 
     return all_signed_distances
