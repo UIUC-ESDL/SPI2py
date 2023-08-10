@@ -308,34 +308,37 @@ class SpatialInterface:
         TODO Remove unnecessary design vector arguments
         """
 
+
         if design_vector is not None:
             design_vectors = self.slice_design_vector(design_vector)
         else:
             design_vectors = list(design_vector_dict.values())
 
+        sums = np.array([np.sum(design_vector) for design_vector in design_vectors])
+        objects_dict = np.sum(sums)
 
-        objects_dict = {}
-
-
-        # STATIC OBJECTS
-        for obj in self.static_objects:
-            object_dict = obj.calculate_positions(None, objects_dict=objects_dict)
-            objects_dict = {**objects_dict, **object_dict}
-
-        # DYNAMIC OBJECTS - Independent then Partially Dependent
-        objects = self.independent_objects + self.partially_dependent_objects
-        for obj, design_vector_row in zip(objects, design_vectors):
-            object_dict = obj.calculate_positions(design_vector_row, objects_dict=objects_dict)
-            objects_dict = {**objects_dict, **object_dict}
-
-        # DYNAMIC OBJECTS - Fully Dependent
-        # TODO remove updating edges...? just use lines
-        for obj in self.fully_dependent_objects:
-            object_dict = obj.calculate_positions(design_vector, objects_dict=objects_dict)
-            objects_dict = {**objects_dict, **object_dict}
-
-        # TODO Add method for partially dependent objects
-        # DYNAMIC OBJECTS - Partially Dependent
+        # objects_dict = {}
+        #
+        #
+        # # STATIC OBJECTS
+        # for obj in self.static_objects:
+        #     object_dict = obj.calculate_positions(None, objects_dict=objects_dict)
+        #     objects_dict = {**objects_dict, **object_dict}
+        #
+        # # DYNAMIC OBJECTS - Independent then Partially Dependent
+        # objects = self.independent_objects + self.partially_dependent_objects
+        # for obj, design_vector_row in zip(objects, design_vectors):
+        #     object_dict = obj.calculate_positions(design_vector_row, objects_dict=objects_dict)
+        #     objects_dict = {**objects_dict, **object_dict}
+        #
+        # # DYNAMIC OBJECTS - Fully Dependent
+        # # TODO remove updating edges...? just use lines
+        # for obj in self.fully_dependent_objects:
+        #     object_dict = obj.calculate_positions(design_vector, objects_dict=objects_dict)
+        #     objects_dict = {**objects_dict, **object_dict}
+        #
+        # # TODO Add method for partially dependent objects
+        # # DYNAMIC OBJECTS - Partially Dependent
 
 
 
