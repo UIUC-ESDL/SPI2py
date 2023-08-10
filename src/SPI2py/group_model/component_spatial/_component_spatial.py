@@ -1,4 +1,4 @@
-import numpy as np
+import jax.numpy as np
 from dataclasses import dataclass
 
 import openmdao.api as om
@@ -84,6 +84,19 @@ class SpatialInterface:
         self.constraints = []
         self.constraint_functions = []
 
+        self.static_objects = self.get_static_objects()
+        self.independent_objects = self.get_independent_objects()
+        self.partially_dependent_objects = self.get_partially_dependent_objects()
+        self.fully_dependent_objects = self.get_fully_dependent_objects()
+        self._uncategorized_objects = self._get_uncategorized_objects()
+
+        self.component_component_pairs = self.get_component_component_pairs()
+        self.component_interconnect_pairs = self.get_component_interconnect_pairs()
+        self.interconnect_interconnect_pairs = self.get_interconnect_interconnect_pairs()
+        self.object_pairs = self.get_object_pairs()
+
+
+
 
     def __repr__(self):
         return f'System({self.name})'
@@ -91,72 +104,9 @@ class SpatialInterface:
     def __str__(self):
         return self.name
 
-    def add_component(self,
-                      name: str,
-                      color: str,
-                      movement_class: str,
-                      degrees_of_freedom,
-                      cad_file: str = None,
-                      mdbd_filepath: str = None,
-                      shapes: list = None,
-                      ports: list = None):
-
-        """
-        Add a component to the system.
-
-        :param name:
-        :param color:
-        :param movement_class:
-        :param shapes:
-        :return:
-        """
-
-
-
-        if mdbd_filepath is not None:
-            positions, radii = read_mdbd_file(mdbd_filepath)
-        else:
-
-            origins = []
-            dimensions = []
-            for shape in shapes:
-                origins.append(shape['origin'])
-                dimensions.append(shape['dimensions'])
-
-            positions, radii = generate_rectangular_prisms(origins, dimensions)
-
-        component = Component(name, positions, radii, color,
-                              movement_class=movement_class,
-                              degrees_of_freedom=degrees_of_freedom,
-                              cad_file=cad_file,
-                              ports=ports)
-
-        # Update the system
-        self.components.append(component)
-
-    def add_interconnect(self, name, component_1, component_1_port, component_2, component_2_port, radius, color,
-                         number_of_bends, degrees_of_freedom):
-        """
-        Add an interconnect to the system.
-
-        """
-        interconnect = Interconnect(name, component_1, component_1_port, component_2, component_2_port, radius, color,
-                                    number_of_bends, degrees_of_freedom)
-
-        self.interconnects.append(interconnect)
-
-
     @property
     def objects(self):
         return self.components + self.interconnects
-
-    def _validate_components(self):
-        # TODO Implement
-        pass
-
-    def _validate_interconnects(self):
-        # TODO Implement
-        pass
 
     # @property
     # def nodes(self):
@@ -173,8 +123,7 @@ class SpatialInterface:
     #
     #     return edges
 
-    @property
-    def static_objects(self):
+    def get_static_objects(self):
         # objects = []
         # for obj in self.objects:
         #     if obj.movement_class == 'static':
@@ -188,32 +137,28 @@ class SpatialInterface:
 
         return other_objects
 
-    @property
-    def independent_objects(self):
+    def get_independent_objects(self):
         objects = []
         for obj in self.objects:
             if obj.movement_class == 'independent':
                 objects.append(obj)
         return objects
 
-    @property
-    def partially_dependent_objects(self):
+    def get_partially_dependent_objects(self):
         objects = []
         for obj in self.objects:
             if obj.movement_class == 'partially dependent':
                 objects.append(obj)
         return objects
 
-    @property
-    def fully_dependent_objects(self):
+    def get_fully_dependent_objects(self):
         objects = []
         for obj in self.objects:
             if obj.movement_class == 'fully dependent':
                 objects.append(obj)
         return objects
 
-    @property
-    def _uncategorized_objects(self):
+    def _get_uncategorized_objects(self):
 
         """
         This list should be empty. It checks to make sure every object is categorized as one of the four types of objects.
@@ -229,13 +174,12 @@ class SpatialInterface:
 
         return uncategorized
 
-    @property
-    def component_component_pairs(self):
+    def get_component_component_pairs(self):
         """TODO Vectorize with cartesian product"""
         return list(combinations(self.components, 2))
 
-    @property
-    def component_interconnect_pairs(self):
+
+    def get_component_interconnect_pairs(self):
         """
         Pairing logic:
         1. Don't check for collision between a component and the interconnect that is attached to it.
@@ -261,8 +205,7 @@ class SpatialInterface:
         return check_pairs
 
 
-    @property
-    def interconnect_interconnect_pairs(self):
+    def get_interconnect_interconnect_pairs(self):
         """
         Pairing logic:
         1. Don't check for collision between two segments of the same interconnect.
@@ -283,8 +226,7 @@ class SpatialInterface:
 
         return pairs
 
-    @property
-    def object_pairs(self):
+    def get_object_pairs(self):
         object_pairs = []
         object_pairs += [self.component_component_pairs]
         object_pairs += [self.component_interconnect_pairs]

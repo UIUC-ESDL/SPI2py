@@ -1,4 +1,4 @@
-from autograd import numpy as np
+import jax.numpy as np
 
 from .distance_calculations import signed_distances_spheres_spheres, signed_distances_capsules_capsules, signed_distances_spheres_capsules
 
