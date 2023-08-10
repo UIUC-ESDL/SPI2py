@@ -12,7 +12,7 @@ from matplotlib import colors as mcolors
 
 logger = logging.getLogger(__name__)
 
-import numpy as np
+import jax.numpy as np
 from typing import Union
 
 import pyvista as pv
@@ -82,7 +82,7 @@ class Component(RigidBody):
             for port in self.ports:
                 self.port_names.append(port['name'])
                 self.positions = np.vstack((self.positions, port['origin']))
-                self.radii = np.concatenate((self.radii, [port['radius']]))
+                self.radii = np.concatenate((self.radii, np.array([port['radius']])))
                 self.port_indices.append(len(self.positions) - 1)
 
 

@@ -1,5 +1,6 @@
 from itertools import combinations
 
+# TODO REPLACE NUMPY WITH JAX.NUMPY
 import numpy as np
 from scipy.spatial.distance import cdist
 

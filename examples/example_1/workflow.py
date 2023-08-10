@@ -152,8 +152,8 @@ study.set_initial_position('hp_cv_to_actuator2', 'spatial_config_1', [4., 0., 1.
 system.map_static_object(object_name='structure_1', design_vector=[0, 0, -1, 0, 0, 0])
 
 
-# # Generate the spatial configuration
-# study.generate_spatial_configuration(name='spatial_config_1', method='manual')
+# Generate the spatial configuration
+study.generate_spatial_configuration(name='spatial_config_1', method='manual')
 
 
 
@@ -197,47 +197,59 @@ system.add_constraint(constraint='signed distances',
 
 
 
-def dummy(x):
-    return np.sum(x**2)
+# def dummy(x):
+#     return np.sum(x**2)
+#
+#
+# def update(x):
+#     positions_dict = system.calculate_positions(design_vector=x)
+#
+#     positions_array = np.vstack([np.vstack(positions_dict[key]['positions']) for key in positions_dict.keys()])
+#
+#     return positions_array
+#
+# def objective(x):
+#     pos = system.calculate_positions(design_vector=x)
+#     vol = bounding_box(pos)
+#     return vol
 
+# x0 = system.design_vector
+#
+# pos0 = system.calculate_positions(x0)
+# grad0 = grad(system.calculate_positions)(x0)
 
-def update(x):
-    positions_dict = system.calculate_positions(design_vector=x)
-
-    positions_array = np.vstack([np.vstack(positions_dict[key]['positions']) for key in positions_dict.keys()])
-
-    return positions_array
-
-def objective(x):
-    pos = system.calculate_positions(design_vector=x)
-    vol = bounding_box(pos)
-    return vol
-
-x0 = system.design_vector
-
-pos0 = system.calculate_positions(x0)
-grad0 = grad(system.calculate_positions)(x0)
-
+# def first_pos(x):
+#     pos_dict = c0.calculate_positions(x)
+#     pos = pos_dict['control_valve_1']['positions']
+#     return np.sum(pos)
+#
+# x0 = c0.design_vector
+# pos0 = c0.calculate_positions(x0)
 
 # vol0 = objective(x0)
 
 # res0 = system.calculate_metrics(x0, requested_metrics=('objective'))
 
-# study.optimize_spatial_configuration(options={'maximum number of iterations': 1,
-#                                               'convergence tolerance': 1e-2})
-#
-# # Post-processing
-#
-# # Plot the final spatial configuration
-# new_positions = system.calculate_positions(study.result.x)
-# system.set_positions(new_positions)
-# # system.plot()
-#
-# # Write output file
-# study.create_report()
-#
-# # Print the log to see the optimization results and if any warnings or errors occurred
-# study.print_log()
+
+
+
+
+
+study.optimize_spatial_configuration(options={'maximum number of iterations': 1,
+                                              'convergence tolerance': 1e-2})
+
+# Post-processing
+
+# Plot the final spatial configuration
+new_positions = system.calculate_positions(study.result.x)
+system.set_positions(new_positions)
+# system.plot()
+
+# Write output file
+study.create_report()
+
+# Print the log to see the optimization results and if any warnings or errors occurred
+study.print_log()
 
 
 
