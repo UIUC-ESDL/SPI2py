@@ -228,28 +228,42 @@ system.add_constraint(constraint='signed distances',
 
 # vol0 = objective(x0)
 
-# res0 = system.calculate_metrics(x0, requested_metrics=('objective'))
+x0 = system.design_vector
+obj0 = system.calculate_objective(x0)
+con0 = system.calculate_constraints(x0)
+
+# def tryer(x):
+#     res = system.calculate_metrics(x, requested_metrics=('objective'))
+#     return res[0]
+#
+# res0 = tryer(x0)
+
+# def my_dot(x):
+#     return np.dot(x, x)
+#
+# a = np.array([[1., 2., 3.]])
+# print(grad(my_dot)(a))
 
 
 
 
 
 
-study.optimize_spatial_configuration(options={'maximum number of iterations': 1,
-                                              'convergence tolerance': 1e-2})
-
-# Post-processing
-
-# Plot the final spatial configuration
-new_positions = system.calculate_positions(study.result.x)
-system.set_positions(new_positions)
+# study.optimize_spatial_configuration(options={'maximum number of iterations': 1,
+#                                               'convergence tolerance': 1e-2})
+#
+# # Post-processing
+#
+# # Plot the final spatial configuration
+# new_positions = system.calculate_positions(study.result.x)
+# system.set_positions(new_positions)
 # system.plot()
-
-# Write output file
-study.create_report()
-
-# Print the log to see the optimization results and if any warnings or errors occurred
-study.print_log()
+#
+# # Write output file
+# study.create_report()
+#
+# # Print the log to see the optimization results and if any warnings or errors occurred
+# study.print_log()
 
 
 

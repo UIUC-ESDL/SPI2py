@@ -13,6 +13,7 @@ from SPI2py.group_model.component_spatial.collision_detection import discrete_co
 from SPI2py.group_model.utilities import kreisselmeier_steinhauser, p_norm, induced_exponential, induced_power
 from SPI2py.group_model.utilities import scale_model_based_objective
 
+from SPI2py.group_model.component_spatial.bounding_volumes import bounding_box
 from SPI2py.group_model.component_spatial.geometric_representation import read_mdbd_file, generate_rectangular_prisms
 from SPI2py.group_model.component_spatial.visualization import plot_3d
 
@@ -308,16 +309,12 @@ class SpatialInterface:
         TODO Remove unnecessary design vector arguments
         """
 
-
         if design_vector is not None:
             design_vectors = self.slice_design_vector(design_vector)
         else:
             design_vectors = list(design_vector_dict.values())
 
-
-
         objects_dict = {}
-
 
         # STATIC OBJECTS
         for obj in self.static_objects:
@@ -408,6 +405,8 @@ class SpatialInterface:
 
         if objective == 'normalized aggregate gap distance':
             _objective_function = normalized_aggregate_gap_distance
+        elif objective == 'bounding box volume':
+            _objective_function = bounding_box
         else:
             raise NotImplementedError
 
@@ -488,25 +487,19 @@ class SpatialInterface:
             self.constraint_functions.append(constraint_aggregation_function)
             self.constraints.append(nlc)
 
-    def calculate_metrics(self,
-                          x,
-                          requested_metrics=('objective', 'constraints')):
-        """
-        Calculate the objective function and constraint functions.
+    def calculate_objective(self, x):
+        objective = self.objectives[0](x)
 
-        """
+        objective = np.array(objective)
 
-        metrics = []
-        if 'objective' in requested_metrics:
-            objective = self.objectives[0](x)
-            metrics.append(objective)
+        return objective
 
-        if 'constraints' in requested_metrics:
-            constraints = [constraint_function(x) for constraint_function in self.constraint_functions]
-            metrics.append(constraints)
+    def calculate_constraints(self, x):
+        constraints = [constraint_function(x) for constraint_function in self.constraint_functions]
 
+        constraints = np.array(constraints)
 
-        return metrics
+        return constraints
 
 
     def plot(self):

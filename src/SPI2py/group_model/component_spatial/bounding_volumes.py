@@ -2,10 +2,12 @@ import jax.numpy as np
 
 
 
-def bounding_box(positions_dict):
+def bounding_box(x, model):
 
     # TODO include radii
     # TODO verify calc
+
+    positions_dict = model.calculate_positions(design_vector=x)
 
     positions_array = np.vstack([np.vstack(positions_dict[key]['positions']) for key in positions_dict.keys()])
 

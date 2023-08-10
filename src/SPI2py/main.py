@@ -8,6 +8,8 @@ import logging
 import os
 import yaml
 
+from SPI2py.group_model.component_spatial.bounding_volumes import bounding_box
+
 
 # TODO Import the model
 
