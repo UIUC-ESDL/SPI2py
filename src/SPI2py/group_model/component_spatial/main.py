@@ -11,7 +11,6 @@ from SPI2py.group_model.component_spatial.objective_functions import normalized_
 from SPI2py.group_model.component_spatial.collision_detection import discrete_collision_detection
 
 from SPI2py.group_model.utilities import kreisselmeier_steinhauser, p_norm, induced_exponential, induced_power
-from SPI2py.group_model.utilities import scale_model_based_objective
 
 from SPI2py.group_model.component_spatial.bounding_volumes import bounding_box
 from SPI2py.group_model.component_spatial.geometric_representation import read_mdbd_file, generate_rectangular_prisms
@@ -81,7 +80,7 @@ class SpatialInterface:
         self.name = name
         self.components = components
         self.interconnects = interconnects
-        self.objectives = []
+        self.objective = None
         self.constraints = []
         self.constraint_functions = []
 
@@ -380,7 +379,7 @@ class SpatialInterface:
 
         return objects_dict
 
-    def add_objective(self,
+    def set_objective(self,
                       objective,
                       options):
 
@@ -393,14 +392,6 @@ class SpatialInterface:
         :param options: The options for the objective function.
         """
 
-        # UNPACK THE OPTIONS
-
-        design_vector_scaling_type   = options['design vector scaling type']
-        design_vector_scaling_factor = options['design vector scaling factor']
-        objective_scaling_type       = options['objective scaling type']
-        objective_scaling_factor     = options['objective scaling factor']
-
-
         # SELECT THE OBJECTIVE FUNCTION HANDLE
 
         if objective == 'normalized aggregate gap distance':
@@ -412,16 +403,10 @@ class SpatialInterface:
 
 
         # SCALE THE OBJECTIVE FUNCTION
-
-
         def objective_function(x):
-            return scale_model_based_objective(x, _objective_function, self,
-                                               design_vector_scale_type=design_vector_scaling_type,
-                                               design_vector_scale_factor=design_vector_scaling_factor,
-                                               objective_scale_type=objective_scaling_type,
-                                               objective_scale_factor=objective_scaling_factor)
+            return _objective_function(x, self)
 
-        self.objectives.append(objective_function)
+        self.objective = objective_function
 
     def add_constraint(self,
                        constraint,
@@ -488,7 +473,7 @@ class SpatialInterface:
             self.constraints.append(nlc)
 
     def calculate_objective(self, x):
-        objective = self.objectives[0](x)
+        objective = self.objective(x)
 
         objective = np.array(objective)
 

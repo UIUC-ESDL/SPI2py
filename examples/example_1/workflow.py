@@ -162,7 +162,7 @@ study.generate_spatial_configuration(name='spatial_config_1', method='manual')
 
 # Perform gradient-based optimization
 
-system.add_objective(objective='normalized aggregate gap distance',
+system.set_objective(objective='normalized aggregate gap distance',
                      options={'design vector scaling type': 'constant',
                               'design vector scaling factor': 1,
                               'objective scaling type': 'constant',
@@ -232,17 +232,22 @@ x0 = system.design_vector
 obj0 = system.calculate_objective(x0)
 con0 = system.calculate_constraints(x0)
 
+
+from SPI2py.group_model.utilities.constraint_aggregation import kreisselmeier_steinhauser
+
+# jacrev(system.calculate_constraints)(x0)
+
 # def tryer(x):
 #     res = system.calculate_metrics(x, requested_metrics=('objective'))
 #     return res[0]
 #
 # res0 = tryer(x0)
 
-# def my_dot(x):
-#     return np.dot(x, x)
-#
-# a = np.array([[1., 2., 3.]])
-# print(grad(my_dot)(a))
+def my_dot(x):
+    return kreisselmeier_steinhauser(x)
+
+a = np.array([1., 2., 3.])
+print(grad(my_dot)(a))
 
 
 
