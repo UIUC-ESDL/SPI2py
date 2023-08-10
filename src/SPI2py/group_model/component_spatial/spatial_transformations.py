@@ -5,6 +5,8 @@
 import numpy as np
 from numpy import sin, cos
 
+# import jax.numpy as np
+# from jax.numpy import sin, cos
 
 def translate(current_sphere_positions, current_reference_point, new_reference_point):
     """

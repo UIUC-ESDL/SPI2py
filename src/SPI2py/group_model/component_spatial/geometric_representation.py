@@ -3,7 +3,8 @@
 TODO Add functionality to rotate geometric primitives
 """
 
-import numpy as np
+import jax.numpy as np
+# import numpy as np
 from scipy.optimize import minimize, NonlinearConstraint, Bounds
 from scipy.spatial import ConvexHull, Delaunay
 import matplotlib.pyplot as plt
@@ -66,6 +67,9 @@ def generate_rectangular_prism(origin, dimension):
     :param dimension:
     :return:
     """
+
+    # TODO REPLACE w/ ARRAY INPUT
+    dimension = np.array(dimension)
 
     # Set the diameter of the packing sphere to the smallest dimension
     diameter = np.min(dimension)

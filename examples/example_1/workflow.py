@@ -8,6 +8,7 @@ Author:     Chad Peterson
 
 
 import os
+import jax.numpy as np
 from SPI2py import (SpatialInterface, Component, Interconnect, DesignStudy)
 
 # %% Define the components
@@ -188,21 +189,42 @@ system.add_constraint(constraint='signed distances',
                                'constraint aggregation parameter': 3.0})
 
 
-study.optimize_spatial_configuration(options={'maximum number of iterations': 10,
-                                              'convergence tolerance': 1e-2})
+x0 = system.design_vector
 
-# Post-processing
+pos0 = system.calculate_positions(x0)
 
-# Plot the final spatial configuration
-new_positions = system.calculate_positions(study.result.x)
-system.set_positions(new_positions)
-# system.plot()
+from jax import grad, jacrev
+from SPI2py.group_model.component_spatial.bounding_volumes import bounding_box
 
-# Write output file
-study.create_report()
 
-# Print the log to see the optimization results and if any warnings or errors occurred
-study.print_log()
+def dummy(x):
+    return np.sum(x**2)
+
+def objective(x):
+    pos = system.calculate_positions(x)
+    vol = bounding_box(pos)
+    return vol
+#
+#
+# vol0 = objective(x0)
+
+# res0 = system.calculate_metrics(x0, requested_metrics=('objective'))
+
+# study.optimize_spatial_configuration(options={'maximum number of iterations': 1,
+#                                               'convergence tolerance': 1e-2})
+#
+# # Post-processing
+#
+# # Plot the final spatial configuration
+# new_positions = system.calculate_positions(study.result.x)
+# system.set_positions(new_positions)
+# # system.plot()
+#
+# # Write output file
+# study.create_report()
+#
+# # Print the log to see the optimization results and if any warnings or errors occurred
+# study.print_log()
 
 
 

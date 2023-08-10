@@ -5,7 +5,8 @@ or thousands of constraints. These functions are used to aggregate the constrain
 way that is differentiable and continuous.
 """
 
-import autograd.numpy as np
+import jax.numpy as np
+
 
 
 def kreisselmeier_steinhauser(g, rho=100):

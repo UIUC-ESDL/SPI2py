@@ -1,4 +1,4 @@
-import numpy as np
+import jax.numpy as np
 from typing import Union
 import logging
 from .spatial_transformations import rigid_transformation
@@ -214,7 +214,7 @@ class RigidBody(ValidateRigidBody):
         else:
 
             # If the object has no degrees of freedom, then return its current position
-            if dof is ():
+            if dof == ():
                 return {self.__repr__(): {'type': 'spheres', 'positions': self.positions, 'radii': self.radii}}
 
             # Extract the design variables from the design vector

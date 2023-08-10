@@ -4,7 +4,7 @@ Provides functions to calculate the distance between classes in various ways.
 """
 
 # import autograd.numpy as np
-
+import jax.numpy as jnp
 import numpy as np
 from itertools import combinations, product
 
@@ -12,8 +12,8 @@ from itertools import combinations, product
 class DistanceFunctions2D:
     pass
 
-def distances_points_points(a: np.ndarray,
-                            b: np.ndarray) -> np.ndarray:
+def distances_points_points(a: jnp.ndarray,
+                            b: jnp.ndarray) -> jnp.ndarray:
     """
     Calculates the pairwise distance between two sets of 3D points.
 
@@ -51,7 +51,7 @@ def distances_points_points(a: np.ndarray,
     aa = a.reshape(-1, 1, 3)
     bb = b.reshape(1, -1, 3)
 
-    c = np.linalg.norm(aa-bb, axis=-1)
+    c = jnp.linalg.norm(aa-bb, axis=-1)
 
     # Reshape the output to a 1D array
     c = c.flatten()
@@ -71,12 +71,13 @@ def sum_radii(a, b):
 
 # 3D Distance Functions
 
-
+# TODO Figure out jax slowdown...
+# TODO REPLACE THE FLOAT VALUE FOR ARRAY
 # @njit(cache=True)
-def minimum_distance_segment_segment(a: np.ndarray,
-                                     b: np.ndarray,
-                                     c: np.ndarray,
-                                     d: np.ndarray) -> tuple[float, np.ndarray]:
+def minimum_distance_segment_segment(a: jnp.ndarray,
+                                     b: jnp.ndarray,
+                                     c: jnp.ndarray,
+                                     d: jnp.ndarray) -> tuple[float, jnp.ndarray]:
     """
     Returns the minimum Euclidean distance between two line segments.
 
@@ -200,10 +201,10 @@ class DistanceFunctions3D:
 
 
 
-def signed_distances_spheres_spheres(centers_a: np.ndarray,
-                                     radii_a:   np.ndarray,
-                                     centers_b: np.ndarray,
-                                     radii_b:   np.ndarray) -> np.ndarray:
+def signed_distances_spheres_spheres(centers_a: jnp.ndarray,
+                                     radii_a:   jnp.ndarray,
+                                     centers_b: jnp.ndarray,
+                                     radii_b:   jnp.ndarray) -> jnp.ndarray:
     """
     Calculates the pairwise signed distance between two sets of spheres.
 
@@ -232,16 +233,17 @@ def signed_distances_spheres_spheres(centers_a: np.ndarray,
     return signed_distances
 
 
-def signed_distances_capsules_capsules(a:        np.ndarray,
-                                       b:        np.ndarray,
-                                       ab_radii: np.ndarray,
-                                       c:        np.ndarray,
-                                       d:        np.ndarray,
-                                       cd_radii: np.ndarray) -> np.ndarray:
+def signed_distances_capsules_capsules(a:        jnp.ndarray,
+                                       b:        jnp.ndarray,
+                                       ab_radii: jnp.ndarray,
+                                       c:        jnp.ndarray,
+                                       d:        jnp.ndarray,
+                                       cd_radii: jnp.ndarray) -> jnp.ndarray:
 
     capsules_ab = [(ai, bi, ab_radius) for ai, bi, ab_radius in zip(a, b, ab_radii)]
     capsules_cd = [(ci, di, cd_radius) for ci, di, cd_radius in zip(c, d, cd_radii)]
 
+    # TODO Precalculate this value
     capsule_pairs = list(product(capsules_ab, capsules_cd))
 
     signed_distances = []
@@ -254,7 +256,7 @@ def signed_distances_capsules_capsules(a:        np.ndarray,
 
         signed_distances.append(minimum_signed_distance)
 
-    return np.array(signed_distances)
+    return jnp.array(signed_distances)
 
 
 

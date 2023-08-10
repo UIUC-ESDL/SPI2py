@@ -84,6 +84,8 @@ class SpatialInterface:
         self.constraints = []
         self.constraint_functions = []
 
+        self.objects = self.get_objects()
+
         self.static_objects = self.get_static_objects()
         self.independent_objects = self.get_independent_objects()
         self.partially_dependent_objects = self.get_partially_dependent_objects()
@@ -104,24 +106,8 @@ class SpatialInterface:
     def __str__(self):
         return self.name
 
-    @property
-    def objects(self):
+    def get_objects(self):
         return self.components + self.interconnects
-
-    # @property
-    # def nodes(self):
-    #     return [str(obj) for obj in self.components + self.interconnect_nodes]
-
-    # @property
-    # def edges(self):
-    #     edges = []
-    #     for segment in self.interconnect_segments:
-    #         # Split with "-" to just get component (not port name)
-    #         # TODO Create a more reliable way to get the component name
-    #         edge = (str(segment.object_1).split('-')[0], str(segment.object_2).split('-')[0])
-    #         edges.append(edge)
-    #
-    #     return edges
 
     def get_static_objects(self):
         # objects = []
@@ -333,18 +319,20 @@ class SpatialInterface:
 
         # STATIC OBJECTS
         for obj in self.static_objects:
-            # objects_dict = obj.calculate_positions(design_vector, objects_dict)
-            objects_dict = {**objects_dict, **obj.calculate_positions(None, objects_dict=objects_dict)}
+            object_dict = obj.calculate_positions(None, objects_dict=objects_dict)
+            objects_dict = {**objects_dict, **object_dict}
 
         # DYNAMIC OBJECTS - Independent then Partially Dependent
         objects = self.independent_objects + self.partially_dependent_objects
         for obj, design_vector_row in zip(objects, design_vectors):
-            objects_dict = {**objects_dict, **obj.calculate_positions(design_vector_row, objects_dict=objects_dict)}
+            object_dict = obj.calculate_positions(design_vector_row, objects_dict=objects_dict)
+            objects_dict = {**objects_dict, **object_dict}
 
         # DYNAMIC OBJECTS - Fully Dependent
         # TODO remove updating edges...? just use lines
         for obj in self.fully_dependent_objects:
-            objects_dict = {**objects_dict, **obj.calculate_positions(design_vector, objects_dict=objects_dict)}
+            object_dict = obj.calculate_positions(design_vector, objects_dict=objects_dict)
+            objects_dict = {**objects_dict, **object_dict}
 
         # TODO Add method for partially dependent objects
         # DYNAMIC OBJECTS - Partially Dependent
@@ -388,26 +376,6 @@ class SpatialInterface:
         obj.set_positions(objects_dict)
 
         return objects_dict
-
-    # def extract_spatial_graph(self):
-    #     """
-    #     Extracts a spatial graph from the layout.
-    #
-    #     TODO Remove unconnected nodes?
-    #
-    #     :return:
-    #     """
-    #
-    #     nodes = self.nodes
-    #     edges = self.edges
-    #
-    #     node_positions = []
-    #
-    #     positions_dict = self.calculate_positions(self.design_vector)
-    #
-    #     # TODO Implement
-    #
-    #     return nodes, node_positions, edges
 
     def add_objective(self,
                       objective,
