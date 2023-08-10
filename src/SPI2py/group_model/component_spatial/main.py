@@ -447,8 +447,6 @@ class SpatialInterface:
         _constraint_aggregation_function = kreisselmeier_steinhauser
 
 
-
-
         def constraint_aggregation_function(x):
             return _constraint_aggregation_function(_constraint_function(x), rho=constraint_aggregation_parameter)
 

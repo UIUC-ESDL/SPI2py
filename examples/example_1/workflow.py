@@ -222,9 +222,6 @@ x0 = system.design_vector
 obj0 = system.calculate_objective(x0)
 con0 = system.calculate_constraints(x0)
 
-
-from SPI2py.group_model.utilities.constraint_aggregation import kreisselmeier_steinhauser
-
 # jacrev(system.calculate_constraints)(x0)
 
 # def tryer(x):
@@ -233,12 +230,29 @@ from SPI2py.group_model.utilities.constraint_aggregation import kreisselmeier_st
 #
 # res0 = tryer(x0)
 
-def my_dot(x):
-    return kreisselmeier_steinhauser(x)
 
-a = np.array([1., 2., 3.])
-print(grad(my_dot)(a))
 
+from SPI2py.group_model.component_spatial.distance_calculations import signed_distances_capsules_capsules, minimum_distance_segment_segment
+
+a = np.array([[0, 0, 0]])
+b = np.array([[1, 0, 0]])
+c = np.array([[0, 1, 0]])
+d = np.array([[0, 0, 1]])
+
+x0 = np.array([0., 0., 0., 1., 0., 0., 0., 1., 0., 0., 0., 1.])
+
+min_dist, min_point = minimum_distance_segment_segment(a, b, c, d)
+
+def my_fun(x):
+
+    a, b, c, d = x.reshape((-1, 3))
+
+    min_dist, min_point = minimum_distance_segment_segment(a, b, c, d)
+
+    return min_dist
+
+
+# print(grad(my_fun)(x0))
 
 
 
