@@ -234,26 +234,26 @@ con0 = system.calculate_constraints(x0)
 
 from SPI2py.group_model.component_spatial.distance_calculations import signed_distances_capsules_capsules, minimum_distance_segment_segment
 
-a = np.array([[0, 0, 0]])
-b = np.array([[1, 0, 0]])
-c = np.array([[0, 1, 0]])
-d = np.array([[0, 0, 1]])
+a = np.array([[0., 0., 0.]])
+b = np.array([[1., 0., 0.]])
+ab_radii = np.array([[0.5]])
+c = np.array([[0., 1., 0.]])
+d = np.array([[0., 0., 1.]])
+cd_radii = np.array([[0.5]])
 
 x0 = np.array([0., 0., 0., 1., 0., 0., 0., 1., 0., 0., 0., 1.])
 
 min_dist, min_point = minimum_distance_segment_segment(a, b, c, d)
 
-def my_fun(x):
-
-    a, b, c, d = x.reshape((-1, 3))
+def my_fun(a, b, c, d):
 
     min_dist, min_point = minimum_distance_segment_segment(a, b, c, d)
 
     return min_dist
 
 
-# print(grad(my_fun)(x0))
-
+# print(grad(my_fun)((a, b, c, d)))
+grad0 = grad(my_fun, argnums=(0,1,2,3))(a,b,c,d)
 
 
 
