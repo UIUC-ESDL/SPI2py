@@ -67,126 +67,197 @@ def sum_radii(a, b):
 # TODO Figure out jax slowdown...
 # TODO REPLACE THE FLOAT VALUE FOR ARRAY
 # @njit(cache=True)
-def minimum_distance_segment_segment(a: np.ndarray,
-                                     b: np.ndarray,
-                                     c: np.ndarray,
-                                     d: np.ndarray) -> tuple[float, np.ndarray]:
-    """
-    Returns the minimum Euclidean distance between two line segments.
+# def minimum_distance_segment_segment(a: np.ndarray,
+#                                      b: np.ndarray,
+#                                      c: np.ndarray,
+#                                      d: np.ndarray) -> tuple[float, np.ndarray]:
+#     """
+#     Returns the minimum Euclidean distance between two line segments.
+#
+#     This function also works for calculating the distance between a line segment and a point and a point and point.
+#
+#     Based on the algorithm described in:
+#
+#     Vladimir J. Lumelsky,
+#     "On Fast Computation of Distance Between Line Segments",
+#     Information Processing Letters 21 (1985) 55-61
+#     https://doi.org/10.1016/0020-0190(85)90032-8
+#
+#     Values 0 <= t <= 1 correspond to points being inside segment AB whereas values < 0  correspond to being 'left' of AB
+#     and values > 1 correspond to being 'right' of AB.
+#
+#     Values 0 <= u <= 1 correspond to points being inside segment CD whereas values < 0  correspond to being 'left' of CD
+#     and values > 1 correspond to being 'right' of CD.
+#
+#     Step 1: Check for special cases; compute D1, D2, and the denominator in (11)
+#         (a) If one of the two segments degenerates into a point, assume that this segment corresponds to the parameter
+#         u, take u=0, and go to Step 4.
+#         (b) If both segments degenerate into points, take t=u=0, and go to Step 5.
+#         (c) If neither of two segments degenerates into a point and the denominator in (11) is zero, take t=0 and go to
+#         Step 3.
+#         (d) If none of (a), (b), (c) takes place, go to Step 2.
+#     Step 2: Using (11) compute t. If t is not in the range [0,1], modify t using (12).
+#     Step 3: Using (10) compute u. If u is not in the range [0,1], modify u using (12); otherwise, go to Step 5.
+#     Step 4: Using (10) compute t. If t is not in the range [0,1], modify t using (12).
+#     Step 5: With current values of t and u, compute the actual MinD using (7).
+#
+#     (7):
+#     (10):
+#     (11):
+#     (12):
+#
+#     :param a: (1,3) numpy array
+#     :param b: (1,3) numpy array
+#     :param c: (1,3) numpy array
+#     :param d: (1,3) numpy array
+#
+#     :return: Minimum distance between line segments, float
+#     """
+#
+#     def clamp_bound(num):
+#         """
+#         If the number is outside the range [0,1] then clamp it to the nearest boundary.
+#         """
+#         if num < 0.:
+#             return np.array(0.)
+#         elif num > 1.:
+#             return np.array(1.)
+#         else:
+#             return num
+#
+#     d1  = b - a
+#     d2  = d - c
+#     d12 = c - a
+#
+#     D1  = np.dot(d1, d1.T)
+#     D2  = np.dot(d2, d2.T)
+#     S1  = np.dot(d1, d12.T)
+#     S2  = np.dot(d2, d12.T)
+#     R   = np.dot(d1, d2.T)
+#     den = D1 * D2 - R**2
+#
+#     # Check if one or both line segments are points
+#     if D1 == 0. or D2 == 0.:
+#
+#         # Both AB and CD are points
+#         if D1 == 0. and D2 == 0.:
+#             t = np.array(0.)
+#             u = np.array(0.)
+#
+#         # AB is a line segment and CD is a point
+#         elif D1 != 0.:
+#             u = np.array(0.)
+#             t = S1/D1
+#             t = clamp_bound(t)
+#
+#         # AB is a point and CD is a line segment
+#         elif D2 != 0.:
+#             t = np.array(0.)
+#             u = -S2/D2
+#             u = clamp_bound(u)
+#
+#     # Check if line segments are parallel
+#     elif den == 0.:
+#         t = np.array(0.)
+#         u = -S2/D2
+#         uf = clamp_bound(u)
+#
+#         if uf != u:
+#             t = (uf*R + S1)/D1
+#             t = clamp_bound(t)
+#             u = uf
+#
+#     # General case for calculating the minimum distance between two line segments
+#     else:
+#
+#         t = (S1 * D2 - S2 * R) / den
+#
+#         t = clamp_bound(t)
+#
+#         u = (t * R - S2) / D2
+#         uf = clamp_bound(u)
+#
+#         if uf != u:
+#             t = (uf * R + S1) / D1
+#             t = clamp_bound(t)
+#
+#             u = uf
+#
+#     minimum_distance          = np.linalg.norm(d1*t - d2*u - d12)
+#     minimum_distance_position = a + d1*t
+#
+#     return minimum_distance, minimum_distance_position
 
-    This function also works for calculating the distance between a line segment and a point and a point and point.
+def minimum_distance_segment_segment(s1_p0: np.ndarray,
+                                     s1_p1: np.ndarray,
+                                     s2_p0: np.ndarray,
+                                     s2_p1: np.ndarray) -> tuple[float, np.ndarray]:
 
-    Based on the algorithm described in:
 
-    Vladimir J. Lumelsky,
-    "On Fast Computation of Distance Between Line Segments",
-    Information Processing Letters 21 (1985) 55-61
-    https://doi.org/10.1016/0020-0190(85)90032-8
+    SMALL_NUM = 1e-8
 
-    Values 0 <= t <= 1 correspond to points being inside segment AB whereas values < 0  correspond to being 'left' of AB
-    and values > 1 correspond to being 'right' of AB.
+    u = s1_p1 - s1_p0
+    v = s2_p1 - s2_p0
+    w = s1_p0 - s2_p0
+    a = np.dot(u, u)
+    b = np.dot(u, v)
+    c = np.dot(v, v)
+    d = np.dot(u, w)
+    e = np.dot(v, w)
+    D = a*c - b*b
+    sc, sN, sD = D, D, D
+    tc, tN, tD = D, D, D
 
-    Values 0 <= u <= 1 correspond to points being inside segment CD whereas values < 0  correspond to being 'left' of CD
-    and values > 1 correspond to being 'right' of CD.
+    # compute the line parameters of the two closest points
+    if D < SMALL_NUM:  # the lines are almost parallel
+        sN = 0.0  # force using point P0 on segment S1
+        sD = 1.0  # to prevent possible division by 0.0 later
+        tN = e
+        tD = c
+    else:  # get the closest points on the infinite lines
+        sN = (b*e - c*d)
+        tN = (a*e - b*d)
+        if sN < 0.0:  # sc < 0 => the s=0 edge is visible
+            sN = 0.0
+            tN = e
+            tD = c
+        elif sN > sD:  # sc > 1  => the s=1 edge is visible
+            sN = sD
+            tN = e + b
+            tD = c
 
-    Step 1: Check for special cases; compute D1, D2, and the denominator in (11)
-        (a) If one of the two segments degenerates into a point, assume that this segment corresponds to the parameter
-        u, take u=0, and go to Step 4.
-        (b) If both segments degenerate into points, take t=u=0, and go to Step 5.
-        (c) If neither of two segments degenerates into a point and the denominator in (11) is zero, take t=0 and go to
-        Step 3.
-        (d) If none of (a), (b), (c) takes place, go to Step 2.
-    Step 2: Using (11) compute t. If t is not in the range [0,1], modify t using (12).
-    Step 3: Using (10) compute u. If u is not in the range [0,1], modify u using (12); otherwise, go to Step 5.
-    Step 4: Using (10) compute t. If t is not in the range [0,1], modify t using (12).
-    Step 5: With current values of t and u, compute the actual MinD using (7).
-
-    (7):
-    (10):
-    (11):
-    (12):
-
-    :param a: (1,3) numpy array
-    :param b: (1,3) numpy array
-    :param c: (1,3) numpy array
-    :param d: (1,3) numpy array
-
-    :return: Minimum distance between line segments, float
-    """
-
-    def clamp_bound(num):
-        """
-        If the number is outside the range [0,1] then clamp it to the nearest boundary.
-        """
-        if num < 0.:
-            return np.array(0.)
-        elif num > 1.:
-            return np.array(1.)
+    if tN < 0.0:  # tc < 0 => the t=0 edge is visible
+        tN = 0.0
+        # recompute sc for this edge
+        if -d < 0.0:
+            sN = 0.0
+        elif -d > a:
+            sN = sD
         else:
-            return num
+            sN = -d
+            sD = a
+    elif tN > tD:
+        # tc > 1  => the t=1 edge is visible
+        tN = tD
+        # recompute sc for this edge
+        if (-d + b) < 0.0:
+            sN = 0
+        elif (-d + b) > a:
+            sN = sD
+        else:
+            sN = (-d + b)
+            sD = a
 
-    d1  = b - a
-    d2  = d - c
-    d12 = c - a
+    # finally do the division to get sc and tc
+    sc = 0.0 if np.abs(sN) < SMALL_NUM else sN / sD
+    tc = 0.0 if np.abs(tN) < SMALL_NUM else tN / tD
 
-    D1  = np.dot(d1, d1.T)
-    D2  = np.dot(d2, d2.T)
-    S1  = np.dot(d1, d12.T)
-    S2  = np.dot(d2, d12.T)
-    R   = np.dot(d1, d2.T)
-    den = D1 * D2 - R**2
+    # get the difference of the two closest points
+    dP = w + (sc * u) - (tc * v)  # =  S1(sc) - S2(tc)
 
-    # Check if one or both line segments are points
-    if D1 == 0. or D2 == 0.:
+    minimum_distance = np.linalg.norm(dP)
 
-        # Both AB and CD are points
-        if D1 == 0. and D2 == 0.:
-            t = np.array(0.)
-            u = np.array(0.)
-
-        # AB is a line segment and CD is a point
-        elif D1 != 0.:
-            u = np.array(0.)
-            t = S1/D1
-            t = clamp_bound(t)
-
-        # AB is a point and CD is a line segment
-        elif D2 != 0.:
-            t = np.array(0.)
-            u = -S2/D2
-            u = clamp_bound(u)
-
-    # Check if line segments are parallel
-    elif den == 0.:
-        t = np.array(0.)
-        u = -S2/D2
-        uf = clamp_bound(u)
-
-        if uf != u:
-            t = (uf*R + S1)/D1
-            t = clamp_bound(t)
-            u = uf
-
-    # General case for calculating the minimum distance between two line segments
-    else:
-
-        t = (S1 * D2 - S2 * R) / den
-
-        t = clamp_bound(t)
-
-        u = (t * R - S2) / D2
-        uf = clamp_bound(u)
-
-        if uf != u:
-            t = (uf * R + S1) / D1
-            t = clamp_bound(t)
-
-            u = uf
-
-    minimum_distance          = np.linalg.norm(d1*t - d2*u - d12)
-    minimum_distance_position = a + d1*t
-
-    return minimum_distance, minimum_distance_position
+    return minimum_distance, s1_p0 + sc * u
 
 
 class DistanceFunctions3D:
