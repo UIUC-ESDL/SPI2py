@@ -242,9 +242,20 @@ def my_fun(x):
 
     return np.sum(all_signed_distances)
 
+def my_fun2(x):
+
+    positions_dict = system.calculate_positions(design_vector=x)
+
+    positions_array = np.vstack([np.vstack(positions_dict[key]['positions']) for key in positions_dict.keys()])
+
+    return np.sum(positions_array)
+
+# TODO Debugging CD
 res0 = my_fun(x0)
 grad0 = grad(my_fun)(x0)
-
+print(grad0)
+# import jax
+# jax.make_jaxpr(grad(my_fun))(x0)
 # ans0 = my_fun(a, b, ab_radii, c, d, cd_radii)
 # grad0 = grad(my_fun, argnums=(0,1,2,3,4,5))(a, b, ab_radii, c, d, cd_radii)
 # print(grad(my_fun)((a, b, c, d)))

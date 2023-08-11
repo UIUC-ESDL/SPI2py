@@ -53,8 +53,8 @@ def discrete_collision_detection(x, model, object_pair, object_class_1, object_c
             c, d = positions_b
 
             signed_distance = signed_distances_capsules_capsules(a, b, radii_a, c, d, radii_b)
-            signed_distance = np.array([signed_distance])
             all_signed_distances.append(signed_distance)
+
 
         else:
             raise ValueError('Invalid object class pair')
