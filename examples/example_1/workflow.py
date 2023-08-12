@@ -198,7 +198,9 @@ print('Initial constraints: ', constraints)
 def constraint_function(x):
     return system.calculate_constraints(x)[0]
 
-grad(constraint_function)
+grad_c = grad(constraint_function)(x0)
+
+print('Initial constraint gradient: ', grad_c)
 
 
 

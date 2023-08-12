@@ -17,11 +17,6 @@ from typing import Union
 
 import pyvista as pv
 
-@dataclass
-class ComponentState:
-
-    origin: np.ndarray
-
 
 class Component(RigidBody):
     """
@@ -219,11 +214,7 @@ class Interconnect:
         self.radius = radius
         self.color = color
 
-        self.origins = None
-        # self.number_of_bends = number_of_bends
-
         self.number_of_waypoints = number_of_waypoints
-        self.number_of_segments = self.number_of_waypoints + 1
 
         # Create InterconnectNode objects
         self.nodes = self.create_nodes()
@@ -294,9 +285,6 @@ class Interconnect:
 
         return node_pairs
 
-    # def set_origins(self, design_vector, objects_dict):
-
-
 
     def calculate_positions(self, design_vector, objects_dict):
 
@@ -319,12 +307,6 @@ class Interconnect:
         stop_arr = node_positions[1:None]
 
         points = np.linspace(start_arr, stop_arr, spheres_per_segment).reshape(-1, 3)
-
-        # Index the starting and stopping nodes of each segment
-        # a = node_positions[0:-1]
-        # b = node_positions[1:None]
-
-        # radii = np.repeat(self.radius, self.number_of_segments)
         radii = np.repeat(self.radius, len(points))
 
         object_dict[str(self)] = {'type': 'interconnect', 'positions': points, 'radii': radii}
@@ -335,8 +317,7 @@ class Interconnect:
 
         self.positions = objects_dict[str(self)]['positions']
 
-        self.radii = np.repeat(self.radius, self.number_of_segments)
-
+        self.radii = objects_dict[str(self)]['radii']
 
     # @property
     # def edges(self):

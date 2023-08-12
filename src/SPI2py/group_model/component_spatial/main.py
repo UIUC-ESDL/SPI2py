@@ -8,22 +8,13 @@ from itertools import combinations, product
 from SPI2py.group_model.component_spatial.objects import Component, Interconnect
 
 from SPI2py.group_model.component_spatial.objective_functions import normalized_aggregate_gap_distance
-from SPI2py.group_model.component_spatial.collision_detection import discrete_collision_detection
+from SPI2py.group_model.component_spatial.distance_calculations import signed_distances
 
 from SPI2py.group_model.utilities import kreisselmeier_steinhauser
 
 from SPI2py.group_model.component_spatial.bounding_volumes import bounding_box
 from SPI2py.group_model.component_spatial.geometric_representation import read_mdbd_file, generate_rectangular_prisms
 from SPI2py.group_model.component_spatial.visualization import plot_3d
-
-
-@dataclass
-class SpatialState:
-    """
-    Defines the state of a system at a given point in time.
-    """
-    design_vector: np.ndarray
-    objects: str
 
 
 class SpatialComponent(om.ExplicitComponent):
@@ -437,7 +428,7 @@ class SpatialInterface:
         # SELECT THE CONSTRAINT FUNCTION HANDLE
         if constraint == 'collision':
             def _constraint_function(x):
-                return discrete_collision_detection(x, self, object_pair, object_class_1, object_class_2)
+                return signed_distances(x, self, object_pair)
 
         else:
             raise NotImplementedError
