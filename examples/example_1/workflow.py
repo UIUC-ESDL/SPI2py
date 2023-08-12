@@ -187,77 +187,32 @@ system.set_constraint(constraint='collision',
 
 
 
-# def dummy(x):
-#     return np.sum(x**2)
-#
-#
-# def update(x):
-#     positions_dict = system.calculate_positions(design_vector=x)
-#
-#     positions_array = np.vstack([np.vstack(positions_dict[key]['positions']) for key in positions_dict.keys()])
-#
-#     return positions_array
-#
-# def objective(x):
-#     pos = system.calculate_positions(design_vector=x)
-#     vol = bounding_box(pos)
-#     return vol
-
-# x0 = system.design_vector
-#
-# pos0 = system.calculate_positions(x0)
-# grad0 = grad(system.calculate_positions)(x0)
-
-# def first_pos(x):
-#     pos_dict = c0.calculate_positions(x)
-#     pos = pos_dict['control_valve_1']['positions']
-#     return np.sum(pos)
-#
-# x0 = c0.design_vector
-# pos0 = c0.calculate_positions(x0)
-
-# vol0 = objective(x0)
-
 x0 = system.design_vector
-obj0 = system.calculate_objective(x0)
-con0 = system.calculate_constraints(x0)
+objective = system.calculate_objective(x0)
+constraints = system.calculate_constraints(x0)
 
-# jacrev(system.calculate_constraints)(x0)
-
-# def tryer(x):
-#     res = system.calculate_metrics(x, requested_metrics=('objective'))
-#     return res[0]
-#
-# res0 = tryer(x0)
+print('Initial objective: ', objective)
+print('Initial constraints: ', constraints)
 
 
-# TODO Fix interconnect position gradients...
-from SPI2py.group_model.component_spatial.distance_calculations import (signed_distances_capsules_capsules,
-                                                                        minimum_distance_segment_segment,
-                                                                        distances_points_points)
-from SPI2py.group_model.component_spatial.collision_detection import discrete_collision_detection
+def constraint_function(x):
+    return system.calculate_constraints(x)[0]
 
+grad(constraint_function)
 
-def my_fun(x):
-
-    all_signed_distances = discrete_collision_detection(x, system, system.interconnect_interconnect_pairs, 'interconnect', 'interconnect')
-
-    return np.sum(all_signed_distances)
-
-my_fun(x0)
 
 
 
 
 # study.optimize_spatial_configuration(options={'maximum number of iterations': 1,
 #                                               'convergence tolerance': 1e-2})
-#
-# # Post-processing
-#
-# # Plot the final spatial configuration
+
+# Post-processing
+
+# Plot the final spatial configuration
 # new_positions = system.calculate_positions(study.result.x)
 # system.set_positions(new_positions)
-# system.plot()
+# # system.plot()
 #
 # # Write output file
 # study.create_report()

@@ -149,7 +149,7 @@ class DesignStudy:
 
         # TODO Remove objective indexing...
         self.result, self.design_vector_log = run_optimizer(self.system,
-                                                            self.system.objectives[0],
+                                                            self.system.objective,
                                                             self.system.constraints,
                                                             options)
 
