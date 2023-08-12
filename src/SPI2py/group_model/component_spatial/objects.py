@@ -299,6 +299,10 @@ class Interconnect:
 
 
     def calculate_positions(self, design_vector, objects_dict):
+
+        # TODO Add num spheres as argument
+        spheres_per_segment = 25
+
         # TODO Make this work with design vectors of not length 3
         # Reshape the design vector to extract xi, yi, and zi positions
         design_vector = np.array(design_vector)
@@ -311,13 +315,19 @@ class Interconnect:
 
         node_positions = np.vstack((pos_1, design_vector, pos_2))
 
+        start_arr = node_positions[0:-1]
+        stop_arr = node_positions[1:None]
+
+        points = np.linspace(start_arr, stop_arr, spheres_per_segment).reshape(-1, 3)
+
         # Index the starting and stopping nodes of each segment
-        a = node_positions[0:-1]
-        b = node_positions[1:None]
+        # a = node_positions[0:-1]
+        # b = node_positions[1:None]
 
-        radii = np.repeat(self.radius, self.number_of_segments)
+        # radii = np.repeat(self.radius, self.number_of_segments)
+        radii = np.repeat(self.radius, len(points))
 
-        object_dict[str(self)] = {'type': 'interconnect', 'positions': [a, b], 'radii': radii}
+        object_dict[str(self)] = {'type': 'interconnect', 'positions': points, 'radii': radii}
 
         return object_dict
 

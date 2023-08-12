@@ -34,31 +34,9 @@ def discrete_collision_detection(x, model, object_pair, object_class_1, object_c
         positions_b = positions_dict[str(obj2)]['positions']
         radii_b = positions_dict[str(obj2)]['radii']
 
-        if object_class_1 == 'component' and object_class_2 == 'component':
-            signed_distances = signed_distances_spheres_spheres(positions_a, radii_a, positions_b, radii_b).flatten()
-            all_signed_distances.append(signed_distances)
 
-        elif object_class_1 == 'component' and object_class_2 == 'interconnect':
-            a, b = positions_b
-            signed_distances = signed_distances_spheres_capsules(positions_a, radii_a, a, b, radii_b).flatten()
-            all_signed_distances.append(signed_distances)
-
-        elif object_class_1 == 'interconnect' and object_class_2 == 'component':
-            a, b = positions_a
-            signed_distances = signed_distances_spheres_capsules(positions_b, radii_b, a, b, radii_a).flatten()
-            all_signed_distances.append(signed_distances)
-
-        elif object_class_1 == 'interconnect' and object_class_2 == 'interconnect':
-            a, b = positions_a
-            c, d = positions_b
-
-            signed_distance = signed_distances_capsules_capsules(a, b, radii_a, c, d, radii_b)
-            all_signed_distances.append(signed_distance)
-
-
-        else:
-            raise ValueError('Invalid object class pair')
-
+        signed_distances = signed_distances_spheres_spheres(positions_a, radii_a, positions_b, radii_b).flatten()
+        all_signed_distances.append(signed_distances)
 
 
     all_signed_distances = np.concatenate(all_signed_distances, axis=0)
