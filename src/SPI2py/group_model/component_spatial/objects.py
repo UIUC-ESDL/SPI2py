@@ -154,16 +154,12 @@ class Component:
         Calculates the positions of the object's spheres.
         """
 
-        design_vector_dict = self.decompose_design_vector(design_vector)
+        if design_vector is not None:
+            design_vector_dict = self.decompose_design_vector(design_vector)
+            translation, rotation, scaling = self.assemble_transformation_vectors(design_vector_dict)
+        else:
+            translation, rotation, scaling = transformation_vectors
 
-        translation, rotation, scaling = self.assemble_transformation_vectors(design_vector_dict)
-
-
-        # TODO Add reference axes argument
-        # Calculate the new positions
-        # translation = np.array([[x,y,z]]).T
-        # rotation = np.array([[rx,ry,rz]]).T
-        # scaling = np.ones((3,1))
         new_positions = affine_transformation(self.reference_position.reshape(-1,1), self.positions.T, translation, rotation, scaling).T
 
         object_dict = {self.__repr__(): {'type': 'spheres', 'positions': new_positions, 'radii': self.radii}}
@@ -174,9 +170,7 @@ class Component:
     def set_positions(self,
                       objects_dict: dict = None,
                       design_vector: list = None,
-                      translation: list = None,
-                      rotation: list = None,
-                      scale: list = None):
+                      transformation_vectors: list = None):
         """
         Update positions of object spheres given a design vector
 
@@ -188,9 +182,8 @@ class Component:
         if design_vector is not None:
             objects_dict = self.calculate_positions(design_vector, force_update=True)
 
-        if translation is not None and rotation is not None and scale is not None:
-            transformation_vectors = [translation, rotation, scale]
-            objects_dict = self.calculate_positions(None, transformation_vectors=transformation_vectors)
+        if transformation_vectors is not None:
+            objects_dict = self.calculate_positions(transformation_vectors=transformation_vectors)
 
 
         self.positions = objects_dict[self.__repr__()]['positions']
@@ -229,9 +222,9 @@ class Interconnect:
     def __init__(self,
                  name,
                  component_1_name,
-                 component_1_port_name,
+                 component_1_port_index,
                  component_2_name,
-                 component_2_port_name,
+                 component_2_port_index,
                  radius,
                  color,
                  number_of_waypoints,
@@ -242,20 +235,25 @@ class Interconnect:
         self.component_1_name = component_1_name
         self.component_2_name = component_2_name
 
-        self.component_1_port_name = component_1_port_name
-        self.component_2_port_name = component_2_port_name
+        self.component_1_port_index = component_1_port_index
+        self.component_2_port_index = component_2_port_index
 
         self.radius = radius
         self.color = color
 
         self.number_of_waypoints = number_of_waypoints
+        self.segments_per_interconnect = self.number_of_waypoints - 1
 
-        self.movement_class = 'partially dependent'
         self.degrees_of_freedom = degrees_of_freedom
 
         self.waypoint_positions = np.zeros((self.number_of_waypoints, 3))
 
         self.dof = 3 * self.number_of_waypoints
+
+        self.spheres_per_segment = 25
+
+        self.positions = np.empty((self.spheres_per_segment*self.segments_per_interconnect,3))
+        self.radii = np.empty((self.spheres_per_segment*self.segments_per_interconnect,1))
 
     def __repr__(self):
         return self.name
@@ -263,16 +261,11 @@ class Interconnect:
     def __str__(self):
         return self.name
 
-
-
     @property
     def design_vector(self):
         return self.waypoint_positions.flatten()
 
     def calculate_positions(self, design_vector, objects_dict):
-
-        # TODO Add num spheres as argument
-        spheres_per_segment = 25
 
         # TODO Make this work with design vectors of not length 3
         # Reshape the design vector to extract xi, yi, and zi positions
@@ -281,40 +274,29 @@ class Interconnect:
 
         object_dict = {}
 
-        # pos_1 = objects_dict[self.object_1]['positions'][0]
-        # pos_2 = objects_dict[self.object_2]['positions'][0]
-
-        pos_1_index = objects_dict[self.component_1_name]['port_indices'][self.component_1_port_name]
-        pos_2_index = objects_dict[self.component_2_name]['port_indices'][self.component_2_port_name]
-
-        pos_1 = objects_dict[self.component_1_name]['positions'][pos_1_index]
-        pos_2 = objects_dict[self.component_2_name]['positions'][pos_2_index]
+        pos_1 = objects_dict[self.component_1_name]['positions'][self.component_1_port_index]
+        pos_2 = objects_dict[self.component_2_name]['positions'][self.component_2_port_index]
 
         node_positions = np.vstack((pos_1, design_vector, pos_2))
 
         start_arr = node_positions[0:-1]
         stop_arr = node_positions[1:None]
 
-        points = np.linspace(start_arr, stop_arr, spheres_per_segment).reshape(-1, 3)
+        points = np.linspace(start_arr, stop_arr, self.spheres_per_segment).reshape(-1, 3)
         radii = np.repeat(self.radius, len(points))
 
         object_dict[str(self)] = {'type': 'interconnect', 'positions': points, 'radii': radii}
 
         return object_dict
 
-    def set_positions(self, objects_dict: dict):
-
+    def set_positions(self, design_vector, objects_dict):
+        objects_dict = self.calculate_positions(design_vector, objects_dict)
         self.positions = objects_dict[str(self)]['positions']
-
         self.radii = objects_dict[str(self)]['radii']
 
 
-    def plot(self):
-        objects = []
-        colors = []
-
-
-        # Plot spheres at each node
+    def generate_plot_objects(self):
+        objects, colors = [], []
         for position, radius in zip(self.positions, self.radii):
             objects.append(pv.Sphere(radius=radius, center=position))
             colors.append(self.color)

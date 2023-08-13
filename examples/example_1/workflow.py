@@ -51,9 +51,9 @@ c4 = Component(name='structure_1',
 ic0 = Interconnect(name='hp_cv_to_actuator',
                    color='black',
                    component_1_name='control_valve_1',
-                   component_1_port_name='supply',
+                   component_1_port_index=c0.port_indices['supply'],
                    component_2_name='actuator_1',
-                   component_2_port_name='supply',
+                   component_2_port_index=c1.port_indices['supply'],
                    radius=0.25,
                    number_of_waypoints=2,
                    degrees_of_freedom=('x', 'y', 'z'))
@@ -61,9 +61,9 @@ ic0 = Interconnect(name='hp_cv_to_actuator',
 ic1 = Interconnect(name='hp_cv_to_actuator2',
                    color='blue',
                    component_1_name='control_valve_1',
-                   component_1_port_name='return',
+                   component_1_port_index=c0.port_indices['return'],
                    component_2_name='actuator_1',
-                   component_2_port_name='return',
+                   component_2_port_index=c1.port_indices['return'],
                    radius=0.25,
                    number_of_waypoints=1,
                    degrees_of_freedom=('x', 'y', 'z'))
@@ -95,66 +95,74 @@ study.add_system(system)
 
 # Map the system to a single spatial configuration
 
-c0.set_positions(translation=[-3., -4.41, -0.24],
-                 rotation=[0., 0., 0.],
-                 scale=[1., 1., 1.])
+system.set_position('control_valve_1',
+                    translation=[-3., -4.41, -0.24],
+                    rotation=[0., 0., 0.],
+                    scale=[1., 1., 1.])
 
-c1.set_positions(translation=[2., 4.41, 0.24],
-                 rotation=[0., 0., 0.],
-                 scale=[1., 1., 1.])
+system.set_position('actuator_1',
+                    translation=[2., 4.41, 0.24],
+                    rotation=[0., 0., 0.],
+                    scale=[1., 1., 1.])
 
-c2.set_positions(translation=[-5, 3, 1],
-                 rotation=[0., 0., 0.],
-                 scale=[1., 1., 1.])
+system.set_position('component_2',
+                    translation=[-5, 3, 1],
+                    rotation=[0., 0., 0.],
+                    scale=[1., 1., 1.])
 
-c3.set_positions(translation=[3., 1., -3.],
-                 rotation=[0., 0., 0.],
-                 scale=[1., 1., 1.])
+system.set_position('component_3',
+                    translation=[3., 1., -3.],
+                    rotation=[0., 0., 0.],
+                    scale=[1., 1., 1.])
 
-c4.set_positions(translation=[0., 0., -1.],
-                 rotation=[0., 0., 0.],
-                 scale=[1., 1., 1.])
+system.set_position('structure_1',
+                    translation=[0., 0., -1.],
+                    rotation=[0., 0., 0.],
+                    scale=[1., 1., 1.])
 
-ic0.set_position(waypoints=[[-3., -2., 2.],[-1., 0., 2.]])
-ic1.set_position(waypoints=[[4., 0., 1.]])
+system.set_position('hp_cv_to_actuator',
+                    waypoints=[[-3., -2., 2.],[-1., 0., 2.]])
+
+system.set_position('hp_cv_to_actuator2',
+                    waypoints=[[4., 0., 1.]])
 
 
 
 # Plot initial spatial configuration
 # system.plot()
 
-# Perform gradient-based optimization
-
-system.set_objective(objective='bounding box volume')
-
-system.set_constraint(constraint='collision',
-                      options={'object class 1': 'component',
-                               'object class 2': 'component',
-                               'constraint tolerance': 0.0,
-                               'constraint aggregation parameter': 3.0})
-
-system.set_constraint(constraint='collision',
-                      options={'object class 1': 'component',
-                               'object class 2': 'interconnect',
-                               'constraint tolerance': 0.01,
-                               'constraint aggregation parameter': 3.0})
-
-system.set_constraint(constraint='collision',
-                      options={'object class 1': 'interconnect',
-                               'object class 2': 'interconnect',
-                               'constraint tolerance': 0.0,
-                               'constraint aggregation parameter': 3.0})
-
-x0 = system.design_vector
-objective = system.calculate_objective(x0)
-constraints = system.calculate_constraints(x0)
-
-print('Initial objective: ', objective)
-print('Initial constraints: ', constraints)
-
-
-def constraint_function(x):
-    return system.calculate_constraints(x)[0]
+# # Perform gradient-based optimization
+#
+# system.set_objective(objective='bounding box volume')
+#
+# system.set_constraint(constraint='collision',
+#                       options={'object class 1': 'component',
+#                                'object class 2': 'component',
+#                                'constraint tolerance': 0.0,
+#                                'constraint aggregation parameter': 3.0})
+#
+# system.set_constraint(constraint='collision',
+#                       options={'object class 1': 'component',
+#                                'object class 2': 'interconnect',
+#                                'constraint tolerance': 0.01,
+#                                'constraint aggregation parameter': 3.0})
+#
+# system.set_constraint(constraint='collision',
+#                       options={'object class 1': 'interconnect',
+#                                'object class 2': 'interconnect',
+#                                'constraint tolerance': 0.0,
+#                                'constraint aggregation parameter': 3.0})
+#
+# x0 = system.design_vector
+# objective = system.calculate_objective(x0)
+# constraints = system.calculate_constraints(x0)
+#
+# print('Initial objective: ', objective)
+# print('Initial constraints: ', constraints)
+#
+#
+# def constraint_function(x):
+#     return system.calculate_constraints(x)[0]
 
 
 # grad_c = grad(constraint_function)(x0)

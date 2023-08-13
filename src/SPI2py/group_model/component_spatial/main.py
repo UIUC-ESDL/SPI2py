@@ -3,7 +3,7 @@ import jax.numpy as np
 import openmdao.api as om
 
 from itertools import combinations, product
-from SPI2py.group_model.component_spatial.objects import Component
+from SPI2py.group_model.component_spatial.objects import Component, Interconnect
 
 from SPI2py.group_model.component_spatial.distance_calculations import signed_distances
 
@@ -221,6 +221,21 @@ class SpatialInterface:
 
         return design_vectors
 
+    def get_component_positions(self):
+        """
+        Get the positions of all objects in the layout.
+
+        :return:
+        """
+
+        positions_dict = {}
+
+        for obj in self.components:
+            positions_dict[obj.__repr__()] = {'positions': obj.positions}
+
+        return positions_dict
+
+
     def calculate_positions(self, design_vector=None, design_vector_dict=None):
         """
 
@@ -248,6 +263,21 @@ class SpatialInterface:
 
         return objects_dict
 
+    def set_position(self, object_name, translation=None, rotation=None, scale=None, waypoints=None):
+
+        obj = next(obj for obj in self.objects if obj.__repr__() == object_name)
+
+        if isinstance(obj, Component):
+            translation = np.array(translation).reshape(3,1)
+            rotation = np.array(rotation).reshape(3,1)
+            scale = np.array(scale).reshape(3,1)
+            transformation_vectors = [translation, rotation, scale]
+            obj.set_positions(transformation_vectors=transformation_vectors)
+
+        elif isinstance(obj, Interconnect):
+            design_vector = np.array(waypoints).flatten()
+            obj_dict = self.get_component_positions()
+            obj.set_positions(design_vector, obj_dict)
 
     def set_positions(self, objects_dict=None, design_vector_dict=None):
         """set_positions Sets the positions of the objects in the layout.
@@ -264,28 +294,6 @@ class SpatialInterface:
         for obj in self.objects:
             obj.set_positions(objects_dict)
 
-    def map_static_object(self, object_name, design_vector):
-        """
-        Maps an object to a spatial configuration.
-
-        :param obj: The object to be mapped.
-        :type obj: Component
-        :param design_vector: The design vector; must be a (1, 6) array for x, y, z, rx, ry, rz.
-        """
-
-        # Get the object given its name as a string
-        obj = next(obj for obj in self.objects if obj.__repr__() == object_name)
-
-        # Get the positions of the object
-        positions = obj.positions
-        radii = obj.radii
-
-        objects_dict = obj.calculate_positions(design_vector, force_update=True)
-
-        # Set the positions of the object
-        obj.set_positions(objects_dict)
-
-        return objects_dict
 
     def set_objective(self, objective: str):
 
