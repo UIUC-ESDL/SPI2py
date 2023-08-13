@@ -48,7 +48,7 @@ c4 = Component(name='structure_1',
 
 # %% Define the interconnects
 
-ic0 = Interconnect(name='hp_cv_to_actuator',
+ic0 = Interconnect(name='hp_cv_actuator',
                    color='black',
                    component_1_name='control_valve_1',
                    component_1_port_index=c0.port_indices['supply'],
@@ -58,7 +58,7 @@ ic0 = Interconnect(name='hp_cv_to_actuator',
                    number_of_waypoints=2,
                    degrees_of_freedom=('x', 'y', 'z'))
 
-ic1 = Interconnect(name='hp_cv_to_actuator2',
+ic1 = Interconnect(name='lp_cv_actuator',
                    color='blue',
                    component_1_name='control_valve_1',
                    component_1_port_index=c0.port_indices['return'],
@@ -120,16 +120,16 @@ system.set_position('structure_1',
                     rotation=[0., 0., 0.],
                     scale=[1., 1., 1.])
 
-system.set_position('hp_cv_to_actuator',
+system.set_position('hp_cv_actuator',
                     waypoints=[[-3., -2., 2.],[-1., 0., 2.]])
 
-system.set_position('hp_cv_to_actuator2',
+system.set_position('lp_cv_actuator',
                     waypoints=[[4., 0., 1.]])
 
 
 
 # Plot initial spatial configuration
-# system.plot()
+system.plot()
 
 # # Perform gradient-based optimization
 #

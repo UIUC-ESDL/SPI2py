@@ -391,10 +391,7 @@ class SpatialInterface:
         :param x: Design vector
         """
 
-        # types = []
-        # positions = []
-        # radii = []
-        # colors = []
+
         objects = []
         colors = []
 
@@ -402,17 +399,5 @@ class SpatialInterface:
             objs, cols = obj.generate_plot_objects()
             objects.extend(objs)
             colors.extend(cols)
-            # if isinstance(obj, Component):
-            #     types.append('component')
-            #     positions.append(obj.positions)
-            #     radii.append(obj.radii)
-            #     colors.append(obj.color)
-            # elif isinstance(obj, Interconnect):
-            #     types.append('interconnect')
-            #     directions, heights, centers = obj.capsules
-            # else:
-            #     raise ValueError('Object type not recognized.')
-
-
 
         fig = plot_3d(objects, colors)

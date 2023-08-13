@@ -48,9 +48,10 @@ class Component:
 
         if self.ports is not None:
             for port in self.ports:
+                self.port_indices[port['name']] = len(self.positions - 1)
                 self.positions = np.vstack((self.positions, port['origin']))
                 self.radii = np.concatenate((self.radii, np.array([port['radius']])))
-                self.port_indices[port['name']] = len(self.positions - 1)
+
 
 
     def __repr__(self):
@@ -162,7 +163,7 @@ class Component:
 
         new_positions = affine_transformation(self.reference_position.reshape(-1,1), self.positions.T, translation, rotation, scaling).T
 
-        object_dict = {self.__repr__(): {'type': 'spheres', 'positions': new_positions, 'radii': self.radii}}
+        object_dict = {self.__repr__(): {'positions': new_positions, 'radii': self.radii}}
 
         return object_dict
 
@@ -182,7 +183,7 @@ class Component:
         if design_vector is not None:
             objects_dict = self.calculate_positions(design_vector, force_update=True)
 
-        if transformation_vectors is not None:
+        elif transformation_vectors is not None:
             objects_dict = self.calculate_positions(transformation_vectors=transformation_vectors)
 
 
@@ -290,7 +291,8 @@ class Interconnect:
         return object_dict
 
     def set_positions(self, design_vector, objects_dict):
-        objects_dict = self.calculate_positions(design_vector, objects_dict)
+        objects_dict = {**objects_dict, **self.calculate_positions(design_vector, objects_dict)}
+        self.waypoint_positions = np.array(design_vector).reshape((-1, 3))
         self.positions = objects_dict[str(self)]['positions']
         self.radii = objects_dict[str(self)]['radii']
 
