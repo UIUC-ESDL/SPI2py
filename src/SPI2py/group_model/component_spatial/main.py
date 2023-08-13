@@ -24,7 +24,7 @@ class SpatialComponent(om.ExplicitComponent):
 
         self.add_design_var('x')
         self.add_objective('f')
-        # self.add_constraint('g', lower=-1, upper=1)
+        self.add_constraint('g1', lower=None, upper=0)
 
     def setup(self):
 
@@ -39,26 +39,32 @@ class SpatialComponent(om.ExplicitComponent):
 
         self.add_input('x', val=x_default)
         self.add_output('f', val=1.0)
+        self.add_output('g1', val=0.0)
 
 
     def setup_partials(self):
         self.declare_partials('f', 'x')
+        self.declare_partials('g1', 'x')
 
     def compute(self, inputs, outputs):
 
         x = inputs['x']
 
         f = self.spatial_interface.calculate_objective(x)
+        g1 = self.spatial_interface.calculate_constraints(x)[0]
 
         outputs['f'] = f
+        outputs['g1'] = g1
 
     def compute_partials(self, inputs, partials):
 
         x = inputs['x']
 
         grad_f = grad(self.spatial_interface.calculate_objective)(x)
+        grad_g1 = grad(lambda d: self.spatial_interface.calculate_constraints(d)[0])(x)
 
         partials['f', 'x'] = grad_f
+        partials['g1', 'x'] = grad_g1
 
 
 

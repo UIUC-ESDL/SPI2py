@@ -166,38 +166,16 @@ prob.run_model()
 
 # Perform gradient-based optimization
 
-print('Initial design vector: ', prob['x'])
-print('Initial objective: ', prob['f'])
+# print('Initial design vector: ', prob['x'])
+# print('Initial objective: ', prob['f'])
+print('Initial constraint values: ', prob['g1'])
+print('Initial constraint gradient values: ', prob.compute_totals('g1','x'))
 
-prob.run_driver()
 
-# Plot optimized spatial configuration
-# spatial_component.spatial_interface.plot()
-
-print('Optimized design vector: ', prob['x'])
-print('Optimized objective: ', prob['f'])
-
-# x0 = system.design_vector
-# objective = system.calculate_objective(x0)
-# constraints = system.calculate_constraints(x0)
+# prob.run_driver()
 #
-# print('Initial objective: ', objective)
-# print('Initial constraints: ', constraints)
+# # Plot optimized spatial configuration
+# # spatial_component.spatial_interface.plot()
 #
-#
-# def constraint_function(x):
-#     return system.calculate_constraints(x)[0]
-#
-#
-# grad_c = grad(constraint_function)(x0)
-# print('Initial constraint gradient: ', grad_c)
-
-# study.optimize_spatial_configuration(options={'maximum number of iterations': 1,
-#                                               'convergence tolerance': 1e-2})
-
-
-# Plot the final spatial configuration
-# new_positions = system.calculate_positions(study.result.x)
-# system.set_positions(new_positions)
-# # system.plot()
-
+# print('Optimized design vector: ', prob['x'])
+# print('Optimized objective: ', prob['f'])
