@@ -120,7 +120,7 @@ study.set_initial_position('hp_cv_to_actuator', 'spatial_config_1', [-3., -2., 2
 study.set_initial_position('hp_cv_to_actuator2', 'spatial_config_1', [4., 0., 1.])
 
 # Map static objects to the spatial configuration (they do not have
-system.map_static_object(object_name='structure_1', design_vector=[0, 0, -1, 0, 0, 0])
+study.set_initial_position('structure_1', 'spatial_config_1', [0, 0, -1, 0, 0, 0])
 
 # Generate the spatial configuration
 study.generate_spatial_configuration(name='spatial_config_1', method='manual')
@@ -130,7 +130,7 @@ study.generate_spatial_configuration(name='spatial_config_1', method='manual')
 
 # Perform gradient-based optimization
 
-system.set_objective(objective='normalized aggregate gap distance')
+system.set_objective(objective='bounding box volume')
 
 system.set_constraint(constraint='collision',
                       options={'object class 1': 'component',

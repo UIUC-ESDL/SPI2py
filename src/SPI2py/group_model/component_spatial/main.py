@@ -160,10 +160,7 @@ class SpatialInterface:
 
         design_vector = np.empty(0)
 
-        for obj in self.independent_objects:
-            design_vector = np.concatenate((design_vector, obj.design_vector))
-
-        for obj in self.partially_dependent_objects:
+        for obj in self.objects:
             design_vector = np.concatenate((design_vector, obj.design_vector))
 
         return design_vector
@@ -185,8 +182,11 @@ class SpatialInterface:
         design_vector_dict = {}
 
         for obj in self.objects:
-            design_vector_dict[obj] = design_vector[0:obj.dof]
-            design_vector = design_vector[obj.dof:]
+            if obj.dof == 0:
+                design_vector_dict[obj] = []
+            else:
+                design_vector_dict[obj] = design_vector[0:obj.dof]
+                design_vector = design_vector[obj.dof:]
 
 
         return design_vector_dict
@@ -203,10 +203,7 @@ class SpatialInterface:
 
         # Get the size of the design vector for each design vector object
         design_vector_sizes = []
-        for i, obj in enumerate(self.independent_objects):
-            design_vector_sizes.append(obj.design_vector.size)
-
-        for i, obj in enumerate(self.partially_dependent_objects):
+        for i, obj in enumerate(self.objects):
             design_vector_sizes.append(obj.design_vector.size)
 
         # Index values
@@ -239,12 +236,13 @@ class SpatialInterface:
         if design_vector is not None:
             design_vectors = self.slice_design_vector(design_vector)
         else:
-            design_vectors = list(design_vector_dict.values())
+            # design_vectors = list(design_vector_dict.values())
+            design_vectors = [design_vector_dict[repr(obj)] for obj in self.objects]
 
         objects_dict = {}
 
-        for obj in self.objects:
-            object_dict = obj.calculate_positions(design_vectors, objects_dict=objects_dict)
+        for obj, design_vector in zip(self.objects, design_vectors):
+            object_dict = obj.calculate_positions(design_vector, objects_dict=objects_dict)
             objects_dict = {**objects_dict, **object_dict}
 
 
@@ -299,9 +297,7 @@ class SpatialInterface:
 
         # SELECT THE OBJECTIVE FUNCTION HANDLE
 
-        if objective == 'normalized aggregate gap distance':
-            _objective_function = normalized_aggregate_gap_distance
-        elif objective == 'bounding box volume':
+        if objective == 'bounding box volume':
             _objective_function = bounding_box
         else:
             raise NotImplementedError

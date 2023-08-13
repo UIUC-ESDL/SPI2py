@@ -129,19 +129,6 @@ class DesignStudy:
         self.spatial_configuration = self.system
 
 
-    # ANALYSIS METHODS
-
-
-
-
-
-
-    def calculate_objective_function(self):
-        pass
-
-    def calculate_constraint_functions(self):
-        pass
-
     # OPTIMIZE METHODS
 
 
@@ -186,44 +173,3 @@ class DesignStudy:
         with open(self.directory + report_filename, 'w') as f:
             json.dump(self.outputs, f)
 
-
-
-
-# from scipy.optimize import minimize
-
-# # Define the cache
-# cache = {}
-
-# def objective(x):
-#     # Check if the state is already in the cache
-#     if tuple(x) in cache:
-#         state = cache[tuple(x)]
-#     else:
-#         # Evaluate the model and store the state in the cache
-#         state = evaluate_model(x)
-#         cache[tuple(x)] = state
-
-#     # Calculate the objective function using the model state
-#     obj = calculate_objective(state)
-
-#     return obj
-
-# def constraint(x):
-#     # Check if the state is already in the cache
-#     if tuple(x) in cache:
-#         state = cache[tuple(x)]
-#     else:
-#         # Evaluate the model and store the state in the cache
-#         state = evaluate_model(x)
-#         cache[tuple(x)] = state
-
-#     # Calculate the constraint function using the model state
-#     con = calculate_constraint(state)
-
-#     return con
-
-# # Define the initial design vector
-# x0 = [0, 0, 0]
-
-# # Minimize the objective function subject to the constraint function
-# res = minimize(objective, x0, constraints={'type': 'ineq', 'fun': constraint})
