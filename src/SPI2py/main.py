@@ -60,40 +60,7 @@ class DesignStudy:
     def add_system(self, system):
         self.system = system
 
-    # LAYOUT METHODS
 
-    def set_initial_position(self, object_name, spatial_config_name, design_vector):
-
-        if spatial_config_name not in list(self.initial_design_vectors.keys()):
-            self.initial_design_vectors[spatial_config_name] = {}
-
-        self.initial_design_vectors[spatial_config_name][object_name] = design_vector
-
-    def generate_spatial_configuration(self, name, method):
-        """
-        Map the objects to a 3D layout.
-
-        First, map static objects to the layout since their positions are independent of the layout generation method.
-
-        :param method:
-        :param inputs:
-
-        TODO implement different layout generation methods
-        """
-
-
-
-        design_vector_dict = self.initial_design_vectors[name]
-
-        objects_dict = self.system.calculate_positions(design_vector_dict=design_vector_dict)
-        self.system.set_positions(objects_dict=objects_dict)
-
-
-
-        self.spatial_configuration = self.system
-
-
-    # OPTIMIZE METHODS
 
 
     def optimize_spatial_configuration(self, options: dict):

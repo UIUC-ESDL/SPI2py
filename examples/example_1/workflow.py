@@ -10,8 +10,9 @@ import os
 
 import jax.numpy as np
 from jax import grad, jacrev
+import openmdao.api as om
 
-from SPI2py import (SpatialInterface, Component, Interconnect, DesignStudy)
+from SPI2py import (SpatialInterface, SpatialComponent, Component, Interconnect, DesignStudy)
 
 
 # %% Define the components
@@ -68,26 +69,50 @@ ic1 = Interconnect(name='lp_cv_actuator',
                    number_of_waypoints=1,
                    degrees_of_freedom=('x', 'y', 'z'))
 
+
+
+
 # %% Define the system
 
+prob = om.Problem()
+model = prob.model
 
-system = SpatialInterface(name='DemoSystem',
-                          components=[c0, c1, c2, c3, c4],
-                          interconnects=[ic0, ic1])
+spatial_component = SpatialComponent()
+spatial_component.options.declare('name', default='DemoSystem', types=str)
+spatial_component.options.declare('components', default=[c0, c1, c2, c3, c4], types=list)
+spatial_component.options.declare('interconnects', default=[ic0, ic1], types=list)
+
+model.add_subsystem('system', spatial_component, promotes=['*'])
+
+
+prob.setup()
+
+
+spatial_component.spatial_interface.set_objective(objective='bounding box volume')
+
+spatial_component.spatial_interface.set_constraint(constraint='collision',
+                      options={'object class 1': 'component',
+                               'object class 2': 'component',
+                               'constraint tolerance': 0.0,
+                               'constraint aggregation parameter': 3.0})
+
+spatial_component.spatial_interface.set_constraint(constraint='collision',
+                      options={'object class 1': 'component',
+                               'object class 2': 'interconnect',
+                               'constraint tolerance': 0.01,
+                               'constraint aggregation parameter': 3.0})
+
+spatial_component.spatial_interface.set_constraint(constraint='collision',
+                      options={'object class 1': 'interconnect',
+                               'object class 2': 'interconnect',
+                               'constraint tolerance': 0.0,
+                               'constraint aggregation parameter': 3.0})
 
 
 # %% Define the design study
 
 
-# Obtain the local path of this example's directory
-local_directory = os.path.dirname(__file__) + '/'
 
-# Initialize the design study
-study = DesignStudy(directory=local_directory,
-                    study_name='Example 1')
-
-# Add the defined system to the design study
-study.add_system(system)
 
 
 # %% Define a spatial configuration for the design study
@@ -95,91 +120,73 @@ study.add_system(system)
 
 # Map the system to a single spatial configuration
 
-system.set_position('control_valve_1',
-                    translation=[-3., -4.41, -0.24],
-                    rotation=[0., 0., 0.],
-                    scale=[1., 1., 1.])
+spatial_component.spatial_interface.set_position('control_valve_1',
+                            translation=[-3., -4.41, -0.24],
+                            rotation=[0., 0., 0.],
+                            scale=[1., 1., 1.])
 
-system.set_position('actuator_1',
-                    translation=[2., 4.41, 0.24],
-                    rotation=[0., 0., 0.],
-                    scale=[1., 1., 1.])
+spatial_component.spatial_interface.set_position('actuator_1',
+                            translation=[2., 4.41, 0.24],
+                            rotation=[0., 0., 0.],
+                            scale=[1., 1., 1.])
 
-system.set_position('component_2',
-                    translation=[-5, 3, 1],
-                    rotation=[0., 0., 0.],
-                    scale=[1., 1., 1.])
+spatial_component.spatial_interface.set_position('component_2',
+                            translation=[-5, 3, 1],
+                            rotation=[0., 0., 0.],
+                            scale=[1., 1., 1.])
 
-system.set_position('component_3',
-                    translation=[3., 1., -3.],
-                    rotation=[0., 0., 0.],
-                    scale=[1., 1., 1.])
+spatial_component.spatial_interface.set_position('component_3',
+                            translation=[3., 1., -3.],
+                            rotation=[0., 0., 0.],
+                            scale=[1., 1., 1.])
 
-system.set_position('structure_1',
-                    translation=[0., 0., -1.],
-                    rotation=[0., 0., 0.],
-                    scale=[1., 1., 1.])
+spatial_component.spatial_interface.set_position('structure_1',
+                            translation=[0., 0., -1.],
+                            rotation=[0., 0., 0.],
+                            scale=[1., 1., 1.])
 
-system.set_position('hp_cv_actuator',
-                    waypoints=[[-3., -2., 2.],[-1., 0., 2.]])
+spatial_component.spatial_interface.set_position('hp_cv_actuator',
+                            waypoints=[[-3., -2., 2.],[-1., 0., 2.]])
 
-system.set_position('lp_cv_actuator',
-                    waypoints=[[4., 0., 1.]])
+spatial_component.spatial_interface.set_position('lp_cv_actuator',
+                            waypoints=[[4., 0., 1.]])
 
 
+# x0 = spatial_component.spatial_interface.design_vector
+# model.set_val('x', spatial_component.spatial_interface.design_vector)
+
+
+prob.driver = om.ScipyOptimizeDriver()
+
+prob.run_model()
 
 # Plot initial spatial configuration
 # system.plot()
 
 # Perform gradient-based optimization
 
-system.set_objective(objective='bounding box volume')
 
-system.set_constraint(constraint='collision',
-                      options={'object class 1': 'component',
-                               'object class 2': 'component',
-                               'constraint tolerance': 0.0,
-                               'constraint aggregation parameter': 3.0})
-
-system.set_constraint(constraint='collision',
-                      options={'object class 1': 'component',
-                               'object class 2': 'interconnect',
-                               'constraint tolerance': 0.01,
-                               'constraint aggregation parameter': 3.0})
-
-system.set_constraint(constraint='collision',
-                      options={'object class 1': 'interconnect',
-                               'object class 2': 'interconnect',
-                               'constraint tolerance': 0.0,
-                               'constraint aggregation parameter': 3.0})
-
-x0 = system.design_vector
-objective = system.calculate_objective(x0)
-constraints = system.calculate_constraints(x0)
-
-print('Initial objective: ', objective)
-print('Initial constraints: ', constraints)
-
-
-def constraint_function(x):
-    return system.calculate_constraints(x)[0]
-
-
-grad_c = grad(constraint_function)(x0)
-print('Initial constraint gradient: ', grad_c)
+# x0 = system.design_vector
+# objective = system.calculate_objective(x0)
+# constraints = system.calculate_constraints(x0)
+#
+# print('Initial objective: ', objective)
+# print('Initial constraints: ', constraints)
+#
+#
+# def constraint_function(x):
+#     return system.calculate_constraints(x)[0]
+#
+#
+# grad_c = grad(constraint_function)(x0)
+# print('Initial constraint gradient: ', grad_c)
 
 # study.optimize_spatial_configuration(options={'maximum number of iterations': 1,
 #                                               'convergence tolerance': 1e-2})
 
-# Post-processing
 
 # Plot the final spatial configuration
 # new_positions = system.calculate_positions(study.result.x)
 # system.set_positions(new_positions)
 # # system.plot()
-#
-# # Write output file
-# study.create_report()
-#
-# # Print the log to see the optimization results and if any warnings or errors occurred
-# study.print_log()
+

@@ -1,4 +1,5 @@
 import jax.numpy as np
+from jax import grad, jacrev
 
 import openmdao.api as om
 
@@ -16,19 +17,50 @@ from SPI2py.group_model.component_spatial.visualization import plot_3d
 class SpatialComponent(om.ExplicitComponent):
 
     def initialize(self):
-        pass
+
+        self.options.declare('name', types=str)
+        self.options.declare('components', types=list)
+        self.options.declare('interconnects', types=list)
+
+        self.add_design_var('x')
+        self.add_objective('f')
+        # self.add_constraint('g', lower=-1, upper=1)
 
     def setup(self):
-        pass
+
+        name = self.options['name']
+        components = self.options['components']
+        interconnects = self.options['interconnects']
+        self.spatial_interface = SpatialInterface(name=name,
+                                                  components=components,
+                                                  interconnects=interconnects)
+
+        x_default = self.spatial_interface.design_vector
+
+        self.add_input('x', val=x_default)
+        self.add_output('f', val=1.0)
+
 
     def setup_partials(self):
-        pass
+        self.declare_partials('f', 'x')
 
     def compute(self, inputs, outputs):
-        pass
 
-    def compute_partials(self, inputs, partials):
-        pass
+        x = inputs['x']
+
+        x = np.array(x)
+
+        f = self.spatial_interface.calculate_objective(x)
+
+        outputs['f'] = f
+
+    # def compute_partials(self, inputs, partials):
+    #
+    #     x = inputs['x']
+    #
+    #     grad_f = grad(self.spatial_interface.calculate_objective)(x)
+    #
+    #     partials['f', 'x'] = grad_f
 
 
 
@@ -367,6 +399,7 @@ class SpatialInterface:
         self.constraints.append(constraint_aggregation_function)
 
     def calculate_objective(self, x):
+
         objective = self.objective(x)
 
         objective = np.array(objective)

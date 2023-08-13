@@ -144,46 +144,6 @@ class Component:
         return translation, rotation, scale
 
 
-    @property
-    def design_vector_dict(self) -> dict:
-
-        """
-        Returns a dictionary of the design vector components.
-
-        An object's design vector is encoded as a reference position and rotation. Since objects are rigid bodies,
-        all other geometric properties are a function of the reference position and rotation.
-        """
-
-        design_vector_dict = {}
-
-        if 'x' in self.degrees_of_freedom:
-            design_vector_dict['x'] = self.reference_position[0]
-        if 'y' in self.degrees_of_freedom:
-            design_vector_dict['y'] = self.reference_position[1]
-        if 'z' in self.degrees_of_freedom:
-            design_vector_dict['z'] = self.reference_position[2]
-        if 'rx' in self.degrees_of_freedom:
-            design_vector_dict['rx'] = self.rotation[0]
-        if 'ry' in self.degrees_of_freedom:
-            design_vector_dict['ry'] = self.rotation[1]
-        if 'rz' in self.degrees_of_freedom:
-            design_vector_dict['rz'] = self.rotation[2]
-        if 'sx' in self.degrees_of_freedom:
-            design_vector_dict['sx'] = self.scale[0]
-        if 'sy' in self.degrees_of_freedom:
-            design_vector_dict['sy'] = self.scale[1]
-        if 'sz' in self.degrees_of_freedom:
-            design_vector_dict['sz'] = self.scale[2]
-
-
-        return design_vector_dict
-
-    # @property
-    # def design_vector(self):
-    #     design_vector = np.array(list(self.design_vector_dict.values()))
-    #     return design_vector
-
-
     def calculate_positions(self, design_vector=None, objects_dict=None, transformation_vectors=None):
         """
         Calculates the positions of the object's spheres.
