@@ -2,17 +2,16 @@
 TODO Can I remove movement classes if I just use degrees of freedom and reference axes?
 
 """
-import logging
 
-from SPI2py.group_model.component_geometry.finite_sphere_method import read_mdbd_file, generate_rectangular_prisms
+
+from SPI2py.group_model.component_geometry.finite_sphere_method import read_xyzr_file, generate_rectangular_prisms
 from SPI2py.group_model.component_spatial.spatial_transformations import affine_transformation
 
 from matplotlib import colors as mcolors
 
-logger = logging.getLogger(__name__)
 
 import jax.numpy as np
-from typing import Union
+from typing import Union, Sequence
 
 import pyvista as pv
 
@@ -23,45 +22,24 @@ class Component:
     """
     def __init__(self,
                  name: str,
-                 color: str=None,
-                 degrees_of_freedom: tuple[str] = ('x', 'y', 'z', 'rx', 'ry', 'rz'),
-                 shapes=None,
-                 ports: Union[None, list[dict]] = None,
-                 cad_file: str = None,
-                 mdbd_filepath: str = None):
+                 color: str = None,
+                 degrees_of_freedom: Sequence[str] = ('x', 'y', 'z', 'rx', 'ry', 'rz'),
+                 filepath=None,
+                 ports: Union[None, list[dict]] = None):
 
-        self.name = self._validate_name(name)
-
-
+        self.name = name
 
         self.type = 'component'
+
+        self.positions, self.radii = read_xyzr_file(filepath)
         self.rotation = np.array([0, 0, 0])
+
         self.ports = self._validate_ports(ports)
         self.port_names = []
         self.port_indices = []
 
-        self.shapes = shapes
-        self.cad_file = cad_file
-        self.mdbd_filepath = mdbd_filepath
+        # TODO Set default design vectors...
 
-        if mdbd_filepath is not None:
-            positions, radii = read_mdbd_file(mdbd_filepath)
-        else:
-
-            origins = []
-            dimensions = []
-            for shape in shapes:
-                origins.append(shape['origin'])
-                dimensions.append(shape['dimensions'])
-
-            positions, radii = generate_rectangular_prisms(origins, dimensions)
-
-
-        self.positions = positions
-        self.radii = radii
-
-        # TODO Remove rotation...
-        self.rotation = np.zeros(3)
         self.degrees_of_freedom = degrees_of_freedom
 
         self._valid_colors = {**mcolors.BASE_COLORS, **mcolors.TABLEAU_COLORS, **mcolors.CSS4_COLORS,
@@ -80,15 +58,6 @@ class Component:
                 self.port_indices.append(len(self.positions) - 1)
 
 
-
-
-
-
-    @staticmethod
-    def _validate_name(name: str) -> str:
-        if not isinstance(name, str):
-            raise TypeError('Name must be a string not %s.' % type(name))
-        return name
 
     def port_index(self, port_name: str) -> int:
         if port_name not in self.port_names:

@@ -19,38 +19,31 @@ from SPI2py import (SpatialInterface, Component, Interconnect, DesignStudy)
 c0 = Component(name='control_valve_1',
                color='aquamarine',
                degrees_of_freedom=('x', 'y', 'z', 'rx', 'ry', 'rz'),
-               shapes=[{'type': 'box', 'origin': [0, 0, 0], 'dimensions': [6, 2, 2], 'rotation': [0, 0, 0]}],
+               filepath='part_models/control_valve_1.xyzr',
                ports=[{'name': 'supply', 'origin': [2, 1, 2.5], 'radius': 0.5},
                       {'name': 'return', 'origin': [4, 1, 2.5], 'radius': 0.5}])
 
 c1 = Component(name='actuator_1',
                color='orange',
                degrees_of_freedom=('x', 'y', 'z', 'rx', 'ry', 'rz'),
-               shapes=[{'type': 'box', 'origin': [0, 0, 0], 'dimensions': [3, 3, 1.5], 'rotation': [0, 0, 0]},
-                       {'type': 'box', 'origin': [0, 0, 1.5], 'dimensions': [3, 3, 1.5], 'rotation': [0, 0, 0]},
-                       {'type': 'box', 'origin': [0, 0, 3], 'dimensions': [3, 3, 1.5], 'rotation': [0, 0, 0]},
-                       {'type': 'box', 'origin': [1, 1, 3.5], 'dimensions': [1, 1, 5], 'rotation': [0, 0, 0]}],
+               filepath='part_models/actuator_1.xyzr',
                ports=[{'name': 'supply', 'origin': [1, 0, 1], 'radius': 0.5},
                       {'name': 'return', 'origin': [2, 0, 1], 'radius': 0.5}])
 
 c2 = Component(name='component_2',
                color='indigo',
                degrees_of_freedom=('x', 'y', 'z', 'rx', 'ry', 'rz'),
-               # Defining a component geometry using a mdbd file (a text file where each line is "x y z radius")
-               mdbd_filepath='part_models/demo_part_1.txt')
+               filepath='part_models/component_2.xyzr')
 
 c3 = Component(name='component_3',
                color='olive',
                degrees_of_freedom=('x', 'y', 'z', 'rx', 'ry', 'rz'),
-               shapes=[{'type': 'box', 'origin': [0, 0, 0], 'dimensions': [1, 1, 1], 'rotation': [0, 0, 0]},
-                       {'type': 'box', 'origin': [1, 0, 0], 'dimensions': [1, 2, 1], 'rotation': [0, 0, 0]},
-                       {'type': 'box', 'origin': [1, 1, 0.5], 'dimensions': [1, 1, 3], 'rotation': [0, 0, 0]},
-                       {'type': 'box', 'origin': [1, 1, 3], 'dimensions': [2, 1, 1], 'rotation': [0, 0, 0]}])
+               filepath='part_models/component_3.xyzr')
 
 c4 = Component(name='structure_1',
                color='gray',
                degrees_of_freedom=(),
-               shapes=[{'type': 'box', 'origin': [0, 0, 0], 'dimensions': [2, 2, 0.5], 'rotation': [0, 0, 0]}])
+               filepath='part_models/structure_1.xyzr')
 
 
 # %% Define the interconnects
@@ -78,7 +71,7 @@ ic1 = Interconnect(name='hp_cv_to_actuator2',
 # %% Define the system
 
 
-system = SpatialInterface(name='Demo System',
+system = SpatialInterface(name='DemoSystem',
                           components=[c0, c1, c2, c3, c4],
                           interconnects=[ic0, ic1])
 
@@ -96,34 +89,22 @@ study = DesignStudy(directory=local_directory,
 # Add the defined system to the design study
 study.add_system(system)
 
-# Define the username and problem description
-study.config['Username'] = 'Chad Peterson'
-study.config['Problem Description'] = 'Simple optimization of a 3D layout'
 
 # %% Define a spatial configuration for the design study
 
 
 # Map the system to a single spatial configuration
 
-# TODO replace add initial design vector to set_position
-# TODO Set initial design vector, including the static object... enter as dict arguments to manual
-# Specify for interconnect, have multiple waypoints
+x0_dict = {'control_valve_1': [-3., -4.41, -0.24, 0., 0., 0.],
+           'actuator_1': [2., 4.41, 0.24, 0., 0., 0.],
+           'component_2': [5, -3, -1, 0., 0., 0.],
+           'component_3': [-3., -1., 3., 0., 0., 0.],
+           'structure_1': [0., 0., -1., 0., 0., 0.],
+           'hp_cv_to_actuator': [-3., -2., 2., -1., 0., 2.],
+           'hp_cv_to_actuator2': [4., 0., 1.]}
 
-# Set the position of each component and interconnect waypoint
-# For objects with at least one degree of freedom, the position is used as a starting point for the optimization.
-# For objects with no degrees of freedom, the position is fixed.
-study.set_initial_position('control_valve_1', 'spatial_config_1', [-3., -4.41, -0.24, 0., 0., 0.])
-study.set_initial_position('actuator_1', 'spatial_config_1', [2., 4.41, 0.24, 0., 0., 0.])
-study.set_initial_position('component_2', 'spatial_config_1', [5, -3, -1, 0., 0., 0.])
-study.set_initial_position('component_3', 'spatial_config_1', [-3., -1., 3., 0., 0., 0.])
-study.set_initial_position('hp_cv_to_actuator', 'spatial_config_1', [-3., -2., 2., -1., 0., 2.])
-study.set_initial_position('hp_cv_to_actuator2', 'spatial_config_1', [4., 0., 1.])
+system.set_positions(design_vector_dict=x0_dict)
 
-# Map static objects to the spatial configuration (they do not have
-study.set_initial_position('structure_1', 'spatial_config_1', [0, 0, -1, 0, 0, 0])
-
-# Generate the spatial configuration
-study.generate_spatial_configuration(name='spatial_config_1', method='manual')
 
 # Plot initial spatial configuration
 # system.plot()
@@ -163,7 +144,6 @@ def constraint_function(x):
 
 
 grad_c = grad(constraint_function)(x0)
-
 print('Initial constraint gradient: ', grad_c)
 
 # study.optimize_spatial_configuration(options={'maximum number of iterations': 1,

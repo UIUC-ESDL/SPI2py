@@ -3,12 +3,7 @@
 TODO Add functionality to rotate geometric primitives
 """
 
-import jax.numpy as np
-# import numpy as np
-from scipy.optimize import minimize, NonlinearConstraint, Bounds
-from scipy.spatial import ConvexHull, Delaunay
-import matplotlib.pyplot as plt
-import pyvista as pv
+import numpy as np
 
 
 class GeometricRepresentation:
@@ -24,19 +19,24 @@ class GeometricRepresentation:
 
 
 
-def read_mdbd_file(filepath):
+def read_xyzr_file(filepath, num_spheres=None, scale_factor=1):
     """
-    Reads a text file where each line contains x, y, z, r separated by spaces.
-    Returns an (n,3) numpy array for x,y,z positions and an (n,1) array for radii.
+    Reads a .xyzr file and returns the positions and radii of the spheres.
 
-    TODO Reshape radii from 1D to 2D or vice versa
+    :param filepath:
+    :param num_spheres:
+    :param scale_factor:
+    :return: positions, radii
     """
 
     with open(filepath, 'r') as f:
         lines = f.readlines()
 
-    # TODO allow user to specify number of spheres
-    lines = lines[0:50]
+    if num_spheres is not None and num_spheres > len(lines):
+        raise ValueError('num_spheres must be less than the number of spheres in the file')
+
+    # Truncate the number of spheres as specified
+    lines = lines[0:num_spheres]
 
     positions = []
     radii = []
@@ -47,14 +47,11 @@ def read_mdbd_file(filepath):
         positions.append([float(x), float(y), float(z)])
         radii.append(float(r))
 
-    # TODO Remove scale factor
-    scale_factor = 1
-
+    # Scale the positions and radii if needed
     positions = np.array(positions)*scale_factor
     radii = np.array(radii)*scale_factor
 
     return positions, radii
-
 
 
 
@@ -102,51 +99,8 @@ def generate_rectangular_prism(origin, dimension):
     return positions, radii
 
 
-def generate_rectangular_prism2(origin, dimension):
-    """
-    Generates...
-
-    This is a rough representation, it doesn't actually package spheres precisely...
-    :param origin:
-    :param dimension:
-    :return:
-    """
-
-    # Recursion depth
-    rdepth = 2
-
-    # Set the diameter of the packing sphere to the smallest dimension
-    diameter = np.min(dimension)
-    radius = diameter / 2
-
-    origin_x, origin_y, origin_z = origin
-    len_x, len_y, len_z = dimension
-
-    num_x_spheres = int(len_x // diameter)
-    num_y_spheres = int(len_y // diameter)
-    num_z_spheres = int(len_z // diameter)
-
-    # Add 2 since we want to fit the spheres inside the box, not along its corners
-    num_x_nodes = num_x_spheres + 2
-    num_y_nodes = num_y_spheres + 2
-    num_z_nodes = num_z_spheres + 2
-
-    # [1:-1] Removes the first and last nodes because...
-    x = np.linspace(origin_x, origin_x + len_x, num_x_nodes)[1:-1]
-    y = np.linspace(origin_y, origin_y + len_y, num_y_nodes)[1:-1]
-    z = np.linspace(origin_z, origin_z + len_z, num_z_nodes)[1:-1]
-
-    xx, yy, zz = np.meshgrid(x, y, z)
-
-    positions = np.hstack((xx.reshape(-1, 1), yy.reshape(-1, 1), zz.reshape(-1, 1)))
-
-    sphere_count = positions.shape[0]
-    radii = np.repeat(radius, sphere_count)
-
-    return positions, radii
-
-
-def generate_rectangular_prisms(origins, dimensions):
+def generate_rectangular_prisms(fname, origins, dimensions):
+    # TODO Add rotations
     positions, radii = np.empty((0, 3)), np.empty(0)
 
     for origin, dimension in zip(origins, dimensions):
@@ -154,6 +108,14 @@ def generate_rectangular_prisms(origins, dimensions):
         positions = np.vstack((positions, sphere_positions))
         radii = np.append(radii, sphere_radius)
 
-    return positions, radii
+    xyzr = np.hstack((positions, radii.reshape(-1, 1)))
+
+    # Since this method generates uniform spheres, shuffle their order so clipping
+    # won't remove a bunch of spheres from the same region
+    np.random.shuffle(xyzr)
+
+    fname = fname + '.xyzr'
+
+    np.savetxt(fname, xyzr, delimiter=' ')
 
 

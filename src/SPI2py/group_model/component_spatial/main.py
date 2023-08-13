@@ -249,7 +249,7 @@ class SpatialInterface:
         return objects_dict
 
 
-    def set_positions(self, objects_dict):
+    def set_positions(self, objects_dict=None, design_vector_dict=None):
         """set_positions Sets the positions of the objects in the layout.
 
         Takes a flattened design vector and sets the positions of the objects in the layout.
@@ -257,6 +257,9 @@ class SpatialInterface:
         :param positions_dict: A dictionary of positions for each object in the layout.
         :type positions_dict: dict
         """
+
+        if design_vector_dict is not None:
+            objects_dict = self.calculate_positions(design_vector_dict=design_vector_dict)
 
         for obj in self.objects:
             obj.set_positions(objects_dict)

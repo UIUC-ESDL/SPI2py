@@ -2,9 +2,7 @@
 
 The EntryPoint Class provides the user with a means to interact with the SPI2py API.
 """
-import json
-from datetime import datetime
-import logging
+
 import os
 import yaml
 
@@ -44,26 +42,13 @@ class DesignStudy:
         self.system = None
 
         self._entry_point_directory = os.path.dirname(__file__) + '/'
-        self.config = self.read_config_file('config.yaml')
 
-        self.logger_name = self.directory + "logger.log"
-
-        self.initialize_logger()
 
         # Initialize the Layout class
         self.spatial_configuration = None
 
-        # Initialize the Analysis class
-
-        self.objectives = []
-        self.constraints = []
-        self.constraint_functions = []
-
         # Initialize the Optimize class
         self._spatial_configuration = None
-
-        # Initialize the Result class
-        self.outputs = {}
 
         self.initial_design_vectors = {}
 
@@ -71,26 +56,6 @@ class DesignStudy:
     def __repr__(self):
         return str(self.study_name)
 
-    # DATA METHODS
-
-    def read_config_file(self, config_filepath):
-        config_filepath = self._entry_point_directory + config_filepath
-        with open(config_filepath, 'r') as f:
-            config = yaml.safe_load(f)
-        return config
-
-    def read_input_file(self, input_filename):
-        input_filepath = self.directory + input_filename
-        with open(input_filepath, 'r') as f:
-            inputs = yaml.safe_load(f)
-        return inputs
-
-    def initialize_logger(self):
-        logging.basicConfig(filename=self.logger_name, encoding='utf-8', level=logging.INFO, filemode='w')
-
-    def print_log(self):
-        with open(self.logger_name) as f:
-            print(f.read())
 
     def add_system(self, system):
         self.system = system
@@ -116,15 +81,14 @@ class DesignStudy:
         TODO implement different layout generation methods
         """
 
-        if method == 'manual':
 
-            design_vector_dict = self.initial_design_vectors[name]
 
-            objects_dict = self.system.calculate_positions(design_vector_dict=design_vector_dict)
-            self.system.set_positions(objects_dict=objects_dict)
+        design_vector_dict = self.initial_design_vectors[name]
 
-        else:
-            raise NotImplementedError
+        objects_dict = self.system.calculate_positions(design_vector_dict=design_vector_dict)
+        self.system.set_positions(objects_dict=objects_dict)
+
+
 
         self.spatial_configuration = self.system
 
@@ -140,36 +104,8 @@ class DesignStudy:
                                                             self.system.constraints,
                                                             options)
 
-    # RESULT METHODS
 
 
 
 
-
-    def create_report(self):
-
-        # Unpack dictionary values
-        user_name = self.config['Username']
-        problem_description = self.config['Problem Description']
-        report_filename = self.config['results']['Report Filename']
-
-        # Create a timestamp
-        now = datetime.now()
-        now_formatted = now.strftime("%d/%m/%Y %H:%M:%S")
-
-        # Convert the design vector log of a list of arrays of list to lists
-        # json cannot serialize numpy arrays
-        design_vector_log = [log.tolist() for log in self.design_vector_log]
-
-        # TODO Merge results instead of overwriting self.outputs
-        # Create the output dictionary
-        self.outputs = {'Username': user_name,
-                        'Date and time': now_formatted,
-                        'Problem Description': problem_description,
-                        'Comments': 'Placeholder',
-                        'Design vector log': design_vector_log}
-
-
-        with open(self.directory + report_filename, 'w') as f:
-            json.dump(self.outputs, f)
 
