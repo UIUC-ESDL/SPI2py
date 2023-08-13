@@ -6,209 +6,80 @@ import jax.numpy as np
 from jax.numpy import sin, cos
 
 
-
-def translate(current_sphere_positions, current_reference_point, new_reference_point):
+def affine_transformation(reference_position, positions, translation, rotation, scaling):
     """
-    Translates a set of points based on the change in position of a reference point
+    Apply translation, rotation, and scaling to an object represented by a set of points.
 
-    TODO Write unit tests for this function
-    TODO Vectorize
-    TODO Change function to take arguments: current_sphere_positions, current_reference_point, new_reference_point
+    The transformation matrix is implemented as defined in the following reference:
+    LaValle, Steven M. Planning algorithms. Cambridge University press, 2006.
 
-    :param current_sphere_positions:
-    :param current_reference_point:
-    :param new_reference_point:
-    :return:
-    """
+    :param reference_position: The reference position of the object
+    :type reference_position: np.array(3,1)
 
-    delta_position = new_reference_point - current_reference_point
+    :param positions: The positions of the object
+    :type positions: np.array(3,n)
 
-    new_sphere_positions = current_sphere_positions + delta_position
+    :param translation: The translation vector
+    :type translation: np.array(3,1)
 
-    return new_sphere_positions
+    :param rotation: The rotation vector
+    :type rotation: np.array(3,1)
 
+    :param scaling: The scaling vector
+    :type scaling: np.array(3,1)
 
-# @njit(cache=True)
-def rotate(positions, rotation):
-    """
-    Rotates a set of points about the first 3D point in the array.
-
-    Note: Why do I manually define the rotation matrix instead of use
-    scipy.spatial.transform.Rotation? Because in the future, the goal is to apply algorithmic
-    differentiation to these functions (for objective and constraint function gradients).
-    At the time being, I do not believe AD would be compatible with scipy functions that are compiled
-    in a different langauge (most of SciPy is actually written in other languages).
-
-    TODO TAKE REFERENCE POINT
-    TODO Write unit tests for this function
-    TODO Vectorize?
-
-    :param positions:
-    :param rotation: Angle in radians
-    :return: new_positions:
+    :return: transformed_positions: The transformed positions of the object
+    :rtype: np.array(3,n)
     """
 
-    # Shift the object to origin
-    reference_position = positions[0]
-    origin_positions = positions - reference_position
+    # Initialize the transformation matrix
+    t = np.eye(4)
 
-    # Unpack rotation angles
-    # alpha, beta, gamma
-    a, b, g = rotation
+    # Insert the translation vector
+    t[0:3, [3]] = translation
 
-    # Rotation matrix Euler angle convention r = r_z(gamma) @ r_y(beta) @ r_x(alpha)
-    #
-    # r_x = np.array([[1., 0., 0.],
-    #                 [0., cos(a), -sin(a)],
-    #                 [0., sin(a), cos(a)]])
-    #
-    # r_y = np.array([[cos(b), 0., sin(b)],
-    #                 [0., 1., 0.],
-    #                 [-sin(b), 0., cos(b)]])
-    #
-    # r_z = np.array([[cos(g), -sin(g), 0.],
-    #                 [sin(g), cos(g), 0.],
-    #                 [0., 0., 1.]])
-    #
-    # r = r_z @ r_y @ r_x
+    # Unpack the rotation angles (Euler)
+    a = rotation[0]  # alpha
+    b = rotation[1]  # beta
+    g = rotation[2]  # gamma
 
-    # Reassemble rotation matrix
+    # Calculate rotation matrix (R = R_z(gamma) @ R_y(beta) @ R_x(alpha))
     r = np.array(
         [[cos(b) * cos(g), sin(a) * sin(b) * cos(g) - cos(a) * sin(g), cos(a) * sin(b) * cos(g) + sin(a) * sin(g)],
          [cos(b) * sin(g), sin(a) * sin(b) * sin(g) + cos(a) * cos(g), cos(a) * sin(b) * sin(g) - sin(a) * cos(g)],
          [-sin(b), sin(a) * cos(b), cos(a) * cos(b)]])
 
-    # Transpose positions from [[x1,y1,z1],[x2... ] to [[x1,x2,x3],[y1,... ]
-    rotated_origin_positions = (r @ origin_positions.T).T
+    # Insert the rotation matrix
+    t[:3, :3] = r
 
-    # Shift back from origin
-    new_positions = rotated_origin_positions + reference_position
+    # Unpack the sizing factors
+    sx = scaling[0]
+    sy = scaling[1]
+    sz = scaling[2]
 
-    return new_positions
+    # Define the scaling matrix
+    m = np.array([[sx, 0, 0, 0],
+                  [0, sy, 0, 0],
+                  [0, 0, sz, 0],
+                  [0, 0, 0, 1]])
 
+    # Concatenate the scaling matrix
+    t = t @ m
 
-def rigid_transformation(reference_position, positions, x, y, z, rx, ry, rz, reference_axes='origin'):
-    """
-    Apply translation and rotation to an object.
+    # Center the object about its reference position
+    positions_shifted = positions - reference_position
 
-    TODO Evaluate lower dimensional representations, e.g. screw
-    <https://en.wikipedia.org/wiki/Chasles%27_theorem_(kinematics)>
+    # Pad the positions with ones
+    ones = np.ones((1, positions_shifted.shape[1]))
+    positions_shifted_padded = np.vstack((positions_shifted, ones))
 
-    TODO Add support for non-origin coordinate systems (e.g., object dependencies)
+    # Apply the transformation
+    transformed_positions_shifted_padded = t @ positions_shifted_padded
 
+    # Remove the padding
+    transformed_positions_shifted = transformed_positions_shifted_padded[:3, :]
 
-    """
+    # Shift the object back to its original position
+    transformed_positions = transformed_positions_shifted + reference_position
 
-    translation = np.array([[x, y, z]])
-    rotation    = np.array([rx, ry, rz])
-
-    translated_positions = positions + translation
-
-    rotated_positions = rotate(translated_positions, rotation)
-
-    return rotated_positions
-
-# def rigid_transformation(reference_position, positions, x, y, z, rx, ry, rz, reference_axes='origin'):
-#     """
-#     Apply translation and rotation to an object.
-
-#     TODO Evaluate lower dimensional representations, e.g. screw
-#     <https://en.wikipedia.org/wiki/Chasles%27_theorem_(kinematics)>
-
-#     TODO Add support for non-origin coordinate systems (e.g., object dependencies)
-#     """
-
-#     # Convert rotation angles to radians
-#     rx = np.radians(rx)
-#     ry = np.radians(ry)
-#     rz = np.radians(rz)
-
-#     # Calculate rotation matrix
-#     R_x = np.array([[1, 0, 0], [0, np.cos(rx), -np.sin(rx)], [0, np.sin(rx), np.cos(rx)]])
-#     R_y = np.array([[np.cos(ry), 0, np.sin(ry)], [0, 1, 0], [-np.sin(ry), 0, np.cos(ry)]])
-#     R_z = np.array([[np.cos(rz), -np.sin(rz), 0], [np.sin(rz), np.cos(rz), 0], [0, 0, 1]])
-#     R = np.dot(R_z, np.dot(R_y, R_x))
-
-#     # Create homogeneous transformation matrix
-#     T = np.eye(4)
-#     T[:3, :3] = R
-#     T[:3, 3] = [x, y, z]
-
-#     # Apply transformation
-#     transformed_positions = np.dot(T, np.vstack((positions.T, np.ones(len(positions))))).T[:, :3]
-
-#     return transformed_positions
-
-
-# def rigid_transformation(reference_position, positions, x, y, z, rx, ry, rz, reference_axes='origin'):
-#     # Convert rotation angles to radians
-#     rx = np.radians(rx)
-#     ry = np.radians(ry)
-#     rz = np.radians(rz)
-
-#     # Calculate rotation matrix
-#     R_x = np.array([[1, 0, 0],
-#                     [0, np.cos(rx), -np.sin(rx)],
-#                     [0, np.sin(rx), np.cos(rx)]])
-#     R_y = np.array([[np.cos(ry), 0, np.sin(ry)],
-#                     [0, 1, 0],
-#                     [-np.sin(ry), 0, np.cos(ry)]])
-#     R_z = np.array([[np.cos(rz), -np.sin(rz), 0],
-#                     [np.sin(rz), np.cos(rz), 0],
-#                     [0, 0, 1]])
-#     R = R_z @ R_y @ R_x
-
-#     # Create homogeneous transformation matrix
-#     T = np.eye(4)
-#     T[:3, :3] = R
-#     T[:3, 3] = [x, y, z]
-
-#     # Apply transformation
-#     positions_homogeneous = np.hstack((positions, np.ones((len(positions), 1))))
-#     transformed_positions_homogeneous = positions_homogeneous @ T.T
-#     transformed_positions = transformed_positions_homogeneous[:, :3]
-
-#     return transformed_positions
-
-
-
-# def test_translation_only():
-#     # Test translation only
-#     reference_position = np.array([0, 0, 0])
-#     positions = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
-#     x, y, z = 1, 2, 3
-#     rx, ry, rz = 0, 0, 0
-#     expected_transformed_positions = np.array([[2, 4, 6], [5, 7, 9], [8, 10, 12]])
-#     transformed_positions = rigid_transformation(reference_position, positions, x, y, z, rx, ry, rz)
-#     np.testing.assert_allclose(transformed_positions, expected_transformed_positions)
-
-# def test_rotation_only():
-#     # Test rotation only
-#     reference_position = np.array([0, 0, 0])
-#     positions = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
-#     x, y, z = 0, 0, 0
-#     rx, ry, rz = 90, 0, 0
-#     expected_transformed_positions = np.array([[1, -3, 2], [4, -6, 5], [7, -9, 8]])
-#     transformed_positions = rigid_transformation(reference_position, positions, x, y, z, rx, ry, rz)
-#     np.testing.assert_allclose(transformed_positions, expected_transformed_positions)
-
-# def test_translation_and_rotation():
-#     # Test translation and rotation
-#     reference_position = np.array([0, 0, 0])
-#     positions = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
-#     x, y, z = 1, 2, 3
-#     rx, ry, rz = 90, 0, 0
-#     expected_transformed_positions = np.array([[1, -1, 4], [4, -2, 7], [7, -3, 10]])
-#     transformed_positions = rigid_transformation(reference_position, positions, x, y, z, rx, ry, rz)
-#     np.testing.assert_allclose(transformed_positions, expected_transformed_positions)
-
-
-# def test_translation_and_rotation():
-#     # Test translation and rotation
-#     reference_position = np.array([0, 0, 0])
-#     positions = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
-#     x, y, z = 1, 2, 3
-#     rx, ry, rz = 90, 90, 90
-#     expected_transformed_positions = np.array([[-2, 4, 8], [-5, 7, 10], [-8, 10, 12]])
-#     transformed_positions = rigid_transformation(reference_position, positions, x, y, z, rx, ry, rz)
-#     np.testing.assert_allclose(transformed_positions, expected_transformed_positions)
+    return transformed_positions

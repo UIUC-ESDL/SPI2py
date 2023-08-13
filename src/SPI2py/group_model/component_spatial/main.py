@@ -1,11 +1,9 @@
 import jax.numpy as np
-from dataclasses import dataclass
 
 import openmdao.api as om
 
-from scipy.optimize import NonlinearConstraint
 from itertools import combinations, product
-from SPI2py.group_model.component_spatial.objects import Component, Interconnect
+from SPI2py.group_model.component_spatial.objects import Component
 
 from SPI2py.group_model.component_spatial.objective_functions import normalized_aggregate_gap_distance
 from SPI2py.group_model.component_spatial.distance_calculations import signed_distances
@@ -13,7 +11,6 @@ from SPI2py.group_model.component_spatial.distance_calculations import signed_di
 from SPI2py.group_model.utilities import kreisselmeier_steinhauser
 
 from SPI2py.group_model.component_spatial.bounding_volumes import bounding_box
-from SPI2py.group_model.component_spatial.geometric_representation import read_mdbd_file, generate_rectangular_prisms
 from SPI2py.group_model.component_spatial.visualization import plot_3d
 
 
@@ -310,10 +307,6 @@ class SpatialInterface:
         for obj in self.static_objects:
             object_dict = obj.calculate_positions(None, objects_dict=objects_dict)
             objects_dict = {**objects_dict, **object_dict}
-
-
-        # sums = np.array([np.sum(design_vector) for design_vector in design_vectors])
-        # objects_dict = np.sum(sums)
 
         # DYNAMIC OBJECTS - Independent then Partially Dependent
         objects = self.independent_objects + self.partially_dependent_objects

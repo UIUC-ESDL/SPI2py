@@ -2,11 +2,10 @@
 TODO Can I remove movement classes if I just use degrees of freedom and reference axes?
 
 """
-from dataclasses import dataclass
 import logging
 
 from .kinematics import RigidBody
-from SPI2py.group_model.component_spatial.geometric_representation import read_mdbd_file, generate_rectangular_prisms
+from SPI2py.group_model.component_geometry.finite_sphere_method import read_mdbd_file, generate_rectangular_prisms
 
 from matplotlib import colors as mcolors
 
