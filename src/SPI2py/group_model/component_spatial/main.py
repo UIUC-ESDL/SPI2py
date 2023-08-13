@@ -51,7 +51,7 @@ class SpatialComponent(om.ExplicitComponent):
         x = inputs['x']
 
         f = self.spatial_interface.calculate_objective(x)
-        g1 = self.spatial_interface.calculate_constraints(x)[0]
+        g1 = self.spatial_interface.calculate_constraints(x)
 
         outputs['f'] = f
         outputs['g1'] = g1
@@ -411,9 +411,13 @@ class SpatialInterface:
         return objective
 
     def calculate_constraints(self, x):
-        constraints = [constraint_function(x) for constraint_function in self.constraints]
+        # TODO Replace with all
 
-        constraints = np.array(constraints)
+        # constraints = [constraint_function(x) for constraint_function in self.constraints]
+        #
+        # constraints = np.array(constraints)
+
+        constraints = self.constraints[1](x)
 
         return constraints
 

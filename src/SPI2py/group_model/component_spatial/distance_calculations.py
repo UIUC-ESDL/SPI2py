@@ -40,13 +40,18 @@ def distances_points_points(a: np.ndarray,
     :return: Euclidean distances, (-1,) np.ndarray
     """
 
+    # TODO REMOVE SQUARED?
+
     # # Reshape the arrays for broadcasting
-
-
     aa = a.reshape(-1, 1, 3)
     bb = b.reshape(1, -1, 3)
+    cc = aa-bb
 
-    c = np.linalg.norm(aa-bb, axis=-1)
+    cc = cc.reshape(-1, 3)
+
+    # c_squared_euclidean_distances =
+
+    c = np.linalg.norm(cc, axis=-1)
 
     # Reshape the output to a 1D array
     c = c.flatten()
@@ -119,6 +124,7 @@ def signed_distances(x, model, object_pair):
     # Calculate the interferences between each sphere of each object pair
     all_signed_distances = []
 
+    # TODO MAKE ORDER STATIC
     for obj1, obj2 in object_pair:
 
         positions_a = positions_dict[str(obj1)]['positions']
@@ -126,7 +132,6 @@ def signed_distances(x, model, object_pair):
 
         positions_b = positions_dict[str(obj2)]['positions']
         radii_b = positions_dict[str(obj2)]['radii']
-
 
         signed_distances = signed_distances_spheres_spheres(positions_a, radii_a, positions_b, radii_b).flatten()
         all_signed_distances.append(signed_distances)

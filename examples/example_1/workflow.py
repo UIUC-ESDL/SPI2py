@@ -12,7 +12,7 @@ import jax.numpy as np
 from jax import grad, jacrev
 import openmdao.api as om
 
-from SPI2py import (SpatialInterface, SpatialComponent, Component, Interconnect, DesignStudy)
+from SPI2py import SpatialComponent, Component, Interconnect
 
 
 # %% Define the components
@@ -41,10 +41,10 @@ c3 = Component(name='component_3',
                degrees_of_freedom=('x', 'y', 'z', 'rx', 'ry', 'rz'),
                filepath='part_models/component_3.xyzr')
 
-c4 = Component(name='structure_1',
-               color='gray',
-               degrees_of_freedom=(),
-               filepath='part_models/structure_1.xyzr')
+# c4 = Component(name='structure_1',
+#                color='gray',
+#                degrees_of_freedom=(),
+#                filepath='part_models/structure_1.xyzr')
 
 
 # %% Define the interconnects
@@ -79,13 +79,51 @@ model = prob.model
 
 spatial_component = SpatialComponent()
 spatial_component.options.declare('name', default='DemoSystem', types=str)
-spatial_component.options.declare('components', default=[c0, c1, c2, c3, c4], types=list)
+spatial_component.options.declare('components', default=[c0, c1, c2, c3], types=list)  # TODO Add c4
 spatial_component.options.declare('interconnects', default=[ic0, ic1], types=list)
 
 model.add_subsystem('system', spatial_component, promotes=['*'])
 
 
 prob.setup()
+
+
+# %% Define the initial spatial configuration
+
+
+spatial_component.spatial_interface.set_position('control_valve_1',
+                            translation=[-3., -4.41, -0.24],
+                            rotation=[0., 0., 0.],
+                            scale=[1., 1., 1.])
+
+spatial_component.spatial_interface.set_position('actuator_1',
+                            translation=[2., 4.41, 0.24],
+                            rotation=[0., 0., 0.],
+                            scale=[1., 1., 1.])
+
+spatial_component.spatial_interface.set_position('component_2',
+                            translation=[-5, 3, 1],
+                            rotation=[0., 0., 0.],
+                            scale=[1., 1., 1.])
+
+spatial_component.spatial_interface.set_position('component_3',
+                            translation=[3., 1., -3.],
+                            rotation=[0., 0., 0.],
+                            scale=[1., 1., 1.])
+
+# spatial_component.spatial_interface.set_position('structure_1',
+#                             translation=[0., 0., -1.],
+#                             rotation=[0., 0., 0.],
+#                             scale=[1., 1., 1.])
+
+spatial_component.spatial_interface.set_position('hp_cv_actuator',
+                            waypoints=[[-3., -2., 2.],[-1., 0., 2.]])
+
+spatial_component.spatial_interface.set_position('lp_cv_actuator',
+                            waypoints=[[4., 0., 1.]])
+
+
+# %% Configure the system objective and constraints
 
 
 spatial_component.spatial_interface.set_objective(objective='bounding box volume')
@@ -109,47 +147,7 @@ spatial_component.spatial_interface.set_constraint(constraint='collision',
                                'constraint aggregation parameter': 3.0})
 
 
-# %% Define the design study
-
-
-
-
-
-# %% Define a spatial configuration for the design study
-
-
-# Map the system to a single spatial configuration
-
-spatial_component.spatial_interface.set_position('control_valve_1',
-                            translation=[-3., -4.41, -0.24],
-                            rotation=[0., 0., 0.],
-                            scale=[1., 1., 1.])
-
-spatial_component.spatial_interface.set_position('actuator_1',
-                            translation=[2., 4.41, 0.24],
-                            rotation=[0., 0., 0.],
-                            scale=[1., 1., 1.])
-
-spatial_component.spatial_interface.set_position('component_2',
-                            translation=[-5, 3, 1],
-                            rotation=[0., 0., 0.],
-                            scale=[1., 1., 1.])
-
-spatial_component.spatial_interface.set_position('component_3',
-                            translation=[3., 1., -3.],
-                            rotation=[0., 0., 0.],
-                            scale=[1., 1., 1.])
-
-spatial_component.spatial_interface.set_position('structure_1',
-                            translation=[0., 0., -1.],
-                            rotation=[0., 0., 0.],
-                            scale=[1., 1., 1.])
-
-spatial_component.spatial_interface.set_position('hp_cv_actuator',
-                            waypoints=[[-3., -2., 2.],[-1., 0., 2.]])
-
-spatial_component.spatial_interface.set_position('lp_cv_actuator',
-                            waypoints=[[4., 0., 1.]])
+# %% Run the optimization
 
 
 x0 = spatial_component.spatial_interface.design_vector
@@ -168,8 +166,22 @@ prob.run_model()
 
 # print('Initial design vector: ', prob['x'])
 # print('Initial objective: ', prob['f'])
-print('Initial constraint values: ', prob['g1'])
-print('Initial constraint gradient values: ', prob.compute_totals('g1','x'))
+# print('Initial constraint values: ', prob['g1'])
+# print('Initial constraint gradient values: ', prob.compute_totals('g1','x'))
+
+# from jax import config
+# config.update("jax_debug_nans", True)
+
+x0 = spatial_component.spatial_interface.design_vector
+
+# grad_f = grad(spatial_component.spatial_interface.calculate_objective)
+# grad_f_val = grad_f(x0)
+# print(grad_f_val)
+
+grad_c = grad(spatial_component.spatial_interface.calculate_constraints)
+grad_c_val = grad_c(x0)
+print(grad_c_val)
+
 
 
 # prob.run_driver()
