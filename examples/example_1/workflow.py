@@ -129,44 +129,44 @@ system.set_position('lp_cv_actuator',
 
 
 # Plot initial spatial configuration
-system.plot()
+# system.plot()
 
-# # Perform gradient-based optimization
-#
-# system.set_objective(objective='bounding box volume')
-#
-# system.set_constraint(constraint='collision',
-#                       options={'object class 1': 'component',
-#                                'object class 2': 'component',
-#                                'constraint tolerance': 0.0,
-#                                'constraint aggregation parameter': 3.0})
-#
-# system.set_constraint(constraint='collision',
-#                       options={'object class 1': 'component',
-#                                'object class 2': 'interconnect',
-#                                'constraint tolerance': 0.01,
-#                                'constraint aggregation parameter': 3.0})
-#
-# system.set_constraint(constraint='collision',
-#                       options={'object class 1': 'interconnect',
-#                                'object class 2': 'interconnect',
-#                                'constraint tolerance': 0.0,
-#                                'constraint aggregation parameter': 3.0})
-#
-# x0 = system.design_vector
-# objective = system.calculate_objective(x0)
-# constraints = system.calculate_constraints(x0)
-#
-# print('Initial objective: ', objective)
-# print('Initial constraints: ', constraints)
-#
-#
-# def constraint_function(x):
-#     return system.calculate_constraints(x)[0]
+# Perform gradient-based optimization
+
+system.set_objective(objective='bounding box volume')
+
+system.set_constraint(constraint='collision',
+                      options={'object class 1': 'component',
+                               'object class 2': 'component',
+                               'constraint tolerance': 0.0,
+                               'constraint aggregation parameter': 3.0})
+
+system.set_constraint(constraint='collision',
+                      options={'object class 1': 'component',
+                               'object class 2': 'interconnect',
+                               'constraint tolerance': 0.01,
+                               'constraint aggregation parameter': 3.0})
+
+system.set_constraint(constraint='collision',
+                      options={'object class 1': 'interconnect',
+                               'object class 2': 'interconnect',
+                               'constraint tolerance': 0.0,
+                               'constraint aggregation parameter': 3.0})
+
+x0 = system.design_vector
+objective = system.calculate_objective(x0)
+constraints = system.calculate_constraints(x0)
+
+print('Initial objective: ', objective)
+print('Initial constraints: ', constraints)
 
 
-# grad_c = grad(constraint_function)(x0)
-# print('Initial constraint gradient: ', grad_c)
+def constraint_function(x):
+    return system.calculate_constraints(x)[0]
+
+
+grad_c = grad(constraint_function)(x0)
+print('Initial constraint gradient: ', grad_c)
 
 # study.optimize_spatial_configuration(options={'maximum number of iterations': 1,
 #                                               'convergence tolerance': 1e-2})
