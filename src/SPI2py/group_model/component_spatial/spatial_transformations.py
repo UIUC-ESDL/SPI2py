@@ -32,11 +32,16 @@ def affine_transformation(reference_position, positions, translation, rotation, 
     :rtype: np.array(3,n)
     """
 
+    # Initialize constants
+    zero = np.array([0])
+    one = np.array([1])
+
     # Initialize the transformation matrix
     t = np.eye(4)
 
     # Insert the translation vector
-    t[0:3, [3]] = translation
+    # t[:3, [3]] = translation
+    t = t.at[:3, [3]].set(translation)  # JAX syntax
 
     # Unpack the rotation angles (Euler)
     a = rotation[0]  # alpha
@@ -44,13 +49,13 @@ def affine_transformation(reference_position, positions, translation, rotation, 
     g = rotation[2]  # gamma
 
     # Calculate rotation matrix (R = R_z(gamma) @ R_y(beta) @ R_x(alpha))
-    r = np.array(
-        [[cos(b) * cos(g), sin(a) * sin(b) * cos(g) - cos(a) * sin(g), cos(a) * sin(b) * cos(g) + sin(a) * sin(g)],
-         [cos(b) * sin(g), sin(a) * sin(b) * sin(g) + cos(a) * cos(g), cos(a) * sin(b) * sin(g) - sin(a) * cos(g)],
-         [-sin(b), sin(a) * cos(b), cos(a) * cos(b)]])
+    r = np.array([[cos(b) * cos(g), sin(a) * sin(b) * cos(g) - cos(a) * sin(g), cos(a) * sin(b) * cos(g) + sin(a) * sin(g)],
+                  [cos(b) * sin(g), sin(a) * sin(b) * sin(g) + cos(a) * cos(g), cos(a) * sin(b) * sin(g) - sin(a) * cos(g)],
+                  [-sin(b), sin(a) * cos(b), cos(a) * cos(b)]]).reshape(3, 3)
 
     # Insert the rotation matrix
-    t[:3, :3] = r
+    # t[:3, :3] = r
+    t = t.at[:3, :3].set(r)  # JAX syntax
 
     # Unpack the sizing factors
     sx = scaling[0]
@@ -58,10 +63,10 @@ def affine_transformation(reference_position, positions, translation, rotation, 
     sz = scaling[2]
 
     # Define the scaling matrix
-    m = np.array([[sx, 0, 0, 0],
-                  [0, sy, 0, 0],
-                  [0, 0, sz, 0],
-                  [0, 0, 0, 1]])
+    m = np.array([[sx,   zero, zero, zero],
+                  [zero, sy,   zero, zero],
+                  [zero, zero, sz,   zero],
+                  [zero, zero, zero, one]]).reshape(4, 4)
 
     # Concatenate the scaling matrix
     t = t @ m

@@ -5,7 +5,6 @@ import openmdao.api as om
 from itertools import combinations, product
 from SPI2py.group_model.component_spatial.objects import Component
 
-from SPI2py.group_model.component_spatial.objective_functions import normalized_aggregate_gap_distance
 from SPI2py.group_model.component_spatial.distance_calculations import signed_distances
 
 from SPI2py.group_model.utilities import kreisselmeier_steinhauser
@@ -74,19 +73,11 @@ class SpatialInterface:
 
         self.objects = self.get_objects()
 
-        self.static_objects = self.get_static_objects()
-        self.independent_objects = self.get_independent_objects()
-        self.partially_dependent_objects = self.get_partially_dependent_objects()
-        self.fully_dependent_objects = self.get_fully_dependent_objects()
-        self._uncategorized_objects = self._get_uncategorized_objects()
 
         self.component_component_pairs = self.get_component_component_pairs()
         self.component_interconnect_pairs = self.get_component_interconnect_pairs()
         self.interconnect_interconnect_pairs = self.get_interconnect_interconnect_pairs()
         self.object_pairs = self.get_object_pairs()
-
-
-
 
     def __repr__(self):
         return f'System({self.name})'
@@ -96,57 +87,6 @@ class SpatialInterface:
 
     def get_objects(self):
         return self.components + self.interconnects
-
-    def get_static_objects(self):
-        # objects = []
-        # for obj in self.objects:
-        #     if obj.movement_class == 'static':
-        #         objects.append(obj)
-
-        other_objects=[]
-        # TODO UPDATE and ref is global
-        for obj in self.objects:
-            if len(obj.degrees_of_freedom) == 0:
-                other_objects.append(obj)
-
-        return other_objects
-
-    def get_independent_objects(self):
-        objects = []
-        for obj in self.objects:
-            if obj.movement_class == 'independent':
-                objects.append(obj)
-        return objects
-
-    def get_partially_dependent_objects(self):
-        objects = []
-        for obj in self.objects:
-            if obj.movement_class == 'partially dependent':
-                objects.append(obj)
-        return objects
-
-    def get_fully_dependent_objects(self):
-        objects = []
-        for obj in self.objects:
-            if obj.movement_class == 'fully dependent':
-                objects.append(obj)
-        return objects
-
-    def _get_uncategorized_objects(self):
-
-        """
-        This list should be empty. It checks to make sure every object is categorized as one of the four types of objects.
-        """
-
-        uncategorized = []
-
-        categorized = self.static_objects + self.independent_objects + self.partially_dependent_objects + self.fully_dependent_objects
-
-        for obj in self.objects:
-            if obj not in categorized:
-                uncategorized.append(obj)
-
-        return uncategorized
 
     def get_component_component_pairs(self):
         """TODO Vectorize with cartesian product"""
@@ -303,26 +243,9 @@ class SpatialInterface:
 
         objects_dict = {}
 
-        # STATIC OBJECTS
-        for obj in self.static_objects:
-            object_dict = obj.calculate_positions(None, objects_dict=objects_dict)
+        for obj in self.objects:
+            object_dict = obj.calculate_positions(design_vectors, objects_dict=objects_dict)
             objects_dict = {**objects_dict, **object_dict}
-
-        # DYNAMIC OBJECTS - Independent then Partially Dependent
-        objects = self.independent_objects + self.partially_dependent_objects
-        for obj, design_vector_row in zip(objects, design_vectors):
-            object_dict = obj.calculate_positions(design_vector_row, objects_dict=objects_dict)
-            objects_dict = {**objects_dict, **object_dict}
-
-        # DYNAMIC OBJECTS - Fully Dependent
-        # TODO remove updating edges...? just use lines
-        for obj in self.fully_dependent_objects:
-            object_dict = obj.calculate_positions(design_vector, objects_dict=objects_dict)
-            objects_dict = {**objects_dict, **object_dict}
-
-        # TODO Add method for partially dependent objects
-        # DYNAMIC OBJECTS - Partially Dependent
-
 
 
         return objects_dict
