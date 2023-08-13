@@ -48,19 +48,17 @@ class SpatialComponent(om.ExplicitComponent):
 
         x = inputs['x']
 
-        x = np.array(x)
-
         f = self.spatial_interface.calculate_objective(x)
 
         outputs['f'] = f
 
-    # def compute_partials(self, inputs, partials):
-    #
-    #     x = inputs['x']
-    #
-    #     grad_f = grad(self.spatial_interface.calculate_objective)(x)
-    #
-    #     partials['f', 'x'] = grad_f
+    def compute_partials(self, inputs, partials):
+
+        x = inputs['x']
+
+        grad_f = grad(self.spatial_interface.calculate_objective)(x)
+
+        partials['f', 'x'] = grad_f
 
 
 

@@ -152,19 +152,30 @@ spatial_component.spatial_interface.set_position('lp_cv_actuator',
                             waypoints=[[4., 0., 1.]])
 
 
-# x0 = spatial_component.spatial_interface.design_vector
-# model.set_val('x', spatial_component.spatial_interface.design_vector)
+x0 = spatial_component.spatial_interface.design_vector
+model.set_val('x', spatial_component.spatial_interface.design_vector)
 
 
 prob.driver = om.ScipyOptimizeDriver()
+prob.driver.options['maxiter'] = 1
 
 prob.run_model()
 
 # Plot initial spatial configuration
-# system.plot()
+# spatial_component.spatial_interface.plot()
 
 # Perform gradient-based optimization
 
+print('Initial design vector: ', prob['x'])
+print('Initial objective: ', prob['f'])
+
+prob.run_driver()
+
+# Plot optimized spatial configuration
+# spatial_component.spatial_interface.plot()
+
+print('Optimized design vector: ', prob['x'])
+print('Optimized objective: ', prob['f'])
 
 # x0 = system.design_vector
 # objective = system.calculate_objective(x0)
