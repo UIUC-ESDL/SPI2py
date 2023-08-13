@@ -25,25 +25,21 @@ class Component:
                  color: str = None,
                  degrees_of_freedom: Sequence[str] = ('x', 'y', 'z', 'rx', 'ry', 'rz'),
                  filepath=None,
-                 ports: Union[None, list[dict]] = None):
+                 ports: list[dict] = []):
 
         self.name = name
 
-        self.type = 'component'
 
         self.positions, self.radii = read_xyzr_file(filepath)
         self.rotation = np.array([0, 0, 0])
 
         self.ports = ports
-        self.port_names = []
-        self.port_indices = []
+        self.port_indices = {}
 
         # TODO Set default design vectors...
 
         self.degrees_of_freedom = degrees_of_freedom
 
-        self._valid_colors = {**mcolors.BASE_COLORS, **mcolors.TABLEAU_COLORS, **mcolors.CSS4_COLORS,
-                              **mcolors.XKCD_COLORS}
 
         self.color = color
 
@@ -52,18 +48,9 @@ class Component:
 
         if self.ports is not None:
             for port in self.ports:
-                self.port_names.append(port['name'])
                 self.positions = np.vstack((self.positions, port['origin']))
                 self.radii = np.concatenate((self.radii, np.array([port['radius']])))
-                self.port_indices.append(len(self.positions) - 1)
-
-
-    # TODO DELETE THESE
-    def port_index(self, port_name: str) -> int:
-        return self.port_indices[self.port_names.index(port_name)]
-
-    def port_position(self, port_name: str) -> np.ndarray:
-        return self.positions[self.port_indices[self.port_names.index(port_name)]]
+                self.port_indices[port['name']] = len(self.positions - 1)
 
 
     def __repr__(self):
@@ -72,38 +59,6 @@ class Component:
     def __str__(self):
         return self.name
 
-    def plot(self):
-        objects = []
-        colors = []
-        for position, radius in zip(self.positions, self.radii):
-            objects.append(pv.Sphere(radius=radius, center=position))
-            colors.append(self.color)
-
-        return objects, colors
-
-    def transformation_vectors(self, design_vector):
-
-        design_vector_dict = self.decompose_design_vector(design_vector)
-
-        translation = np.zeros((3,1))
-        rotation = np.zeros((3,1))
-        scaling = np.ones((3,1))
-
-        if 'x' in self.degrees_of_freedom:
-            translation[0] = design_vector_dict['x']
-        if 'y' in self.degrees_of_freedom:
-            translation[1] = design_vector_dict['y']
-        if 'z' in self.degrees_of_freedom:
-            translation[2] = design_vector_dict['z']
-
-        if 'rx' in self.degrees_of_freedom:
-            rotation[0] = design_vector_dict['rx']
-        if 'ry' in self.degrees_of_freedom:
-            rotation[1] = design_vector_dict['ry']
-        if 'rz' in self.degrees_of_freedom:
-            rotation[2] = design_vector_dict['rz']
-
-
     @property
     def reference_position(self):
         """
@@ -111,37 +66,7 @@ class Component:
         """
         return np.mean(self.positions, axis=0)
 
-    @property
-    def design_vector_dict(self) -> dict:
 
-        """
-        Returns a dictionary of the design vector components.
-
-        An object's design vector is encoded as a reference position and rotation. Since objects are rigid bodies,
-        all other geometric properties are a function of the reference position and rotation.
-        """
-
-        design_vector_dict = {}
-
-        if 'x' in self.degrees_of_freedom:
-            design_vector_dict['x'] = self.reference_position[0]
-        if 'y' in self.degrees_of_freedom:
-            design_vector_dict['y'] = self.reference_position[1]
-        if 'z' in self.degrees_of_freedom:
-            design_vector_dict['z'] = self.reference_position[2]
-        if 'rx' in self.degrees_of_freedom:
-            design_vector_dict['rx'] = self.rotation[0]
-        if 'ry' in self.degrees_of_freedom:
-            design_vector_dict['ry'] = self.rotation[1]
-        if 'rz' in self.degrees_of_freedom:
-            design_vector_dict['rz'] = self.rotation[2]
-
-        return design_vector_dict
-
-    @property
-    def design_vector(self):
-        design_vector = np.array(list(self.design_vector_dict.values()))
-        return design_vector
 
     def decompose_design_vector(self, design_vector: np.ndarray) -> dict:
         """
@@ -158,101 +83,100 @@ class Component:
 
         return design_vector_dict
 
-    def calculate_positions(self, design_vector, objects_dict=None, force_update=False):
+    def assemble_transformation_vectors(self, design_vector_dict):
+
+        translation = np.zeros((3,1))
+        rotation = np.zeros((3,1))
+        scale = np.ones((3,1))
+
+        if 'x' in self.degrees_of_freedom:
+            translation = translation.at[0].set(design_vector_dict['x'])
+        if 'y' in self.degrees_of_freedom:
+            translation = translation.at[1].set(design_vector_dict['y'])
+        if 'z' in self.degrees_of_freedom:
+            translation = translation.at[2].set(design_vector_dict['z'])
+
+        if 'rx' in self.degrees_of_freedom:
+            rotation = rotation.at[0].set(design_vector_dict['rx'])
+        if 'ry' in self.degrees_of_freedom:
+            rotation = rotation.at[1].set(design_vector_dict['ry'])
+        if 'rz' in self.degrees_of_freedom:
+            rotation = rotation.at[2].set(design_vector_dict['rz'])
+
+        if 'sx' in self.degrees_of_freedom:
+            scale[0] = design_vector_dict['sx']
+        if 'sy' in self.degrees_of_freedom:
+            scale[1] = design_vector_dict['sy']
+        if 'sz' in self.degrees_of_freedom:
+            scale[2] = design_vector_dict['sz']
+
+        return translation, rotation, scale
+
+
+
+
+    # @property
+    # def design_vector_dict(self) -> dict:
+    #
+    #     """
+    #     Returns a dictionary of the design vector components.
+    #
+    #     An object's design vector is encoded as a reference position and rotation. Since objects are rigid bodies,
+    #     all other geometric properties are a function of the reference position and rotation.
+    #     """
+    #
+    #     design_vector_dict = {}
+    #
+    #     if 'x' in self.degrees_of_freedom:
+    #         design_vector_dict['x'] = self.reference_position[0]
+    #     if 'y' in self.degrees_of_freedom:
+    #         design_vector_dict['y'] = self.reference_position[1]
+    #     if 'z' in self.degrees_of_freedom:
+    #         design_vector_dict['z'] = self.reference_position[2]
+    #     if 'rx' in self.degrees_of_freedom:
+    #         design_vector_dict['rx'] = self.rotation[0]
+    #     if 'ry' in self.degrees_of_freedom:
+    #         design_vector_dict['ry'] = self.rotation[1]
+    #     if 'rz' in self.degrees_of_freedom:
+    #         design_vector_dict['rz'] = self.rotation[2]
+    #
+    #
+    #     return design_vector_dict
+
+    # @property
+    # def design_vector(self):
+    #     design_vector = np.array(list(self.design_vector_dict.values()))
+    #     return design_vector
+
+
+    def calculate_positions(self, design_vector=None, objects_dict=None, transformation_vectors=None):
         """
         Calculates the positions of the object's spheres.
-
-        Considerations
-        6 DOF: x, y, z, rx, ry, rz
-        n references axes
-
-        1. Pure translation
-        2. Pure rotation
-        3. Translation and rotation
-        4. Translation/rotation about a reference axis
-            -Adopts the reference axis angles and origin position
-        5. Translation/rotation about two reference axes (colinear motion)
-            -Ignores axes angles, just creates a line between the two axes
-        6. Translation/rotation about three reference axes (coplanar motion)
-            -Ignores axes angles, just triangulates 3D coordinates into a plane
         """
 
-        dof = self.degrees_of_freedom
+        design_vector_dict = self.decompose_design_vector(design_vector)
 
-        if force_update is True:
-            dof = ('x', 'y', 'z', 'rx', 'ry', 'rz')
-            x  = design_vector[0]
-            y  = design_vector[1]
-            z  = design_vector[2]
-            rx = design_vector[3]
-            ry = design_vector[4]
-            rz = design_vector[5]
+        translation, rotation, scaling = self.assemble_transformation_vectors(design_vector_dict)
 
-        else:
-
-            # If the object has no degrees of freedom, then return its current position
-            if dof == ():
-                return {self.__repr__(): {'type': 'spheres', 'positions': self.positions, 'radii': self.radii}}
-
-            # Extract the design variables from the design vector
-            design_vector_dict = self.decompose_design_vector(design_vector)
-
-            if 'x' in dof:
-                x = design_vector_dict['x']
-            else:
-                x = 0
-
-            if 'y' in dof:
-                y = design_vector_dict['y']
-            else:
-                y = 0
-
-            if 'z' in dof:
-                z = design_vector_dict['z']
-            else:
-                z = 0
-
-            if 'rx' in dof:
-                rx = design_vector_dict['rx']
-            else:
-                rx = 0
-
-            if 'ry' in dof:
-                ry = design_vector_dict['ry']
-            else:
-                ry = 0
-
-            if 'rz' in dof:
-                rz = design_vector_dict['rz']
-            else:
-                rz = 0
 
         # TODO Add reference axes argument
         # Calculate the new positions
-        translation = np.array([[x,y,z]]).T
-        rotation = np.array([[rx,ry,rz]]).T
-        scaling = np.ones((3,1))
+        # translation = np.array([[x,y,z]]).T
+        # rotation = np.array([[rx,ry,rz]]).T
+        # scaling = np.ones((3,1))
         new_positions = affine_transformation(self.reference_position.reshape(-1,1), self.positions.T, translation, rotation, scaling).T
 
         object_dict = {self.__repr__(): {'type': 'spheres', 'positions': new_positions, 'radii': self.radii}}
-
-        # TODO HOW TO UPDATE THIS?
-        if self.ports is not None:
-
-            for port in self.ports:
-                new_port_position = new_positions[self.port_index(port['name'])]
-                new_port_position = new_port_position.reshape(1, 3)
-                new_port_radius = np.array([self.radii[self.port_index(port['name'])]])
-                object_dict[self.__repr__() + '_' + port['name']] = {'type': 'spheres', 'positions': new_port_position, 'radii': new_port_radius}
-
-
 
         return object_dict
 
 
     def set_positions(self,
                       objects_dict: dict = None,
-                      design_vector: list = None):
+                      design_vector: list = None,
+                      translation: list = None,
+                      rotation: list = None,
+                      scale: list = None):
         """
         Update positions of object spheres given a design vector
 
@@ -264,8 +188,22 @@ class Component:
         if design_vector is not None:
             objects_dict = self.calculate_positions(design_vector, force_update=True)
 
+        if translation is not None and rotation is not None and scale is not None:
+            transformation_vectors = [translation, rotation, scale]
+            objects_dict = self.calculate_positions(None, transformation_vectors=transformation_vectors)
+
+
         self.positions = objects_dict[self.__repr__()]['positions']
         self.radii     = objects_dict[self.__repr__()]['radii']
+
+    def generate_plot_objects(self):
+        objects = []
+        colors = []
+        for position, radius in zip(self.positions, self.radii):
+            objects.append(pv.Sphere(radius=radius, center=position))
+            colors.append(self.color)
+
+        return objects, colors
 
 
 class Interconnect:
@@ -307,9 +245,6 @@ class Interconnect:
         self.component_1_port_name = component_1_port_name
         self.component_2_port_name = component_2_port_name
 
-        self.object_1 = self.component_1_name + '_' + self.component_1_port_name
-        self.object_2 = self.component_2_name + '_' + self.component_2_port_name
-
         self.radius = radius
         self.color = color
 
@@ -346,8 +281,14 @@ class Interconnect:
 
         object_dict = {}
 
-        pos_1 = objects_dict[self.object_1]['positions'][0]
-        pos_2 = objects_dict[self.object_2]['positions'][0]
+        # pos_1 = objects_dict[self.object_1]['positions'][0]
+        # pos_2 = objects_dict[self.object_2]['positions'][0]
+
+        pos_1_index = objects_dict[self.component_1_name]['port_indices'][self.component_1_port_name]
+        pos_2_index = objects_dict[self.component_2_name]['port_indices'][self.component_2_port_name]
+
+        pos_1 = objects_dict[self.component_1_name]['positions'][pos_1_index]
+        pos_2 = objects_dict[self.component_2_name]['positions'][pos_2_index]
 
         node_positions = np.vstack((pos_1, design_vector, pos_2))
 
@@ -367,9 +308,6 @@ class Interconnect:
 
         self.radii = objects_dict[str(self)]['radii']
 
-    # @property
-    # def edges(self):
-    #     return [segment.edge for segment in self.segments]
 
     def plot(self):
         objects = []

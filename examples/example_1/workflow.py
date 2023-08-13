@@ -95,15 +95,29 @@ study.add_system(system)
 
 # Map the system to a single spatial configuration
 
-x0_dict = {'control_valve_1': [-3., -4.41, -0.24, 0., 0., 0.],
-           'actuator_1': [2., 4.41, 0.24, 0., 0., 0.],
-           'component_2': [5, -3, -1, 0., 0., 0.],
-           'component_3': [-3., -1., 3., 0., 0., 0.],
-           'structure_1': [0., 0., -1., 0., 0., 0.],
-           'hp_cv_to_actuator': [-3., -2., 2., -1., 0., 2.],
-           'hp_cv_to_actuator2': [4., 0., 1.]}
+c0.set_positions(translation=[-3., -4.41, -0.24],
+                 rotation=[0., 0., 0.],
+                 scale=[1., 1., 1.])
 
-system.set_positions(design_vector_dict=x0_dict)
+c1.set_positions(translation=[2., 4.41, 0.24],
+                 rotation=[0., 0., 0.],
+                 scale=[1., 1., 1.])
+
+c2.set_positions(translation=[-5, 3, 1],
+                 rotation=[0., 0., 0.],
+                 scale=[1., 1., 1.])
+
+c3.set_positions(translation=[3., 1., -3.],
+                 rotation=[0., 0., 0.],
+                 scale=[1., 1., 1.])
+
+c4.set_positions(translation=[0., 0., -1.],
+                 rotation=[0., 0., 0.],
+                 scale=[1., 1., 1.])
+
+ic0.set_position(waypoints=[[-3., -2., 2.],[-1., 0., 2.]])
+ic1.set_position(waypoints=[[4., 0., 1.]])
+
 
 
 # Plot initial spatial configuration

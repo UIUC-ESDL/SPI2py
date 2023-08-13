@@ -242,7 +242,7 @@ class SpatialInterface:
         objects_dict = {}
 
         for obj, design_vector in zip(self.objects, design_vectors):
-            object_dict = obj.calculate_positions(design_vector, objects_dict=objects_dict)
+            object_dict = obj.calculate_positions(design_vector=design_vector, objects_dict=objects_dict)
             objects_dict = {**objects_dict, **object_dict}
 
 
@@ -391,7 +391,7 @@ class SpatialInterface:
         colors = []
 
         for obj in self.objects:
-            objs, cols = obj.plot()
+            objs, cols = obj.generate_plot_objects()
             objects.extend(objs)
             colors.extend(cols)
             # if isinstance(obj, Component):
