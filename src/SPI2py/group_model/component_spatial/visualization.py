@@ -5,10 +5,6 @@
 import pyvista as pv
 
 
-def plot_2d():
-    pass
-
-
 def plot_3d(objects, colors):
     """
 

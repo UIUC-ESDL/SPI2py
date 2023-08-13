@@ -34,7 +34,7 @@ class Component:
         self.positions, self.radii = read_xyzr_file(filepath)
         self.rotation = np.array([0, 0, 0])
 
-        self.ports = self._validate_ports(ports)
+        self.ports = ports
         self.port_names = []
         self.port_indices = []
 
@@ -45,7 +45,7 @@ class Component:
         self._valid_colors = {**mcolors.BASE_COLORS, **mcolors.TABLEAU_COLORS, **mcolors.CSS4_COLORS,
                               **mcolors.XKCD_COLORS}
 
-        self.color = self._validate_colors(color)
+        self.color = color
 
         # TODO Make tuple len zero not none
         self.dof = len(self.degrees_of_freedom)
@@ -58,60 +58,13 @@ class Component:
                 self.port_indices.append(len(self.positions) - 1)
 
 
-
+    # TODO DELETE THESE
     def port_index(self, port_name: str) -> int:
-        if port_name not in self.port_names:
-            raise ValueError('Port name %s is not in %s.' % (port_name, self.name))
         return self.port_indices[self.port_names.index(port_name)]
 
     def port_position(self, port_name: str) -> np.ndarray:
-        if port_name not in self.port_names:
-            raise ValueError('Port name %s is not in %s.' % (port_name, self.name))
         return self.positions[self.port_indices[self.port_names.index(port_name)]]
 
-    def _validate_color(self, color):
-
-        if not isinstance(color, str):
-            raise ValueError('Color must be a string.')
-
-        if color not in self._valid_colors:
-            raise ValueError('Color not recognized. For a list of valid colors inspect the attribute '
-                             'self._valid_colors.keys().')
-
-    def _validate_colors(self, colors):
-
-        if colors is None:
-            raise ValueError(f'Color has not been set for {self.__repr__()}')
-
-        if isinstance(colors, list):
-
-            if len(colors) == 1:
-                self._validate_color(colors)
-
-            if len(colors) > 1:
-                for color in colors:
-                    self._validate_color(color)
-
-        elif isinstance(colors, str):
-            self._validate_color(colors)
-        else:
-            raise ValueError('Colors must be a list or string.')
-
-        return colors
-
-    def _validate_ports(self, ports):
-
-        if ports is None:
-            return ports
-
-        if not isinstance(ports, list):
-            raise TypeError('Ports must be a list.')
-
-        # for port in ports:
-        #     if not isinstance(port, Port):
-        #         raise TypeError('Ports must be a list of Port objects.')
-
-        return ports
 
     def __repr__(self):
         return self.name
@@ -122,28 +75,41 @@ class Component:
     def plot(self):
         objects = []
         colors = []
-        for i in range(len(self.positions)):
-            objects.append(pv.Sphere(radius=self.radii[i], center=self.positions[i]))
-            colors.append(self.color)
-
-        if self.cad_file is not None:
-            mesh = pv.read(self.cad_file)
-            mesh = mesh.scale(1/50)
-            objects.append(mesh)
+        for position, radius in zip(self.positions, self.radii):
+            objects.append(pv.Sphere(radius=radius, center=position))
             colors.append(self.color)
 
         return objects, colors
 
+    def transformation_vectors(self, design_vector):
+
+        design_vector_dict = self.decompose_design_vector(design_vector)
+
+        translation = np.zeros((3,1))
+        rotation = np.zeros((3,1))
+        scaling = np.ones((3,1))
+
+        if 'x' in self.degrees_of_freedom:
+            translation[0] = design_vector_dict['x']
+        if 'y' in self.degrees_of_freedom:
+            translation[1] = design_vector_dict['y']
+        if 'z' in self.degrees_of_freedom:
+            translation[2] = design_vector_dict['z']
+
+        if 'rx' in self.degrees_of_freedom:
+            rotation[0] = design_vector_dict['rx']
+        if 'ry' in self.degrees_of_freedom:
+            rotation[1] = design_vector_dict['ry']
+        if 'rz' in self.degrees_of_freedom:
+            rotation[2] = design_vector_dict['rz']
 
 
     @property
     def reference_position(self):
         """
         Returns the reference position of the object.
-
-        TODO Replace with a signed distance function that is consistent regardless of the number of spheres used.
         """
-        return self.positions[0]
+        return np.mean(self.positions, axis=0)
 
     @property
     def design_vector_dict(self) -> dict:
@@ -270,14 +236,16 @@ class Component:
 
         object_dict = {self.__repr__(): {'type': 'spheres', 'positions': new_positions, 'radii': self.radii}}
 
+        # TODO HOW TO UPDATE THIS?
         if self.ports is not None:
 
-            for i, port in enumerate(self.ports):
-                port_name = self.__repr__() + '_' + port['name']
-                port_positions = new_positions[self.port_index(port['name'])]
-                port_positions = port_positions.reshape(1, 3)
-                port_radius = np.array([port['radius']])
-                object_dict[port_name] = {'type': 'spheres', 'positions': port_positions, 'radii': port_radius}
+            for port in self.ports:
+                new_port_position = new_positions[self.port_index(port['name'])]
+                new_port_position = new_port_position.reshape(1, 3)
+                new_port_radius = np.array([self.radii[self.port_index(port['name'])]])
+                object_dict[self.__repr__() + '_' + port['name']] = {'type': 'spheres', 'positions': new_port_position, 'radii': new_port_radius}
+
+
 
         return object_dict
 
@@ -347,13 +315,6 @@ class Interconnect:
 
         self.number_of_waypoints = number_of_waypoints
 
-        # Create InterconnectNode objects
-        self.nodes = self.create_nodes()
-        self.interconnect_nodes = self.nodes[1:-1]  # trims off components 1 and 2
-
-        # Create InterconnectSegment objects
-        self.node_pairs = self.create_node_pairs()
-
         self.movement_class = 'partially dependent'
         self.degrees_of_freedom = degrees_of_freedom
 
@@ -361,61 +322,17 @@ class Interconnect:
 
         self.dof = 3 * self.number_of_waypoints
 
-    @property
-    def capsules(self):
-
-        a, b = self.positions
-
-        directions = []
-        heights = []
-        centers = []
-
-        for i in range(self.number_of_waypoints+1):
-
-            direction = b[i] - a[i]
-
-            directions.append(direction)
-
-            height = np.linalg.norm(direction)
-            heights.append(height)
-
-            center = a[i] + direction / 2
-            centers.append(center)
-
-        return directions, heights, centers
-
     def __repr__(self):
         return self.name
 
     def __str__(self):
         return self.name
 
+
+
     @property
     def design_vector(self):
         return self.waypoint_positions.flatten()
-
-    def create_nodes(self):
-
-        # Create the nodes list and add component 1
-        nodes = [self.object_1]
-
-        # Add the interconnect nodes
-        for i in range(self.number_of_waypoints):
-            # Each node should have unique identifier
-            node_name = self.name + '_node_' + str(i)
-            nodes.append(node_name)
-
-        # Add component 2
-        nodes.append(self.object_2)
-
-        return nodes
-
-    def create_node_pairs(self):
-
-        node_pairs = [(self.nodes[i], self.nodes[i + 1]) for i in range(len(self.nodes) - 1)]
-
-        return node_pairs
-
 
     def calculate_positions(self, design_vector, objects_dict):
 
@@ -458,18 +375,10 @@ class Interconnect:
         objects = []
         colors = []
 
-        a, b = self.positions
 
         # Plot spheres at each node
-        for i in range(len(self.positions)):
-            objects.append(pv.Sphere(radius=self.radii[i], center=a[i]))
-            colors.append(self.color)
-
-        directions, heights, centers = self.capsules
-
-        # Plot capsules between nodes
-        for direction, height, center in zip(directions, heights, centers):
-            objects.append(pv.Cylinder(radius=self.radius, direction=direction, height=height, center=center))
+        for position, radius in zip(self.positions, self.radii):
+            objects.append(pv.Sphere(radius=radius, center=position))
             colors.append(self.color)
 
         return objects, colors

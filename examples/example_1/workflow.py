@@ -143,8 +143,8 @@ def constraint_function(x):
     return system.calculate_constraints(x)[0]
 
 
-grad_c = grad(constraint_function)(x0)
-print('Initial constraint gradient: ', grad_c)
+# grad_c = grad(constraint_function)(x0)
+# print('Initial constraint gradient: ', grad_c)
 
 # study.optimize_spatial_configuration(options={'maximum number of iterations': 1,
 #                                               'convergence tolerance': 1e-2})
