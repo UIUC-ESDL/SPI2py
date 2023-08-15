@@ -3,12 +3,10 @@
 Provides functions to calculate the distance between classes in various ways.
 """
 
-import jax.numpy as np
-from jax import numpy as np
+import torch
 
 
-def distances_points_points(a: np.ndarray,
-                            b: np.ndarray) -> np.ndarray:
+def distances_points_points(a: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
     """
     Calculates the pairwise distance between two sets of 3D points.
 
@@ -51,7 +49,7 @@ def distances_points_points(a: np.ndarray,
 
     # c_squared_euclidean_distances =
 
-    c = np.linalg.norm(cc, axis=-1)
+    c = torch.linalg.norm(cc, axis=-1)
 
     # Reshape the output to a 1D array
     c = c.flatten()
@@ -70,10 +68,10 @@ def sum_radii(a, b):
     return c
 
 
-def signed_distances_spheres_spheres(centers_a: np.ndarray,
-                                     radii_a:   np.ndarray,
-                                     centers_b: np.ndarray,
-                                     radii_b:   np.ndarray) -> np.ndarray:
+def signed_distances_spheres_spheres(centers_a: torch.tensor,
+                                     radii_a: torch.tensor,
+                                     centers_b: torch.tensor,
+                                     radii_b: torch.tensor) -> torch.tensor:
     """
     Calculates the pairwise signed distance between two sets of spheres.
 
@@ -137,6 +135,6 @@ def signed_distances(x, model, object_pair):
         all_signed_distances.append(signed_distances)
 
 
-    all_signed_distances = np.concatenate(all_signed_distances, axis=0)
+    all_signed_distances = torch.cat(all_signed_distances)
 
     return all_signed_distances

@@ -9,8 +9,8 @@ from SPI2py.group_model.component_spatial.spatial_transformations import affine_
 
 from matplotlib import colors as mcolors
 
+import torch
 
-import jax.numpy as np
 from typing import Union, Sequence
 
 import pyvista as pv
@@ -31,8 +31,8 @@ class Component:
 
 
         self.positions, self.radii = read_xyzr_file(filepath)
-        self.rotation = np.array([0, 0, 0])
-        self.scale = np.array([1, 1, 1])
+        self.rotation = torch.tensor([0, 0, 0], dtype=torch.float64)
+        self.scale = torch.tensor([1, 1, 1], dtype=torch.float64)
 
         self.ports = ports
         self.port_indices = {}
@@ -50,8 +50,8 @@ class Component:
         if self.ports is not None:
             for port in self.ports:
                 self.port_indices[port['name']] = len(self.positions - 1)
-                self.positions = np.vstack((self.positions, port['origin']))
-                self.radii = np.concatenate((self.radii, np.array([port['radius']])))
+                self.positions = torch.vstack((self.positions, torch.tensor(port['origin'], dtype=torch.float64)))
+                self.radii = torch.cat((self.radii, torch.tensor([port['radius']], dtype=torch.float64)))
 
 
 
@@ -66,7 +66,12 @@ class Component:
         """
         Returns the reference position of the object.
         """
-        return np.mean(self.positions, axis=0)
+
+        x_mean = torch.mean(self.positions[:, 0])
+        y_mean = torch.mean(self.positions[:, 1])
+        z_mean = torch.mean(self.positions[:, 2])
+
+        return torch.tensor([x_mean, y_mean, z_mean], dtype=torch.float64)
 
     @property
     def design_vector(self):
@@ -94,12 +99,12 @@ class Component:
         if 'sz' in self.degrees_of_freedom:
             design_vector.append(self.scale[2])
 
-        return np.array(design_vector)
+        return torch.tensor(design_vector, dtype=torch.float64)
 
 
 
 
-    def decompose_design_vector(self, design_vector: np.ndarray) -> dict:
+    def decompose_design_vector(self, design_vector: torch.tensor) -> dict:
         """
         Takes a 1D design vector and decomposes it into a dictionary of design variables.
         """
@@ -116,23 +121,23 @@ class Component:
 
     def assemble_transformation_vectors(self, design_vector_dict):
 
-        translation = np.zeros((3,1))
-        rotation = np.zeros((3,1))
-        scale = np.ones((3,1))
+        translation = torch.zeros((3,1), dtype=torch.float64)
+        rotation = torch.zeros((3,1), dtype=torch.float64)
+        scale = torch.ones((3,1), dtype=torch.float64)
 
         if 'x' in self.degrees_of_freedom:
-            translation = translation.at[0].set(design_vector_dict['x'])
+            translation[0] = design_vector_dict['x']
         if 'y' in self.degrees_of_freedom:
-            translation = translation.at[1].set(design_vector_dict['y'])
+            translation[1] = design_vector_dict['y']
         if 'z' in self.degrees_of_freedom:
-            translation = translation.at[2].set(design_vector_dict['z'])
+            translation[2] = design_vector_dict['z']
 
         if 'rx' in self.degrees_of_freedom:
-            rotation = rotation.at[0].set(design_vector_dict['rx'])
+            rotation[0] = design_vector_dict['rx']
         if 'ry' in self.degrees_of_freedom:
-            rotation = rotation.at[1].set(design_vector_dict['ry'])
+            rotation[1] = design_vector_dict['ry']
         if 'rz' in self.degrees_of_freedom:
-            rotation = rotation.at[2].set(design_vector_dict['rz'])
+            rotation[2] = design_vector_dict['rz']
 
         if 'sx' in self.degrees_of_freedom:
             scale[0] = design_vector_dict['sx']
@@ -241,14 +246,14 @@ class Interconnect:
 
         self.degrees_of_freedom = degrees_of_freedom
 
-        self.waypoint_positions = np.zeros((self.number_of_waypoints, 3))
+        self.waypoint_positions = torch.zeros((self.number_of_waypoints, 3), dtype=torch.float64)
 
         self.dof = 3 * self.number_of_waypoints
 
         self.spheres_per_segment = 25
 
-        self.positions = np.empty((self.spheres_per_segment*self.segments_per_interconnect,3))
-        self.radii = np.empty((self.spheres_per_segment*self.segments_per_interconnect,1))
+        self.positions = torch.empty((self.spheres_per_segment*self.segments_per_interconnect,3), dtype=torch.float64)
+        self.radii = torch.empty((self.spheres_per_segment*self.segments_per_interconnect,1), dtype=torch.float64)
 
     def __repr__(self):
         return self.name
@@ -264,7 +269,7 @@ class Interconnect:
 
         # TODO Make this work with design vectors of not length 3
         # Reshape the design vector to extract xi, yi, and zi positions
-        design_vector = np.array(design_vector)
+        design_vector = torch.tensor(design_vector, dtype=torch.float64)
         design_vector = design_vector.reshape((self.number_of_waypoints, 3))
 
         object_dict = {}
@@ -272,13 +277,24 @@ class Interconnect:
         pos_1 = objects_dict[self.component_1_name]['positions'][self.component_1_port_index]
         pos_2 = objects_dict[self.component_2_name]['positions'][self.component_2_port_index]
 
-        node_positions = np.vstack((pos_1, design_vector, pos_2))
+        node_positions = torch.vstack((pos_1, design_vector, pos_2))
 
         start_arr = node_positions[0:-1]
         stop_arr = node_positions[1:None]
 
-        points = np.linspace(start_arr, stop_arr, self.spheres_per_segment).reshape(-1, 3)
-        radii = np.repeat(self.radius, len(points))
+        diff_arr = stop_arr - start_arr
+        n = self.spheres_per_segment
+        increment = diff_arr / n
+
+        start_arr = start_arr.reshape(-1, 3, 1)
+        increment = increment.reshape(-1, 3, 1)
+        points = start_arr + increment * torch.arange(n).reshape(1, 1, -1)
+
+        # Reshape back into a 2D array
+        points = points.reshape(-1, 3)
+
+        # points = torch.linspace(start_arr, stop_arr, self.spheres_per_segment).reshape(-1, 3)
+        radii = self.radius * torch.ones(len(points))
 
         object_dict[str(self)] = {'type': 'interconnect', 'positions': points, 'radii': radii}
 
@@ -286,7 +302,7 @@ class Interconnect:
 
     def set_positions(self, design_vector, objects_dict):
         objects_dict = {**objects_dict, **self.calculate_positions(design_vector, objects_dict)}
-        self.waypoint_positions = np.array(design_vector).reshape((-1, 3))
+        self.waypoint_positions = torch.tensor(design_vector, dtype=torch.float64).reshape((-1, 3))
         self.positions = objects_dict[str(self)]['positions']
         self.radii = objects_dict[str(self)]['radii']
 

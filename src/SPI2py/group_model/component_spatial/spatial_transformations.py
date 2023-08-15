@@ -2,8 +2,8 @@
 
 """
 
-import jax.numpy as np
-from jax.numpy import sin, cos
+import torch
+from torch import sin, cos
 
 
 def affine_transformation(reference_position, positions, translation, rotation, scaling):
@@ -33,15 +33,15 @@ def affine_transformation(reference_position, positions, translation, rotation, 
     """
 
     # Initialize constants
-    zero = np.array([0])
-    one = np.array([1])
+    zero = torch.zeros(1, dtype=torch.float64)
+    one = torch.ones(1, dtype=torch.float64)
 
     # Initialize the transformation matrix
-    t = np.eye(4)
+    t = torch.eye(4, dtype=torch.float64)
 
     # Insert the translation vector
-    # t[:3, [3]] = translation
-    t = t.at[:3, [3]].set(translation)  # JAX syntax
+    t[:3, [3]] = translation
+
 
     # Unpack the rotation angles (Euler)
     a = rotation[0]  # alpha
@@ -49,13 +49,12 @@ def affine_transformation(reference_position, positions, translation, rotation, 
     g = rotation[2]  # gamma
 
     # Calculate rotation matrix (R = R_z(gamma) @ R_y(beta) @ R_x(alpha))
-    r = np.array([[cos(b) * cos(g), sin(a) * sin(b) * cos(g) - cos(a) * sin(g), cos(a) * sin(b) * cos(g) + sin(a) * sin(g)],
-                  [cos(b) * sin(g), sin(a) * sin(b) * sin(g) + cos(a) * cos(g), cos(a) * sin(b) * sin(g) - sin(a) * cos(g)],
-                  [-sin(b), sin(a) * cos(b), cos(a) * cos(b)]]).reshape(3, 3)
+    r = torch.cat((cos(b) * cos(g), sin(a) * sin(b) * cos(g) - cos(a) * sin(g), cos(a) * sin(b) * cos(g) + sin(a) * sin(g),
+                   cos(b) * sin(g), sin(a) * sin(b) * sin(g) + cos(a) * cos(g), cos(a) * sin(b) * sin(g) - sin(a) * cos(g),
+                   -sin(b),         sin(a) * cos(b),                            cos(a) * cos(b))).view(3, 3)
 
     # Insert the rotation matrix
-    # t[:3, :3] = r
-    t = t.at[:3, :3].set(r)  # JAX syntax
+    t[:3, :3] = r
 
     # Unpack the sizing factors
     sx = scaling[0]
@@ -63,10 +62,10 @@ def affine_transformation(reference_position, positions, translation, rotation, 
     sz = scaling[2]
 
     # Define the scaling matrix
-    m = np.array([[sx,   zero, zero, zero],
-                  [zero, sy,   zero, zero],
-                  [zero, zero, sz,   zero],
-                  [zero, zero, zero, one]]).reshape(4, 4)
+    m = torch.cat((sx,   zero, zero, zero,
+                   zero, sy,   zero, zero,
+                   zero, zero, sz,   zero,
+                   zero, zero, zero, one)).view(4, 4)
 
     # Concatenate the scaling matrix
     t = t @ m
@@ -75,8 +74,8 @@ def affine_transformation(reference_position, positions, translation, rotation, 
     positions_shifted = positions - reference_position
 
     # Pad the positions with ones
-    ones = np.ones((1, positions_shifted.shape[1]))
-    positions_shifted_padded = np.vstack((positions_shifted, ones))
+    ones = torch.ones((1, positions_shifted.shape[1]))
+    positions_shifted_padded = torch.vstack((positions_shifted, ones))
 
     # Apply the transformation
     transformed_positions_shifted_padded = t @ positions_shifted_padded

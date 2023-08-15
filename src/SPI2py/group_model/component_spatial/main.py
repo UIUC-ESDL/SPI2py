@@ -1,5 +1,7 @@
-import jax.numpy as np
-from jax import grad, jacrev
+import numpy as np
+
+import torch
+from torch.autograd.functional import jacobian
 
 import openmdao.api as om
 
@@ -52,21 +54,31 @@ class SpatialComponent(om.ExplicitComponent):
 
         x = inputs['x']
 
+        x = torch.tensor(x, dtype=torch.float64)
+
         f = self.spatial_interface.calculate_objective(x)
         g = self.spatial_interface.calculate_constraints(x)
+
+        f = f.detach().numpy()
+        g = g.detach().numpy()
 
         outputs['f'] = f
         outputs['g'] = g
 
-    def compute_partials(self, inputs, partials):
-
-        x = inputs['x']
-
-        grad_f = grad(self.spatial_interface.calculate_objective)(x)
-        grad_g = jacrev(self.spatial_interface.calculate_constraints)(x)
-
-        partials['f', 'x'] = grad_f
-        partials['g', 'x'] = grad_g
+    # def compute_partials(self, inputs, partials):
+    #
+    #     x = inputs['x']
+    #
+    #     x = torch.tensor(x, dtype=torch.float64, requires_grad=True)
+    #
+    #     jac_f = jacobian(self.spatial_interface.calculate_objective, x)
+    #     jac_g = jacobian(self.spatial_interface.calculate_constraints, x)
+    #
+    #     jac_f = jac_f.detach().numpy()
+    #     jac_g = jac_g.detach().numpy()
+    #
+    #     partials['f', 'x'] = jac_f
+    #     partials['g', 'x'] = jac_g
 
 
 
@@ -242,7 +254,7 @@ class SpatialInterface:
         # Get the size of the design vector for each design vector object
         design_vector_sizes = []
         for i, obj in enumerate(self.objects):
-            design_vector_sizes.append(obj.design_vector.size)
+            design_vector_sizes.append(len(obj.design_vector))
 
         # Index values
         start, stop = 0, 0
@@ -250,6 +262,7 @@ class SpatialInterface:
 
         for i, size in enumerate(design_vector_sizes):
             # Increment stop index
+
             stop += design_vector_sizes[i]
 
             design_vectors.append(design_vector[start:stop])
@@ -306,14 +319,14 @@ class SpatialInterface:
         obj = next(obj for obj in self.objects if obj.__repr__() == object_name)
 
         if isinstance(obj, Component):
-            translation = np.array(translation).reshape(3,1)
-            rotation = np.array(rotation).reshape(3,1)
-            scale = np.array(scale).reshape(3,1)
+            translation = torch.tensor(translation, dtype=torch.float64).reshape(3,1)
+            rotation = torch.tensor(rotation, dtype=torch.float64).reshape(3,1)
+            scale = torch.tensor(scale, dtype=torch.float64).reshape(3,1)
             transformation_vectors = [translation, rotation, scale]
             obj.set_positions(transformation_vectors=transformation_vectors)
 
         elif isinstance(obj, Interconnect):
-            design_vector = np.array(waypoints).flatten()
+            design_vector = torch.tensor(waypoints).flatten()
             obj_dict = self.get_component_positions()
             obj.set_positions(design_vector, obj_dict)
 
@@ -415,11 +428,11 @@ class SpatialInterface:
     def calculate_constraints(self, x):
         # TODO Replace with all
 
-        constraints = [constraint_function(x) for constraint_function in self.constraints]
+        # constraints = [constraint_function(x) for constraint_function in self.constraints]
+        #
+        # constraints = np.array(constraints)
 
-        constraints = np.array(constraints)
-
-        # constraints = self.constraints[1](x)
+        constraints = self.constraints[1](x)
 
         return constraints
 

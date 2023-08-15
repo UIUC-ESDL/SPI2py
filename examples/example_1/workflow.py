@@ -8,8 +8,6 @@ Author:     Chad Peterson
 
 import os
 
-import jax.numpy as np
-from jax import grad, jacrev
 import openmdao.api as om
 
 from SPI2py import SpatialComponent, Component, Interconnect
@@ -155,7 +153,7 @@ model.set_val('x', spatial_component.spatial_interface.design_vector)
 
 
 prob.driver = om.ScipyOptimizeDriver()
-prob.driver.options['maxiter'] = 100
+prob.driver.options['maxiter'] = 1
 
 prob.run_model()
 

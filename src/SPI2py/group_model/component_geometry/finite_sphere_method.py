@@ -4,7 +4,7 @@ TODO Add functionality to rotate geometric primitives
 """
 
 import numpy as np
-
+import torch
 
 class GeometricRepresentation:
     """
@@ -48,8 +48,8 @@ def read_xyzr_file(filepath, num_spheres=None, scale_factor=1):
         radii.append(float(r))
 
     # Scale the positions and radii if needed
-    positions = np.array(positions)*scale_factor
-    radii = np.array(radii)*scale_factor
+    positions = torch.tensor(positions, dtype=torch.float64)*scale_factor
+    radii = torch.tensor(radii, dtype=torch.float)*scale_factor
 
     return positions, radii
 
