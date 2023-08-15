@@ -41,10 +41,10 @@ c3 = Component(name='component_3',
                degrees_of_freedom=('x', 'y', 'z', 'rx', 'ry', 'rz'),
                filepath='part_models/component_3.xyzr')
 
-# c4 = Component(name='structure_1',
-#                color='gray',
-#                degrees_of_freedom=(),
-#                filepath='part_models/structure_1.xyzr')
+c4 = Component(name='structure_1',
+               color='gray',
+               degrees_of_freedom=(),
+               filepath='part_models/structure_1.xyzr')
 
 
 # %% Define the interconnects
@@ -79,7 +79,7 @@ model = prob.model
 
 spatial_component = SpatialComponent()
 spatial_component.options.declare('name', default='DemoSystem', types=str)
-spatial_component.options.declare('components', default=[c0, c1, c2, c3], types=list)  # TODO Add c4
+spatial_component.options.declare('components', default=[c0, c1, c2, c3, c4], types=list)  # TODO Add c4
 spatial_component.options.declare('interconnects', default=[ic0, ic1], types=list)
 
 model.add_subsystem('system', spatial_component, promotes=['*'])
@@ -111,10 +111,10 @@ spatial_component.spatial_interface.set_position('component_3',
                             rotation=[0., 0., 0.],
                             scale=[1., 1., 1.])
 
-# spatial_component.spatial_interface.set_position('structure_1',
-#                             translation=[0., 0., -1.],
-#                             rotation=[0., 0., 0.],
-#                             scale=[1., 1., 1.])
+spatial_component.spatial_interface.set_position('structure_1',
+                            translation=[0., 0., -1.],
+                            rotation=[0., 0., 0.],
+                            scale=[1., 1., 1.])
 
 spatial_component.spatial_interface.set_position('hp_cv_actuator',
                             waypoints=[[-3., -2., 2.],[-1., 0., 2.]])
@@ -155,7 +155,7 @@ model.set_val('x', spatial_component.spatial_interface.design_vector)
 
 
 prob.driver = om.ScipyOptimizeDriver()
-prob.driver.options['maxiter'] = 1
+prob.driver.options['maxiter'] = 100
 
 prob.run_model()
 
@@ -164,30 +164,30 @@ prob.run_model()
 
 # Perform gradient-based optimization
 
-# print('Initial design vector: ', prob['x'])
-# print('Initial objective: ', prob['f'])
+print('Initial design vector: ', prob['x'])
+print('Initial objective: ', prob['f'])
 # print('Initial constraint values: ', prob['g1'])
 # print('Initial constraint gradient values: ', prob.compute_totals('g1','x'))
 
 # from jax import config
 # config.update("jax_debug_nans", True)
 
-x0 = spatial_component.spatial_interface.design_vector
+# x0 = spatial_component.spatial_interface.design_vector
 
 # grad_f = grad(spatial_component.spatial_interface.calculate_objective)
 # grad_f_val = grad_f(x0)
 # print(grad_f_val)
 
-grad_c = grad(spatial_component.spatial_interface.calculate_constraints)
-grad_c_val = grad_c(x0)
-print(grad_c_val)
+# grad_c = grad(spatial_component.spatial_interface.calculate_constraints)
+# grad_c_val = grad_c(x0)
+# print(grad_c_val)
 
 
 
-# prob.run_driver()
-#
-# # Plot optimized spatial configuration
+prob.run_driver()
+
+# Plot optimized spatial configuration
 # # spatial_component.spatial_interface.plot()
-#
-# print('Optimized design vector: ', prob['x'])
-# print('Optimized objective: ', prob['f'])
+
+print('Optimized design vector: ', prob['x'])
+print('Optimized objective: ', prob['f'])

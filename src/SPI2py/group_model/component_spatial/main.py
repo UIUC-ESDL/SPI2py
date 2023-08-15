@@ -24,7 +24,7 @@ class SpatialComponent(om.ExplicitComponent):
 
         self.add_design_var('x')
         self.add_objective('f')
-        self.add_constraint('g1', lower=None, upper=0)
+        self.add_constraint('g', upper=0)
 
     def setup(self):
 
@@ -36,35 +36,37 @@ class SpatialComponent(om.ExplicitComponent):
                                                   interconnects=interconnects)
 
         x_default = self.spatial_interface.design_vector
+        # f_default = self.spatial_interface.calculate_objective(x_default)
+        # g_default = self.spatial_interface.calculate_constraints(x_default)
 
         self.add_input('x', val=x_default)
         self.add_output('f', val=1.0)
-        self.add_output('g1', val=0.0)
+        self.add_output('g', val=[-1., -1., -1.])
 
 
     def setup_partials(self):
         self.declare_partials('f', 'x')
-        self.declare_partials('g1', 'x')
+        self.declare_partials('g', 'x')
 
     def compute(self, inputs, outputs):
 
         x = inputs['x']
 
         f = self.spatial_interface.calculate_objective(x)
-        g1 = self.spatial_interface.calculate_constraints(x)
+        g = self.spatial_interface.calculate_constraints(x)
 
         outputs['f'] = f
-        outputs['g1'] = g1
+        outputs['g'] = g
 
     def compute_partials(self, inputs, partials):
 
         x = inputs['x']
 
         grad_f = grad(self.spatial_interface.calculate_objective)(x)
-        grad_g1 = grad(lambda d: self.spatial_interface.calculate_constraints(d)[0])(x)
+        grad_g = jacrev(self.spatial_interface.calculate_constraints)(x)
 
         partials['f', 'x'] = grad_f
-        partials['g1', 'x'] = grad_g1
+        partials['g', 'x'] = grad_g
 
 
 
@@ -413,11 +415,11 @@ class SpatialInterface:
     def calculate_constraints(self, x):
         # TODO Replace with all
 
-        # constraints = [constraint_function(x) for constraint_function in self.constraints]
-        #
-        # constraints = np.array(constraints)
+        constraints = [constraint_function(x) for constraint_function in self.constraints]
 
-        constraints = self.constraints[1](x)
+        constraints = np.array(constraints)
+
+        # constraints = self.constraints[1](x)
 
         return constraints
 
