@@ -59,8 +59,8 @@ class SpatialComponent(om.ExplicitComponent):
         f = self.spatial_interface.calculate_objective(x)
         g = self.spatial_interface.calculate_constraints(x)
 
-        f = f.detach().numpy()
-        g = g.detach().numpy()
+        # f = f.detach().numpy()
+        # g = g.detach().numpy()
 
         outputs['f'] = f
         outputs['g'] = g

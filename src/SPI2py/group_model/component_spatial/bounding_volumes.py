@@ -9,7 +9,7 @@ def bounding_box(x, model):
 
     positions_dict = model.calculate_positions(design_vector=x)
 
-    positions_array = torch.vstack([torch.vstack(positions_dict[key]['positions']) for key in positions_dict.keys()])
+    positions_array = torch.vstack([positions_dict[key]['positions'] for key in positions_dict.keys()])
 
     min_x = torch.min(positions_array[:, 0])
     max_x = torch.max(positions_array[:, 0])

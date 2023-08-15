@@ -5,7 +5,7 @@ or thousands of constraints. These functions are used to aggregate the constrain
 way that is differentiable and continuous.
 """
 
-import jax.numpy as np
+import torch
 
 
 def kreisselmeier_steinhauser(g, rho=100):
@@ -24,7 +24,7 @@ def kreisselmeier_steinhauser(g, rho=100):
     :return:
     """
 
-    g_bar_ks = np.max(g) + 1/rho * np.log(np.sum(np.exp(rho * (g - np.max(g)))))
+    g_bar_ks = torch.max(g) + 1/rho * torch.log(torch.sum(torch.exp(rho * (g - torch.max(g)))))
 
     return g_bar_ks
 
