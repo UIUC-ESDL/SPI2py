@@ -1,10 +1,3 @@
-"""Constraint Aggregation Functions
-
-This module contains functions for aggregating constraint values. Constraint functions for signed distances yield
-or thousands of constraints. These functions are used to aggregate the constraint values into a single value in a
-way that is differentiable and continuous.
-"""
-
 import torch
 
 

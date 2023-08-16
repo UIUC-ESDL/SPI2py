@@ -29,8 +29,7 @@ dependencies = [
     "autograd",
     "pyvista",
     "openmdao",
-    "jax",
-    "jaxlib",
+    "torch",
 ]
 
 [project.optional-dependencies]

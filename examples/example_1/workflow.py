@@ -126,23 +126,6 @@ spatial_component.spatial_interface.set_position('lp_cv_actuator',
 
 spatial_component.spatial_interface.set_objective(objective='bounding box volume')
 
-spatial_component.spatial_interface.set_constraint(constraint='collision',
-                      options={'object class 1': 'component',
-                               'object class 2': 'component',
-                               'constraint tolerance': 0.0,
-                               'constraint aggregation parameter': 3.0})
-
-spatial_component.spatial_interface.set_constraint(constraint='collision',
-                      options={'object class 1': 'component',
-                               'object class 2': 'interconnect',
-                               'constraint tolerance': 0.01,
-                               'constraint aggregation parameter': 3.0})
-
-spatial_component.spatial_interface.set_constraint(constraint='collision',
-                      options={'object class 1': 'interconnect',
-                               'object class 2': 'interconnect',
-                               'constraint tolerance': 0.0,
-                               'constraint aggregation parameter': 3.0})
 
 
 # %% Run the optimization
@@ -164,15 +147,18 @@ prob.run_model()
 
 print('Initial design vector: ', prob['x'])
 print('Initial objective: ', prob['f'])
+print('Initial constraint values: ', prob['g'])
 
-spatial_component.spatial_interface.plot()
+# spatial_component.spatial_interface.plot()
 
 
-# prob.run_driver()
-#
-#
-# print('Optimized design vector: ', prob['x'])
-# print('Optimized objective: ', prob['f'])
-#
-# # Plot optimized spatial configuration
+prob.run_driver()
+
+
+print('Optimized design vector: ', prob['x'])
+print('Optimized objective: ', prob['f'])
+
+# Plot optimized spatial
+# objects_dict = spatial_component.spatial_interface.calculate_positions(prob['x'])
+# spatial_component.spatial_interface.set_positions(objects_dict=objects_dict)
 # spatial_component.spatial_interface.plot()

@@ -265,19 +265,23 @@ class Interconnect:
     def design_vector(self):
         return self.waypoint_positions.flatten()
 
-    def calculate_positions(self, design_vector, objects_dict):
+    def calculate_positions(self, design_vector=None, objects_dict=None):
 
-        # TODO Make this work with design vectors of not length 3
-        # Reshape the design vector to extract xi, yi, and zi positions
-        design_vector = torch.tensor(design_vector, dtype=torch.float64)
-        design_vector = design_vector.reshape((self.number_of_waypoints, 3))
+        if design_vector is not None:
+            design_vector = design_vector.reshape((self.number_of_waypoints, 3))
+        elif design_vector is None:
+            # TODO Make this work with design vectors of not length 3
+            # Reshape the design vector to extract xi, yi, and zi positions
+            design_vector = torch.tensor(design_vector, dtype=torch.float64)
+            design_vector = design_vector.reshape((self.number_of_waypoints, 3))
+
 
         object_dict = {}
 
         pos_1 = objects_dict[self.component_1_name]['positions'][self.component_1_port_index]
         pos_2 = objects_dict[self.component_2_name]['positions'][self.component_2_port_index]
 
-        node_positions = torch.vstack((pos_1, design_vector, pos_2))
+        node_positions = torch.vstack((pos_1, design_vector.reshape(-1, 3), pos_2))
 
         start_arr = node_positions[0:-1]
         stop_arr = node_positions[1:None]
@@ -293,20 +297,23 @@ class Interconnect:
         for i in range(self.segments_per_interconnect):
             points[i*n:(i+1)*n] = start_arr[i] + increment[i] * torch.arange(1, n+1).reshape(-1, 1)
 
-
-        # points = torch.linspace(start_arr, stop_arr, self.spheres_per_segment).reshape(-1, 3)
         radii = self.radius * torch.ones(len(points))
 
         object_dict[str(self)] = {'type': 'interconnect', 'positions': points, 'radii': radii}
 
         return object_dict
 
-    def set_positions(self, design_vector, objects_dict):
-        objects_dict = {**objects_dict, **self.calculate_positions(design_vector, objects_dict)}
-        self.waypoint_positions = torch.tensor(design_vector, dtype=torch.float64).reshape((-1, 3))
-        self.positions = objects_dict[str(self)]['positions']
-        self.radii = objects_dict[str(self)]['radii']
+    def set_positions(self, design_vector=None, objects_dict=None):
 
+        if design_vector is not None:
+            objects_dict = {**objects_dict, **self.calculate_positions(design_vector, objects_dict)}
+            self.waypoint_positions = design_vector.reshape((-1, 3))
+            self.positions = objects_dict[str(self)]['positions']
+            self.radii = objects_dict[str(self)]['radii']
+
+        elif design_vector is None:
+            self.positions = objects_dict[str(self)]['positions']
+            self.radii = objects_dict[str(self)]['radii']
 
     def generate_plot_objects(self):
         objects, colors = [], []

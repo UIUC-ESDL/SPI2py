@@ -35,7 +35,7 @@ def distances_points_points(a: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
 
     :param a: Set of 3D points, (-1, 3) ndarray
     :param b: Set of 3D points, (-1, 3) ndarray
-    :return: Euclidean distances, (-1,) np.ndarray
+    :return: Euclidean distances, (-1, 3) np.ndarray
     """
 
     # TODO REMOVE SQUARED?
