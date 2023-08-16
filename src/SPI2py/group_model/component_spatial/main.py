@@ -43,7 +43,8 @@ class SpatialComponent(om.ExplicitComponent):
 
         self.add_input('x', val=x_default)
         self.add_output('f', val=1.0)
-        self.add_output('g', val=[-1., -1., -1.])
+        self.add_output('g', val=-1.0)
+        # self.add_output('g', val=[-1., -1., -1.])
 
 
     def setup_partials(self):
@@ -59,26 +60,26 @@ class SpatialComponent(om.ExplicitComponent):
         f = self.spatial_interface.calculate_objective(x)
         g = self.spatial_interface.calculate_constraints(x)
 
-        # f = f.detach().numpy()
-        # g = g.detach().numpy()
+        f = f.detach().numpy()
+        g = g.detach().numpy()
 
         outputs['f'] = f
         outputs['g'] = g
 
-    # def compute_partials(self, inputs, partials):
-    #
-    #     x = inputs['x']
-    #
-    #     x = torch.tensor(x, dtype=torch.float64, requires_grad=True)
-    #
-    #     jac_f = jacobian(self.spatial_interface.calculate_objective, x)
-    #     jac_g = jacobian(self.spatial_interface.calculate_constraints, x)
-    #
-    #     jac_f = jac_f.detach().numpy()
-    #     jac_g = jac_g.detach().numpy()
-    #
-    #     partials['f', 'x'] = jac_f
-    #     partials['g', 'x'] = jac_g
+    def compute_partials(self, inputs, partials):
+
+        x = inputs['x']
+
+        x = torch.tensor(x, dtype=torch.float64, requires_grad=True)
+
+        jac_f = jacobian(self.spatial_interface.calculate_objective, x)
+        jac_g = jacobian(self.spatial_interface.calculate_constraints, x)
+
+        jac_f = jac_f.detach().numpy()
+        jac_g = jac_g.detach().numpy()
+
+        partials['f', 'x'] = jac_f
+        partials['g', 'x'] = jac_g
 
 
 
@@ -420,8 +421,6 @@ class SpatialInterface:
     def calculate_objective(self, x):
 
         objective = self.objective(x)
-
-        objective = np.array(objective)
 
         return objective
 

@@ -153,7 +153,7 @@ model.set_val('x', spatial_component.spatial_interface.design_vector)
 
 
 prob.driver = om.ScipyOptimizeDriver()
-prob.driver.options['maxiter'] = 1
+prob.driver.options['maxiter'] = 100
 
 prob.run_model()
 
@@ -164,28 +164,15 @@ prob.run_model()
 
 print('Initial design vector: ', prob['x'])
 print('Initial objective: ', prob['f'])
-# print('Initial constraint values: ', prob['g1'])
-# print('Initial constraint gradient values: ', prob.compute_totals('g1','x'))
 
-# from jax import config
-# config.update("jax_debug_nans", True)
-
-# x0 = spatial_component.spatial_interface.design_vector
-
-# grad_f = grad(spatial_component.spatial_interface.calculate_objective)
-# grad_f_val = grad_f(x0)
-# print(grad_f_val)
-
-# grad_c = grad(spatial_component.spatial_interface.calculate_constraints)
-# grad_c_val = grad_c(x0)
-# print(grad_c_val)
+spatial_component.spatial_interface.plot()
 
 
-
-prob.run_driver()
-
-# Plot optimized spatial configuration
-# # spatial_component.spatial_interface.plot()
-
-print('Optimized design vector: ', prob['x'])
-print('Optimized objective: ', prob['f'])
+# prob.run_driver()
+#
+#
+# print('Optimized design vector: ', prob['x'])
+# print('Optimized objective: ', prob['f'])
+#
+# # Plot optimized spatial configuration
+# spatial_component.spatial_interface.plot()

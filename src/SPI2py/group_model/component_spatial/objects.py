@@ -242,7 +242,7 @@ class Interconnect:
         self.color = color
 
         self.number_of_waypoints = number_of_waypoints
-        self.segments_per_interconnect = self.number_of_waypoints - 1
+        self.segments_per_interconnect = self.number_of_waypoints + 1
 
         self.degrees_of_freedom = degrees_of_freedom
 
@@ -286,12 +286,13 @@ class Interconnect:
         n = self.spheres_per_segment
         increment = diff_arr / n
 
-        start_arr = start_arr.reshape(-1, 3, 1)
-        increment = increment.reshape(-1, 3, 1)
-        points = start_arr + increment * torch.arange(n).reshape(1, 1, -1)
+        points = torch.zeros((self.spheres_per_segment*self.segments_per_interconnect, 3), dtype=torch.float64)
+        points[0] = start_arr[0]
+        points[-1] = stop_arr[-1]
 
-        # Reshape back into a 2D array
-        points = points.reshape(-1, 3)
+        for i in range(self.segments_per_interconnect):
+            points[i*n:(i+1)*n] = start_arr[i] + increment[i] * torch.arange(1, n+1).reshape(-1, 1)
+
 
         # points = torch.linspace(start_arr, stop_arr, self.spheres_per_segment).reshape(-1, 3)
         radii = self.radius * torch.ones(len(points))
