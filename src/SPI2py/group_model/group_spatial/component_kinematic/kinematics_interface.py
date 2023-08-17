@@ -1,9 +1,9 @@
 import torch
 from itertools import combinations, product
+import pyvista as pv
 
 from .distance_calculations import signed_distances
 from .bounding_volumes import bounding_box
-from .visualization import plot_3d
 from ...utilities import kreisselmeier_steinhauser
 
 
@@ -17,37 +17,18 @@ class KinematicsInterface:
         self.interconnects = interconnects
         self.objects = self.components + self.interconnects
 
-        self.component_component_pairs, self.component_interconnect_pairs, self.interconnect_interconnect_pairs = self.get_collision_detection_pairs()
+        self.component_component_pairs = list(combinations(self.components, 2))
+        self.component_interconnect_pairs = list(product(self.components, self.interconnects))
+        self.interconnect_interconnect_pairs = list(combinations(self.interconnects, 2))
 
         self.objective = None
         self.constraints = [self.constraint_collision_components_components,
                             self.constraint_collision_components_interconnects,
                             self.constraint_collision_interconnects_interconnects]
 
-    def get_collision_detection_pairs(self):
-
-        component_component_pairs = list(combinations(self.components, 2))
-
-        all_component_interconnect_pairs = list(product(self.components, self.interconnects))
-        component_interconnect_pairs = []
-        for component, interconnect in all_component_interconnect_pairs:
-            if component.__repr__() != interconnect.component_1_name and component.__repr__() != interconnect.component_2_name:
-                component_interconnect_pairs.append((component, interconnect))
-
-        interconnect_interconnect_pairs = list(combinations(self.interconnects, 2))
-
-        return component_component_pairs, component_interconnect_pairs, interconnect_interconnect_pairs
-
 
     @property
     def design_vector(self):
-        """
-        Flattened format is necessary for the optimizer...
-
-        Returns
-        -------
-
-        """
 
         design_vector = torch.empty(0)
 
@@ -85,17 +66,6 @@ class KinematicsInterface:
         return design_vectors
 
     def calculate_positions(self, design_vector):
-        """
-
-        :param design_vector:
-        :param design_vector:
-        :return:
-
-        TODO handle both design vector and design vector dict
-        TODO get positions for interconnects, structures, etc
-        TODO Remove unnecessary design vector arguments
-        """
-
 
         design_vectors = self.decompose_design_vector(design_vector)
         design_vectors_components = design_vectors[:len(self.components)]
@@ -152,8 +122,6 @@ class KinematicsInterface:
         """
         Add an objective to the design study.
 
-        TODO Move objective to the model module...?
-
         :param objective: The objective function to be added.
         :param options: The options for the objective function.
         """
@@ -208,20 +176,24 @@ class KinematicsInterface:
     def plot(self):
         """
         Plot the model at a given state.
-
-        TODO add option to plot all design vectors
-        TODO add option to plot design vector--> move to system object
-
-        :param x: Design vector
         """
 
-
+        # Create the plot objects
         objects = []
         colors = []
-
         for obj in self.objects:
-            objs, cols = obj.generate_plot_objects()
-            objects.extend(objs)
-            colors.extend(cols)
+            for position, radius in zip(obj.positions, obj.radii):
+                objects.append(pv.Sphere(radius=radius, center=position))
+                colors.append(obj.color)
 
-        fig = plot_3d(objects, colors)
+        # Plot the objects
+        p = pv.Plotter(window_size=[1000, 1000])
+
+        for obj, color in zip(objects, colors):
+            p.add_mesh(obj, color=color)
+
+        p.view_vector((5.0, 2, 3))
+        p.add_floor('-z', lighting=True, color='tan', pad=1.0)
+        p.enable_shadows()
+        p.show_axes()
+        p.show()

@@ -51,7 +51,7 @@ ic0 = Interconnect(name='hp_cv_actuator',
                    component_2_name='actuator_1',
                    component_2_port_index=c1.port_indices['supply'],
                    radius=0.25,
-                   number_of_waypoints=2,
+                   number_of_waypoints=6,
                    degrees_of_freedom=('x', 'y', 'z'))
 
 ic1 = Interconnect(name='lp_cv_actuator',
@@ -61,7 +61,7 @@ ic1 = Interconnect(name='lp_cv_actuator',
                    component_2_name='actuator_1',
                    component_2_port_index=c1.port_indices['return'],
                    radius=0.25,
-                   number_of_waypoints=1,
+                   number_of_waypoints=6,
                    degrees_of_freedom=('x', 'y', 'z'))
 
 
@@ -102,8 +102,18 @@ default_positions_dict = {'control_valve_1': {'translation': [-3., -4.41, -0.24]
                           'structure_1': {'translation': [0., 0., -1.],
                                           'rotation': [0., 0., 0.],
                                           'scale': [1., 1., 1.]},
-                          'hp_cv_actuator': {'waypoints': [[-3., -2., 2.],[-1., 0., 2.]]},
-                          'lp_cv_actuator': {'waypoints': [[4., 0., 1.]]}}
+                          'hp_cv_actuator': {'waypoints': [[-3., -2., 2.],
+                                                           [-2., -1., 1.],
+                                                           [-1.5, -0.5, 0.5],
+                                                           [-1., 0., 2.],
+                                                           [-0.75, 0.25, 2.25],
+                                                           [-0.5, 0.5, 2.5]]},
+                          'lp_cv_actuator': {'waypoints': [[4., 0., 1.],
+                                                           [4.1, 0., 1.1],
+                                                           [4.3, 0., 1.3],
+                                                           [4.5, 0., 1.5],
+                                                           [4.7, 0., 1.7],
+                                                           [5., 0., 2.],]}}
 
 kinematics_component.kinematics_interface.set_default_positions(default_positions_dict)
 
@@ -126,7 +136,7 @@ model.set_val('x', kinematics_component.kinematics_interface.design_vector)
 
 
 prob.driver = om.ScipyOptimizeDriver()
-prob.driver.options['maxiter'] = 100
+prob.driver.options['maxiter'] = 300
 
 
 
@@ -141,8 +151,10 @@ print('Initial design vector: ', prob['x'])
 print('Initial objective: ', prob['f'])
 print('Initial constraint values: ', prob['g'])
 
-# spatial_component.spatial_interface.plot()
-
+# x0 = torch.tensor(prob['x'], dtype=torch.float64)
+# objects_dict = kinematics_component.kinematics_interface.calculate_positions(x0)
+# kinematics_component.kinematics_interface.set_positions(objects_dict)
+# kinematics_component.kinematics_interface.plot()
 
 prob.run_driver()
 
@@ -151,7 +163,7 @@ print('Optimized design vector: ', prob['x'])
 print('Optimized objective: ', prob['f'])
 print('Optimized constraint values: ', prob['g'])
 
-# # Plot optimized spatial
+# Plot optimized spatial
 xf = torch.tensor(prob['x'], dtype=torch.float64)
 objects_dict = kinematics_component.kinematics_interface.calculate_positions(xf)
 kinematics_component.kinematics_interface.set_positions(objects_dict)

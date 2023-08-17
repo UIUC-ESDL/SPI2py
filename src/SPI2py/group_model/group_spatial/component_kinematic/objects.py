@@ -9,14 +9,10 @@ from .spatial_transformations import affine_transformation
 
 import torch
 from typing import Sequence
-import pyvista as pv
-
 
 
 class Component:
-    """
-    TODO Update set position to just set the origin.. positions should be a SDF(?)
-    """
+
     def __init__(self,
                  name: str,
                  color: str = None,
@@ -188,15 +184,6 @@ class Component:
         self.positions = objects_dict[self.__repr__()]['positions']
         self.radii     = objects_dict[self.__repr__()]['radii']
 
-    def generate_plot_objects(self):
-        objects = []
-        colors = []
-        for position, radius in zip(self.positions, self.radii):
-            objects.append(pv.Sphere(radius=radius, center=position))
-            colors.append(self.color)
-
-        return objects, colors
-
 
 class Interconnect:
     """
@@ -247,8 +234,8 @@ class Interconnect:
 
         self.spheres_per_segment = 25
 
-        self.positions = torch.empty((self.spheres_per_segment*self.segments_per_interconnect,3), dtype=torch.float64)
-        self.radii = torch.empty((self.spheres_per_segment*self.segments_per_interconnect,1), dtype=torch.float64)
+        self.positions = torch.empty((self.spheres_per_segment*self.segments_per_interconnect-6, 3), dtype=torch.float64)
+        self.radii = torch.empty((self.spheres_per_segment*self.segments_per_interconnect-4, 1), dtype=torch.float64)
 
         # Default design variables
         self.waypoint_positions = torch.zeros((self.number_of_waypoints, 3), dtype=torch.float64)
@@ -288,6 +275,9 @@ class Interconnect:
         for i in range(self.segments_per_interconnect):
             points[i*n:(i+1)*n] = start_arr[i] + increment[i] * torch.arange(1, n+1).reshape(-1, 1)
 
+        # Remove start and stop points
+        points = points[2:-2]
+
         radii = self.radius * torch.ones(len(points))
 
         object_dict[str(self)] = {'type': 'interconnect', 'positions': points, 'radii': radii}
@@ -301,12 +291,3 @@ class Interconnect:
     def set_default_positions(self, waypoints, objects_dict):
         object_dict = self.calculate_positions(waypoints, objects_dict)
         self.set_positions(object_dict)
-
-
-    def generate_plot_objects(self):
-        objects, colors = [], []
-        for position, radius in zip(self.positions, self.radii):
-            objects.append(pv.Sphere(radius=radius, center=position))
-            colors.append(self.color)
-
-        return objects, colors
