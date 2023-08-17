@@ -54,6 +54,9 @@ class KinematicsInterface:
         for obj in self.objects:
             design_vector = torch.cat((design_vector, obj.design_vector))
 
+        # Export as numpy array
+        design_vector = design_vector.detach().numpy()
+
         return design_vector
 
     def decompose_design_vector(self, design_vector):
@@ -141,7 +144,7 @@ class KinematicsInterface:
         """
 
         for obj in self.objects:
-            obj.update_positions(objects_dict=objects_dict)
+            obj.set_positions(objects_dict)
 
 
     def set_objective(self, objective: str):

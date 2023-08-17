@@ -11,10 +11,6 @@ class KinematicsComponent(ExplicitComponent):
         self.options.declare('components', types=list)
         self.options.declare('interconnects', types=list)
 
-        self.add_design_var('x')
-        self.add_objective('f')
-        self.add_constraint('g', upper=0)
-
     def setup(self):
 
         components = self.options['components']
@@ -52,18 +48,17 @@ class KinematicsComponent(ExplicitComponent):
         outputs['f'] = f
         outputs['g'] = g
 
-    # TODO Uncomment compute_partials
-    # def compute_partials(self, inputs, partials):
-    #
-    #     x = inputs['x']
-    #
-    #     x = torch.tensor(x, dtype=torch.float64, requires_grad=True)
-    #
-    #     jac_f = jacobian(self.kinematic_interface.calculate_objective, x)
-    #     jac_g = jacobian(self.kinematic_interface.calculate_constraints, x)
-    #
-    #     jac_f = jac_f.detach().numpy()
-    #     jac_g = jac_g.detach().numpy()
-    #
-    #     partials['f', 'x'] = jac_f
-    #     partials['g', 'x'] = jac_g
+    def compute_partials(self, inputs, partials):
+
+        x = inputs['x']
+
+        x = torch.tensor(x, dtype=torch.float64, requires_grad=True)
+
+        jac_f = jacobian(self.kinematics_interface.calculate_objective, x)
+        jac_g = jacobian(self.kinematics_interface.calculate_constraints, x)
+
+        jac_f = jac_f.detach().numpy()
+        jac_g = jac_g.detach().numpy()
+
+        partials['f', 'x'] = jac_f
+        partials['g', 'x'] = jac_g
