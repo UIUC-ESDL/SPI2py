@@ -39,8 +39,6 @@ class KinematicsInterface:
         return component_component_pairs, component_interconnect_pairs, interconnect_interconnect_pairs
 
 
-
-
     @property
     def design_vector(self):
         """
@@ -58,22 +56,13 @@ class KinematicsInterface:
 
         return design_vector
 
-    # def assemble_transformation_matrices
-
     def decompose_design_vector(self, design_vector):
-        """
-        Since design vectors are irregularly sized, come up with indexing scheme.
-        Not the most elegant method.
-
-        Takes argument b.c. new design vector...
-
-        :return:
-        """
 
         # Get the size of the design vector for each design vector object
         design_vector_sizes = []
-        for i, obj in enumerate(self.objects):
-            design_vector_sizes.append(len(obj.design_vector))
+        for obj in self.objects:
+            design_vector_size = len(obj.design_vector)
+            design_vector_sizes.append(design_vector_size)
 
         # Index values
         start, stop = 0, 0
@@ -84,29 +73,15 @@ class KinematicsInterface:
 
             stop += design_vector_sizes[i]
 
-            design_vectors.append(design_vector[start:stop])
+            design_vector_i = design_vector[start:stop]
+            design_vectors.append(design_vector_i)
 
             # Increment start index
             start = stop
 
         return design_vectors
 
-    def get_component_positions(self):
-        """
-        Get the positions of all objects in the layout.
-
-        :return:
-        """
-
-        positions_dict = {}
-
-        for obj in self.components:
-            positions_dict[obj.__repr__()] = {'positions': obj.positions}
-
-        return positions_dict
-
-
-    def calculate_positions(self, design_vector=None, design_vector_dict=None):
+    def calculate_positions(self, design_vector):
         """
 
         :param design_vector:
@@ -118,19 +93,19 @@ class KinematicsInterface:
         TODO Remove unnecessary design vector arguments
         """
 
-        if design_vector is not None:
-            design_vectors = self.decompose_design_vector(design_vector)
-        else:
-            design_vectors = [design_vector_dict[repr(obj)] for obj in self.objects]
+
+        design_vectors = self.decompose_design_vector(design_vector)
+        design_vectors_components = design_vectors[:len(self.components)]
+        design_vectors_interconnects = design_vectors[len(self.components):]
 
         objects_dict = {}
 
-        for component in self.components:
-            object_dict = component.calculate_positions(design_vector=design_vectors[0])
+        for component, design_vector in zip(self.components, design_vectors_components):
+            object_dict = component.calculate_positions(design_vector=design_vector)
             objects_dict = {**objects_dict, **object_dict}
 
-        for interconnect in self.interconnects:
-            object_dict = interconnect.calculate_positions(design_vector=design_vectors[1], objects_dict=objects_dict)
+        for interconnect, design_vector in zip(self.interconnects, design_vectors_interconnects):
+            object_dict = interconnect.calculate_positions(design_vector=design_vector, objects_dict=objects_dict)
             objects_dict = {**objects_dict, **object_dict}
 
 

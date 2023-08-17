@@ -72,11 +72,11 @@ ic1 = Interconnect(name='lp_cv_actuator',
 prob = om.Problem()
 model = prob.model
 
-kinematic_component = KinematicsComponent()
-kinematic_component.options.declare('components', default=[c0, c1, c2, c3, c4], types=list)
-kinematic_component.options.declare('interconnects', default=[ic0, ic1], types=list)
+kinematics_component = KinematicsComponent()
+kinematics_component.options.declare('components', default=[c0, c1, c2, c3, c4], types=list)
+kinematics_component.options.declare('interconnects', default=[ic0, ic1], types=list)
 
-model.add_subsystem('kinematic', kinematic_component, promotes=['*'])
+model.add_subsystem('kinematic', kinematics_component, promotes=['*'])
 
 prob.setup()
 
@@ -101,7 +101,7 @@ default_positions_dict = {'control_valve_1': {'translation': [-3., -4.41, -0.24]
                           'hp_cv_actuator': {'waypoints': [[-3., -2., 2.],[-1., 0., 2.]]},
                           'lp_cv_actuator': {'waypoints': [[4., 0., 1.]]}}
 
-kinematic_component.kinematic_interface.set_default_positions(default_positions_dict)
+kinematics_component.kinematics_interface.set_default_positions(default_positions_dict)
 
 
 
@@ -109,15 +109,15 @@ kinematic_component.kinematic_interface.set_default_positions(default_positions_
 # %% Configure the system objective and constraints
 
 
-kinematic_component.kinematic_interface.set_objective(objective='bounding box volume')
+kinematics_component.kinematics_interface.set_objective(objective='bounding box volume')
 
 
 
 # %% Run the optimization
 
 
-x0 = kinematic_component.kinematic_interface.design_vector
-model.set_val('x', kinematic_component.kinematic_interface.design_vector)
+x0 = kinematics_component.kinematics_interface.design_vector
+model.set_val('x', kinematics_component.kinematics_interface.design_vector)
 
 
 prob.driver = om.ScipyOptimizeDriver()
@@ -126,22 +126,22 @@ prob.driver.options['maxiter'] = 100
 prob.run_model()
 
 # Plot initial spatial configuration
-# spatial_component.spatial_interface.plot()
+kinematics_component.kinematics_interface.plot()
 
 # Perform gradient-based optimization
 
-print('Initial design vector: ', prob['x'])
-print('Initial objective: ', prob['f'])
-print('Initial constraint values: ', prob['g'])
+# print('Initial design vector: ', prob['x'])
+# print('Initial objective: ', prob['f'])
+# print('Initial constraint values: ', prob['g'])
 
 # spatial_component.spatial_interface.plot()
 
 
-prob.run_driver()
-
-
-print('Optimized design vector: ', prob['x'])
-print('Optimized objective: ', prob['f'])
+# prob.run_driver()
+#
+#
+# print('Optimized design vector: ', prob['x'])
+# print('Optimized objective: ', prob['f'])
 
 # Plot optimized spatial
 # objects_dict = spatial_component.spatial_interface.calculate_positions(prob['x'])

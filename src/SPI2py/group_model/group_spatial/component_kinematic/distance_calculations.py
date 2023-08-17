@@ -117,7 +117,7 @@ def signed_distances(x, model, object_pair):
     :return: An array of signed distances between each object pair
     """
     # Calculate the positions of all spheres in layout given design vector x
-    positions_dict = model.calculate_positions(design_vector=x)
+    positions_dict = model.calculate_positions(x)
 
     # Calculate the interferences between each sphere of each object pair
     all_signed_distances = []

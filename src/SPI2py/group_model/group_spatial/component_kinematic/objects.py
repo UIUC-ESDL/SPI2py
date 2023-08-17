@@ -4,8 +4,8 @@ TODO Can I remove movement classes if I just use degrees of freedom and referenc
 """
 
 
-from SPI2py.group_model.component_geometry.finite_sphere_method import read_xyzr_file, generate_rectangular_prisms
-from SPI2py.group_model.component_kinematic.spatial_transformations import affine_transformation
+from ..component_geometry.finite_sphere_method import read_xyzr_file
+from .spatial_transformations import affine_transformation
 
 import torch
 from typing import Sequence
@@ -71,11 +71,11 @@ class Component:
         design_vector = []
 
         if 'x' in self.degrees_of_freedom:
-            design_vector.append(self.reference_position[0])
+            design_vector.append(self.translation[0])
         if 'y' in self.degrees_of_freedom:
-            design_vector.append(self.reference_position[1])
+            design_vector.append(self.translation[1])
         if 'z' in self.degrees_of_freedom:
-            design_vector.append(self.reference_position[2])
+            design_vector.append(self.translation[2])
 
         if 'rx' in self.degrees_of_freedom:
             design_vector.append(self.rotation[0])
@@ -91,7 +91,7 @@ class Component:
         if 'sz' in self.degrees_of_freedom:
             design_vector.append(self.scale[2])
 
-        return torch.tensor(design_vector, dtype=torch.float64)
+        return torch.tensor(design_vector)
 
     @property
     def object_dict(self):
@@ -245,12 +245,13 @@ class Interconnect:
 
         self.degrees_of_freedom = degrees_of_freedom
 
-        self.waypoint_positions = torch.zeros((self.number_of_waypoints, 3), dtype=torch.float64)
-
         self.spheres_per_segment = 25
 
         self.positions = torch.empty((self.spheres_per_segment*self.segments_per_interconnect,3), dtype=torch.float64)
         self.radii = torch.empty((self.spheres_per_segment*self.segments_per_interconnect,1), dtype=torch.float64)
+
+        # Default design variables
+        self.waypoint_positions = torch.zeros((self.number_of_waypoints, 3), dtype=torch.float64)
 
     def __repr__(self):
         return self.name

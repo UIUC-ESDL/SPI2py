@@ -7,7 +7,7 @@ def bounding_box(x, model):
     # TODO include radii
     # TODO verify calc
 
-    positions_dict = model.calculate_positions(design_vector=x)
+    positions_dict = model.calculate_positions(x)
 
     positions_array = torch.vstack([positions_dict[key]['positions'] for key in positions_dict.keys()])
 
