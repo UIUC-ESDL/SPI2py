@@ -178,8 +178,9 @@ class SpatialInterface:
 
         return design_vector
 
+    # def assemble_transformation_matrices
 
-    def slice_design_vector(self, design_vector):
+    def decompose_design_vector(self, design_vector):
         """
         Since design vectors are irregularly sized, come up with indexing scheme.
         Not the most elegant method.
@@ -238,37 +239,44 @@ class SpatialInterface:
         """
 
         if design_vector is not None:
-            design_vectors = self.slice_design_vector(design_vector)
+            design_vectors = self.decompose_design_vector(design_vector)
         else:
-            # design_vectors = list(design_vector_dict.values())
             design_vectors = [design_vector_dict[repr(obj)] for obj in self.objects]
 
         objects_dict = {}
 
-        for obj, design_vector in zip(self.objects, design_vectors):
-            object_dict = obj.calculate_positions(design_vector=design_vector, objects_dict=objects_dict)
+        for component in self.components:
+            object_dict = component.calculate_positions(design_vector=design_vectors[0])
+            objects_dict = {**objects_dict, **object_dict}
+
+        for interconnect in self.interconnects:
+            object_dict = interconnect.calculate_positions(design_vector=design_vectors[1], objects_dict=objects_dict)
             objects_dict = {**objects_dict, **object_dict}
 
 
         return objects_dict
 
-    def set_position(self, object_name, translation=None, rotation=None, scale=None, waypoints=None):
+    def set_default_positions(self, default_positions_dict):
 
-        obj = next(obj for obj in self.objects if obj.__repr__() == object_name)
+        objects_dict = {}
 
-        if isinstance(obj, Component):
-            translation = torch.tensor(translation, dtype=torch.float64).reshape(3,1)
-            rotation = torch.tensor(rotation, dtype=torch.float64).reshape(3,1)
-            scale = torch.tensor(scale, dtype=torch.float64).reshape(3,1)
-            transformation_vectors = [translation, rotation, scale]
-            obj.set_positions(transformation_vectors=transformation_vectors)
+        # Map components first
+        for component in self.components:
+            translation, rotation, scale = list(default_positions_dict[component.__repr__()].values())
+            translation = torch.tensor(translation, dtype=torch.float64).reshape(3, 1)
+            rotation = torch.tensor(rotation, dtype=torch.float64).reshape(3, 1)
+            scale = torch.tensor(scale, dtype=torch.float64).reshape(3, 1)
+            component.set_default_positions(translation, rotation, scale)
+            objects_dict = {**objects_dict, **component.object_dict}
 
-        elif isinstance(obj, Interconnect):
-            design_vector = torch.tensor(waypoints).flatten()
-            obj_dict = self.get_component_positions()
-            obj.set_positions(design_vector=design_vector, objects_dict=obj_dict)
+        # Now interconnects
+        for interconnect in self.interconnects:
+            waypoints = list(default_positions_dict[interconnect.__repr__()].values())
+            waypoints = torch.tensor(waypoints, dtype=torch.float64)
+            interconnect.set_default_positions(waypoints, objects_dict)
 
-    def set_positions(self, objects_dict=None, design_vector_dict=None):
+
+    def set_positions(self, objects_dict):
         """set_positions Sets the positions of the objects in the layout.
 
         Takes a flattened design vector and sets the positions of the objects in the layout.
@@ -277,12 +285,8 @@ class SpatialInterface:
         :type positions_dict: dict
         """
 
-
-        if design_vector_dict is not None:
-            objects_dict = self.calculate_positions(design_vector_dict=design_vector_dict)
-
         for obj in self.objects:
-            obj.set_positions(objects_dict=objects_dict)
+            obj.update_positions(objects_dict=objects_dict)
 
 
     def set_objective(self, objective: str):

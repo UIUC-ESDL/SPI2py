@@ -7,13 +7,12 @@ TODO Can I remove movement classes if I just use degrees of freedom and referenc
 from SPI2py.group_model.component_geometry.finite_sphere_method import read_xyzr_file, generate_rectangular_prisms
 from SPI2py.group_model.component_spatial.spatial_transformations import affine_transformation
 
-from matplotlib import colors as mcolors
-
 import torch
 
-from typing import Union, Sequence
+from typing import Sequence
 
 import pyvista as pv
+
 
 
 class Component:
@@ -25,35 +24,30 @@ class Component:
                  color: str = None,
                  degrees_of_freedom: Sequence[str] = ('x', 'y', 'z', 'rx', 'ry', 'rz'),
                  filepath=None,
-                 ports: list[dict] = []):
+                 ports: Sequence[dict] = ()):
 
+        # Assign the inputs
         self.name = name
-
-
-        self.positions, self.radii = read_xyzr_file(filepath)
-        self.rotation = torch.tensor([0, 0, 0], dtype=torch.float64)
-        self.scale = torch.tensor([1, 1, 1], dtype=torch.float64)
-
-        self.ports = ports
-        self.port_indices = {}
-
-        # TODO Set default design vectors...
-
-        self.degrees_of_freedom = degrees_of_freedom
-
-
         self.color = color
+        self.degrees_of_freedom = degrees_of_freedom
+        self.filepath = filepath
+        self.ports = ports
 
-        # TODO Make tuple len zero not none
-        self.dof = len(self.degrees_of_freedom)
+        # Extract the positions and radii of the spheres from the xyzr file
+        self.positions, self.radii = read_xyzr_file(filepath)
 
+        # Initialize the ports
+        self.port_indices = {}
         if self.ports is not None:
             for port in self.ports:
                 self.port_indices[port['name']] = len(self.positions - 1)
                 self.positions = torch.vstack((self.positions, torch.tensor(port['origin'], dtype=torch.float64)))
                 self.radii = torch.cat((self.radii, torch.tensor([port['radius']], dtype=torch.float64)))
 
-
+        # Default transformation vectors
+        self.translation = torch.tensor([0, 0, 0], dtype=torch.float64)
+        self.rotation = torch.tensor([0, 0, 0], dtype=torch.float64)
+        self.scale = torch.tensor([1, 1, 1], dtype=torch.float64)
 
     def __repr__(self):
         return self.name
@@ -101,8 +95,9 @@ class Component:
 
         return torch.tensor(design_vector, dtype=torch.float64)
 
-
-
+    @property
+    def object_dict(self):
+        return {self.__repr__(): {'positions': self.positions, 'radii': self.radii}}
 
     def decompose_design_vector(self, design_vector: torch.tensor) -> dict:
         """
@@ -148,29 +143,42 @@ class Component:
 
         return translation, rotation, scale
 
-
-    def calculate_positions(self, design_vector=None, objects_dict=None, transformation_vectors=None):
+    def calculate_positions(self, design_vector):
         """
         Calculates the positions of the object's spheres.
         """
 
-        if design_vector is not None:
-            design_vector_dict = self.decompose_design_vector(design_vector)
-            translation, rotation, scaling = self.assemble_transformation_vectors(design_vector_dict)
-        else:
-            translation, rotation, scaling = transformation_vectors
+        design_vector_dict = self.decompose_design_vector(design_vector)
 
-        new_positions = affine_transformation(self.reference_position.reshape(-1,1), self.positions.T, translation, rotation, scaling).T
+        translation, rotation, scale = self.assemble_transformation_vectors(design_vector_dict)
+
+        new_positions = affine_transformation(self.reference_position.reshape(-1,1),
+                                              self.positions.T,
+                                              translation,
+                                              rotation,
+                                              scale).T
 
         object_dict = {self.__repr__(): {'positions': new_positions, 'radii': self.radii}}
 
         return object_dict
 
+    def set_default_positions(self, translation, rotation, scale):
+        """
+        Calculates the positions of the object's spheres.
+        """
 
-    def set_positions(self,
-                      objects_dict: dict = None,
-                      design_vector: list = None,
-                      transformation_vectors: list = None):
+        new_positions = affine_transformation(self.reference_position.reshape(-1,1),
+                                              self.positions.T,
+                                              translation,
+                                              rotation,
+                                              scale).T
+
+        self.positions = new_positions
+        self.translation = translation
+        self.rotation = rotation
+        self.scale = scale
+
+    def set_positions(self, objects_dict: dict):
         """
         Update positions of object spheres given a design vector
 
@@ -178,13 +186,6 @@ class Component:
         :param design_vector:
         :return:
         """
-
-        if design_vector is not None:
-            objects_dict = self.calculate_positions(design_vector, force_update=True)
-
-        elif transformation_vectors is not None:
-            objects_dict = self.calculate_positions(transformation_vectors=transformation_vectors)
-
 
         self.positions = objects_dict[self.__repr__()]['positions']
         self.radii     = objects_dict[self.__repr__()]['radii']
@@ -248,8 +249,6 @@ class Interconnect:
 
         self.waypoint_positions = torch.zeros((self.number_of_waypoints, 3), dtype=torch.float64)
 
-        self.dof = 3 * self.number_of_waypoints
-
         self.spheres_per_segment = 25
 
         self.positions = torch.empty((self.spheres_per_segment*self.segments_per_interconnect,3), dtype=torch.float64)
@@ -258,23 +257,16 @@ class Interconnect:
     def __repr__(self):
         return self.name
 
-    def __str__(self):
-        return self.name
-
     @property
     def design_vector(self):
+        # TODO Consider not all DOF being used
         return self.waypoint_positions.flatten()
 
-    def calculate_positions(self, design_vector=None, objects_dict=None):
 
-        if design_vector is not None:
-            design_vector = design_vector.reshape((self.number_of_waypoints, 3))
-        elif design_vector is None:
-            # TODO Make this work with design vectors of not length 3
-            # Reshape the design vector to extract xi, yi, and zi positions
-            design_vector = torch.tensor(design_vector, dtype=torch.float64)
-            design_vector = design_vector.reshape((self.number_of_waypoints, 3))
 
+    def calculate_positions(self, design_vector, objects_dict):
+
+        design_vector = design_vector.reshape((self.number_of_waypoints, 3))
 
         object_dict = {}
 
@@ -303,17 +295,14 @@ class Interconnect:
 
         return object_dict
 
-    def set_positions(self, design_vector=None, objects_dict=None):
+    def set_positions(self, objects_dict):
+        self.positions = objects_dict[str(self)]['positions']
+        self.radii = objects_dict[str(self)]['radii']
 
-        if design_vector is not None:
-            objects_dict = {**objects_dict, **self.calculate_positions(design_vector, objects_dict)}
-            self.waypoint_positions = design_vector.reshape((-1, 3))
-            self.positions = objects_dict[str(self)]['positions']
-            self.radii = objects_dict[str(self)]['radii']
+    def set_default_positions(self, waypoints, objects_dict):
+        object_dict = self.calculate_positions(waypoints, objects_dict)
+        self.set_positions(object_dict)
 
-        elif design_vector is None:
-            self.positions = objects_dict[str(self)]['positions']
-            self.radii = objects_dict[str(self)]['radii']
 
     def generate_plot_objects(self):
         objects, colors = [], []

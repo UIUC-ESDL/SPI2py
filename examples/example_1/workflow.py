@@ -6,10 +6,7 @@ Author:     Chad Peterson
 # %% Import packages
 
 
-import os
-
 import openmdao.api as om
-
 from SPI2py import SpatialComponent, Component, Interconnect
 
 
@@ -88,37 +85,27 @@ prob.setup()
 
 # %% Define the initial spatial configuration
 
+default_positions_dict = {'control_valve_1': {'translation': [-3., -4.41, -0.24],
+                                              'rotation': [0., 0., 0.],
+                                              'scale': [1., 1., 1.]},
+                          'actuator_1': {'translation': [2., 4.41, 0.24],
+                                         'rotation': [0., 0., 0.],
+                                         'scale': [1., 1., 1.]},
+                          'component_2': {'translation': [-5, 3, 1],
+                                          'rotation': [0., 0., 0.],
+                                          'scale': [1., 1., 1.]},
+                          'component_3': {'translation': [3., 1., -3.],
+                                          'rotation': [0., 0., 0.],
+                                          'scale': [1., 1., 1.]},
+                          'structure_1': {'translation': [0., 0., -1.],
+                                          'rotation': [0., 0., 0.],
+                                          'scale': [1., 1., 1.]},
+                          'hp_cv_actuator': {'waypoints': [[-3., -2., 2.],[-1., 0., 2.]]},
+                          'lp_cv_actuator': {'waypoints': [[4., 0., 1.]]}}
 
-spatial_component.spatial_interface.set_position('control_valve_1',
-                            translation=[-3., -4.41, -0.24],
-                            rotation=[0., 0., 0.],
-                            scale=[1., 1., 1.])
+spatial_component.spatial_interface.set_default_positions(default_positions_dict)
 
-spatial_component.spatial_interface.set_position('actuator_1',
-                            translation=[2., 4.41, 0.24],
-                            rotation=[0., 0., 0.],
-                            scale=[1., 1., 1.])
 
-spatial_component.spatial_interface.set_position('component_2',
-                            translation=[-5, 3, 1],
-                            rotation=[0., 0., 0.],
-                            scale=[1., 1., 1.])
-
-spatial_component.spatial_interface.set_position('component_3',
-                            translation=[3., 1., -3.],
-                            rotation=[0., 0., 0.],
-                            scale=[1., 1., 1.])
-
-spatial_component.spatial_interface.set_position('structure_1',
-                            translation=[0., 0., -1.],
-                            rotation=[0., 0., 0.],
-                            scale=[1., 1., 1.])
-
-spatial_component.spatial_interface.set_position('hp_cv_actuator',
-                            waypoints=[[-3., -2., 2.],[-1., 0., 2.]])
-
-spatial_component.spatial_interface.set_position('lp_cv_actuator',
-                            waypoints=[[4., 0., 1.]])
 
 
 # %% Configure the system objective and constraints
