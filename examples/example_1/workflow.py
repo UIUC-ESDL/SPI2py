@@ -152,7 +152,7 @@ print('Optimized objective: ', prob['f'])
 print('Optimized constraint values: ', prob['g'])
 
 # # Plot optimized spatial
-# xf = torch.tensor(prob['x'], dtype=torch.float64)
-# objects_dict = kinematics_component.kinematics_interface.calculate_positions(xf)
-# kinematics_component.kinematics_interface.set_positions(objects_dict)
-# kinematics_component.kinematics_interface.plot()
+xf = torch.tensor(prob['x'], dtype=torch.float64)
+objects_dict = kinematics_component.kinematics_interface.calculate_positions(xf)
+kinematics_component.kinematics_interface.set_positions(objects_dict)
+kinematics_component.kinematics_interface.plot()

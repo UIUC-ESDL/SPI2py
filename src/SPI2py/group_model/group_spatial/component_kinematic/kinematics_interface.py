@@ -195,15 +195,14 @@ class KinematicsInterface:
         return objective
 
     def calculate_constraints(self, x):
-        # TODO Replace with all
 
-        # constraints = [constraint_function(x) for constraint_function in self.constraints]
-        #
-        # constraints = torch.tensor(constraints)
+        g_components_components = self.constraint_collision_components_components(x).reshape(1,1)
+        g_components_interconnects = self.constraint_collision_components_interconnects(x).reshape(1,1)
+        g_interconnects_interconnects = self.constraint_collision_interconnects_interconnects(x).reshape(1,1)
 
-        constraints = self.constraints[1](x)
+        g = torch.cat((g_components_components, g_components_interconnects, g_interconnects_interconnects))
 
-        return constraints
+        return g
 
 
     def plot(self):

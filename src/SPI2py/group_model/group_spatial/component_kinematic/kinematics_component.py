@@ -25,8 +25,8 @@ class KinematicsComponent(ExplicitComponent):
 
         self.add_input('x', val=x_default)
         self.add_output('f', val=1.0)
-        self.add_output('g', val=-1.0)
-        # self.add_output('g', val=[-1., -1., -1.])
+        # self.add_output('g', val=-1.0)
+        self.add_output('g', val=[-1., -1., -1.])
 
 
     def setup_partials(self):
