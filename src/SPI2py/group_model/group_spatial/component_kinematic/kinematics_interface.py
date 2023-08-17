@@ -1,165 +1,45 @@
-import numpy as np
-
 import torch
-from torch.autograd.functional import jacobian
-
-import openmdao.api as om
-
 from itertools import combinations, product
-from SPI2py.group_model.component_spatial.objects import Component, Interconnect
 
-from SPI2py.group_model.component_spatial.distance_calculations import signed_distances
-
-from SPI2py.group_model.utilities import kreisselmeier_steinhauser
-
-from SPI2py.group_model.component_spatial.bounding_volumes import bounding_box
-from SPI2py.group_model.component_spatial.visualization import plot_3d
+from .distance_calculations import signed_distances
+from .bounding_volumes import bounding_box
+from .visualization import plot_3d
+from ...utilities import kreisselmeier_steinhauser
 
 
-class SpatialComponent(om.ExplicitComponent):
-
-    def initialize(self):
-
-        self.options.declare('name', types=str)
-        self.options.declare('components', types=list)
-        self.options.declare('interconnects', types=list)
-
-        self.add_design_var('x')
-        self.add_objective('f')
-        self.add_constraint('g', upper=0)
-
-    def setup(self):
-
-        name = self.options['name']
-        components = self.options['components']
-        interconnects = self.options['interconnects']
-        self.spatial_interface = SpatialInterface(name=name,
-                                                  components=components,
-                                                  interconnects=interconnects)
-
-        x_default = self.spatial_interface.design_vector
-        # f_default = self.spatial_interface.calculate_objective(x_default)
-        # g_default = self.spatial_interface.calculate_constraints(x_default)
-
-        self.add_input('x', val=x_default)
-        self.add_output('f', val=1.0)
-        self.add_output('g', val=-1.0)
-        # self.add_output('g', val=[-1., -1., -1.])
-
-
-    def setup_partials(self):
-        self.declare_partials('f', 'x')
-        self.declare_partials('g', 'x')
-
-    def compute(self, inputs, outputs):
-
-        x = inputs['x']
-
-        x = torch.tensor(x, dtype=torch.float64)
-
-        f = self.spatial_interface.calculate_objective(x)
-        g = self.spatial_interface.calculate_constraints(x)
-
-        f = f.detach().numpy()
-        g = g.detach().numpy()
-
-        outputs['f'] = f
-        outputs['g'] = g
-    #
-    # def compute_partials(self, inputs, partials):
-    #
-    #     x = inputs['x']
-    #
-    #     x = torch.tensor(x, dtype=torch.float64, requires_grad=True)
-    #
-    #     jac_f = jacobian(self.spatial_interface.calculate_objective, x)
-    #     jac_g = jacobian(self.spatial_interface.calculate_constraints, x)
-    #
-    #     jac_f = jac_f.detach().numpy()
-    #     jac_g = jac_g.detach().numpy()
-    #
-    #     partials['f', 'x'] = jac_f
-    #     partials['g', 'x'] = jac_g
-
-
-
-class SpatialInterface:
-    """
-    Defines the associative (non-spatial) aspects of systems.
-
-    The layout module of SPI2py may map a single System to multiple SpatialConfigurations, performing gradient-based
-    optimization on each SpatialConfiguration in parallel.
-
-    This associative information includes things such as which objects to check check for collision between.
-    Movement classes and associated constraints dictate which objects have design variables and if those design
-    variables are constrained.
-
-    There are four types of objects:
-    1. Static:              Objects that cannot move (but must still be mapped to the spatial configuration)
-    2. Independent:         Objects that can move independently of each other
-    3. Partially Dependent: Objects that are constrained relative to other object(s) but retain some degree of freedom
-    4. Fully Dependent:     Objects that are fully constrained to another object (e.g., the port of a component)
-
-    Note: For the time being we will assume that you cannot chain dependencies.
-    For example, we may assert that the position of objects B,C, and D may depend directly on A.
-    However, we may not assert that the position of object D depends on C, which depends on the position of B.
-
-    TODO Change positions dict from pass-thru edit to merge edit
-    TODO Add a method to consistently order all objects based on their dependency chains
-    TODO Add a method to check for circular dependencies and overconstrained objects
-    TODO Write unit tests to confirm that all property-decorated functions correctly apply filters
-    """
+class KinematicsInterface:
 
     def __init__(self,
-                 name: str,
                  components: list = None,
                  interconnects: list = None):
 
-        self.name = name
         self.components = components
         self.interconnects = interconnects
         self.objects = self.components + self.interconnects
 
-        self.component_component_pairs = self.get_component_component_pairs()
-        self.component_interconnect_pairs = self.get_component_interconnect_pairs()
-        self.interconnect_interconnect_pairs = self.get_interconnect_interconnect_pairs()
-        self.object_pairs = self.get_object_pairs()
+        self.component_component_pairs, self.component_interconnect_pairs, self.interconnect_interconnect_pairs = self.get_collision_detection_pairs()
 
         self.objective = None
         self.constraints = [self.constraint_collision_components_components,
                             self.constraint_collision_components_interconnects,
                             self.constraint_collision_interconnects_interconnects]
 
-    def __repr__(self):
-        return f'System({self.name})'
+    def get_collision_detection_pairs(self):
 
-    def get_component_component_pairs(self):
-        return list(combinations(self.components, 2))
+        component_component_pairs = list(combinations(self.components, 2))
 
-    def get_component_interconnect_pairs(self):
-        # Create a list of all component-interconnect pairs
-        pairs = list(product(self.components, self.interconnects))
-
-        # Remove pairs that contain a component and its own interconnect
-        check_pairs = []
-        for component, interconnect in pairs:
+        all_component_interconnect_pairs = list(product(self.components, self.interconnects))
+        component_interconnect_pairs = []
+        for component, interconnect in all_component_interconnect_pairs:
             if component.__repr__() != interconnect.component_1_name and component.__repr__() != interconnect.component_2_name:
-                check_pairs.append((component, interconnect))
+                component_interconnect_pairs.append((component, interconnect))
 
-        return check_pairs
+        interconnect_interconnect_pairs = list(combinations(self.interconnects, 2))
+
+        return component_component_pairs, component_interconnect_pairs, interconnect_interconnect_pairs
 
 
-    def get_interconnect_interconnect_pairs(self):
-        # Create a list of all interconnect pairs
-        pairs = list(combinations(self.interconnects, 2))
-        return pairs
 
-    def get_object_pairs(self):
-        object_pairs = []
-        object_pairs += [self.component_component_pairs]
-        object_pairs += [self.component_interconnect_pairs]
-        object_pairs += [self.interconnect_interconnect_pairs]
-        return object_pairs
 
     @property
     def design_vector(self):
@@ -171,10 +51,10 @@ class SpatialInterface:
 
         """
 
-        design_vector = np.empty(0)
+        design_vector = torch.empty(0)
 
         for obj in self.objects:
-            design_vector = np.concatenate((design_vector, obj.design_vector))
+            design_vector = torch.cat((design_vector, obj.design_vector))
 
         return design_vector
 
@@ -341,7 +221,7 @@ class SpatialInterface:
 
         # constraints = [constraint_function(x) for constraint_function in self.constraints]
         #
-        # constraints = np.array(constraints)
+        # constraints = torch.tensor(constraints)
 
         constraints = self.constraints[1](x)
 

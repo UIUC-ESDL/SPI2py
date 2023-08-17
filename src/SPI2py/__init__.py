@@ -1,2 +1,2 @@
-from SPI2py.group_model.component_spatial.main import SpatialInterface, SpatialComponent
-from SPI2py.group_model.component_spatial.objects import Component, Interconnect
+from .group_model.group_spatial.component_kinematic.objects import Component, Interconnect
+from .group_model.group_spatial.component_kinematic.kinematics_component import KinematicsComponent

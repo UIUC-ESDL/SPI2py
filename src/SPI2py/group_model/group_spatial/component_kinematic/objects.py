@@ -5,12 +5,10 @@ TODO Can I remove movement classes if I just use degrees of freedom and referenc
 
 
 from SPI2py.group_model.component_geometry.finite_sphere_method import read_xyzr_file, generate_rectangular_prisms
-from SPI2py.group_model.component_spatial.spatial_transformations import affine_transformation
+from SPI2py.group_model.component_kinematic.spatial_transformations import affine_transformation
 
 import torch
-
 from typing import Sequence
-
 import pyvista as pv
 
 

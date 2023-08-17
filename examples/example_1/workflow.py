@@ -7,7 +7,7 @@ Author:     Chad Peterson
 
 
 import openmdao.api as om
-from SPI2py import SpatialComponent, Component, Interconnect
+from SPI2py import KinematicsComponent, Component, Interconnect
 
 
 # %% Define the components
@@ -72,13 +72,11 @@ ic1 = Interconnect(name='lp_cv_actuator',
 prob = om.Problem()
 model = prob.model
 
-spatial_component = SpatialComponent()
-spatial_component.options.declare('name', default='DemoSystem', types=str)
-spatial_component.options.declare('components', default=[c0, c1, c2, c3, c4], types=list)  # TODO Add c4
-spatial_component.options.declare('interconnects', default=[ic0, ic1], types=list)
+kinematic_component = KinematicsComponent()
+kinematic_component.options.declare('components', default=[c0, c1, c2, c3, c4], types=list)
+kinematic_component.options.declare('interconnects', default=[ic0, ic1], types=list)
 
-model.add_subsystem('system', spatial_component, promotes=['*'])
-
+model.add_subsystem('kinematic', kinematic_component, promotes=['*'])
 
 prob.setup()
 
@@ -103,7 +101,7 @@ default_positions_dict = {'control_valve_1': {'translation': [-3., -4.41, -0.24]
                           'hp_cv_actuator': {'waypoints': [[-3., -2., 2.],[-1., 0., 2.]]},
                           'lp_cv_actuator': {'waypoints': [[4., 0., 1.]]}}
 
-spatial_component.spatial_interface.set_default_positions(default_positions_dict)
+kinematic_component.kinematic_interface.set_default_positions(default_positions_dict)
 
 
 
@@ -111,15 +109,15 @@ spatial_component.spatial_interface.set_default_positions(default_positions_dict
 # %% Configure the system objective and constraints
 
 
-spatial_component.spatial_interface.set_objective(objective='bounding box volume')
+kinematic_component.kinematic_interface.set_objective(objective='bounding box volume')
 
 
 
 # %% Run the optimization
 
 
-x0 = spatial_component.spatial_interface.design_vector
-model.set_val('x', spatial_component.spatial_interface.design_vector)
+x0 = kinematic_component.kinematic_interface.design_vector
+model.set_val('x', kinematic_component.kinematic_interface.design_vector)
 
 
 prob.driver = om.ScipyOptimizeDriver()

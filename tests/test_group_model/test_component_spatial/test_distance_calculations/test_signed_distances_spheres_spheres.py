@@ -1,5 +1,5 @@
 import numpy as np
-from SPI2py.group_model.component_spatial.distance_calculations import signed_distances_spheres_spheres
+from SPI2py.group_model.group_spatial.component_kinematic.distance_calculations import signed_distances_spheres_spheres
 
 
 def test_sphere_sphere_tangent_1():
