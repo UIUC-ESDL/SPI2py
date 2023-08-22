@@ -11,7 +11,8 @@ class KinematicsInterface:
 
     def __init__(self,
                  components: list = None,
-                 interconnects: list = None):
+                 interconnects: list = None,
+                 objective: str = None):
 
         self.components = components
         self.interconnects = interconnects
@@ -21,7 +22,7 @@ class KinematicsInterface:
         self.component_interconnect_pairs = list(product(self.components, self.interconnects))
         self.interconnect_interconnect_pairs = list(combinations(self.interconnects, 2))
 
-        self.objective = None
+        self.set_objective(objective)
         self.constraints = [self.constraint_collision_components_components,
                             self.constraint_collision_components_interconnects,
                             self.constraint_collision_interconnects_interconnects]

@@ -38,16 +38,12 @@ def distances_points_points(a: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
     :return: Euclidean distances, (-1, 3) np.ndarray
     """
 
-    # TODO REMOVE SQUARED?
-
-    # # Reshape the arrays for broadcasting
+    # Reshape the arrays for broadcasting
     aa = a.reshape(-1, 1, 3)
     bb = b.reshape(1, -1, 3)
     cc = aa-bb
 
     cc = cc.reshape(-1, 3)
-
-    # c_squared_euclidean_distances =
 
     c = torch.linalg.norm(cc, axis=-1)
 
@@ -55,6 +51,7 @@ def distances_points_points(a: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
     c = c.flatten()
 
     return c
+
 
 def sum_radii(a, b):
     # Sum radii
@@ -132,8 +129,8 @@ def signed_distances(x, model, object_pair):
         radii_b = positions_dict[str(obj2)]['radii']
 
         signed_distances = signed_distances_spheres_spheres(positions_a, radii_a, positions_b, radii_b).flatten()
-        all_signed_distances.append(signed_distances)
 
+        all_signed_distances.append(signed_distances)
 
     all_signed_distances = torch.cat(all_signed_distances)
 

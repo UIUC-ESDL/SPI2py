@@ -1,2 +1,2 @@
 from .group_model.group_spatial.component_kinematic.objects import Component, Interconnect
-from .group_model.group_spatial.component_kinematic.kinematics_component import KinematicsComponent
+from .group_model.group_spatial.component_kinematic.kinematics_component import KinematicsInterface, KinematicsComponent

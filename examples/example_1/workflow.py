@@ -7,10 +7,10 @@ Author:     Chad Peterson
 
 import torch
 import openmdao.api as om
-from SPI2py import KinematicsComponent, Component, Interconnect
+from SPI2py import KinematicsInterface, KinematicsComponent, Component, Interconnect
 
 
-# %% Define the components
+# %% Define the kinematics model
 
 c0 = Component(name='control_valve_1',
                color='aquamarine',
@@ -41,9 +41,6 @@ c4 = Component(name='structure_1',
                degrees_of_freedom=(),
                filepath='part_models/structure_1.xyzr')
 
-
-# %% Define the interconnects
-
 ic0 = Interconnect(name='hp_cv_actuator',
                    color='black',
                    component_1_name='control_valve_1',
@@ -51,7 +48,7 @@ ic0 = Interconnect(name='hp_cv_actuator',
                    component_2_name='actuator_1',
                    component_2_port_index=c1.port_indices['supply'],
                    radius=0.25,
-                   number_of_waypoints=6,
+                   number_of_waypoints=2,
                    degrees_of_freedom=('x', 'y', 'z'))
 
 ic1 = Interconnect(name='lp_cv_actuator',
@@ -61,10 +58,12 @@ ic1 = Interconnect(name='lp_cv_actuator',
                    component_2_name='actuator_1',
                    component_2_port_index=c1.port_indices['return'],
                    radius=0.25,
-                   number_of_waypoints=6,
+                   number_of_waypoints=1,
                    degrees_of_freedom=('x', 'y', 'z'))
 
-
+kinematics_interface = KinematicsInterface(components=[c0, c1, c2, c3, c4],
+                                           interconnects=[ic0, ic1],
+                                           objective='bounding box volume')
 
 
 # %% Define the system
@@ -73,8 +72,7 @@ prob = om.Problem()
 model = prob.model
 
 kinematics_component = KinematicsComponent()
-kinematics_component.options.declare('components', default=[c0, c1, c2, c3, c4], types=list)
-kinematics_component.options.declare('interconnects', default=[ic0, ic1], types=list)
+kinematics_component.options.declare('kinematic_interface', default=kinematics_interface)
 
 model.add_subsystem('kinematics', kinematics_component, promotes=['*'])
 
@@ -102,28 +100,12 @@ default_positions_dict = {'control_valve_1': {'translation': [-3., -4.41, -0.24]
                           'structure_1': {'translation': [0., 0., -1.],
                                           'rotation': [0., 0., 0.],
                                           'scale': [1., 1., 1.]},
-                          'hp_cv_actuator': {'waypoints': [[-3., -2., 2.],
-                                                           [-2., -1., 1.],
-                                                           [-1.5, -0.5, 0.5],
-                                                           [-1., 0., 2.],
-                                                           [-0.75, 0.25, 2.25],
-                                                           [-0.5, 0.5, 2.5]]},
-                          'lp_cv_actuator': {'waypoints': [[4., 0., 1.],
-                                                           [4.1, 0., 1.1],
-                                                           [4.3, 0., 1.3],
-                                                           [4.5, 0., 1.5],
-                                                           [4.7, 0., 1.7],
-                                                           [5., 0., 2.],]}}
+                          'hp_cv_actuator': {'waypoints': [[-3., -2., 2.],[-1., 0., 2.]]},
+                          'lp_cv_actuator': {'waypoints': [[4., 0., 1.]]}}
 
 kinematics_component.kinematics_interface.set_default_positions(default_positions_dict)
 
 
-
-
-# %% Configure the system objective and constraints
-
-
-kinematics_component.kinematics_interface.set_objective(objective='bounding box volume')
 
 
 
