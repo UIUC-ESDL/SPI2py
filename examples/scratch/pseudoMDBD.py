@@ -9,6 +9,8 @@ Also note that the Trimesh library may raise some errors when you first run the 
 it seems to have missed a few necessary libraries. Read the error message and see if there is an import error. If so,
 pip install the missing library.
 
+I had to pip install 'rtree'
+
 The algorithm is as follows:
 
     1. Create a meshgrid of points, using the bounding box of the object as the bounds.
@@ -64,11 +66,13 @@ def constraint_nonoverlap(d_i):
 
 
 # USER INPUT: Filepath
-filepath = 'C:/Users/cpgui/PycharmProjects/SPI2py/examples/prototyping/files/part2.stl'
+filepath = 'files/part2.stl'
 
 # Create the pyvista and trimesh objects. Both are required.
 mesh_pyvista = pv.read(filepath)
 
+# If the object has a ridiculously high fidelity then the naive algorthm will run too slow
+# The decimate method (commented out below) reduces the resolution of the mesh
 # model_engine = pv.read('C:/Users/cpgui/PycharmProjects/SPI2py/examples/prototyping/files/Motor_final_solid_reducedv4.stl')
 # model_engine_decimated = model_engine.decimate_boundary(target_reduction=0.99)
 # model_engine_decimated.plot()
@@ -89,7 +93,6 @@ r_min = 0.01  # Lower bound to prevent the nonphysical radius of 0
 r_max = min([x_max - x_min, y_max - y_min, z_max - z_min]) / 2  # The max radius must still fit inside the bounding box
 
 # USER INPUT: The number of increments for each dimension of the meshgrid.
-num_meshgrid_increments = 15
 nx = 15
 ny = 15
 nz = 15
@@ -108,7 +111,7 @@ sphere_points = np.empty((0, 3))
 sphere_radii = np.empty((0, 1))
 
 
-# FIRST SPHERE
+# PACKAGE THE FIRST SPHERE (No sphere-sphere overlap constraint)
 
 
 # Filter out points that are not inside the mesh
@@ -151,7 +154,7 @@ points_filtered = points_filtered[np.linalg.norm(points_filtered - res.x[:3], ax
 
 # FURTHER SPHERES
 
-# USER INPUT
+# USER INPUT: How many additional MDBD spheres to package?
 num_spheres = 20
 
 for i in range(num_spheres):
@@ -210,12 +213,10 @@ plotter.add_mesh(part2, color='white', opacity=0.5)
 # plotter.add_mesh(points, color='red', point_size=10, render_points_as_spheres=True)
 
 
-
 # Plot the sphere
 for i in range(len(sphere_points)):
     sphere = pv.Sphere(center=sphere_points[i], radius=sphere_radii[i])
     plotter.add_mesh(sphere, color='green', opacity=0.75)
-
 plotter.show()
 
 
