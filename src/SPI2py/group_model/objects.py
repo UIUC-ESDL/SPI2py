@@ -4,8 +4,8 @@ TODO Can I remove movement classes if I just use degrees of freedom and referenc
 """
 
 
-from ..component_geometry.finite_sphere_method import read_xyzr_file
-from .spatial_transformations import affine_transformation
+from src.SPI2py.group_model.component_geometry.spherical_decomposition_methods.finite_sphere_method import read_xyzr_file
+from src.SPI2py.group_model.component_kinematics.spatial_transformations import affine_transformation
 
 import torch
 from typing import Sequence

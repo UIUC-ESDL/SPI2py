@@ -66,7 +66,7 @@ def constraint_nonoverlap(d_i):
 
 
 # USER INPUT: Filepath
-filepath = 'files/part2.stl'
+filepath = 'engine_1.stl'
 
 # Create the pyvista and trimesh objects. Both are required.
 mesh_pyvista = pv.read(filepath)
@@ -155,7 +155,7 @@ points_filtered = points_filtered[np.linalg.norm(points_filtered - res.x[:3], ax
 # FURTHER SPHERES
 
 # USER INPUT: How many additional MDBD spheres to package?
-num_spheres = 20
+num_spheres = 100
 
 for i in range(num_spheres):
 

@@ -1,0 +1,1 @@
+from src.SPI2py.group_model.component_geometry.spherical_decomposition_methods.finite_sphere_method import generate_rectangular_prisms

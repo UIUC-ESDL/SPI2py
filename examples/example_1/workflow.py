@@ -7,7 +7,7 @@ Author:     Chad Peterson
 
 import torch
 import openmdao.api as om
-from SPI2py import KinematicsInterface, KinematicsComponent, Component, Interconnect
+from SPI2py import KinematicsInterface, Kinematics, Component, Interconnect
 
 
 # %% Define the kinematics model
@@ -61,7 +61,7 @@ ic1 = Interconnect(name='lp_cv_actuator',
                    number_of_waypoints=1,
                    degrees_of_freedom=('x', 'y', 'z'))
 
-kinematics_interface = KinematicsInterface(components=[c0, c1, c2, c3, c4],
+kinematics = Kinematics(components=[c0, c1, c2, c3, c4],
                                            interconnects=[ic0, ic1],
                                            objective='bounding box volume')
 
@@ -71,8 +71,8 @@ kinematics_interface = KinematicsInterface(components=[c0, c1, c2, c3, c4],
 prob = om.Problem()
 model = prob.model
 
-kinematics_component = KinematicsComponent()
-kinematics_component.options.declare('kinematic_interface', default=kinematics_interface)
+kinematics_component = KinematicsInterface()
+kinematics_component.options.declare('kinematics', default=kinematics)
 
 model.add_subsystem('kinematics', kinematics_component, promotes=['*'])
 
@@ -103,7 +103,7 @@ default_positions_dict = {'control_valve_1': {'translation': [-3., -4.41, -0.24]
                           'hp_cv_actuator': {'waypoints': [[-3., -2., 2.],[-1., 0., 2.]]},
                           'lp_cv_actuator': {'waypoints': [[4., 0., 1.]]}}
 
-kinematics_component.kinematics_interface.set_default_positions(default_positions_dict)
+kinematics_component.kinematics.set_default_positions(default_positions_dict)
 
 
 
@@ -112,8 +112,8 @@ kinematics_component.kinematics_interface.set_default_positions(default_position
 # %% Run the optimization
 
 
-x0 = kinematics_component.kinematics_interface.design_vector
-model.set_val('x', kinematics_component.kinematics_interface.design_vector)
+x0 = kinematics_component.kinematics.design_vector
+model.set_val('x', kinematics_component.kinematics.design_vector)
 
 
 
@@ -147,6 +147,6 @@ print('Optimized constraint values: ', prob['g'])
 
 # Plot optimized spatial
 xf = torch.tensor(prob['x'], dtype=torch.float64)
-objects_dict = kinematics_component.kinematics_interface.calculate_positions(xf)
-kinematics_component.kinematics_interface.set_positions(objects_dict)
-kinematics_component.kinematics_interface.plot()
+objects_dict = kinematics_component.kinematics.calculate_positions(xf)
+kinematics_component.kinematics.set_positions(objects_dict)
+kinematics_component.kinematics.plot()

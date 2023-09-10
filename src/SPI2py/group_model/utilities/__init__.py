@@ -1,1 +1,1 @@
-from .constraint_aggregation import kreisselmeier_steinhauser
+from .aggregation import kreisselmeier_steinhauser

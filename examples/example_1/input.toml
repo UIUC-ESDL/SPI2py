@@ -1,4 +1,21 @@
-components:
+[info]
+name = "Chad Peterson"
+description = "A simple example of a 3D model of a control valve and actuator"
+
+[geometry]
+
+[geometry.components]
+
+[geometry.conductors]
+
+
+[kinematics]
+
+[projection]
+
+[finite_element]
+
+
 
 
   control_valve_1: name: control_valve_1,
