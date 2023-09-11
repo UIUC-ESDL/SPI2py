@@ -294,4 +294,128 @@ class Interconnect:
 
 
 class System:
-    pass
+    def __init__(self,
+                 components: list = None,
+                 interconnects: list = None,
+                 objective: str = None):
+
+        self.components = components
+        self.interconnects = interconnects
+        self.objects = self.components + self.interconnects
+
+        self.set_objective(objective)
+
+    @property
+    def design_vector(self):
+
+        design_vector = torch.empty(0)
+
+        for obj in self.objects:
+            design_vector = torch.cat((design_vector, obj.design_vector))
+
+        # Export as numpy array
+        design_vector = design_vector.detach().numpy()
+
+        return design_vector
+
+    def decompose_design_vector(self, design_vector):
+
+        # Get the size of the design vector for each design vector object
+        design_vector_sizes = []
+        for obj in self.objects:
+            design_vector_size = len(obj.design_vector)
+            design_vector_sizes.append(design_vector_size)
+
+        # Index values
+        start, stop = 0, 0
+        design_vectors = []
+
+        for i, size in enumerate(design_vector_sizes):
+            # Increment stop index
+
+            stop += design_vector_sizes[i]
+
+            design_vector_i = design_vector[start:stop]
+            design_vectors.append(design_vector_i)
+
+            # Increment start index
+            start = stop
+
+        return design_vectors
+
+
+    def set_objective(self, objective: str):
+
+        """
+        Add an objective to the design study.
+
+        :param objective: The objective function to be added.
+        :param options: The options for the objective function.
+        """
+
+        # SELECT THE OBJECTIVE FUNCTION HANDLE
+
+        if objective == 'bounding box volume':
+            _objective_function = bounding_box
+        else:
+            raise NotImplementedError
+
+        def objective_function(positions):
+            return _objective_function(positions)
+
+        self.objective = objective_function
+
+    def collision_detection(self, x, object_pair):
+
+        # Calculate the positions of all spheres in layout given design vector x
+        positions_dict = self.calculate_positions(x)
+
+        signed_distance_vals = signed_distances(positions_dict, object_pair)
+        max_signed_distance = kreisselmeier_steinhauser(signed_distance_vals)
+
+        return max_signed_distance
+
+    def calculate_objective(self, x):
+
+        positions_dict = self.calculate_positions(x)
+
+        positions_array = torch.vstack([positions_dict[key]['positions'] for key in positions_dict.keys()])
+
+        objective = self.objective(positions_array)
+
+        return objective
+
+    def calculate_constraints(self, x):
+
+        g_components_components = self.collision_detection(x, self.component_component_pairs).reshape(1, 1)
+        g_components_interconnects = self.collision_detection(x, self.component_interconnect_pairs).reshape(1, 1)
+        g_interconnects_interconnects = self.collision_detection(x, self.interconnect_interconnect_pairs).reshape(1, 1)
+
+        g = torch.cat((g_components_components, g_components_interconnects, g_interconnects_interconnects))
+
+        return g
+
+    def plot(self):
+        """
+        Plot the model at a given state.
+        """
+
+        # Create the plot objects
+        objects = []
+        colors = []
+        for obj in self.objects:
+            for position, radius in zip(obj.positions, obj.radii):
+                objects.append(pv.Sphere(radius=radius, center=position))
+                colors.append(obj.color)
+
+        # Plot the objects
+        p = pv.Plotter(window_size=[1000, 1000])
+
+        for obj, color in zip(objects, colors):
+            p.add_mesh(obj, color=color)
+
+        p.view_vector((5.0, 2, 3))
+        p.add_floor('-z', lighting=True, color='tan', pad=1.0)
+        p.enable_shadows()
+        p.show_axes()
+        p.show()
