@@ -291,3 +291,7 @@ class Interconnect:
     def set_default_positions(self, waypoints, objects_dict):
         object_dict = self.calculate_positions(waypoints, objects_dict)
         self.set_positions(object_dict)
+
+
+class System:
+    pass

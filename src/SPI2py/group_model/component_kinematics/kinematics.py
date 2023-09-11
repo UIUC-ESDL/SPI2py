@@ -4,8 +4,8 @@ import pyvista as pv
 from openmdao.core.explicitcomponent import ExplicitComponent
 from torch.autograd.functional import jacobian
 
-from src.SPI2py.group_model.component_geometry.distance_calculations import signed_distances
-from src.SPI2py.group_model.component_geometry.bounding_volumes import bounding_box
+from src.SPI2py.group_model.component_kinematics.distance_calculations import signed_distances
+from src.SPI2py.group_model.component_kinematics.bounding_volumes import bounding_box
 from src.SPI2py.group_model.utilities import kreisselmeier_steinhauser
 
 
@@ -80,9 +80,6 @@ class Kinematics:
         self.interconnect_interconnect_pairs = list(combinations(self.interconnects, 2))
 
         self.set_objective(objective)
-        self.constraints = [self.constraint_collision_components_components,
-                            self.constraint_collision_components_interconnects,
-                            self.constraint_collision_interconnects_interconnects]
 
 
     @property
@@ -191,40 +188,39 @@ class Kinematics:
         else:
             raise NotImplementedError
 
-        def objective_function(x):
-            return _objective_function(x, self)
+        def objective_function(positions):
+            return _objective_function(positions)
 
         self.objective = objective_function
 
-    def constraint_collision_components_components(self, x):
-        object_pair = self.component_component_pairs
-        signed_distance_vals = signed_distances(x, self, object_pair)
+    def collision_detection(self, x, object_pair):
+
+        # Calculate the positions of all spheres in layout given design vector x
+        positions_dict = self.calculate_positions(x)
+
+        signed_distance_vals = signed_distances(positions_dict, object_pair)
         max_signed_distance = kreisselmeier_steinhauser(signed_distance_vals)
+
+
+
         return max_signed_distance
 
-    def constraint_collision_components_interconnects(self, x):
-        object_pair = self.component_interconnect_pairs
-        signed_distance_vals = signed_distances(x, self, object_pair)
-        max_signed_distance = kreisselmeier_steinhauser(signed_distance_vals)
-        return max_signed_distance
-
-    def constraint_collision_interconnects_interconnects(self, x):
-        object_pair = self.interconnect_interconnect_pairs
-        signed_distance_vals = signed_distances(x, self, object_pair)
-        max_signed_distance = kreisselmeier_steinhauser(signed_distance_vals)
-        return max_signed_distance
 
     def calculate_objective(self, x):
 
-        objective = self.objective(x)
+        positions_dict = self.calculate_positions(x)
+
+        positions_array = torch.vstack([positions_dict[key]['positions'] for key in positions_dict.keys()])
+
+        objective = self.objective(positions_array)
 
         return objective
 
     def calculate_constraints(self, x):
 
-        g_components_components = self.constraint_collision_components_components(x).reshape(1,1)
-        g_components_interconnects = self.constraint_collision_components_interconnects(x).reshape(1,1)
-        g_interconnects_interconnects = self.constraint_collision_interconnects_interconnects(x).reshape(1,1)
+        g_components_components = self.collision_detection(x, self.component_component_pairs).reshape(1,1)
+        g_components_interconnects = self.collision_detection(x, self.component_interconnect_pairs).reshape(1,1)
+        g_interconnects_interconnects = self.collision_detection(x, self.interconnect_interconnect_pairs).reshape(1,1)
 
         g = torch.cat((g_components_components, g_components_interconnects, g_interconnects_interconnects))
 

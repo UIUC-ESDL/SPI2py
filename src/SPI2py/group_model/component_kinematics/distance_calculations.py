@@ -97,7 +97,7 @@ def signed_distances_spheres_spheres(centers_a: torch.tensor,
     return signed_distances
 
 
-def signed_distances(x, model, object_pair):
+def signed_distances(positions_dict, object_pair):
     """
     Returns the signed distances between all pairs of objects in the layout.
 
@@ -113,8 +113,7 @@ def signed_distances(x, model, object_pair):
     :param object_pair: The list of object pairs to calculate the signed distance between
     :return: An array of signed distances between each object pair
     """
-    # Calculate the positions of all spheres in layout given design vector x
-    positions_dict = model.calculate_positions(x)
+
 
     # Calculate the interferences between each sphere of each object pair
     all_signed_distances = []

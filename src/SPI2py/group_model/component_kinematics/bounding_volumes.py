@@ -1,15 +1,9 @@
 import torch
 
 
-
-def bounding_box(x, model):
+def bounding_box(positions_array):
 
     # TODO include radii
-    # TODO verify calc
-
-    positions_dict = model.calculate_positions(x)
-
-    positions_array = torch.vstack([positions_dict[key]['positions'] for key in positions_dict.keys()])
 
     min_x = torch.min(positions_array[:, 0])
     max_x = torch.max(positions_array[:, 0])

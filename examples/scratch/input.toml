@@ -1,0 +1,21 @@
+[components]
+control_valve.a = "control_valve"
+control_valve = 1
+
+[conductors]
+
+[geometry]
+unit = "meters"
+
+[kinematics]
+
+[projection]
+
+[physics]
+
+
+[physics.finite_element_method]
+
+
+
+
