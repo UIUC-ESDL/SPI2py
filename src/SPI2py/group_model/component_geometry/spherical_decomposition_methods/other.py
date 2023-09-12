@@ -6,9 +6,9 @@
 import numpy as np
 import pyvista as pv
 import trimesh
-from scipy.optimize import minimize, NonlinearConstraint, Bounds
 
-def pack_spheres(filepath, num_spheres=300, meshgrid_increment=25, plot=True):
+
+def pack_spheres(filepath, num_spheres=100, meshgrid_increment=25, plot=True):
 
     # Create the pyvista and trimesh objects. Both are required.
     mesh_trimesh = trimesh.exchange.load.load(filepath)
@@ -44,11 +44,9 @@ def pack_spheres(filepath, num_spheres=300, meshgrid_increment=25, plot=True):
     points_filtered_sorted = points_filtered[np.argsort(distances_filtered)[::-1]]
     distances_filtered_sorted = distances_filtered[np.argsort(distances_filtered)[::-1]]
 
-
     # Initialize the empty arrays that will store the MDBD spheres
     sphere_points = np.empty((0, 3))
     sphere_radii = np.empty((0, 1))
-
 
     # Package spheres
     for i in range(num_spheres):
