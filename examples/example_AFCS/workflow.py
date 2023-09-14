@@ -61,8 +61,8 @@ ic1 = Interconnect(name='lp_cv_actuator',
                    number_of_waypoints=1,
                    degrees_of_freedom=('x', 'y', 'z'))
 
-system = System(components=[c0, c1, c2, c3, c4],
-                interconnects=[ic0, ic1])
+# system = System(components=[c0, c1, c2, c3, c4],
+#                 interconnects=[ic0, ic1])
 
 
 kinematics = Kinematics(components=[c0, c1, c2, c3, c4],
@@ -90,20 +90,15 @@ prob.setup()
 # %% Define the initial spatial configuration
 
 default_positions_dict = {'control_valve_1': {'translation': [-3., -4.41, -0.24],
-                                              'rotation': [0., 0., 0.],
-                                              'scale': [1., 1., 1.]},
+                                              'rotation': [0., 0., 0.]},
                           'actuator_1': {'translation': [2., 4.41, 0.24],
-                                         'rotation': [0., 0., 0.],
-                                         'scale': [1., 1., 1.]},
+                                         'rotation': [0., 0., 0.]},
                           'component_2': {'translation': [-5, 3, 1],
-                                          'rotation': [0., 0., 0.],
-                                          'scale': [1., 1., 1.]},
+                                          'rotation': [0., 0., 0.]},
                           'component_3': {'translation': [3., 1., -3.],
-                                          'rotation': [0., 0., 0.],
-                                          'scale': [1., 1., 1.]},
+                                          'rotation': [0., 0., 0.]},
                           'structure_1': {'translation': [0., 0., -1.],
-                                          'rotation': [0., 0., 0.],
-                                          'scale': [1., 1., 1.]},
+                                          'rotation': [0., 0., 0.]},
                           'hp_cv_actuator': {'waypoints': [[-3., -2., 2.], [-1., 0., 2.]]},
                           'lp_cv_actuator': {'waypoints': [[4., 0., 1.]]}}
 

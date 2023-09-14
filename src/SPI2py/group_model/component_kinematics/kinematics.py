@@ -145,11 +145,10 @@ class Kinematics:
 
         # Map components first
         for component in self.components:
-            translation, rotation, scale = list(default_positions_dict[component.__repr__()].values())
+            translation, rotation = list(default_positions_dict[component.__repr__()].values())
             translation = torch.tensor(translation, dtype=torch.float64).reshape(3, 1)
             rotation = torch.tensor(rotation, dtype=torch.float64).reshape(3, 1)
-            scale = torch.tensor(scale, dtype=torch.float64).reshape(3, 1)
-            component.set_default_positions(translation, rotation, scale)
+            component.set_default_positions(translation, rotation)
             objects_dict = {**objects_dict, **component.object_dict}
 
         # Now interconnects

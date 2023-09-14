@@ -5,7 +5,7 @@
 from SPI2py.group_model.component_geometry import generate_rectangular_prisms
 from SPI2py.group_model.component_geometry.spherical_decomposition_methods.other import pack_spheres
 
-a = pack_spheres('part_models/part2.stl')
+a = pack_spheres('part_models/', 'engine_1.stl', 'engine_1.txt')
 
 # generate_rectangular_prisms('part_models/radiator_and_ion_exchanger',
 #                             [[0, 0, 0]],

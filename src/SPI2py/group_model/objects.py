@@ -6,6 +6,9 @@ TODO Can I remove movement classes if I just use degrees of freedom and referenc
 
 from src.SPI2py.group_model.component_geometry.spherical_decomposition_methods.finite_sphere_method import read_xyzr_file
 from src.SPI2py.group_model.component_kinematics.spatial_transformations import affine_transformation
+from src.SPI2py.group_model.component_kinematics.bounding_volumes import bounding_box
+from src.SPI2py.group_model.component_kinematics.distance_calculations import signed_distances
+from src.SPI2py.group_model.utilities import kreisselmeier_steinhauser
 
 import torch
 from typing import Sequence
@@ -110,9 +113,8 @@ class Component:
 
     def assemble_transformation_vectors(self, design_vector_dict):
 
-        translation = torch.zeros((3,1), dtype=torch.float64)
-        rotation = torch.zeros((3,1), dtype=torch.float64)
-        scale = torch.ones((3,1), dtype=torch.float64)
+        translation = torch.zeros((3, 1), dtype=torch.float64)
+        rotation = torch.zeros((3, 1), dtype=torch.float64)
 
         if 'x' in self.degrees_of_freedom:
             translation[0] = design_vector_dict['x']
@@ -128,14 +130,7 @@ class Component:
         if 'rz' in self.degrees_of_freedom:
             rotation[2] = design_vector_dict['rz']
 
-        if 'sx' in self.degrees_of_freedom:
-            scale[0] = design_vector_dict['sx']
-        if 'sy' in self.degrees_of_freedom:
-            scale[1] = design_vector_dict['sy']
-        if 'sz' in self.degrees_of_freedom:
-            scale[2] = design_vector_dict['sz']
-
-        return translation, rotation, scale
+        return translation, rotation
 
     def calculate_positions(self, design_vector):
         """
@@ -144,19 +139,18 @@ class Component:
 
         design_vector_dict = self.decompose_design_vector(design_vector)
 
-        translation, rotation, scale = self.assemble_transformation_vectors(design_vector_dict)
+        translation, rotation = self.assemble_transformation_vectors(design_vector_dict)
 
         new_positions = affine_transformation(self.reference_position.reshape(-1,1),
                                               self.positions.T,
                                               translation,
-                                              rotation,
-                                              scale).T
+                                              rotation).T
 
         object_dict = {self.__repr__(): {'positions': new_positions, 'radii': self.radii}}
 
         return object_dict
 
-    def set_default_positions(self, translation, rotation, scale):
+    def set_default_positions(self, translation, rotation):
         """
         Calculates the positions of the object's spheres.
         """
@@ -164,13 +158,12 @@ class Component:
         new_positions = affine_transformation(self.reference_position.reshape(-1,1),
                                               self.positions.T,
                                               translation,
-                                              rotation,
-                                              scale).T
+                                              rotation).T
 
         self.positions = new_positions
         self.translation = translation
         self.rotation = rotation
-        self.scale = scale
+
 
     def set_positions(self, objects_dict: dict):
         """

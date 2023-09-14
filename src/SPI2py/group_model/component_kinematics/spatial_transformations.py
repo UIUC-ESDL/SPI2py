@@ -6,9 +6,9 @@ import torch
 from torch import sin, cos
 
 
-def affine_transformation(reference_position, positions, translation, rotation, scaling):
+def affine_transformation(reference_position, positions, translation, rotation):
     """
-    Apply translation, rotation, and scaling to an object represented by a set of points.
+    Apply translation and rotation to an object represented by a set of points.
 
     The transformation matrix is implemented as defined in the following reference:
     LaValle, Steven M. Planning algorithms. Cambridge University press, 2006.
@@ -25,9 +25,6 @@ def affine_transformation(reference_position, positions, translation, rotation, 
     :param rotation: The rotation vector
     :type rotation: np.array(3,1)
 
-    :param scaling: The scaling vector
-    :type scaling: np.array(3,1)
-
     :return: transformed_positions: The transformed positions of the object
     :rtype: np.array(3,n)
     """
@@ -42,7 +39,6 @@ def affine_transformation(reference_position, positions, translation, rotation, 
     # Insert the translation vector
     t[:3, [3]] = translation
 
-
     # Unpack the rotation angles (Euler)
     a = rotation[0]  # alpha
     b = rotation[1]  # beta
@@ -55,20 +51,6 @@ def affine_transformation(reference_position, positions, translation, rotation, 
 
     # Insert the rotation matrix
     t[:3, :3] = r
-
-    # Unpack the sizing factors
-    sx = scaling[0]
-    sy = scaling[1]
-    sz = scaling[2]
-
-    # Define the scaling matrix
-    m = torch.cat((sx,   zero, zero, zero,
-                   zero, sy,   zero, zero,
-                   zero, zero, sz,   zero,
-                   zero, zero, zero, one)).view(4, 4)
-
-    # Concatenate the scaling matrix
-    t = t @ m
 
     # Center the object about its reference position
     positions_shifted = positions - reference_position
