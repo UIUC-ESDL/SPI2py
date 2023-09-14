@@ -92,3 +92,12 @@ def mdbd(directory, input_filename, output_filename, num_spheres=1000, meshgrid_
     np.savetxt(directory+output_filename, spheres, delimiter=' ')
     
 
+def mdbd_rectangular_prism(dims, directory, input_filename, output_filename, num_spheres=1000, meshgrid_increment=25, plot=True):
+
+    l, w, h = dims
+
+    box = pv.Cube(x_length=l, y_length=w, z_length=h)
+
+    box.save(directory+input_filename)
+
+    mdbd(directory, input_filename, output_filename, num_spheres=num_spheres, meshgrid_increment=meshgrid_increment, plot=False)

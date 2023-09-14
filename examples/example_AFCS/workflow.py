@@ -7,68 +7,91 @@ Author:     Chad Peterson
 
 import torch
 import openmdao.api as om
-from SPI2py import KinematicsInterface, Kinematics, Component, Interconnect, System
-
+from SPI2py import KinematicsInterface, Kinematics, Component, Interconnect  # , System
 
 # %% Define the kinematics model
 
-c0 = Component(name='control_valve_1',
-               color='aquamarine',
-               degrees_of_freedom=('x', 'y', 'z', 'rx', 'ry', 'rz'),
-               filepath='part_models/control_valve_1.xyzr',
-               ports=[{'name': 'supply', 'origin': [2, 1, 2.5], 'radius': 0.5},
-                      {'name': 'return', 'origin': [4, 1, 2.5], 'radius': 0.5}])
+c1a = Component(name='radiator_and_ion_exchanger_1a',
+                color='purple',
+                degrees_of_freedom=('x', 'y', 'z', 'rx', 'ry', 'rz'),
+                filepath='part_models/radiator_and_ion_exchanger.xyzr',
+                ports=[{'name': 'supply', 'origin': [0.2850/2+0.05, 0, 0], 'radius': 0.05},
+                       {'name': 'return', 'origin': [-(0.2850/2+0.05), 0, 0], 'radius': 0.05}])
 
-c1 = Component(name='actuator_1',
-               color='orange',
-               degrees_of_freedom=('x', 'y', 'z', 'rx', 'ry', 'rz'),
-               filepath='part_models/actuator_1.xyzr',
-               ports=[{'name': 'supply', 'origin': [1, 0, 1], 'radius': 0.5},
-                      {'name': 'return', 'origin': [2, 0, 1], 'radius': 0.5}])
+c1b = Component(name='radiator_and_ion_exchanger_1b',
+                color='purple',
+                degrees_of_freedom=('x', 'y', 'z', 'rx', 'ry', 'rz'),
+                filepath='part_models/radiator_and_ion_exchanger.xyzr',
+                ports=[{'name': 'supply', 'origin': [0.2850/2+0.05, 0, 0], 'radius': 0.05},
+                       {'name': 'return', 'origin': [-(0.2850/2+0.05), 0, 0], 'radius': 0.05}])
 
-c2 = Component(name='component_2',
-               color='indigo',
-               degrees_of_freedom=('x', 'y', 'z', 'rx', 'ry', 'rz'),
-               filepath='part_models/component_2.xyzr')
+c2a = Component(name='pump_2a',
+                color='blue',
+                degrees_of_freedom=('x', 'y', 'z', 'rx', 'ry', 'rz'),
+                filepath='part_models/pump.xyzr',
+                ports=[{'name': 'supply', 'origin': [0, 0, 0], 'radius': 0.05},
+                       {'name': 'return', 'origin': [0, 0, 0], 'radius': 0.05}])
 
-c3 = Component(name='component_3',
-               color='olive',
-               degrees_of_freedom=('x', 'y', 'z', 'rx', 'ry', 'rz'),
-               filepath='part_models/component_3.xyzr')
+c2b = Component(name='pump_2b',
+                color='blue',
+                degrees_of_freedom=('x', 'y', 'z', 'rx', 'ry', 'rz'),
+                filepath='part_models/pump.xyzr',
+                ports=[{'name': 'supply', 'origin': [0, 0, 0], 'radius': 0.05},
+                       {'name': 'return', 'origin': [0, 0, 0], 'radius': 0.05}])
 
-c4 = Component(name='structure_1',
+c3a = Component(name='particle_filter_3a',
+                color='yellow',
+                degrees_of_freedom=('x', 'y', 'z', 'rx', 'ry', 'rz'),
+                filepath='part_models/particle_filter.xyzr')
+
+c3b = Component(name='particle_filter_3b',
+                color='yellow',
+                degrees_of_freedom=('x', 'y', 'z', 'rx', 'ry', 'rz'),
+                filepath='part_models/particle_filter.xyzr')
+
+c4a = Component(name='fuel_cell_stack_4a',
+                color='green',
+                degrees_of_freedom=('x', 'y', 'z', 'rx', 'ry', 'rz'),
+                filepath='part_models/fuel_cell_stack.xyzr')
+
+c4b = Component(name='fuel_cell_stack_4b',
+                color='green',
+                degrees_of_freedom=('x', 'y', 'z', 'rx', 'ry', 'rz'),
+                filepath='part_models/fuel_cell_stack.xyzr')
+
+c5 = Component(name='WEG_heater_and_pump_5',
                color='gray',
                degrees_of_freedom=(),
-               filepath='part_models/structure_1.xyzr')
+               filepath='part_models/WEG_heater_and_pump.xyzr')
+
+c6 = Component(name='heater_core_6',
+               color='red',
+               degrees_of_freedom=(),
+               filepath='part_models/heater_core.xyzr')
 
 ic0 = Interconnect(name='hp_cv_actuator',
                    color='black',
-                   component_1_name='control_valve_1',
-                   component_1_port_index=c0.port_indices['supply'],
-                   component_2_name='actuator_1',
-                   component_2_port_index=c1.port_indices['supply'],
-                   radius=0.25,
-                   number_of_waypoints=2,
-                   degrees_of_freedom=('x', 'y', 'z'))
+                   component_1_name='radiator_and_ion_exchanger_1a',
+                   component_1_port_index=c1a.port_indices['supply'],
+                   component_2_name='radiator_and_ion_exchanger_1b',
+                   component_2_port_index=c1b.port_indices['supply'],
+                   radius=0.05,
+                   number_of_waypoints=0,
+                   degrees_of_freedom=())
 
 ic1 = Interconnect(name='lp_cv_actuator',
                    color='blue',
-                   component_1_name='control_valve_1',
-                   component_1_port_index=c0.port_indices['return'],
-                   component_2_name='actuator_1',
-                   component_2_port_index=c1.port_indices['return'],
-                   radius=0.25,
-                   number_of_waypoints=1,
-                   degrees_of_freedom=('x', 'y', 'z'))
+                   component_1_name='radiator_and_ion_exchanger_1b',
+                   component_1_port_index=c1b.port_indices['return'],
+                   component_2_name='pump_2b',
+                   component_2_port_index=c2b.port_indices['return'],
+                   radius=0.05,
+                   number_of_waypoints=0,
+                   degrees_of_freedom=())
 
-# system = System(components=[c0, c1, c2, c3, c4],
-#                 interconnects=[ic0, ic1])
-
-
-kinematics = Kinematics(components=[c0, c1, c2, c3, c4],
-                                           interconnects=[ic0, ic1],
-                                           objective='bounding box volume')
-
+kinematics = Kinematics(components=[c1a, c1b, c2a, c2b, c3a, c3b, c4a, c4b, c5, c6],
+                        interconnects=[ic0, ic1],
+                        objective='bounding box volume')
 
 # %% Define the system
 
@@ -86,27 +109,45 @@ prob.model.add_constraint('g', upper=0)
 
 prob.setup()
 
-
 # %% Define the initial spatial configuration
 
-default_positions_dict = {'control_valve_1': {'translation': [-3., -4.41, -0.24],
-                                              'rotation': [0., 0., 0.]},
-                          'actuator_1': {'translation': [2., 4.41, 0.24],
-                                         'rotation': [0., 0., 0.]},
-                          'component_2': {'translation': [-5, 3, 1],
-                                          'rotation': [0., 0., 0.]},
-                          'component_3': {'translation': [3., 1., -3.],
-                                          'rotation': [0., 0., 0.]},
-                          'structure_1': {'translation': [0., 0., -1.],
-                                          'rotation': [0., 0., 0.]},
-                          'hp_cv_actuator': {'waypoints': [[-3., -2., 2.], [-1., 0., 2.]]},
-                          'lp_cv_actuator': {'waypoints': [[4., 0., 1.]]}}
+default_positions_dict = {'radiator_and_ion_exchanger_1a':
+                              {'translation': [0.5, 5, 0],
+                               'rotation': [0., 0., 0.]},
+                          'radiator_and_ion_exchanger_1b':
+                              {'translation': [2.5, 5, 0],
+                               'rotation': [0., 0., 0.]},
+                          'pump_2a':
+                              {'translation': [0, 4, 0],
+                               'rotation': [0., 0., 0.]},
+                          'pump_2b':
+                              {'translation': [3., 4., 0],
+                               'rotation': [0., 0., 0.]},
+                          'particle_filter_3a':
+                              {'translation': [0., 3., 0],
+                               'rotation': [0., 0., 0.]},
+                          'particle_filter_3b':
+                              {'translation': [3., 3., 0],
+                               'rotation': [0., 0., 0.]},
+                          'fuel_cell_stack_4a':
+                              {'translation': [0, 2, 0],
+                               'rotation': [0., 0., 0.]},
+                          'fuel_cell_stack_4b':
+                              {'translation': [3, 2, 0],
+                               'rotation': [0., 0., 0.]},
+                          'WEG_heater_and_pump_5':
+                              {'translation': [2., 1., 0],
+                               'rotation': [0., 0., 0.]},
+                          'heater_core_6':
+                              {'translation': [1.5, 0., 0],
+                               'rotation': [0., 0., 0.]},
+                          'hp_cv_actuator': {'waypoints': []},
+                          'lp_cv_actuator': {'waypoints': []}}
+
+# 'hp_cv_actuator': {'waypoints': [[-3., -2., 2.], [-1., 0., 2.]]},
+# 'lp_cv_actuator': {'waypoints': [[4., 0., 1.]]}}
 
 kinematics_component.kinematics.set_default_positions(default_positions_dict)
-
-
-
-
 
 # %% Run the optimization
 
@@ -114,12 +155,8 @@ kinematics_component.kinematics.set_default_positions(default_positions_dict)
 x0 = kinematics_component.kinematics.design_vector
 model.set_val('x', kinematics_component.kinematics.design_vector)
 
-
-
 prob.driver = om.ScipyOptimizeDriver()
 prob.driver.options['maxiter'] = 300
-
-
 
 prob.run_model()
 

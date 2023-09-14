@@ -217,6 +217,7 @@ class Kinematics:
 
     def calculate_constraints(self, x):
 
+
         g_components_components = self.collision_detection(x, self.component_component_pairs).reshape(1,1)
         g_components_interconnects = self.collision_detection(x, self.component_interconnect_pairs).reshape(1,1)
         g_interconnects_interconnects = self.collision_detection(x, self.interconnect_interconnect_pairs).reshape(1,1)
@@ -236,7 +237,7 @@ class Kinematics:
         colors = []
         for obj in self.objects:
             for position, radius in zip(obj.positions, obj.radii):
-                objects.append(pv.Sphere(radius=radius, center=position))
+                objects.append(pv.Sphere(radius=radius, center=position, theta_resolution=30, phi_resolution=30))
                 colors.append(obj.color)
 
         # Plot the objects
@@ -245,8 +246,9 @@ class Kinematics:
         for obj, color in zip(objects, colors):
             p.add_mesh(obj, color=color)
 
-        p.view_vector((5.0, 2, 3))
-        p.add_floor('-z', lighting=True, color='tan', pad=1.0)
-        p.enable_shadows()
+        # p.view_vector((5.0, 2, 3))
+        p.view_isometric()
+        # p.add_floor('-z', color='tan', pad=1.0)
+        # p.enable_shadows()
         p.show_axes()
         p.show()
