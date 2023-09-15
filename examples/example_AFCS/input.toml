@@ -1,6 +1,10 @@
 [info]
 name = "Chad Peterson"
-description = "A simple example of a 3D model of a control valve and actuator"
+description = """Demo Problem based on DOI 10.2514/6.2022-0804:
+Underhood Spatial Packing and Routing of an Automotive Fuel Cell System
+(AFCS) Using 2D Geometric Projection"""
+
+[components]
 
 [components.radiator_and_ion_exchanger_1a]
 color='purple'
@@ -8,7 +12,7 @@ degrees_of_freedom=['x', 'y', 'z', 'rx', 'ry', 'rz']
 filepath='part_models/radiator_and_ion_exchanger.xyzr'
 ports=[{'name'= 'left', 'origin'= [-1.475, 0, 0], 'radius'= 0.05},
        {'name'= 'right', 'origin'= [1.475, 0, 0], 'radius'= 0.05}]
-    
+
 [components.radiator_and_ion_exchanger_1b]
 color='purple'
 degrees_of_freedom=['x', 'y', 'z', 'rx', 'ry', 'rz']
@@ -22,14 +26,14 @@ degrees_of_freedom=['x', 'y', 'z', 'rx', 'ry', 'rz']
 filepath='part_models/pump.xyzr'
 ports=[{'name'= 'top', 'origin'= [0, 0.275, 0], 'radius'= 0.05},
        {'name'= 'bottom', 'origin'= [0, -0.275, 0], 'radius'= 0.05}]
-    
+
 [components.pump_2b]
 color='blue'
 degrees_of_freedom=['x', 'y', 'z', 'rx', 'ry', 'rz']
 filepath='part_models/pump.xyzr'
 ports=[{'name'= 'top', 'origin'= [0, 0.275, 0], 'radius'= 0.05},
        {'name'= 'bottom', 'origin'= [0, -0.275, 0], 'radius'= 0.05}]
-    
+
 [components.particle_filter_3a]
 color='yellow'
 degrees_of_freedom=['x', 'y', 'z', 'rx', 'ry', 'rz']
@@ -71,6 +75,8 @@ degrees_of_freedom=[]
 filepath='part_models/heater_core.xyzr'
 ports=[{'name'= 'left', 'origin'= [-0.7225, 0, 0], 'radius'= 0.05},
        {'name'= 'right', 'origin'= [0.7225, 0, 0], 'radius'= 0.05}]
+
+[conductors]
 
 [conductors.c1a_c1b]
 component_1='radiator_and_ion_exchanger_1a'
@@ -171,3 +177,17 @@ radius=0.05
 color='black'
 linear_spline_segments=1
 degrees_of_freedom=[]
+
+[geometry]
+
+[kinematics]
+
+
+[projection]
+
+[physics.lumped_parameter]
+
+[physics.finite_element]
+
+
+[visualization]

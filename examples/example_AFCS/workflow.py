@@ -50,46 +50,9 @@ kinematics = Kinematics(components=components,
 
 # %% Define the initial spatial configuration
 
-default_positions_dict = {'radiator_and_ion_exchanger_1a':
-                              {'translation': [2, 7, 0],
-                               'rotation': [0., 0., 0.]},
-                          'radiator_and_ion_exchanger_1b':
-                              {'translation': [5.5, 7, 0],
-                               'rotation': [0., 0., 0.]},
-                          'pump_2a':
-                              {'translation': [0.5, 6, 0],
-                               'rotation': [0., 0., 0.]},
-                          'pump_2b':
-                              {'translation': [7.5, 6, 0],
-                               'rotation': [0., 0., 0.]},
-                          'particle_filter_3a':
-                              {'translation': [0.5, 4.5, 0],
-                               'rotation': [0., 0., 0.]},
-                          'particle_filter_3b':
-                              {'translation': [7.5, 5, 0],
-                               'rotation': [0., 0., 0.]},
-                          'fuel_cell_stack_4a':
-                              {'translation': [0.5, 2, 0],
-                               'rotation': [0., 0., 0.]},
-                          'fuel_cell_stack_4b':
-                              {'translation': [7.5, 3, 0],
-                               'rotation': [0., 0., 0.]},
-                          'WEG_heater_and_pump_5':
-                              {'translation': [6, 1., 0],
-                               'rotation': [0., 0., 0.]},
-                          'heater_core_6':
-                              {'translation': [2, 0., 0],
-                               'rotation': [0., 0., 0.]},
-                          'c1a_c1b': {'waypoints': []},
-                          'c1b_c2b': {'waypoints': []},
-                          'c2b_c3b': {'waypoints': []},
-                          'c3b_c4b': {'waypoints': []},
-                          'c4b_c5': {'waypoints': []},
-                          'c5_c6': {'waypoints': []},
-                          'c6_c4a': {'waypoints': [[1, 0, 0]]},
-                          'c4a_c3a': {'waypoints': []},
-                          'c3a_c2a': {'waypoints': []},
-                          'c2a_c1a': {'waypoints': []}}
+with open("spatial_configurations.toml", mode="rb") as fp:
+    default_positions_dict = tomli.load(fp)
+
 
 kinematics.set_default_positions(default_positions_dict)
 
