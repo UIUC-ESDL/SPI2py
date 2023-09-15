@@ -14,7 +14,7 @@ class KinematicsInterface(ExplicitComponent):
     def setup(self):
 
         self.kinematics = self.options['kinematics']
-        x_default = torch.zeros(self.kinematics.design_vector.shape)
+        x_default = torch.zeros(self.kinematics.design_vector_size)
         # f_default = self.kinematics_interface.calculate_objective(x_default)
         # g_default = self.kinematics_interface.calculate_constraints(x_default)
 
@@ -77,24 +77,21 @@ class Kinematics:
 
     # TODO This should not return positions
     @property
-    def design_vector(self):
+    def design_vector_size(self):
 
-        design_vector = torch.empty(0)
+        size = 0
 
         for obj in self.objects:
-            design_vector = torch.cat((design_vector, obj.design_vector))
+            size += obj.design_vector_size
 
-        # Export as numpy array
-        design_vector = design_vector.detach().numpy()
-
-        return design_vector
+        return size
 
     def decompose_design_vector(self, design_vector):
 
         # Get the size of the design vector for each design vector object
         design_vector_sizes = []
         for obj in self.objects:
-            design_vector_size = len(obj.design_vector)
+            design_vector_size = obj.design_vector_size
             design_vector_sizes.append(design_vector_size)
 
         # Index values

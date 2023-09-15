@@ -304,7 +304,7 @@ class System:
 
     def read_input_file(self):
 
-        with open("input.toml", mode="rb") as fp:
+        with open(self.input_file, mode="rb") as fp:
             input = tomli.load(fp)
 
         return input
@@ -349,17 +349,14 @@ class System:
         return conductors
 
     @property
-    def design_vector(self):
+    def design_vector_size(self):
 
-        design_vector = torch.empty(0)
+        size = 0
 
         for obj in self.objects:
-            design_vector = torch.cat((design_vector, obj.design_vector))
+            size += obj.design_vector_size
 
-        # Export as numpy array
-        design_vector = design_vector.detach().numpy()
-
-        return design_vector
+        return size
 
     def decompose_design_vector(self, design_vector):
 
