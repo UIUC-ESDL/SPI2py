@@ -11,68 +11,86 @@ from SPI2py import KinematicsInterface, Kinematics, Component, Interconnect  # ,
 
 # %% Define the kinematics model
 
-c1a = Component(name='radiator_and_ion_exchanger_1a',
-                color='purple',
-                degrees_of_freedom=('x', 'y', 'z', 'rx', 'ry', 'rz'),
-                filepath='part_models/radiator_and_ion_exchanger.xyzr',
-                ports=[{'name': 'left', 'origin': [-(2.850/2+0.05), 0, 0], 'radius': 0.05},
-                       {'name': 'right', 'origin': [(2.850/2+0.05), 0, 0], 'radius': 0.05}])
+import tomli
 
-c1b = Component(name='radiator_and_ion_exchanger_1b',
-                color='purple',
-                degrees_of_freedom=('x', 'y', 'z', 'rx', 'ry', 'rz'),
-                filepath='part_models/radiator_and_ion_exchanger.xyzr',
-                ports=[{'name': 'left', 'origin': [-(2.850/2+0.05), 0, 0], 'radius': 0.05},
-                       {'name': 'right', 'origin': [(2.850/2+0.05), 0, 0], 'radius': 0.05}])
+with open("input.toml", mode="rb") as fp:
+    config = tomli.load(fp)
 
-c2a = Component(name='pump_2a',
-                color='blue',
-                degrees_of_freedom=('x', 'y', 'z', 'rx', 'ry', 'rz'),
-                filepath='part_models/pump.xyzr',
-                ports=[{'name': 'top', 'origin': [0, (0.450/2+0.05), 0], 'radius': 0.05},
-                       {'name': 'bottom', 'origin': [0, -(0.450/2+0.05), 0], 'radius': 0.05}])
+components_inputs = config['components']
 
-c2b = Component(name='pump_2b',
-                color='blue',
-                degrees_of_freedom=('x', 'y', 'z', 'rx', 'ry', 'rz'),
-                filepath='part_models/pump.xyzr',
-                ports=[{'name': 'top', 'origin': [0, (0.450/2+0.05), 0], 'radius': 0.05},
-                       {'name': 'bottom', 'origin': [0, -(0.450/2+0.05), 0], 'radius': 0.05}])
+components = []
+for component_inputs in components_inputs.items():
+    name = component_inputs[0]
+    component_inputs = component_inputs[1]
+    color = component_inputs['color']
+    degrees_of_freedom = component_inputs['degrees_of_freedom']
+    filepath = component_inputs['filepath']
+    ports = component_inputs['ports']
+    components.append(Component(name=name, color=color, degrees_of_freedom=degrees_of_freedom, filepath=filepath, ports=ports))
 
-c3a = Component(name='particle_filter_3a',
-                color='yellow',
-                degrees_of_freedom=('x', 'y', 'z', 'rx', 'ry', 'rz'),
-                filepath='part_models/particle_filter.xyzr',
-                ports=[{'name': 'top', 'origin': [0, (0.330 / 2 + 0.05), 0], 'radius': 0.05},
-                       {'name': 'bottom', 'origin': [0, -(0.330 / 2 + 0.05), 0], 'radius': 0.05}])
 
-c3b = Component(name='particle_filter_3b',
-                color='yellow',
-                degrees_of_freedom=('x', 'y', 'z', 'rx', 'ry', 'rz'),
-                filepath='part_models/particle_filter.xyzr',
-                ports=[{'name': 'top', 'origin': [0, (0.330 / 2 + 0.05), 0], 'radius': 0.05},
-                       {'name': 'bottom', 'origin': [0, -(0.330 / 2 + 0.05), 0], 'radius': 0.05}])
-
-c4a = Component(name='fuel_cell_stack_4a',
-                color='green',
-                degrees_of_freedom=('x', 'y', 'z', 'rx', 'ry', 'rz'),
-                filepath='part_models/fuel_cell_stack.xyzr',
-                ports=[{'name': 'top', 'origin': [0, (1.600 / 2 + 0.05), 0], 'radius': 0.05},
-                       {'name': 'bottom', 'origin': [0, -(1.600 / 2 + 0.05), 0], 'radius': 0.05}])
-
-c4b = Component(name='fuel_cell_stack_4b',
-                color='green',
-                degrees_of_freedom=('x', 'y', 'z', 'rx', 'ry', 'rz'),
-                filepath='part_models/fuel_cell_stack.xyzr',
-                ports=[{'name': 'top', 'origin': [0, (1.600 / 2 + 0.05), 0], 'radius': 0.05},
-                       {'name': 'bottom', 'origin': [0, -(1.600 / 2 + 0.05), 0], 'radius': 0.05}])
-
-c5 = Component(name='WEG_heater_and_pump_5',
-               color='gray',
-               degrees_of_freedom=(),
-               filepath='part_models/WEG_heater_and_pump.xyzr',
-               ports=[{'name': 'top', 'origin': [0, (1.833 / 2 + 0.05), 0], 'radius': 0.05},
-                      {'name': 'left', 'origin': [-(1.833 / 2 + 0.05), 0, 0], 'radius': 0.05}])
+# c1a = Component(name='radiator_and_ion_exchanger_1a',
+#                 color='purple',
+#                 degrees_of_freedom=('x', 'y', 'z', 'rx', 'ry', 'rz'),
+#                 filepath='part_models/radiator_and_ion_exchanger.xyzr',
+#                 ports=[{'name': 'left', 'origin': [-(2.850/2+0.05), 0, 0], 'radius': 0.05},
+#                        {'name': 'right', 'origin': [(2.850/2+0.05), 0, 0], 'radius': 0.05}])
+#
+# c1b = Component(name='radiator_and_ion_exchanger_1b',
+#                 color='purple',
+#                 degrees_of_freedom=('x', 'y', 'z', 'rx', 'ry', 'rz'),
+#                 filepath='part_models/radiator_and_ion_exchanger.xyzr',
+#                 ports=[{'name': 'left', 'origin': [-(2.850/2+0.05), 0, 0], 'radius': 0.05},
+#                        {'name': 'right', 'origin': [(2.850/2+0.05), 0, 0], 'radius': 0.05}])
+#
+# c2a = Component(name='pump_2a',
+#                 color='blue',
+#                 degrees_of_freedom=('x', 'y', 'z', 'rx', 'ry', 'rz'),
+#                 filepath='part_models/pump.xyzr',
+#                 ports=[{'name': 'top', 'origin': [0, (0.450/2+0.05), 0], 'radius': 0.05},
+#                        {'name': 'bottom', 'origin': [0, -(0.450/2+0.05), 0], 'radius': 0.05}])
+#
+# c2b = Component(name='pump_2b',
+#                 color='blue',
+#                 degrees_of_freedom=('x', 'y', 'z', 'rx', 'ry', 'rz'),
+#                 filepath='part_models/pump.xyzr',
+#                 ports=[{'name': 'top', 'origin': [0, (0.450/2+0.05), 0], 'radius': 0.05},
+#                        {'name': 'bottom', 'origin': [0, -(0.450/2+0.05), 0], 'radius': 0.05}])
+#
+# c3a = Component(name='particle_filter_3a',
+#                 color='yellow',
+#                 degrees_of_freedom=('x', 'y', 'z', 'rx', 'ry', 'rz'),
+#                 filepath='part_models/particle_filter.xyzr',
+#                 ports=[{'name': 'top', 'origin': [0, (0.330 / 2 + 0.05), 0], 'radius': 0.05},
+#                        {'name': 'bottom', 'origin': [0, -(0.330 / 2 + 0.05), 0], 'radius': 0.05}])
+#
+# c3b = Component(name='particle_filter_3b',
+#                 color='yellow',
+#                 degrees_of_freedom=('x', 'y', 'z', 'rx', 'ry', 'rz'),
+#                 filepath='part_models/particle_filter.xyzr',
+#                 ports=[{'name': 'top', 'origin': [0, (0.330 / 2 + 0.05), 0], 'radius': 0.05},
+#                        {'name': 'bottom', 'origin': [0, -(0.330 / 2 + 0.05), 0], 'radius': 0.05}])
+#
+# c4a = Component(name='fuel_cell_stack_4a',
+#                 color='green',
+#                 degrees_of_freedom=('x', 'y', 'z', 'rx', 'ry', 'rz'),
+#                 filepath='part_models/fuel_cell_stack.xyzr',
+#                 ports=[{'name': 'top', 'origin': [0, (1.600 / 2 + 0.05), 0], 'radius': 0.05},
+#                        {'name': 'bottom', 'origin': [0, -(1.600 / 2 + 0.05), 0], 'radius': 0.05}])
+#
+# c4b = Component(name='fuel_cell_stack_4b',
+#                 color='green',
+#                 degrees_of_freedom=('x', 'y', 'z', 'rx', 'ry', 'rz'),
+#                 filepath='part_models/fuel_cell_stack.xyzr',
+#                 ports=[{'name': 'top', 'origin': [0, (1.600 / 2 + 0.05), 0], 'radius': 0.05},
+#                        {'name': 'bottom', 'origin': [0, -(1.600 / 2 + 0.05), 0], 'radius': 0.05}])
+#
+# c5 = Component(name='WEG_heater_and_pump_5',
+#                color='gray',
+#                degrees_of_freedom=(),
+#                filepath='part_models/WEG_heater_and_pump.xyzr',
+#                ports=[{'name': 'top', 'origin': [0, (1.833 / 2 + 0.05), 0], 'radius': 0.05},
+#                       {'name': 'left', 'origin': [-(1.833 / 2 + 0.05), 0, 0], 'radius': 0.05}])
 
 c6 = Component(name='heater_core_6',
                color='red',
@@ -177,7 +195,9 @@ ic9 = Interconnect(name='c2a_c1a',
                    linear_spline_segments=1,
                    degrees_of_freedom=())
 
-kinematics = Kinematics(components=[c1a, c1b, c2a, c2b, c3a, c3b, c4a, c4b, c5, c6],
+# components = [c1a, c1b, c2a, c2b, c3a, c3b, c4a, c4b, c5, c6]
+
+kinematics = Kinematics(components=components,
                         interconnects=[ic0, ic1, ic2, ic3, ic4, ic5, ic6, ic7, ic8, ic9],
                         objective='bounding box volume')
 

@@ -1,0 +1,73 @@
+[info]
+name = "Chad Peterson"
+description = "A simple example of a 3D model of a control valve and actuator"
+
+[components.radiator_and_ion_exchanger_1a]
+color='purple'
+degrees_of_freedom=['x', 'y', 'z', 'rx', 'ry', 'rz']
+filepath='part_models/radiator_and_ion_exchanger.xyzr'
+ports=[{'name'= 'left', 'origin'= [-1.475, 0, 0], 'radius'= 0.05},
+       {'name'= 'right', 'origin'= [1.475, 0, 0], 'radius'= 0.05}]
+    
+[components.radiator_and_ion_exchanger_1b]
+color='purple'
+degrees_of_freedom=['x', 'y', 'z', 'rx', 'ry', 'rz']
+filepath='part_models/radiator_and_ion_exchanger.xyzr'
+ports=[{'name'= 'left', 'origin'= [-1.475, 0, 0], 'radius'= 0.05},
+       {'name'= 'right', 'origin'= [1.475, 0, 0], 'radius'= 0.05}]
+
+[components.pump_2a]
+color='blue'
+degrees_of_freedom=['x', 'y', 'z', 'rx', 'ry', 'rz']
+filepath='part_models/pump.xyzr'
+ports=[{'name'= 'top', 'origin'= [0, 0.275, 0], 'radius'= 0.05},
+       {'name'= 'bottom', 'origin'= [0, -0.275, 0], 'radius'= 0.05}]
+    
+[components.pump_2b]
+color='blue'
+degrees_of_freedom=['x', 'y', 'z', 'rx', 'ry', 'rz']
+filepath='part_models/pump.xyzr'
+ports=[{'name'= 'top', 'origin'= [0, 0.275, 0], 'radius'= 0.05},
+       {'name'= 'bottom', 'origin'= [0, -0.275, 0], 'radius'= 0.05}]
+    
+[components.particle_filter_3a]
+color='yellow'
+degrees_of_freedom=['x', 'y', 'z', 'rx', 'ry', 'rz']
+filepath='part_models/particle_filter.xyzr'
+ports=[{'name'= 'top', 'origin'= [0, 0.215, 0], 'radius'= 0.05},
+       {'name'= 'bottom', 'origin'= [0, -0.215, 0], 'radius'= 0.05}]
+
+[components.particle_filter_3b]
+color='yellow'
+degrees_of_freedom=['x', 'y', 'z', 'rx', 'ry', 'rz']
+filepath='part_models/particle_filter.xyzr'
+ports=[{'name'= 'top', 'origin'= [0, 0.215, 0], 'radius'= 0.05},
+       {'name'= 'bottom', 'origin'= [0, -0.215, 0], 'radius'= 0.05}]
+
+[components.fuel_cell_stack_4a]
+color='green'
+degrees_of_freedom=['x', 'y', 'z', 'rx', 'ry', 'rz']
+filepath='part_models/fuel_cell_stack.xyzr'
+ports=[{'name'= 'top', 'origin'= [0, 0.85, 0], 'radius'= 0.05},
+       {'name'= 'bottom', 'origin'= [0, -0.85, 0], 'radius'= 0.05}]
+
+[components.fuel_cell_stack_4b]
+color='green'
+degrees_of_freedom=['x', 'y', 'z', 'rx', 'ry', 'rz']
+filepath='part_models/fuel_cell_stack.xyzr'
+ports=[{'name'= 'top', 'origin'= [0, 0.85, 0], 'radius'= 0.05},
+       {'name'= 'bottom', 'origin'= [0, -0.85, 0], 'radius'= 0.05}]
+
+[components.WEG_heater_and_pump_5]
+color='gray'
+degrees_of_freedom=[]
+filepath='part_models/WEG_heater_and_pump.xyzr'
+ports=[{'name'= 'top', 'origin'= [0, 0.9665, 0], 'radius'= 0.05},
+       {'name'= 'left', 'origin'= [-0.8775, 0, 0], 'radius'= 0.05}]
+
+[components.heater_core_6]
+color='red'
+degrees_of_freedom=[]
+filepath='part_models/heater_core.xyzr'
+ports=[{'name'= 'left', 'origin'= [-0.7225, 0, 0], 'radius'= 0.05},
+       {'name'= 'right', 'origin'= [0.7225, 0, 0], 'radius'= 0.05}]
