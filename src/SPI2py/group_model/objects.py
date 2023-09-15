@@ -242,8 +242,6 @@ class Interconnect:
         # TODO Consider not all DOF being used
         return self.waypoint_positions.flatten()
 
-
-
     def calculate_positions(self, design_vector, objects_dict):
 
         design_vector = design_vector.reshape((self.number_of_waypoints, 3))

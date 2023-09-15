@@ -151,8 +151,8 @@ ic6 = Interconnect(name='c6_c4a',
                    component_2_name='fuel_cell_stack_4a',
                    component_2_port_index=c4a.port_indices['bottom'],
                    radius=0.05,
-                   number_of_waypoints=0,
-                   degrees_of_freedom=())
+                   number_of_waypoints=1,
+                   degrees_of_freedom=('x', 'y', 'z'))
 
 
 ic7 = Interconnect(name='c4a_c3a',
@@ -229,7 +229,7 @@ default_positions_dict = {'radiator_and_ion_exchanger_1a':
                           'c3b_c4b': {'waypoints': []},
                           'c4b_c5': {'waypoints': []},
                           'c5_c6': {'waypoints': []},
-                          'c6_c4a': {'waypoints': []},
+                          'c6_c4a': {'waypoints': [[1, 0, 0]]},
                           'c4a_c3a': {'waypoints': []},
                           'c3a_c2a': {'waypoints': []},
                           'c2a_c1a': {'waypoints': []}}
