@@ -4,6 +4,9 @@ description = """Demo Problem based on DOI 10.2514/6.2022-0804:
 Underhood Spatial Packing and Routing of an Automotive Fuel Cell System
 (AFCS) Using 2D Geometric Projection"""
 
+[problem]
+objective = "bounding box volume"
+
 [components]
 
 [components.radiator_and_ion_exchanger_1a]

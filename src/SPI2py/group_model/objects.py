@@ -3,6 +3,7 @@ TODO Can I remove movement classes if I just use degrees of freedom and referenc
 
 """
 
+import tomli
 
 from src.SPI2py.group_model.component_geometry.spherical_decomposition_methods.finite_sphere_method import read_xyzr_file
 from src.SPI2py.group_model.component_kinematics.spatial_transformations import affine_transformation
@@ -287,99 +288,147 @@ class Interconnect:
         self.set_positions(object_dict)
 
 
-# class System:
-#     def __init__(self,
-#                  components: list = None,
-#                  interconnects: list = None,
-#                  objective: str = None):
-#
-#         self.components = components
-#         self.interconnects = interconnects
-#         self.objects = self.components + self.interconnects
-#
-#         self.set_objective(objective)
-#
-#     @property
-#     def design_vector(self):
-#
-#         design_vector = torch.empty(0)
-#
-#         for obj in self.objects:
-#             design_vector = torch.cat((design_vector, obj.design_vector))
-#
-#         # Export as numpy array
-#         design_vector = design_vector.detach().numpy()
-#
-#         return design_vector
-#
-#     def decompose_design_vector(self, design_vector):
-#
-#         # Get the size of the design vector for each design vector object
-#         design_vector_sizes = []
-#         for obj in self.objects:
-#             design_vector_size = len(obj.design_vector)
-#             design_vector_sizes.append(design_vector_size)
-#
-#         # Index values
-#         start, stop = 0, 0
-#         design_vectors = []
-#
-#         for i, size in enumerate(design_vector_sizes):
-#             # Increment stop index
-#
-#             stop += design_vector_sizes[i]
-#
-#             design_vector_i = design_vector[start:stop]
-#             design_vectors.append(design_vector_i)
-#
-#             # Increment start index
-#             start = stop
-#
-#         return design_vectors
-#
-#
-#     def set_objective(self, objective: str):
-#
-#         """
-#         Add an objective to the design study.
-#
-#         :param objective: The objective function to be added.
-#         :param options: The options for the objective function.
-#         """
-#
-#         # SELECT THE OBJECTIVE FUNCTION HANDLE
-#
-#         if objective == 'bounding box volume':
-#             _objective_function = bounding_box
-#         else:
-#             raise NotImplementedError
-#
-#         def objective_function(positions):
-#             return _objective_function(positions)
-#
-#         self.objective = objective_function
-#
-#     def plot(self):
-#         """
-#         Plot the model at a given state.
-#         """
-#
-#         # Create the plot objects
-#         objects = []
-#         colors = []
-#         for obj in self.objects:
-#             for position, radius in zip(obj.positions, obj.radii):
-#                 objects.append(pv.Sphere(radius=radius, center=position))
-#                 colors.append(obj.color)
-#
-#         # Plot the objects
-#         p = pv.Plotter(window_size=[1000, 1000])
-#
-#         for obj, color in zip(objects, colors):
-#             p.add_mesh(obj, color=color)
-#
-#         p.view_vector((5.0, 2, 3))
-#         p.add_floor('-z', lighting=True, color='tan', pad=1.0)
-#         p.enable_shadows()
-#         p.show_axes()
-#         p.show()
+class System:
+    def __init__(self, input_file):
+
+        self.input_file = input_file
+        self.input = self.read_input_file()
+
+
+        self.components = self.create_components()
+        self.interconnects = self.create_conductors()
+        self.objects = self.components + self.interconnects
+
+        objective = self.input['problem']['objective']
+        self.set_objective(objective)
+
+    def read_input_file(self):
+
+        with open("input.toml", mode="rb") as fp:
+            input = tomli.load(fp)
+
+        return input
+
+    def create_components(self):
+        components_inputs = self.input['components']
+
+        components = []
+        for component_inputs in components_inputs.items():
+            name = component_inputs[0]
+            component_inputs = component_inputs[1]
+            color = component_inputs['color']
+            degrees_of_freedom = component_inputs['degrees_of_freedom']
+            filepath = component_inputs['filepath']
+            ports = component_inputs['ports']
+            components.append(
+                Component(name=name, color=color, degrees_of_freedom=degrees_of_freedom, filepath=filepath,
+                          ports=ports))
+
+        return components
+
+    def create_conductors(self):
+        conductors_inputs = self.input['conductors']
+
+        conductors = []
+        for conductor_inputs in conductors_inputs.items():
+            name = conductor_inputs[0]
+            conductor_inputs = conductor_inputs[1]
+            component_1 = conductor_inputs['component_1']
+            component_1_port = conductor_inputs['component_1_port']
+            component_2 = conductor_inputs['component_2']
+            component_2_port = conductor_inputs['component_2_port']
+            radius = conductor_inputs['radius']
+            color = conductor_inputs['color']
+            linear_spline_segments = conductor_inputs['linear_spline_segments']
+            degrees_of_freedom = conductor_inputs['degrees_of_freedom']
+            conductors.append(Interconnect(name=name, component_1=component_1, component_1_port=component_1_port,
+                                           component_2=component_2, component_2_port=component_2_port, radius=radius,
+                                           color=color, linear_spline_segments=linear_spline_segments,
+                                           degrees_of_freedom=degrees_of_freedom))
+
+        return conductors
+
+    @property
+    def design_vector(self):
+
+        design_vector = torch.empty(0)
+
+        for obj in self.objects:
+            design_vector = torch.cat((design_vector, obj.design_vector))
+
+        # Export as numpy array
+        design_vector = design_vector.detach().numpy()
+
+        return design_vector
+
+    def decompose_design_vector(self, design_vector):
+
+        # Get the size of the design vector for each design vector object
+        design_vector_sizes = []
+        for obj in self.objects:
+            design_vector_size = len(obj.design_vector)
+            design_vector_sizes.append(design_vector_size)
+
+        # Index values
+        start, stop = 0, 0
+        design_vectors = []
+
+        for i, size in enumerate(design_vector_sizes):
+            # Increment stop index
+
+            stop += design_vector_sizes[i]
+
+            design_vector_i = design_vector[start:stop]
+            design_vectors.append(design_vector_i)
+
+            # Increment start index
+            start = stop
+
+        return design_vectors
+
+
+    def set_objective(self, objective: str):
+
+        """
+        Add an objective to the design study.
+
+        :param objective: The objective function to be added.
+        :param options: The options for the objective function.
+        """
+
+        # SELECT THE OBJECTIVE FUNCTION HANDLE
+
+        if objective == 'bounding box volume':
+            _objective_function = bounding_box
+        else:
+            raise NotImplementedError
+
+        def objective_function(positions):
+            return _objective_function(positions)
+
+        self.objective = objective_function
+
+    def plot(self):
+        """
+        Plot the model at a given state.
+        """
+
+        # Create the plot objects
+        objects = []
+        colors = []
+        for obj in self.objects:
+            for position, radius in zip(obj.positions, obj.radii):
+                objects.append(pv.Sphere(radius=radius, center=position))
+                colors.append(obj.color)
+
+        # Plot the objects
+        p = pv.Plotter(window_size=[1000, 1000])
+
+        for obj, color in zip(objects, colors):
+            p.add_mesh(obj, color=color)
+
+        p.view_vector((5.0, 2, 3))
+        p.add_floor('-z', lighting=True, color='tan', pad=1.0)
+        p.enable_shadows()
+        p.show_axes()
+        p.show()

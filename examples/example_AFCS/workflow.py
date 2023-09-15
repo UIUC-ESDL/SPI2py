@@ -7,46 +7,48 @@ Author:     Chad Peterson
 
 import torch
 import openmdao.api as om
-from SPI2py import KinematicsInterface, Kinematics, Component, Interconnect  # , System
+from SPI2py import KinematicsInterface, Kinematics, Component, Interconnect, System
 
 # %% Define the kinematics model
 
-import tomli
+# import tomli
+#
+# with open("input.toml", mode="rb") as fp:
+#     config = tomli.load(fp)
+#
+# components_inputs = config['components']
+# conductors_inputs = config['conductors']
+#
+# components = []
+# for component_inputs in components_inputs.items():
+#     name = component_inputs[0]
+#     component_inputs = component_inputs[1]
+#     color = component_inputs['color']
+#     degrees_of_freedom = component_inputs['degrees_of_freedom']
+#     filepath = component_inputs['filepath']
+#     ports = component_inputs['ports']
+#     components.append(Component(name=name, color=color, degrees_of_freedom=degrees_of_freedom, filepath=filepath, ports=ports))
+#
+# conductors = []
+# for conductor_inputs in conductors_inputs.items():
+#     name = conductor_inputs[0]
+#     conductor_inputs = conductor_inputs[1]
+#     component_1 = conductor_inputs['component_1']
+#     component_1_port = conductor_inputs['component_1_port']
+#     component_2 = conductor_inputs['component_2']
+#     component_2_port = conductor_inputs['component_2_port']
+#     radius = conductor_inputs['radius']
+#     color = conductor_inputs['color']
+#     linear_spline_segments = conductor_inputs['linear_spline_segments']
+#     degrees_of_freedom = conductor_inputs['degrees_of_freedom']
+#     conductors.append(Interconnect(name=name, component_1=component_1, component_1_port=component_1_port, component_2=component_2, component_2_port=component_2_port, radius=radius, color=color, linear_spline_segments=linear_spline_segments, degrees_of_freedom=degrees_of_freedom))
 
-with open("input.toml", mode="rb") as fp:
-    config = tomli.load(fp)
 
-components_inputs = config['components']
-conductors_inputs = config['conductors']
+# kinematics = Kinematics(components=components,
+#                         interconnects=conductors,
+#                         objective='bounding box volume')
 
-components = []
-for component_inputs in components_inputs.items():
-    name = component_inputs[0]
-    component_inputs = component_inputs[1]
-    color = component_inputs['color']
-    degrees_of_freedom = component_inputs['degrees_of_freedom']
-    filepath = component_inputs['filepath']
-    ports = component_inputs['ports']
-    components.append(Component(name=name, color=color, degrees_of_freedom=degrees_of_freedom, filepath=filepath, ports=ports))
-
-conductors = []
-for conductor_inputs in conductors_inputs.items():
-    name = conductor_inputs[0]
-    conductor_inputs = conductor_inputs[1]
-    component_1 = conductor_inputs['component_1']
-    component_1_port = conductor_inputs['component_1_port']
-    component_2 = conductor_inputs['component_2']
-    component_2_port = conductor_inputs['component_2_port']
-    radius = conductor_inputs['radius']
-    color = conductor_inputs['color']
-    linear_spline_segments = conductor_inputs['linear_spline_segments']
-    degrees_of_freedom = conductor_inputs['degrees_of_freedom']
-    conductors.append(Interconnect(name=name, component_1=component_1, component_1_port=component_1_port, component_2=component_2, component_2_port=component_2_port, radius=radius, color=color, linear_spline_segments=linear_spline_segments, degrees_of_freedom=degrees_of_freedom))
-
-
-kinematics = Kinematics(components=components,
-                        interconnects=conductors,
-                        objective='bounding box volume')
+system = System('input.toml')
 
 # %% Define the initial spatial configuration
 
