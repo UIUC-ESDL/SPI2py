@@ -11,16 +11,10 @@ from src.SPI2py.group_model.utilities import kreisselmeier_steinhauser
 
 class KinematicsInterface(ExplicitComponent):
 
-    def initialize(self):
-
-        self.options.declare('components', types=list)
-        self.options.declare('interconnects', types=list)
-        self.options.declare('objective', types=str)
-
     def setup(self):
 
         self.kinematics = self.options['kinematics']
-        x_default = self.kinematics.design_vector
+        x_default = torch.zeros(self.kinematics.design_vector.shape)
         # f_default = self.kinematics_interface.calculate_objective(x_default)
         # g_default = self.kinematics_interface.calculate_constraints(x_default)
 
@@ -81,7 +75,7 @@ class Kinematics:
 
         self.set_objective(objective)
 
-
+    # TODO This should not return positions
     @property
     def design_vector(self):
 
@@ -246,9 +240,8 @@ class Kinematics:
         for obj, color in zip(objects, colors):
             p.add_mesh(obj, color=color)
 
-        # p.view_vector((5.0, 2, 3))
-        p.view_isometric()
-        # p.add_floor('-z', color='tan', pad=1.0)
-        # p.enable_shadows()
+        # p.view_isometric()
+        p.view_xy()
         p.show_axes()
+        p.show_bounds()
         p.show()
