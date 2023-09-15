@@ -95,7 +95,9 @@ class Component:
 
     @property
     def object_dict(self):
-        return {self.__repr__(): {'positions': self.positions, 'radii': self.radii}}
+        return {self.__repr__(): {'positions': self.positions,
+                                  'radii': self.radii,
+                                  'port_indices': self.port_indices}}
 
     def decompose_design_vector(self, design_vector: torch.tensor) -> dict:
         """
@@ -147,7 +149,9 @@ class Component:
                                               translation,
                                               rotation).T
 
-        object_dict = {self.__repr__(): {'positions': new_positions, 'radii': self.radii}}
+        object_dict = {self.__repr__(): {'positions': new_positions,
+                                         'radii': self.radii,
+                                         'port_indices': self.port_indices}}
 
         return object_dict
 
@@ -201,38 +205,33 @@ class Interconnect:
 
     def __init__(self,
                  name,
-                 component_1_name,
-                 component_1_port_index,
-                 component_2_name,
-                 component_2_port_index,
+                 component_1,
+                 component_1_port,
+                 component_2,
+                 component_2_port,
                  radius,
-                 color,
-                 number_of_waypoints,
-                 degrees_of_freedom):
+                 color='black',
+                 linear_spline_segments=1,
+                 degrees_of_freedom=()):
 
         self.name = name
-
-        self.component_1_name = component_1_name
-        self.component_2_name = component_2_name
-
-        self.component_1_port_index = component_1_port_index
-        self.component_2_port_index = component_2_port_index
-
+        self.component_1 = component_1
+        self.component_1_port = component_1_port
+        self.component_2 = component_2
+        self.component_2_port = component_2_port
         self.radius = radius
         self.color = color
-
-        self.number_of_waypoints = number_of_waypoints
-        self.segments_per_interconnect = self.number_of_waypoints + 1
-
+        self.linear_spline_segments = linear_spline_segments
         self.degrees_of_freedom = degrees_of_freedom
 
+        self.number_of_bends = linear_spline_segments-1
         self.spheres_per_segment = 25
 
-        self.positions = torch.empty((self.spheres_per_segment*self.segments_per_interconnect-6, 3), dtype=torch.float64)
-        self.radii = torch.empty((self.spheres_per_segment*self.segments_per_interconnect-4, 1), dtype=torch.float64)
+        self.positions = torch.empty((self.spheres_per_segment * self.linear_spline_segments - 6, 3), dtype=torch.float64)
+        self.radii = torch.empty((self.spheres_per_segment * self.linear_spline_segments - 4, 1), dtype=torch.float64)
 
         # Default design variables
-        self.waypoint_positions = torch.zeros((self.number_of_waypoints, 3), dtype=torch.float64)
+        self.waypoint_positions = torch.zeros((self.number_of_bends, 3), dtype=torch.float64)
 
     def __repr__(self):
         return self.name
@@ -244,12 +243,15 @@ class Interconnect:
 
     def calculate_positions(self, design_vector, objects_dict):
 
-        design_vector = design_vector.reshape((self.number_of_waypoints, 3))
+        design_vector = design_vector.reshape((self.number_of_bends, 3))
 
         object_dict = {}
 
-        pos_1 = objects_dict[self.component_1_name]['positions'][self.component_1_port_index]
-        pos_2 = objects_dict[self.component_2_name]['positions'][self.component_2_port_index]
+        port_index_1 = objects_dict[self.component_1]['port_indices'][self.component_1_port]
+        port_index_2 = objects_dict[self.component_2]['port_indices'][self.component_2_port]
+
+        pos_1 = objects_dict[self.component_1]['positions'][port_index_1]
+        pos_2 = objects_dict[self.component_2]['positions'][port_index_2]
 
         node_positions = torch.vstack((pos_1, design_vector.reshape(-1, 3), pos_2))
 
@@ -260,11 +262,11 @@ class Interconnect:
         n = self.spheres_per_segment
         increment = diff_arr / n
 
-        points = torch.zeros((self.spheres_per_segment*self.segments_per_interconnect, 3), dtype=torch.float64)
+        points = torch.zeros((self.spheres_per_segment * self.linear_spline_segments, 3), dtype=torch.float64)
         points[0] = start_arr[0]
         points[-1] = stop_arr[-1]
 
-        for i in range(self.segments_per_interconnect):
+        for i in range(self.linear_spline_segments):
             points[i*n:(i+1)*n] = start_arr[i] + increment[i] * torch.arange(1, n+1).reshape(-1, 1)
 
         # Remove start and stop points
