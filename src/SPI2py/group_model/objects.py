@@ -4,12 +4,19 @@ TODO Can I remove movement classes if I just use degrees of freedom and referenc
 """
 
 import tomli
+from itertools import combinations, product
 
 from src.SPI2py.group_model.component_geometry.spherical_decomposition_methods.finite_sphere_method import read_xyzr_file
 from src.SPI2py.group_model.component_kinematics.spatial_transformations import affine_transformation
 from src.SPI2py.group_model.component_kinematics.bounding_volumes import bounding_box
 from src.SPI2py.group_model.component_kinematics.distance_calculations import signed_distances
 from src.SPI2py.group_model.utilities import kreisselmeier_steinhauser
+
+from src.SPI2py.group_model.component_kinematics.distance_calculations import signed_distances
+from src.SPI2py.group_model.component_kinematics.bounding_volumes import bounding_box
+from src.SPI2py.group_model.utilities import kreisselmeier_steinhauser
+
+
 
 import torch
 from typing import Sequence
@@ -48,6 +55,9 @@ class Component:
         self.rotation = torch.tensor([0, 0, 0], dtype=torch.float64)
         self.scale = torch.tensor([1, 1, 1], dtype=torch.float64)
 
+
+        self.num_spheres = len(self.positions)
+
     def __repr__(self):
         return self.name
 
@@ -67,7 +77,7 @@ class Component:
         return torch.tensor([x_mean, y_mean, z_mean], dtype=torch.float64)
 
     @property
-    def design_vector(self):
+    def design_vector_size(self):
 
         design_vector = []
 
@@ -92,7 +102,7 @@ class Component:
         if 'sz' in self.degrees_of_freedom:
             design_vector.append(self.scale[2])
 
-        return torch.tensor(design_vector)
+        return len(torch.tensor(design_vector))
 
     @property
     def object_dict(self):
@@ -234,13 +244,27 @@ class Interconnect:
         # Default design variables
         self.waypoint_positions = torch.zeros((self.number_of_bends, 3), dtype=torch.float64)
 
+        # TODO Add waypoints?
+        self.num_spheres = len(self.positions)
+
+        # TODO
+        num_segments = linear_spline_segments
+        num_spheres_per_segment = self.spheres_per_segment
+        segments = torch.arange(num_segments)
+
+        # Collocation constraints
+        collocation_constraints = num_segments - 1
+        collocation_start_indices = segments * torch.tensor([num_spheres_per_segment]) - 1
+        collocation_stop_indices = segments * torch.tensor([num_spheres_per_segment])
+        collocation_constraint_indices = torch.vstack((collocation_start_indices, collocation_stop_indices)).T
+
     def __repr__(self):
         return self.name
 
     @property
-    def design_vector(self):
+    def design_vector_size(self):
         # TODO Consider not all DOF being used
-        return self.waypoint_positions.flatten()
+        return len(self.waypoint_positions.flatten())
 
     def calculate_positions(self, design_vector, objects_dict):
 
@@ -299,8 +323,17 @@ class System:
         self.interconnects = self.create_conductors()
         self.objects = self.components + self.interconnects
 
+        self.component_component_pairs = list(combinations(self.components, 2))
+        self.component_interconnect_pairs = list(product(self.components, self.interconnects))
+        self.interconnect_interconnect_pairs = list(combinations(self.interconnects, 2))
+
+
         objective = self.input['problem']['objective']
         self.set_objective(objective)
+
+        # TODO Convert local indexing to global indexing...
+
+        # TODO Component-Interconnect collocation constraints
 
     def read_input_file(self):
 
@@ -363,7 +396,7 @@ class System:
         # Get the size of the design vector for each design vector object
         design_vector_sizes = []
         for obj in self.objects:
-            design_vector_size = len(obj.design_vector)
+            design_vector_size = obj.design_vector_size
             design_vector_sizes.append(design_vector_size)
 
         # Index values
@@ -405,6 +438,93 @@ class System:
 
         self.objective = objective_function
 
+
+    def calculate_positions(self, design_vector):
+
+        design_vectors = self.decompose_design_vector(design_vector)
+        design_vectors_components = design_vectors[:len(self.components)]
+        design_vectors_interconnects = design_vectors[len(self.components):]
+
+        objects_dict = {}
+
+        for component, design_vector in zip(self.components, design_vectors_components):
+            object_dict = component.calculate_positions(design_vector=design_vector)
+            objects_dict = {**objects_dict, **object_dict}
+
+        for interconnect, design_vector in zip(self.interconnects, design_vectors_interconnects):
+            object_dict = interconnect.calculate_positions(design_vector=design_vector, objects_dict=objects_dict)
+            objects_dict = {**objects_dict, **object_dict}
+
+
+        return objects_dict
+
+    def set_default_positions(self, default_positions_dict):
+
+        objects_dict = {}
+
+        # Map components first
+        for component in self.components:
+            translation, rotation = list(default_positions_dict[component.__repr__()].values())
+            translation = torch.tensor(translation, dtype=torch.float64).reshape(3, 1)
+            rotation = torch.tensor(rotation, dtype=torch.float64).reshape(3, 1)
+            component.set_default_positions(translation, rotation)
+            objects_dict = {**objects_dict, **component.object_dict}
+
+        # Now interconnects
+        for interconnect in self.interconnects:
+            waypoints = list(default_positions_dict[interconnect.__repr__()].values())
+            waypoints = torch.tensor(waypoints, dtype=torch.float64)
+            interconnect.set_default_positions(waypoints, objects_dict)
+
+
+
+    def set_positions(self, objects_dict):
+        """set_positions Sets the positions of the objects in the layout.
+
+        Takes a flattened design vector and sets the positions of the objects in the layout.
+
+        :param positions_dict: A dictionary of positions for each object in the layout.
+        :type positions_dict: dict
+        """
+
+        for obj in self.objects:
+            obj.set_positions(objects_dict)
+
+
+    def collision_detection(self, x, object_pair):
+
+        # Calculate the positions of all spheres in layout given design vector x
+        positions_dict = self.calculate_positions(x)
+
+        signed_distance_vals = signed_distances(positions_dict, object_pair)
+        max_signed_distance = kreisselmeier_steinhauser(signed_distance_vals)
+
+
+
+        return max_signed_distance
+
+
+    def calculate_objective(self, x):
+
+        positions_dict = self.calculate_positions(x)
+
+        positions_array = torch.vstack([positions_dict[key]['positions'] for key in positions_dict.keys()])
+
+        objective = self.objective(positions_array)
+
+        return objective
+
+    def calculate_constraints(self, x):
+
+
+        g_components_components = self.collision_detection(x, self.component_component_pairs).reshape(1,1)
+        g_components_interconnects = self.collision_detection(x, self.component_interconnect_pairs).reshape(1,1)
+        g_interconnects_interconnects = self.collision_detection(x, self.interconnect_interconnect_pairs).reshape(1,1)
+
+        g = torch.cat((g_components_components, g_components_interconnects, g_interconnects_interconnects))
+
+        return g
+
     def plot(self):
         """
         Plot the model at a given state.
@@ -415,7 +535,7 @@ class System:
         colors = []
         for obj in self.objects:
             for position, radius in zip(obj.positions, obj.radii):
-                objects.append(pv.Sphere(radius=radius, center=position))
+                objects.append(pv.Sphere(radius=radius, center=position, theta_resolution=30, phi_resolution=30))
                 colors.append(obj.color)
 
         # Plot the objects
@@ -424,8 +544,8 @@ class System:
         for obj, color in zip(objects, colors):
             p.add_mesh(obj, color=color)
 
-        p.view_vector((5.0, 2, 3))
-        p.add_floor('-z', lighting=True, color='tan', pad=1.0)
-        p.enable_shadows()
+        # p.view_isometric()
+        p.view_xy()
         p.show_axes()
+        p.show_bounds()
         p.show()

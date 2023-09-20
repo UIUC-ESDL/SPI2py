@@ -5,9 +5,10 @@ Author:     Chad Peterson
 
 # %% Import packages
 
+import tomli
 import torch
 import openmdao.api as om
-from SPI2py import KinematicsInterface, Kinematics, Component, Interconnect, System
+from SPI2py import KinematicsInterface, Component, Interconnect, System
 
 # %% Define the kinematics model
 
@@ -56,7 +57,7 @@ with open("spatial_configurations.toml", mode="rb") as fp:
     default_positions_dict = tomli.load(fp)
 
 
-kinematics.set_default_positions(default_positions_dict)
+system.set_default_positions(default_positions_dict)
 
 # %% Define the system
 
@@ -64,7 +65,7 @@ prob = om.Problem()
 model = prob.model
 
 kinematics_component = KinematicsInterface()
-kinematics_component.options.declare('kinematics', default=kinematics)
+kinematics_component.options.declare('kinematics', default=system)
 
 model.add_subsystem('kinematics', kinematics_component, promotes=['*'])
 
