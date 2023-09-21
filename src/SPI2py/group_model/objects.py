@@ -23,6 +23,15 @@ from typing import Sequence
 import pyvista as pv
 
 
+class RigidBody:
+    pass
+
+class DeformableBody:
+    pass
+
+class LinearSpline:
+    pass
+
 class Component:
 
     def __init__(self,
