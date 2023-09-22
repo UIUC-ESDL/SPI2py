@@ -72,6 +72,7 @@ def signed_distances_spheres_spheres(centers_a: torch.tensor,
     """
     Calculates the pairwise signed distance between two sets of spheres.
 
+    # TODO Check convention
     Convention:
     Signed Distance < 0 means no overlap
     Signed Distance = 0 means tangent

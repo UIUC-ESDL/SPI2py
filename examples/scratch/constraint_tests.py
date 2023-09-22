@@ -45,6 +45,17 @@ def objective(x):
 
     return f
 
+def objective_grad(x):
+
+    x = torch.tensor(x, requires_grad=True)
+    f = objective(x)
+    grad_f = jacobian(objective, x)
+
+    f = f.detach().numpy()
+    grad_f = grad_f.detach().numpy()
+
+    return f, grad_f
+
 def constraint(x):
 
     g = []
@@ -53,6 +64,24 @@ def constraint(x):
         g.append(gi)
 
     return g
+
+def constraint_torch(x):
+
+    g = torch.empty(0)
+    for i in range(len(x)-1):
+        gi = 0.1 - (x[i] - x[i+1])**2
+        g = torch.hstack((g, gi))
+
+    return g
+
+def grad_constraint(x):
+
+        x = torch.tensor(x, requires_grad=True)
+        grad_g = jacobian(constraint_torch, x)
+
+        grad_g = grad_g.detach().numpy()
+
+        return grad_g
 
 # def constant(x, c):
 #
@@ -70,6 +99,17 @@ def run_minimize(x):
     sol = minimize(objective, x, method='SLSQP', constraints=nlcs)
 
     return sol
+
+def run_minimize_grad(x):
+
+        num_constraints = len(x) - 1
+        lb = -np.inf * np.ones(num_constraints)
+        ub = np.zeros(num_constraints)
+        nlcs = NonlinearConstraint(constraint, lb, ub, jac=grad_constraint)
+
+        sol = minimize(objective_grad, x, method='SLSQP', jac=True, constraints=nlcs)
+
+        return sol
 
 def run_minimize_eq(x, num_eq_constraints):
 
@@ -131,4 +171,8 @@ def state_constraint(x):
 # dg = approx_fprime(x0, state_constraint, 1e-6)
 # print('Shape:', dg.shape)
 
-sol3 = run_minimize_bound(x1, 100)
+# sol3 = run_minimize_bound(x1, 100)
+
+# run_minimize_grad(x1)
+# grad_constraint(x0)
+# print(constraint(x0))
