@@ -6,7 +6,7 @@ import torch
 from torch import sin, cos
 
 
-def affine_transformation(reference_position, positions, translation, rotation):
+def rigid_body_transformation(reference_position, positions, translation, rotation):
     """
     Apply translation and rotation to an object represented by a set of points.
 

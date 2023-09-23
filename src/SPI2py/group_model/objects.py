@@ -5,32 +5,22 @@ TODO Can I remove movement classes if I just use degrees of freedom and referenc
 
 import tomli
 from itertools import combinations, product
-
-from src.SPI2py.group_model.component_geometry.spherical_decomposition_methods.finite_sphere_method import read_xyzr_file
-from src.SPI2py.group_model.component_kinematics.spatial_transformations import affine_transformation
-from src.SPI2py.group_model.component_kinematics.bounding_volumes import bounding_box
-from src.SPI2py.group_model.component_kinematics.distance_calculations import signed_distances
-from src.SPI2py.group_model.utilities import kreisselmeier_steinhauser
-
-from src.SPI2py.group_model.component_kinematics.distance_calculations import signed_distances
-from src.SPI2py.group_model.component_kinematics.bounding_volumes import bounding_box
-from src.SPI2py.group_model.utilities import kreisselmeier_steinhauser
-
-
-
 import torch
 from typing import Sequence
 import pyvista as pv
 
+from src.SPI2py.group_model.component_geometry.spherical_decomposition_methods.finite_sphere_method import read_xyzr_file
+from src.SPI2py.group_model.component_kinematics.spatial_transformations import rigid_body_transformation
+from src.SPI2py.group_model.component_kinematics.bounding_volumes import bounding_box
+from src.SPI2py.group_model.component_kinematics.distance_calculations import signed_distances
+from src.SPI2py.group_model.utilities import kreisselmeier_steinhauser
 
-class RigidBody:
-    pass
+from src.SPI2py.group_model.component_kinematics.distance_calculations import signed_distances
+from src.SPI2py.group_model.component_kinematics.bounding_volumes import bounding_box
+from src.SPI2py.group_model.utilities import kreisselmeier_steinhauser
 
-class DeformableBody:
-    pass
 
-class LinearSpline:
-    pass
+
 
 class Component:
 
@@ -164,10 +154,10 @@ class Component:
 
         translation, rotation = self.assemble_transformation_vectors(design_vector_dict)
 
-        new_positions = affine_transformation(self.reference_position.reshape(-1,1),
-                                              self.positions.T,
-                                              translation,
-                                              rotation).T
+        new_positions = rigid_body_transformation(self.reference_position.reshape(-1, 1),
+                                                  self.positions.T,
+                                                  translation,
+                                                  rotation).T
 
         object_dict = {self.__repr__(): {'positions': new_positions,
                                          'radii': self.radii,
@@ -180,10 +170,10 @@ class Component:
         Calculates the positions of the object's spheres.
         """
 
-        new_positions = affine_transformation(self.reference_position.reshape(-1,1),
-                                              self.positions.T,
-                                              translation,
-                                              rotation).T
+        new_positions = rigid_body_transformation(self.reference_position.reshape(-1, 1),
+                                                  self.positions.T,
+                                                  translation,
+                                                  rotation).T
 
         self.positions = new_positions
         self.translation = translation
@@ -329,7 +319,7 @@ class System:
 
 
         self.components = self.create_components()
-        self.interconnects = self.create_conductors()
+        self.interconnects, self.collocation_constraint_indices = self.create_conductors()
         self.objects = self.components + self.interconnects
 
         self.component_component_pairs = list(combinations(self.components, 2))
@@ -369,26 +359,48 @@ class System:
         return components
 
     def create_conductors(self):
+
+        # TODO Define collocation constraints
+
         conductors_inputs = self.input['conductors']
 
         conductors = []
+        collocation_constraint_indices = []
         for conductor_inputs in conductors_inputs.items():
             name = conductor_inputs[0]
             conductor_inputs = conductor_inputs[1]
+
+
             component_1 = conductor_inputs['component_1']
             component_1_port = conductor_inputs['component_1_port']
             component_2 = conductor_inputs['component_2']
             component_2_port = conductor_inputs['component_2_port']
+
+            component_1_index = self.components.index([i for i in self.components if repr(i) == component_1][0])
+            component_2_index = self.components.index([i for i in self.components if repr(i) == component_2][0])
+            component_1_port_index = self.components[component_1_index].port_indices[component_1_port]
+            component_2_port_index = self.components[component_2_index].port_indices[component_2_port]
+            collocation_constraint_1 = [component_1_port_index, 0]
+            collocation_constraint_2 = [component_2_port_index, -1]
+            collocation_constraint_indices.append(collocation_constraint_1)
+            collocation_constraint_indices.append(collocation_constraint_2)
+
             radius = conductor_inputs['radius']
             color = conductor_inputs['color']
             linear_spline_segments = conductor_inputs['linear_spline_segments']
             degrees_of_freedom = conductor_inputs['degrees_of_freedom']
-            conductors.append(Interconnect(name=name, component_1=component_1, component_1_port=component_1_port,
+
+            conductors.append(Interconnect(name=name,
+                                           component_1=component_1, component_1_port=component_1_port,
                                            component_2=component_2, component_2_port=component_2_port, radius=radius,
-                                           color=color, linear_spline_segments=linear_spline_segments,
+                                           color=color,
+                                           linear_spline_segments=linear_spline_segments,
                                            degrees_of_freedom=degrees_of_freedom))
 
-        return conductors
+        return conductors, collocation_constraint_indices
+
+
+
 
     @property
     def design_vector_size(self):
@@ -448,8 +460,8 @@ class System:
         self.objective = objective_function
 
 
-    def calculate_positions(self, design_vector):
-
+    def calculate_positions(self, design_vector, limit_spheres=False):
+        # TODO Vectorize...
         design_vectors = self.decompose_design_vector(design_vector)
         design_vectors_components = design_vectors[:len(self.components)]
         design_vectors_interconnects = design_vectors[len(self.components):]
@@ -503,7 +515,7 @@ class System:
     def collision_detection(self, x, object_pair):
 
         # Calculate the positions of all spheres in layout given design vector x
-        positions_dict = self.calculate_positions(x)
+        positions_dict = self.calculate_positions(x, limit_spheres=True)
 
         signed_distance_vals = signed_distances(positions_dict, object_pair)
         max_signed_distance = kreisselmeier_steinhauser(signed_distance_vals)

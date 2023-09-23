@@ -11,14 +11,16 @@ class KinematicsInterface(ExplicitComponent):
 
         self.kinematics = self.options['kinematics']
         x_default = torch.zeros(self.kinematics.design_vector_size)
-        # f_default = self.kinematics_interface.calculate_objective(x_default)
-        # g_default = self.kinematics_interface.calculate_constraints(x_default)
+        f_default = self.kinematics.calculate_objective(x_default)
+        g_default = self.kinematics.calculate_constraints(x_default)
 
         # TODO Autoconfigure shape of design vector...
 
         self.add_input('x', val=x_default)
-        self.add_output('f', val=1.0)
-        self.add_output('g', val=[-1.0, -1.0, -1.0])
+        self.add_output('f', val=f_default)
+        self.add_output('g', val=g_default)
+
+        # TODO Set up collocation_constraints
 
 
     def setup_partials(self):
@@ -56,26 +58,3 @@ class KinematicsInterface(ExplicitComponent):
 
         partials['f', 'x'] = jac_f
         partials['g', 'x'] = jac_g
-
-
-class Kinematics:
-
-    def __init__(self):
-        pass
-
-    def assemble_transformation_matrix(self):
-        pass
-
-    def assemble_transformation_matrices(self):
-        pass
-
-    def apply_spatial_transformations(self):
-        pass
-
-    def collision_detection(self):
-        pass
-
-    def bounding_box_volume(self):
-        pass
-
-

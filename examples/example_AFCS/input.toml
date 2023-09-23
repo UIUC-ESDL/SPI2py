@@ -13,6 +13,8 @@ objective = "bounding box volume"
 color='purple'
 degrees_of_freedom=['x', 'y', 'z', 'rx', 'ry', 'rz']
 filepath='part_models/radiator_and_ion_exchanger.xyzr'
+num_spheres_collision_detection=25
+num_spheres_visualization=150
 ports=[{'name'= 'left', 'origin'= [-1.475, 0, 0], 'radius'= 0.05},
        {'name'= 'right', 'origin'= [1.475, 0, 0], 'radius'= 0.05}]
 
@@ -20,6 +22,8 @@ ports=[{'name'= 'left', 'origin'= [-1.475, 0, 0], 'radius'= 0.05},
 color='purple'
 degrees_of_freedom=['x', 'y', 'z', 'rx', 'ry', 'rz']
 filepath='part_models/radiator_and_ion_exchanger.xyzr'
+num_spheres_collision_detection=25
+num_spheres_visualization=150
 ports=[{'name'= 'left', 'origin'= [-1.475, 0, 0], 'radius'= 0.05},
        {'name'= 'right', 'origin'= [1.475, 0, 0], 'radius'= 0.05}]
 
@@ -27,6 +31,8 @@ ports=[{'name'= 'left', 'origin'= [-1.475, 0, 0], 'radius'= 0.05},
 color='blue'
 degrees_of_freedom=['x', 'y', 'z', 'rx', 'ry', 'rz']
 filepath='part_models/pump.xyzr'
+num_spheres_collision_detection=25
+num_spheres_visualization=150
 ports=[{'name'= 'top', 'origin'= [0, 0.275, 0], 'radius'= 0.05},
        {'name'= 'bottom', 'origin'= [0, -0.275, 0], 'radius'= 0.05}]
 
@@ -34,6 +40,8 @@ ports=[{'name'= 'top', 'origin'= [0, 0.275, 0], 'radius'= 0.05},
 color='blue'
 degrees_of_freedom=['x', 'y', 'z', 'rx', 'ry', 'rz']
 filepath='part_models/pump.xyzr'
+num_spheres_collision_detection=25
+num_spheres_visualization=150
 ports=[{'name'= 'top', 'origin'= [0, 0.275, 0], 'radius'= 0.05},
        {'name'= 'bottom', 'origin'= [0, -0.275, 0], 'radius'= 0.05}]
 
@@ -41,6 +49,8 @@ ports=[{'name'= 'top', 'origin'= [0, 0.275, 0], 'radius'= 0.05},
 color='yellow'
 degrees_of_freedom=['x', 'y', 'z', 'rx', 'ry', 'rz']
 filepath='part_models/particle_filter.xyzr'
+num_spheres_collision_detection=25
+num_spheres_visualization=150
 ports=[{'name'= 'top', 'origin'= [0, 0.215, 0], 'radius'= 0.05},
        {'name'= 'bottom', 'origin'= [0, -0.215, 0], 'radius'= 0.05}]
 
@@ -48,6 +58,8 @@ ports=[{'name'= 'top', 'origin'= [0, 0.215, 0], 'radius'= 0.05},
 color='yellow'
 degrees_of_freedom=['x', 'y', 'z', 'rx', 'ry', 'rz']
 filepath='part_models/particle_filter.xyzr'
+num_spheres_collision_detection=25
+num_spheres_visualization=150
 ports=[{'name'= 'top', 'origin'= [0, 0.215, 0], 'radius'= 0.05},
        {'name'= 'bottom', 'origin'= [0, -0.215, 0], 'radius'= 0.05}]
 
@@ -55,6 +67,8 @@ ports=[{'name'= 'top', 'origin'= [0, 0.215, 0], 'radius'= 0.05},
 color='green'
 degrees_of_freedom=['x', 'y', 'z', 'rx', 'ry', 'rz']
 filepath='part_models/fuel_cell_stack.xyzr'
+num_spheres_collision_detection=25
+num_spheres_visualization=150
 ports=[{'name'= 'top', 'origin'= [0, 0.85, 0], 'radius'= 0.05},
        {'name'= 'bottom', 'origin'= [0, -0.85, 0], 'radius'= 0.05}]
 
@@ -62,6 +76,8 @@ ports=[{'name'= 'top', 'origin'= [0, 0.85, 0], 'radius'= 0.05},
 color='green'
 degrees_of_freedom=['x', 'y', 'z', 'rx', 'ry', 'rz']
 filepath='part_models/fuel_cell_stack.xyzr'
+num_spheres_collision_detection=25
+num_spheres_visualization=150
 ports=[{'name'= 'top', 'origin'= [0, 0.85, 0], 'radius'= 0.05},
        {'name'= 'bottom', 'origin'= [0, -0.85, 0], 'radius'= 0.05}]
 
@@ -69,6 +85,8 @@ ports=[{'name'= 'top', 'origin'= [0, 0.85, 0], 'radius'= 0.05},
 color='gray'
 degrees_of_freedom=[]
 filepath='part_models/WEG_heater_and_pump.xyzr'
+num_spheres_collision_detection=25
+num_spheres_visualization=150
 ports=[{'name'= 'top', 'origin'= [0, 0.9665, 0], 'radius'= 0.05},
        {'name'= 'left', 'origin'= [-0.8775, 0, 0], 'radius'= 0.05}]
 
@@ -76,6 +94,8 @@ ports=[{'name'= 'top', 'origin'= [0, 0.9665, 0], 'radius'= 0.05},
 color='red'
 degrees_of_freedom=[]
 filepath='part_models/heater_core.xyzr'
+num_spheres_collision_detection=25
+num_spheres_visualization=150
 ports=[{'name'= 'left', 'origin'= [-0.7225, 0, 0], 'radius'= 0.05},
        {'name'= 'right', 'origin'= [0.7225, 0, 0], 'radius'= 0.05}]
 
@@ -90,6 +110,7 @@ radius=0.05
 color='black'
 linear_spline_segments=1
 degrees_of_freedom=[]
+
 
 [conductors.c1b_c2b]
 component_1='radiator_and_ion_exchanger_1b'
@@ -180,6 +201,9 @@ radius=0.05
 color='black'
 linear_spline_segments=1
 degrees_of_freedom=[]
+
+[system]
+
 
 [geometry]
 
