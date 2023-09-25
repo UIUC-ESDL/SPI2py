@@ -41,8 +41,6 @@ class Component:
         # Extract the positions and radii of the spheres from the xyzr file
         self.positions, self.radii = read_xyzr_file(filepath)
 
-        self.homogenous_positions = torch.vstack((self.positions.T, torch.ones((1, len(self.positions)))))
-
         # Initialize the ports
         self.port_indices = {}
         if self.ports is not None:
@@ -53,12 +51,10 @@ class Component:
 
         self.num_spheres = len(self.positions)
 
-        self.design_vector_indices = self.configure_design_vector_indices()
+        self.design_vector_indices = {dof: i for i, dof in enumerate(self.degrees_of_freedom)}
+        self.design_vector_size = len(self.design_vector_indices)
 
     def __repr__(self):
-        return self.name
-
-    def __str__(self):
         return self.name
 
     @property
@@ -79,71 +75,6 @@ class Component:
         return {self.__repr__(): {'positions': self.positions,
                                   'radii': self.radii,
                                   'port_indices': self.port_indices}}
-
-    def configure_design_vector_indices(self):
-
-        design_vector_indices = {}
-        for i, dof in enumerate(self.degrees_of_freedom):
-            design_vector_indices[dof] = i
-
-        return design_vector_indices
-
-    @property
-    def design_vector_size(self):
-
-        design_vector = []
-
-        if 'x' in self.degrees_of_freedom:
-            design_vector.append(self.translation[0])
-        if 'y' in self.degrees_of_freedom:
-            design_vector.append(self.translation[1])
-        if 'z' in self.degrees_of_freedom:
-            design_vector.append(self.translation[2])
-
-        if 'rx' in self.degrees_of_freedom:
-            design_vector.append(self.rotation[0])
-        if 'ry' in self.degrees_of_freedom:
-            design_vector.append(self.rotation[1])
-        if 'rz' in self.degrees_of_freedom:
-            design_vector.append(self.rotation[2])
-
-        return len(torch.tensor(design_vector))
-
-    def decompose_design_vector(self, design_vector: torch.tensor) -> dict:
-        """
-        Takes a 1D design vector and decomposes it into a dictionary of design variables.
-        """
-
-        if len(design_vector) != len(self.degrees_of_freedom):
-            raise ValueError('The specified design vector must be the same length as the degrees of freedom.')
-
-        design_vector_dict = {}
-
-        for i, dof in enumerate(self.degrees_of_freedom):
-            design_vector_dict[dof] = design_vector[i]
-
-        return design_vector_dict
-
-    def assemble_transformation_vectors_old(self, design_vector_dict):
-
-        translation = torch.zeros((3, 1), dtype=torch.float64)
-        rotation = torch.zeros((3, 1), dtype=torch.float64)
-
-        if 'x' in self.degrees_of_freedom:
-            translation[0] = design_vector_dict['x']
-        if 'y' in self.degrees_of_freedom:
-            translation[1] = design_vector_dict['y']
-        if 'z' in self.degrees_of_freedom:
-            translation[2] = design_vector_dict['z']
-
-        if 'rx' in self.degrees_of_freedom:
-            rotation[0] = design_vector_dict['rx']
-        if 'ry' in self.degrees_of_freedom:
-            rotation[1] = design_vector_dict['ry']
-        if 'rz' in self.degrees_of_freedom:
-            rotation[2] = design_vector_dict['rz']
-
-        return translation, rotation
 
     def assemble_transformation_vectors(self, vector, check_dof=True):
 
@@ -175,7 +106,7 @@ class Component:
 
     def assemble_homogenous_transformation_matrix(self, vector, check_dof=True):
 
-        translation, rotation = self.assemble_transformation_vectors(vector)
+        translation, rotation = self.assemble_transformation_vectors(vector, check_dof)
 
         # Initialize the transformation matrix
         t = torch.eye(4, dtype=torch.float64)
