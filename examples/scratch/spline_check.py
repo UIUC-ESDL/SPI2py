@@ -1,5 +1,36 @@
 import numpy as np
 
+def calculate_position_spline_segment(positions, control_point_1, control_point_2):
+
+    num_spheres = positions.shape[0]
+
+    # Fx ctrl points
+    delta_cp_l = control_point_1 - cp_l
+    delta_cp_r = control_point_2 - cp_r
+
+    # Left update
+    dlx = np.linspace(delta_cp_l[0], 0, num_spheres)
+    dly = np.linspace(delta_cp_l[1], 0, num_spheres)
+    dlz = np.linspace(delta_cp_l[2], 0, num_spheres)
+    dl = np.vstack((dlx, dly, dlz)).T
+
+    # Right update
+    drx = np.linspace(0, delta_cp_r[0], num_spheres)
+    dry = np.linspace(0, delta_cp_r[1], num_spheres)
+    drz = np.linspace(0, delta_cp_r[2], num_spheres)
+    dr = np.vstack((drx, dry, drz)).T
+
+    # Update segment
+    positions_updated = positions + dl + dr
+
+    return positions_updated
+
+
+
+
+
+
+
 points_per_segment = 4
 
 # Control points are not spheres? Make sure spheres don't overlap?...
@@ -10,24 +41,7 @@ segment_1 = np.linspace(cp_l, cp_r, points_per_segment)
 cp_l_new = np.array([-1, 0, 0])
 cp_r_new = np.array([6, 2, 1])
 
-delta_cp_l = cp_l_new - cp_l
-delta_cp_r = cp_r_new - cp_r
-
-
-# Left update
-dlx = np.linspace(delta_cp_l[0], 0, points_per_segment)
-dly = np.linspace(delta_cp_l[1], 0, points_per_segment)
-dlz = np.linspace(delta_cp_l[2], 0, points_per_segment)
-dl = np.vstack((dlx, dly, dlz)).T
-
-# Right update
-drx = np.linspace(0, delta_cp_r[0], points_per_segment)
-dry = np.linspace(0, delta_cp_r[1], points_per_segment)
-drz = np.linspace(0, delta_cp_r[2], points_per_segment)
-dr = np.vstack((drx, dry, drz)).T
-
-# Update segment
-segment_1_new_calculated = segment_1 + dl + dr
+segment_1_new_calculated = calculate_position_spline_segment(segment_1, cp_l_new, cp_r_new)
 
 
 

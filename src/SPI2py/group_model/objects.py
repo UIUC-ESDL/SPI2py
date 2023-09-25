@@ -41,6 +41,8 @@ class Component:
         # Extract the positions and radii of the spheres from the xyzr file
         self.positions, self.radii = read_xyzr_file(filepath)
 
+        self.homogenous_positions = torch.vstack((self.positions.T, torch.ones((1, len(self.positions)))))
+
         # Initialize the ports
         self.port_indices = {}
         if self.ports is not None:
@@ -56,6 +58,8 @@ class Component:
 
 
         self.num_spheres = len(self.positions)
+
+        self.design_vector_indices = self.configure_design_vector_indices()
 
     def __repr__(self):
         return self.name
@@ -74,6 +78,15 @@ class Component:
         z_mean = torch.mean(self.positions[:, 2])
 
         return torch.tensor([x_mean, y_mean, z_mean], dtype=torch.float64)
+
+    def configure_design_vector_indices(self):
+
+        design_vector_indices = {}
+        for i, dof in enumerate(self.degrees_of_freedom):
+            design_vector_indices[dof] = i
+
+        return design_vector_indices
+
 
     @property
     def design_vector_size(self):
@@ -124,7 +137,7 @@ class Component:
 
         return design_vector_dict
 
-    def assemble_transformation_vectors(self, design_vector_dict):
+    def assemble_transformation_vectors_old(self, design_vector_dict):
 
         translation = torch.zeros((3, 1), dtype=torch.float64)
         rotation = torch.zeros((3, 1), dtype=torch.float64)
@@ -145,6 +158,30 @@ class Component:
 
         return translation, rotation
 
+    def assemble_transformation_vectors_old(self, design_vector):
+
+        translation = torch.zeros((3, 1), dtype=torch.float64)
+        rotation = torch.zeros((3, 1), dtype=torch.float64)
+
+        if 'x' in self.degrees_of_freedom:
+            translation[0] = design_vector_dict['x']
+        if 'y' in self.degrees_of_freedom:
+            translation[1] = design_vector_dict['y']
+        if 'z' in self.degrees_of_freedom:
+            translation[2] = design_vector_dict['z']
+
+        if 'rx' in self.degrees_of_freedom:
+            rotation[0] = design_vector_dict['rx']
+        if 'ry' in self.degrees_of_freedom:
+            rotation[1] = design_vector_dict['ry']
+        if 'rz' in self.degrees_of_freedom:
+            rotation[2] = design_vector_dict['rz']
+
+        return translation, rotation
+
+    def assemble_transformation_matrix(self, design_vector):
+
+
     def calculate_positions(self, design_vector):
         """
         Calculates the positions of the object's spheres.
@@ -152,7 +189,7 @@ class Component:
 
         design_vector_dict = self.decompose_design_vector(design_vector)
 
-        translation, rotation = self.assemble_transformation_vectors(design_vector_dict)
+        translation, rotation = self.assemble_transformation_vectors_old(design_vector_dict)
 
         new_positions = rigid_body_transformation(self.reference_position.reshape(-1, 1),
                                                   self.positions.T,
@@ -436,6 +473,10 @@ class System:
             start = stop
 
         return design_vectors
+
+    def assemble_transformation_matrices(self):
+        pass
+
 
 
     def set_objective(self, objective: str):
