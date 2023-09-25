@@ -10,8 +10,9 @@ from torch import sin, cos
 from typing import Sequence
 import pyvista as pv
 
-from src.SPI2py.group_model.component_geometry.spherical_decomposition_methods.finite_sphere_method import read_xyzr_file
-from src.SPI2py.group_model.component_kinematics.spatial_transformations import rigid_body_transformation
+from src.SPI2py.group_model.component_geometry.spherical_decomposition_methods.finite_sphere_method import \
+    read_xyzr_file
+from src.SPI2py.group_model.component_kinematics.spatial_transformations import apply_homogenous_transformation
 from src.SPI2py.group_model.component_kinematics.bounding_volumes import bounding_box
 from src.SPI2py.group_model.component_kinematics.distance_calculations import signed_distances
 from src.SPI2py.group_model.utilities import kreisselmeier_steinhauser
@@ -19,8 +20,6 @@ from src.SPI2py.group_model.utilities import kreisselmeier_steinhauser
 from src.SPI2py.group_model.component_kinematics.distance_calculations import signed_distances
 from src.SPI2py.group_model.component_kinematics.bounding_volumes import bounding_box
 from src.SPI2py.group_model.utilities import kreisselmeier_steinhauser
-
-
 
 
 class Component:
@@ -52,11 +51,6 @@ class Component:
                 self.positions = torch.vstack((self.positions, torch.tensor(port['origin'], dtype=torch.float64)))
                 self.radii = torch.cat((self.radii, torch.tensor([port['radius']], dtype=torch.float64)))
 
-        # Default transformation vectors
-
-
-
-
         self.num_spheres = len(self.positions)
 
         self.design_vector_indices = self.configure_design_vector_indices()
@@ -86,7 +80,6 @@ class Component:
                                   'radii': self.radii,
                                   'port_indices': self.port_indices}}
 
-
     def configure_design_vector_indices(self):
 
         design_vector_indices = {}
@@ -94,7 +87,6 @@ class Component:
             design_vector_indices[dof] = i
 
         return design_vector_indices
-
 
     @property
     def design_vector_size(self):
@@ -116,7 +108,6 @@ class Component:
             design_vector.append(self.rotation[2])
 
         return len(torch.tensor(design_vector))
-
 
     def decompose_design_vector(self, design_vector: torch.tensor) -> dict:
         """
@@ -154,74 +145,70 @@ class Component:
 
         return translation, rotation
 
-    def assemble_transformation_vectors(self,
-                                        design_vector,
-                                        default_translation=(0,0,0),
-                                        default_rotation=(0,0,0)):
+    def assemble_transformation_vectors(self, vector, check_dof=True):
 
-        # Initialize the translation and rotation vectors
         translation = torch.zeros((3, 1), dtype=torch.float64)
         rotation = torch.zeros((3, 1), dtype=torch.float64)
 
-        # Splice the
-
-
-        #
-        if 'x' in self.degrees_of_freedom:
-            translation[0] = design_vector[self.design_vector_indices['x']]
-        if 'y' in self.degrees_of_freedom:
-            translation[1] = design_vector[self.design_vector_indices['y']]
-        if 'z' in self.degrees_of_freedom:
-            translation[2] = design_vector[self.design_vector_indices['z']]
-        if 'rx' in self.degrees_of_freedom:
-            rotation[0] = design_vector[self.design_vector_indices['rx']]
-        if 'ry' in self.degrees_of_freedom:
-            rotation[1] = design_vector[self.design_vector_indices['ry']]
-        if 'rz' in self.degrees_of_freedom:
-            rotation[2] = design_vector[self.design_vector_indices['rz']]
-
-            # Initialize the transformation matrix
-            t = torch.eye(4, dtype=torch.float64)
-
-            # Insert the translation vector
-            t[:3, [3]] = translation
-
-            # Unpack the rotation angles (Euler)
-            a = rotation[0]  # alpha
-            b = rotation[1]  # beta
-            g = rotation[2]  # gamma
-
-            # Calculate rotation matrix (R = R_z(gamma) @ R_y(beta) @ R_x(alpha))
-            r = torch.cat(
-                (
-                cos(b) * cos(g), sin(a) * sin(b) * cos(g) - cos(a) * sin(g), cos(a) * sin(b) * cos(g) + sin(a) * sin(g),
-                cos(b) * sin(g), sin(a) * sin(b) * sin(g) + cos(a) * cos(g), cos(a) * sin(b) * sin(g) - sin(a) * cos(g),
-                -sin(b), sin(a) * cos(b), cos(a) * cos(b))).view(3, 3)
-
-            # Insert the rotation matrix
-            t[:3, :3] = r
-
-            return t
-
+        if not check_dof:
+            translation[0] = vector[0]
+            translation[1] = vector[1]
+            translation[2] = vector[2]
+            rotation[0] = vector[3]
+            rotation[1] = vector[4]
+            rotation[2] = vector[5]
+        else:
+            if 'x' in self.degrees_of_freedom:
+                translation[0] = vector[self.design_vector_indices['x']]
+            if 'y' in self.degrees_of_freedom:
+                translation[1] = vector[self.design_vector_indices['y']]
+            if 'z' in self.degrees_of_freedom:
+                translation[2] = vector[self.design_vector_indices['z']]
+            if 'rx' in self.degrees_of_freedom:
+                rotation[0] = vector[self.design_vector_indices['rx']]
+            if 'ry' in self.degrees_of_freedom:
+                rotation[1] = vector[self.design_vector_indices['ry']]
+            if 'rz' in self.degrees_of_freedom:
+                rotation[2] = vector[self.design_vector_indices['rz']]
 
         return translation, rotation
 
-    # def assemble_transformation_matrix(self, design_vector):
+    def assemble_homogenous_transformation_matrix(self, vector, check_dof=True):
 
+        translation, rotation = self.assemble_transformation_vectors(vector)
+
+        # Initialize the transformation matrix
+        t = torch.eye(4, dtype=torch.float64)
+
+        # Insert the translation vector
+        t[:3, [3]] = translation
+
+        # Unpack the rotation angles (Euler)
+        a = rotation[0]  # alpha
+        b = rotation[1]  # beta
+        g = rotation[2]  # gamma
+
+        # Calculate rotation matrix (R = R_z(gamma) @ R_y(beta) @ R_x(alpha))
+        r = torch.cat(
+            (cos(b) * cos(g), sin(a) * sin(b) * cos(g) - cos(a) * sin(g), cos(a) * sin(b) * cos(g) + sin(a) * sin(g),
+             cos(b) * sin(g), sin(a) * sin(b) * sin(g) + cos(a) * cos(g), cos(a) * sin(b) * sin(g) - sin(a) * cos(g),
+             -sin(b),         sin(a) * cos(b),                            cos(a) * cos(b))).view(3, 3)
+
+        # Insert the rotation matrix
+        t[:3, :3] = r
+
+        return t
 
     def calculate_positions(self, design_vector):
         """
         Calculates the positions of the object's spheres.
         """
 
-        design_vector_dict = self.decompose_design_vector(design_vector)
+        t = self.assemble_homogenous_transformation_matrix(design_vector)
 
-        translation, rotation = self.assemble_transformation_vectors_old(design_vector_dict)
-
-        new_positions = rigid_body_transformation(self.centroid.reshape(-1, 1),
+        new_positions = apply_homogenous_transformation(self.centroid.reshape(-1, 1),
                                                   self.positions.T,
-                                                  translation,
-                                                  rotation).T
+                                                  t).T
 
         object_dict = {self.__repr__(): {'positions': new_positions,
                                          'radii': self.radii,
@@ -234,15 +221,17 @@ class Component:
         Calculates the positions of the object's spheres.
         """
 
-        new_positions = rigid_body_transformation(self.centroid.reshape(-1, 1),
+        vector = torch.cat((translation, rotation))
+
+        t = self.assemble_homogenous_transformation_matrix(vector, check_dof=False)
+
+        new_positions = apply_homogenous_transformation(self.centroid.reshape(-1, 1),
                                                   self.positions.T,
-                                                  translation,
-                                                  rotation).T
+                                                  t).T
 
         self.positions = new_positions
         self.translation = translation
         self.rotation = rotation
-
 
     def set_positions(self, objects_dict: dict):
         """
@@ -254,7 +243,7 @@ class Component:
         """
 
         self.positions = objects_dict[self.__repr__()]['positions']
-        self.radii     = objects_dict[self.__repr__()]['radii']
+        self.radii = objects_dict[self.__repr__()]['radii']
 
 
 class Interconnect:
@@ -287,7 +276,6 @@ class Interconnect:
                  color='black',
                  linear_spline_segments=1,
                  degrees_of_freedom=()):
-
         self.name = name
         self.component_1 = component_1
         self.component_1_port = component_1_port
@@ -298,10 +286,11 @@ class Interconnect:
         self.linear_spline_segments = linear_spline_segments
         self.degrees_of_freedom = degrees_of_freedom
 
-        self.number_of_bends = linear_spline_segments-1
+        self.number_of_bends = linear_spline_segments - 1
         self.spheres_per_segment = 25
 
-        self.positions = torch.empty((self.spheres_per_segment * self.linear_spline_segments - 6, 3), dtype=torch.float64)
+        self.positions = torch.empty((self.spheres_per_segment * self.linear_spline_segments - 6, 3),
+                                     dtype=torch.float64)
         self.radii = torch.empty((self.spheres_per_segment * self.linear_spline_segments - 4, 1), dtype=torch.float64)
 
         # Default design variables
@@ -328,7 +317,6 @@ class Interconnect:
         pass
 
     def calculate_positions(self, design_vector, objects_dict):
-
         design_vector = design_vector.reshape((self.number_of_bends, 3))
 
         object_dict = {}
@@ -353,7 +341,7 @@ class Interconnect:
         points[-1] = stop_arr[-1]
 
         for i in range(self.linear_spline_segments):
-            points[i*n:(i+1)*n] = start_arr[i] + increment[i] * torch.arange(1, n+1).reshape(-1, 1)
+            points[i * n:(i + 1) * n] = start_arr[i] + increment[i] * torch.arange(1, n + 1).reshape(-1, 1)
 
         # Remove start and stop points
         points = points[2:-2]
@@ -379,7 +367,6 @@ class System:
         self.input_file = input_file
         self.input = self.read_input_file()
 
-
         self.components = self.create_components()
         self.interconnects, self.collocation_constraint_indices = self.create_conductors()
         self.objects = self.components + self.interconnects
@@ -387,7 +374,6 @@ class System:
         self.component_component_pairs = list(combinations(self.components, 2))
         self.component_interconnect_pairs = list(product(self.components, self.interconnects))
         self.interconnect_interconnect_pairs = list(combinations(self.interconnects, 2))
-
 
         objective = self.input['problem']['objective']
         self.set_objective(objective)
@@ -432,7 +418,6 @@ class System:
             name = conductor_inputs[0]
             conductor_inputs = conductor_inputs[1]
 
-
             component_1 = conductor_inputs['component_1']
             component_1_port = conductor_inputs['component_1_port']
             component_2 = conductor_inputs['component_2']
@@ -460,9 +445,6 @@ class System:
                                            degrees_of_freedom=degrees_of_freedom))
 
         return conductors, collocation_constraint_indices
-
-
-
 
     @property
     def design_vector_size(self):
@@ -502,8 +484,6 @@ class System:
     def assemble_transformation_matrices(self):
         pass
 
-
-
     def set_objective(self, objective: str):
 
         """
@@ -525,7 +505,6 @@ class System:
 
         self.objective = objective_function
 
-
     def calculate_positions(self, design_vector, limit_spheres=False):
         # TODO Vectorize...
         design_vectors = self.decompose_design_vector(design_vector)
@@ -541,7 +520,6 @@ class System:
         for interconnect, design_vector in zip(self.interconnects, design_vectors_interconnects):
             object_dict = interconnect.calculate_positions(design_vector=design_vector, objects_dict=objects_dict)
             objects_dict = {**objects_dict, **object_dict}
-
 
         return objects_dict
 
@@ -563,8 +541,6 @@ class System:
             waypoints = torch.tensor(waypoints, dtype=torch.float64)
             interconnect.set_default_positions(waypoints, objects_dict)
 
-
-
     def set_positions(self, objects_dict):
         """set_positions Sets the positions of the objects in the layout.
 
@@ -577,7 +553,6 @@ class System:
         for obj in self.objects:
             obj.set_positions(objects_dict)
 
-
     def collision_detection(self, x, object_pair):
 
         # Calculate the positions of all spheres in layout given design vector x
@@ -586,10 +561,7 @@ class System:
         signed_distance_vals = signed_distances(positions_dict, object_pair)
         max_signed_distance = kreisselmeier_steinhauser(signed_distance_vals)
 
-
-
         return max_signed_distance
-
 
     def calculate_objective(self, x):
 
@@ -603,10 +575,9 @@ class System:
 
     def calculate_constraints(self, x):
 
-
-        g_components_components = self.collision_detection(x, self.component_component_pairs).reshape(1,1)
-        g_components_interconnects = self.collision_detection(x, self.component_interconnect_pairs).reshape(1,1)
-        g_interconnects_interconnects = self.collision_detection(x, self.interconnect_interconnect_pairs).reshape(1,1)
+        g_components_components = self.collision_detection(x, self.component_component_pairs).reshape(1, 1)
+        g_components_interconnects = self.collision_detection(x, self.component_interconnect_pairs).reshape(1, 1)
+        g_interconnects_interconnects = self.collision_detection(x, self.interconnect_interconnect_pairs).reshape(1, 1)
 
         g = torch.cat((g_components_components, g_components_interconnects, g_interconnects_interconnects))
 
