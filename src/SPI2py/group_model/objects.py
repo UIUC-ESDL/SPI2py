@@ -6,6 +6,7 @@ TODO Can I remove movement classes if I just use degrees of freedom and referenc
 import tomli
 from itertools import combinations, product
 import torch
+from torch import sin, cos
 from typing import Sequence
 import pyvista as pv
 
@@ -52,9 +53,8 @@ class Component:
                 self.radii = torch.cat((self.radii, torch.tensor([port['radius']], dtype=torch.float64)))
 
         # Default transformation vectors
-        self.translation = torch.tensor([0, 0, 0], dtype=torch.float64)
-        self.rotation = torch.tensor([0, 0, 0], dtype=torch.float64)
-        self.scale = torch.tensor([1, 1, 1], dtype=torch.float64)
+
+
 
 
         self.num_spheres = len(self.positions)
@@ -68,16 +68,24 @@ class Component:
         return self.name
 
     @property
-    def reference_position(self):
+    def centroid(self):
         """
-        Returns the reference position of the object.
+        Returns the centroid of the object. Assumes no overlapping spheres.
         """
 
-        x_mean = torch.mean(self.positions[:, 0])
-        y_mean = torch.mean(self.positions[:, 1])
-        z_mean = torch.mean(self.positions[:, 2])
+        v_i = ((4 / 3) * torch.pi * self.radii ** 3).view(-1, 1)
+        v_total = torch.sum(v_i)
 
-        return torch.tensor([x_mean, y_mean, z_mean], dtype=torch.float64)
+        centroid = torch.sum(self.positions * v_i, 0) / v_total
+
+        return centroid
+
+    @property
+    def object_dict(self):
+        return {self.__repr__(): {'positions': self.positions,
+                                  'radii': self.radii,
+                                  'port_indices': self.port_indices}}
+
 
     def configure_design_vector_indices(self):
 
@@ -107,20 +115,8 @@ class Component:
         if 'rz' in self.degrees_of_freedom:
             design_vector.append(self.rotation[2])
 
-        if 'sx' in self.degrees_of_freedom:
-            design_vector.append(self.scale[0])
-        if 'sy' in self.degrees_of_freedom:
-            design_vector.append(self.scale[1])
-        if 'sz' in self.degrees_of_freedom:
-            design_vector.append(self.scale[2])
-
         return len(torch.tensor(design_vector))
 
-    @property
-    def object_dict(self):
-        return {self.__repr__(): {'positions': self.positions,
-                                  'radii': self.radii,
-                                  'port_indices': self.port_indices}}
 
     def decompose_design_vector(self, design_vector: torch.tensor) -> dict:
         """
@@ -158,28 +154,59 @@ class Component:
 
         return translation, rotation
 
-    def assemble_transformation_vectors_old(self, design_vector):
+    def assemble_transformation_vectors(self,
+                                        design_vector,
+                                        default_translation=(0,0,0),
+                                        default_rotation=(0,0,0)):
 
+        # Initialize the translation and rotation vectors
         translation = torch.zeros((3, 1), dtype=torch.float64)
         rotation = torch.zeros((3, 1), dtype=torch.float64)
 
-        if 'x' in self.degrees_of_freedom:
-            translation[0] = design_vector_dict['x']
-        if 'y' in self.degrees_of_freedom:
-            translation[1] = design_vector_dict['y']
-        if 'z' in self.degrees_of_freedom:
-            translation[2] = design_vector_dict['z']
+        # Splice the
 
+
+        #
+        if 'x' in self.degrees_of_freedom:
+            translation[0] = design_vector[self.design_vector_indices['x']]
+        if 'y' in self.degrees_of_freedom:
+            translation[1] = design_vector[self.design_vector_indices['y']]
+        if 'z' in self.degrees_of_freedom:
+            translation[2] = design_vector[self.design_vector_indices['z']]
         if 'rx' in self.degrees_of_freedom:
-            rotation[0] = design_vector_dict['rx']
+            rotation[0] = design_vector[self.design_vector_indices['rx']]
         if 'ry' in self.degrees_of_freedom:
-            rotation[1] = design_vector_dict['ry']
+            rotation[1] = design_vector[self.design_vector_indices['ry']]
         if 'rz' in self.degrees_of_freedom:
-            rotation[2] = design_vector_dict['rz']
+            rotation[2] = design_vector[self.design_vector_indices['rz']]
+
+            # Initialize the transformation matrix
+            t = torch.eye(4, dtype=torch.float64)
+
+            # Insert the translation vector
+            t[:3, [3]] = translation
+
+            # Unpack the rotation angles (Euler)
+            a = rotation[0]  # alpha
+            b = rotation[1]  # beta
+            g = rotation[2]  # gamma
+
+            # Calculate rotation matrix (R = R_z(gamma) @ R_y(beta) @ R_x(alpha))
+            r = torch.cat(
+                (
+                cos(b) * cos(g), sin(a) * sin(b) * cos(g) - cos(a) * sin(g), cos(a) * sin(b) * cos(g) + sin(a) * sin(g),
+                cos(b) * sin(g), sin(a) * sin(b) * sin(g) + cos(a) * cos(g), cos(a) * sin(b) * sin(g) - sin(a) * cos(g),
+                -sin(b), sin(a) * cos(b), cos(a) * cos(b))).view(3, 3)
+
+            # Insert the rotation matrix
+            t[:3, :3] = r
+
+            return t
+
 
         return translation, rotation
 
-    def assemble_transformation_matrix(self, design_vector):
+    # def assemble_transformation_matrix(self, design_vector):
 
 
     def calculate_positions(self, design_vector):
@@ -191,7 +218,7 @@ class Component:
 
         translation, rotation = self.assemble_transformation_vectors_old(design_vector_dict)
 
-        new_positions = rigid_body_transformation(self.reference_position.reshape(-1, 1),
+        new_positions = rigid_body_transformation(self.centroid.reshape(-1, 1),
                                                   self.positions.T,
                                                   translation,
                                                   rotation).T
@@ -207,7 +234,7 @@ class Component:
         Calculates the positions of the object's spheres.
         """
 
-        new_positions = rigid_body_transformation(self.reference_position.reshape(-1, 1),
+        new_positions = rigid_body_transformation(self.centroid.reshape(-1, 1),
                                                   self.positions.T,
                                                   translation,
                                                   rotation).T
@@ -278,29 +305,27 @@ class Interconnect:
         self.radii = torch.empty((self.spheres_per_segment * self.linear_spline_segments - 4, 1), dtype=torch.float64)
 
         # Default design variables
-        self.waypoint_positions = torch.zeros((self.number_of_bends, 3), dtype=torch.float64)
+        # TODO Consider not all DOF being used
+        self.design_vector_size = self.number_of_bends * 3
 
-        # TODO Add waypoints?
         self.num_spheres = len(self.positions)
 
         # TODO
-        num_segments = linear_spline_segments
-        num_spheres_per_segment = self.spheres_per_segment
-        segments = torch.arange(num_segments)
-
+        # num_segments = linear_spline_segments
+        # num_spheres_per_segment = self.spheres_per_segment
+        # segments = torch.arange(num_segments)
         # Collocation constraints
-        collocation_constraints = num_segments - 1
-        collocation_start_indices = segments * torch.tensor([num_spheres_per_segment]) - 1
-        collocation_stop_indices = segments * torch.tensor([num_spheres_per_segment])
-        collocation_constraint_indices = torch.vstack((collocation_start_indices, collocation_stop_indices)).T
+        # collocation_constraints = num_segments - 1
+        # collocation_start_indices = segments * torch.tensor([num_spheres_per_segment]) - 1
+        # collocation_stop_indices = segments * torch.tensor([num_spheres_per_segment])
+        # collocation_constraint_indices = torch.vstack((collocation_start_indices, collocation_stop_indices)).T
 
     def __repr__(self):
         return self.name
 
-    @property
-    def design_vector_size(self):
-        # TODO Consider not all DOF being used
-        return len(self.waypoint_positions.flatten())
+    def assemble_translation_vectors(self, design_vector):
+        # TODO Implement
+        pass
 
     def calculate_positions(self, design_vector, objects_dict):
 
@@ -609,5 +634,6 @@ class System:
         # p.view_isometric()
         p.view_xy()
         p.show_axes()
-        p.show_bounds()
+        p.show_bounds(color='black')
+        p.background_color = 'white'
         p.show()

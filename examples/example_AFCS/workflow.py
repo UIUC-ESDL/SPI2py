@@ -64,7 +64,7 @@ prob.run_model()
 # kinematics_component.kinematics_interface.set_positions(objects_dict)
 # kinematics_component.kinematics_interface.plot()
 
-# prob.run_driver()
+# prob.()
 
 
 print('Optimized design vector: ', prob['x'])

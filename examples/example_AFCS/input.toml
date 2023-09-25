@@ -159,7 +159,7 @@ component_2='heater_core_6'
 component_2_port='right'
 radius=0.05
 color='black'
-linear_spline_segments=1
+linear_spline_segments=2
 degrees_of_freedom=[]
 
 [conductors.c6_c4a]
