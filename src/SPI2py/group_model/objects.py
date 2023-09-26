@@ -17,7 +17,6 @@ from src.SPI2py.group_model.component_kinematics.bounding_volumes import boundin
 from src.SPI2py.group_model.component_kinematics.distance_calculations import signed_distances
 from src.SPI2py.group_model.utilities import kreisselmeier_steinhauser
 
-from src.SPI2py.group_model.component_kinematics.distance_calculations import signed_distances
 from src.SPI2py.group_model.component_kinematics.bounding_volumes import bounding_box
 from src.SPI2py.group_model.utilities import kreisselmeier_steinhauser
 
@@ -249,7 +248,7 @@ class Interconnect:
         # num_dof_stop = 3
         # num_dof = num_dof_collocation + num_dof_start + num_dof_stop
 
-        num_dof = 3 * self.num_control_points
+        num_dof = 3 * self.num_nodes
 
         return num_dof
 
@@ -279,26 +278,19 @@ class Interconnect:
 
     def calculate_positions(self, design_vector, objects_dict):
 
-        node_positions = self.map_design_vector_to_node_positions(design_vector)
+        delta_node_positions = self.map_design_vector_to_node_positions(design_vector)
 
-        object_dict = {}
-
-        port_index_1 = objects_dict[self.component_1]['port_indices'][self.component_1_port]
-        port_index_2 = objects_dict[self.component_2]['port_indices'][self.component_2_port]
-        pos_1 = objects_dict[self.component_1]['positions'][port_index_1]
-        pos_2 = objects_dict[self.component_2]['positions'][port_index_2]
-
-        node_positions = torch.vstack((pos_1, node_positions, pos_2))
-
-        start_positions = node_positions[0:-1]
-        stop_positions = node_positions[1:None]
+        start_positions = delta_node_positions[0:-1]
+        stop_positions = delta_node_positions[1:None]
 
         positions = torch.empty((0, 3), dtype=torch.float64)
         for start_position, stop_position in zip(start_positions, stop_positions):
             segment_positions = self.calculate_segment_positions(start_position, stop_position)
             positions = torch.vstack((positions, segment_positions))
 
+        positions = self.positions + positions
 
+        object_dict={}
         object_dict[str(self)] = {'type': 'interconnect', 'positions': positions, 'radii': self.radii}
 
         return object_dict
