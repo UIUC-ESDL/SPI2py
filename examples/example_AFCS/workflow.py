@@ -41,6 +41,8 @@ prob.setup()
 
 # %% Run the optimization
 
+# TODO Assume standard shape design vectors...
+# Bound indices and default values...
 
 # x0 = kinematics_component.kinematics.design_vector
 # model.set_val('x', kinematics_component.kinematics.design_vector)

@@ -298,8 +298,6 @@ class Interconnect:
             segment_positions = self.calculate_segment_positions(start_position, stop_position)
             positions = torch.vstack((positions, segment_positions))
 
-        # ?
-        positions = self.positions + positions
 
         object_dict[str(self)] = {'type': 'interconnect', 'positions': positions, 'radii': self.radii}
 
