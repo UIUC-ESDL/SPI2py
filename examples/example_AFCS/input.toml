@@ -108,9 +108,7 @@ component_2='radiator_and_ion_exchanger_1b'
 component_2_port='left'
 radius=0.05
 color='black'
-linear_spline_segments=1
-degrees_of_freedom=[]
-
+num_segments=1
 
 [conductors.c1b_c2b]
 component_1='radiator_and_ion_exchanger_1b'
@@ -119,8 +117,7 @@ component_2='pump_2b'
 component_2_port='top'
 radius=0.05
 color='black'
-linear_spline_segments=1
-degrees_of_freedom=[]
+num_segments=1
 
 [conductors.c2b_c3b]
 component_1='pump_2b'
@@ -129,8 +126,7 @@ component_2='particle_filter_3b'
 component_2_port='top'
 radius=0.05
 color='black'
-linear_spline_segments=1
-degrees_of_freedom=[]
+num_segments=1
 
 [conductors.c3b_c4b]
 component_1='particle_filter_3b'
@@ -139,8 +135,7 @@ component_2='fuel_cell_stack_4b'
 component_2_port='top'
 radius=0.05
 color='black'
-linear_spline_segments=1
-degrees_of_freedom=[]
+num_segments=1
 
 [conductors.c4b_c5]
 component_1='fuel_cell_stack_4b'
@@ -149,8 +144,7 @@ component_2='WEG_heater_and_pump_5'
 component_2_port='top'
 radius=0.05
 color='black'
-linear_spline_segments=1
-degrees_of_freedom=[]
+num_segments=1
 
 [conductors.c5_c6]
 component_1='WEG_heater_and_pump_5'
@@ -159,8 +153,7 @@ component_2='heater_core_6'
 component_2_port='right'
 radius=0.05
 color='black'
-linear_spline_segments=2
-degrees_of_freedom=[]
+num_segments=2
 
 [conductors.c6_c4a]
 component_1='heater_core_6'
@@ -169,8 +162,7 @@ component_2='fuel_cell_stack_4a'
 component_2_port='bottom'
 radius=0.05
 color='black'
-linear_spline_segments=2
-degrees_of_freedom=['x', 'y', 'z']
+num_segments=2
 
 [conductors.c4a_c3a]
 component_1='fuel_cell_stack_4a'
@@ -179,8 +171,7 @@ component_2='particle_filter_3a'
 component_2_port='bottom'
 radius=0.05
 color='black'
-linear_spline_segments=1
-degrees_of_freedom=[]
+num_segments=1
 
 [conductors.c3a_c2a]
 component_1='particle_filter_3a'
@@ -189,8 +180,7 @@ component_2='pump_2a'
 component_2_port='top'
 radius=0.05
 color='black'
-linear_spline_segments=1
-degrees_of_freedom=[]
+num_segments=1
 
 [conductors.c2a_c1a]
 component_1='pump_2a'
@@ -199,8 +189,7 @@ component_2='radiator_and_ion_exchanger_1a'
 component_2_port='left'
 radius=0.05
 color='black'
-linear_spline_segments=1
-degrees_of_freedom=[]
+num_segments=1
 
 [system]
 

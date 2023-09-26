@@ -206,8 +206,7 @@ class Interconnect:
                  radius,
                  color='black',
                  num_segments=1,
-                 num_spheres_per_segment=25,
-                 degrees_of_freedom=()):
+                 num_spheres_per_segment=25):
 
         self.name = name
         self.component_1 = component_1
@@ -215,7 +214,6 @@ class Interconnect:
         self.component_2 = component_2
         self.component_2_port = component_2_port
         self.color = color
-        self.degrees_of_freedom = degrees_of_freedom
 
         self.num_segments = num_segments
         self.num_spheres_per_segment = num_spheres_per_segment
@@ -224,6 +222,9 @@ class Interconnect:
         self.num_nodes = num_segments + 1
         self.num_control_points = num_segments - 1
         self.num_spheres = num_segments * num_spheres_per_segment
+
+        # The first and last indices of each segment
+        self.control_point_indices = []
 
         # Initialize positions and radii tensors
         self.positions = torch.zeros((num_spheres_per_segment * num_segments, 3), dtype=torch.float64)
@@ -284,7 +285,6 @@ class Interconnect:
 
         port_index_1 = objects_dict[self.component_1]['port_indices'][self.component_1_port]
         port_index_2 = objects_dict[self.component_2]['port_indices'][self.component_2_port]
-
         pos_1 = objects_dict[self.component_1]['positions'][port_index_1]
         pos_2 = objects_dict[self.component_2]['positions'][port_index_2]
 
@@ -298,50 +298,17 @@ class Interconnect:
             segment_positions = self.calculate_segment_positions(start_position, stop_position)
             positions = torch.vstack((positions, segment_positions))
 
+        # ?
+        positions = self.positions + positions
+
         object_dict[str(self)] = {'type': 'interconnect', 'positions': positions, 'radii': self.radii}
 
         return object_dict
 
 
-    # def calculate_positions(self, design_vector, objects_dict):
-    #     design_vector = design_vector.reshape((self.number_of_bends, 3))
-    #
-    #     object_dict = {}
-    #
-    #     port_index_1 = objects_dict[self.component_1]['port_indices'][self.component_1_port]
-    #     port_index_2 = objects_dict[self.component_2]['port_indices'][self.component_2_port]
-    #
-    #     pos_1 = objects_dict[self.component_1]['positions'][port_index_1]
-    #     pos_2 = objects_dict[self.component_2]['positions'][port_index_2]
-    #
-    #     node_positions = torch.vstack((pos_1, design_vector.reshape(-1, 3), pos_2))
-    #
-    #     start_arr = node_positions[0:-1]
-    #     stop_arr = node_positions[1:None]
-    #
-    #     diff_arr = stop_arr - start_arr
-    #     n = self.spheres_per_segment
-    #     increment = diff_arr / n
-    #
-    #     points = torch.zeros((self.spheres_per_segment * self.linear_spline_segments, 3), dtype=torch.float64)
-    #     points[0] = start_arr[0]
-    #     points[-1] = stop_arr[-1]
-    #
-    #     for i in range(self.linear_spline_segments):
-    #         points[i * n:(i + 1) * n] = start_arr[i] + increment[i] * torch.arange(1, n + 1).reshape(-1, 1)
-    #
-    #     # Remove start and stop points
-    #     points = points[1:-1]
-    #
-    #     radii = self.radius * torch.ones(len(points))
-    #
-    #     object_dict[str(self)] = {'type': 'interconnect', 'positions': points, 'radii': radii}
-    #
-    #     return object_dict
-
     def set_positions(self, objects_dict):
         self.positions = objects_dict[str(self)]['positions']
-        self.radii = objects_dict[str(self)]['radii']
+
 
     def set_default_positions(self, waypoints, objects_dict):
         object_dict = self.calculate_positions(waypoints, objects_dict)
@@ -421,15 +388,14 @@ class System:
 
             radius = conductor_inputs['radius']
             color = conductor_inputs['color']
-            linear_spline_segments = conductor_inputs['linear_spline_segments']
-            degrees_of_freedom = conductor_inputs['degrees_of_freedom']
+            num_segments = conductor_inputs['num_segments']
+
 
             conductors.append(Interconnect(name=name,
                                            component_1=component_1, component_1_port=component_1_port,
                                            component_2=component_2, component_2_port=component_2_port, radius=radius,
                                            color=color,
-                                           num_segments=linear_spline_segments,
-                                           degrees_of_freedom=degrees_of_freedom))
+                                           num_segments=num_segments))
 
         return conductors, collocation_constraint_indices
 
