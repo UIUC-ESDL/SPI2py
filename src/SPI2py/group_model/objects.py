@@ -27,14 +27,14 @@ class Component:
     def __init__(self,
                  name: str,
                  color: str = None,
-                 degrees_of_freedom: Sequence[str] = ('x', 'y', 'z', 'rx', 'ry', 'rz'),
+                 dof: Sequence[str] = ('x', 'y', 'z', 'rx', 'ry', 'rz'),
                  filepath=None,
                  ports: Sequence[dict] = ()):
 
         # Assign the inputs
         self.name = name
         self.color = color
-        self.degrees_of_freedom = degrees_of_freedom
+        self.dof = dof
         self.filepath = filepath
         self.ports = ports
 
@@ -51,7 +51,7 @@ class Component:
 
         self.num_spheres = len(self.positions)
 
-        self.design_vector_indices = {dof: i for i, dof in enumerate(self.degrees_of_freedom)}
+        self.design_vector_indices = {dof_i: i for i, dof_i in enumerate(self.dof)}
         self.design_vector_size = len(self.design_vector_indices)
 
     def __repr__(self):
@@ -89,17 +89,17 @@ class Component:
             rotation[1] = vector[4]
             rotation[2] = vector[5]
         else:
-            if 'x' in self.degrees_of_freedom:
+            if 'x' in self.dof:
                 translation[0] = vector[self.design_vector_indices['x']]
-            if 'y' in self.degrees_of_freedom:
+            if 'y' in self.dof:
                 translation[1] = vector[self.design_vector_indices['y']]
-            if 'z' in self.degrees_of_freedom:
+            if 'z' in self.dof:
                 translation[2] = vector[self.design_vector_indices['z']]
-            if 'rx' in self.degrees_of_freedom:
+            if 'rx' in self.dof:
                 rotation[0] = vector[self.design_vector_indices['rx']]
-            if 'ry' in self.degrees_of_freedom:
+            if 'ry' in self.dof:
                 rotation[1] = vector[self.design_vector_indices['ry']]
-            if 'rz' in self.degrees_of_freedom:
+            if 'rz' in self.dof:
                 rotation[2] = vector[self.design_vector_indices['rz']]
 
         return translation, rotation
@@ -205,50 +205,80 @@ class Interconnect:
                  component_2_port,
                  radius,
                  color='black',
-                 linear_spline_segments=1,
+                 num_segments=1,
+                 num_spheres_per_segment=25,
                  degrees_of_freedom=()):
+
         self.name = name
         self.component_1 = component_1
         self.component_1_port = component_1_port
         self.component_2 = component_2
         self.component_2_port = component_2_port
-        self.radius = radius
         self.color = color
-        self.linear_spline_segments = linear_spline_segments
         self.degrees_of_freedom = degrees_of_freedom
 
-        self.number_of_bends = linear_spline_segments - 1
-        self.spheres_per_segment = 25
+        self.num_segments = num_segments
+        self.num_spheres_per_segment = num_spheres_per_segment
+        self.radius = radius
 
-        self.positions = torch.empty((self.spheres_per_segment * self.linear_spline_segments - 6, 3),
-                                     dtype=torch.float64)
-        self.radii = torch.empty((self.spheres_per_segment * self.linear_spline_segments - 4, 1), dtype=torch.float64)
+        self.num_nodes = num_segments + 1
+        self.num_control_points = num_segments - 1
+        self.num_spheres = num_segments * num_spheres_per_segment
 
-        # Default design variables
-        # TODO Consider not all DOF being used
-        self.design_vector_size = self.number_of_bends * 3
+        # Initialize positions and radii tensors
+        self.positions = torch.zeros((num_spheres_per_segment * num_segments, 3), dtype=torch.float64)
+        self.radii = radius * torch.ones((num_spheres_per_segment * num_segments, 1), dtype=torch.float64)
 
-        self.num_spheres = len(self.positions)
-
-        # TODO
-        # num_segments = linear_spline_segments
-        # num_spheres_per_segment = self.spheres_per_segment
-        # segments = torch.arange(num_segments)
-        # Collocation constraints
-        # collocation_constraints = num_segments - 1
-        # collocation_start_indices = segments * torch.tensor([num_spheres_per_segment]) - 1
-        # collocation_stop_indices = segments * torch.tensor([num_spheres_per_segment])
-        # collocation_constraint_indices = torch.vstack((collocation_start_indices, collocation_stop_indices)).T
+        # Determine the sphere indices for collocation constraints
+        # segments = torch.arange(1, num_segments)
+        # collocation_indices_start = segments * torch.tensor([num_spheres_per_segment]) - 1
+        # collocation_indices_stop = segments * torch.tensor([num_spheres_per_segment])
+        # self.collocation_constraint_indices = torch.vstack((collocation_indices_start, collocation_indices_stop)).T
 
     def __repr__(self):
         return self.name
 
-    def assemble_translation_vectors(self, design_vector):
-        # TODO Implement
-        pass
+
+    @property
+    def design_vector_size(self):
+        # TODO Enable different degrees of freedom
+        # TODO Fix for collocation points
+        # num_dof_collocation = 3 * 2 * self.num_collocation_points
+        # num_dof_start = 3
+        # num_dof_stop = 3
+        # num_dof = num_dof_collocation + num_dof_start + num_dof_stop
+
+        num_dof = 3 * self.num_control_points
+
+        return num_dof
+
+    def map_design_vector_to_node_positions(self, design_vector):
+        # TODO Enable different degrees of freedom
+        # TODO Enable mapping constant terms for fixed dof
+        node_positions = design_vector.reshape((-1, 3))
+        return node_positions
+
+    def calculate_segment_positions(self, start_position, stop_position):
+
+        x_start = start_position[0]
+        y_start = start_position[1]
+        z_start = start_position[2]
+
+        x_stop = stop_position[0]
+        y_stop = stop_position[1]
+        z_stop = stop_position[2]
+
+        x = torch.linspace(x_start, x_stop, self.num_spheres_per_segment)
+        y = torch.linspace(y_start, y_stop, self.num_spheres_per_segment)
+        z = torch.linspace(z_start, z_stop, self.num_spheres_per_segment)
+
+        positions = torch.vstack((x, y, z)).T
+
+        return positions
 
     def calculate_positions(self, design_vector, objects_dict):
-        design_vector = design_vector.reshape((self.number_of_bends, 3))
+
+        node_positions = self.map_design_vector_to_node_positions(design_vector)
 
         object_dict = {}
 
@@ -258,30 +288,56 @@ class Interconnect:
         pos_1 = objects_dict[self.component_1]['positions'][port_index_1]
         pos_2 = objects_dict[self.component_2]['positions'][port_index_2]
 
-        node_positions = torch.vstack((pos_1, design_vector.reshape(-1, 3), pos_2))
+        node_positions = torch.vstack((pos_1, node_positions, pos_2))
 
-        start_arr = node_positions[0:-1]
-        stop_arr = node_positions[1:None]
+        start_positions = node_positions[0:-1]
+        stop_positions = node_positions[1:None]
 
-        diff_arr = stop_arr - start_arr
-        n = self.spheres_per_segment
-        increment = diff_arr / n
+        positions = torch.empty((0, 3), dtype=torch.float64)
+        for start_position, stop_position in zip(start_positions, stop_positions):
+            segment_positions = self.calculate_segment_positions(start_position, stop_position)
+            positions = torch.vstack((positions, segment_positions))
 
-        points = torch.zeros((self.spheres_per_segment * self.linear_spline_segments, 3), dtype=torch.float64)
-        points[0] = start_arr[0]
-        points[-1] = stop_arr[-1]
-
-        for i in range(self.linear_spline_segments):
-            points[i * n:(i + 1) * n] = start_arr[i] + increment[i] * torch.arange(1, n + 1).reshape(-1, 1)
-
-        # Remove start and stop points
-        points = points[2:-2]
-
-        radii = self.radius * torch.ones(len(points))
-
-        object_dict[str(self)] = {'type': 'interconnect', 'positions': points, 'radii': radii}
+        object_dict[str(self)] = {'type': 'interconnect', 'positions': positions, 'radii': self.radii}
 
         return object_dict
+
+
+    # def calculate_positions(self, design_vector, objects_dict):
+    #     design_vector = design_vector.reshape((self.number_of_bends, 3))
+    #
+    #     object_dict = {}
+    #
+    #     port_index_1 = objects_dict[self.component_1]['port_indices'][self.component_1_port]
+    #     port_index_2 = objects_dict[self.component_2]['port_indices'][self.component_2_port]
+    #
+    #     pos_1 = objects_dict[self.component_1]['positions'][port_index_1]
+    #     pos_2 = objects_dict[self.component_2]['positions'][port_index_2]
+    #
+    #     node_positions = torch.vstack((pos_1, design_vector.reshape(-1, 3), pos_2))
+    #
+    #     start_arr = node_positions[0:-1]
+    #     stop_arr = node_positions[1:None]
+    #
+    #     diff_arr = stop_arr - start_arr
+    #     n = self.spheres_per_segment
+    #     increment = diff_arr / n
+    #
+    #     points = torch.zeros((self.spheres_per_segment * self.linear_spline_segments, 3), dtype=torch.float64)
+    #     points[0] = start_arr[0]
+    #     points[-1] = stop_arr[-1]
+    #
+    #     for i in range(self.linear_spline_segments):
+    #         points[i * n:(i + 1) * n] = start_arr[i] + increment[i] * torch.arange(1, n + 1).reshape(-1, 1)
+    #
+    #     # Remove start and stop points
+    #     points = points[1:-1]
+    #
+    #     radii = self.radius * torch.ones(len(points))
+    #
+    #     object_dict[str(self)] = {'type': 'interconnect', 'positions': points, 'radii': radii}
+    #
+    #     return object_dict
 
     def set_positions(self, objects_dict):
         self.positions = objects_dict[str(self)]['positions']
@@ -332,7 +388,7 @@ class System:
             filepath = component_inputs['filepath']
             ports = component_inputs['ports']
             components.append(
-                Component(name=name, color=color, degrees_of_freedom=degrees_of_freedom, filepath=filepath,
+                Component(name=name, color=color, dof=degrees_of_freedom, filepath=filepath,
                           ports=ports))
 
         return components
@@ -372,7 +428,7 @@ class System:
                                            component_1=component_1, component_1_port=component_1_port,
                                            component_2=component_2, component_2_port=component_2_port, radius=radius,
                                            color=color,
-                                           linear_spline_segments=linear_spline_segments,
+                                           num_segments=linear_spline_segments,
                                            degrees_of_freedom=degrees_of_freedom))
 
         return conductors, collocation_constraint_indices

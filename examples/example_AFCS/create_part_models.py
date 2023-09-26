@@ -8,6 +8,9 @@ from SPI2py.group_model.component_geometry.spherical_decomposition_methods.maxim
 # a = pack_spheres('part_models/', 'engine_1.stl', 'engine_1.txt')
 
 num_spheres = 150
+min_radius = 0.01
+
+mdbd('part_models/', 'Hydraulic_Bottle_Jack_solid.stl', 'Hydraulic_Bottle_Jack_solid.xyzr', num_spheres=num_spheres)
 
 # mdbd_rectangular_prism([2.850, 0.830, 0.830], 'part_models/', 'radiator_and_ion_exchanger.stl', 'radiator_and_ion_exchanger.xyzr', num_spheres=num_spheres)
 #

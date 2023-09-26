@@ -8,7 +8,7 @@ import pyvista as pv
 import trimesh
 
 
-def mdbd(directory, input_filename, output_filename, num_spheres=1000, meshgrid_increment=25, plot=True):
+def mdbd(directory, input_filename, output_filename, num_spheres=1000, min_radius=0.001, meshgrid_increment=25, plot=True):
 
     # Create the pyvista and trimesh objects. Both are required.
     mesh_trimesh = trimesh.exchange.load.load(directory+input_filename)
@@ -55,6 +55,9 @@ def mdbd(directory, input_filename, output_filename, num_spheres=1000, meshgrid_
         # min_distances = []
         min_distance = distances_filtered_sorted[0]
         min_distance_point = points_filtered_sorted[0]
+
+        if min_distance < min_radius:
+            break
 
         # Remove the point from the list of points
         points_filtered_sorted = points_filtered_sorted[1:]
