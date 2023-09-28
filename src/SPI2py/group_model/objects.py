@@ -23,6 +23,8 @@ from src.SPI2py.group_model.utilities import kreisselmeier_steinhauser
 
 class Component:
 
+    # TODO Preprocess: Calculate centroids & principal axes, transform components to origin, etc.
+
     def __init__(self,
                  name: str,
                  color: str = None,
@@ -68,6 +70,12 @@ class Component:
         centroid = torch.sum(self.positions * v_i, 0) / v_total
 
         return centroid
+
+    def principal_axes(self):
+        pass
+
+    def align_component(self):
+        pass
 
     def assemble_transformation_vectors(self, vector, check_dof=True):
 
@@ -171,41 +179,15 @@ class Component:
 
 
 class Interconnect:
-    """
-    Interconnects are made of one or more non-zero-length segments and connect two components.
-
-    TODO Add a class of components for interconnect dividers (e.g., pipe tee for a three-way split)
-
-    When an interconnect is initialized it does not contain spatial information.
-
-    In the SPI2 class the user specifies which layout generation method to use, and that method tells
-    the Interconnect InterconnectNodes what their positions are.
-
-    For now, I will assume that interconnect nodes will start along a straight line between components A
-    and B. In the near future they may be included in the layout generation method. The to-do is tracked
-    in spatial_configuration.py.
-
-    # placeholder
-        component_1 = [i for i in self.components if repr(i) == self.component_1][0]
-        component_2 = [i for i in self.components if repr(i) == self.component_2][0]
-    """
 
     def __init__(self,
                  name,
-                 component_1,
-                 component_1_port,
-                 component_2,
-                 component_2_port,
                  radius,
                  color='black',
                  num_segments=1,
                  num_spheres_per_segment=25):
 
         self.name = name
-        self.component_1 = component_1
-        self.component_1_port = component_1_port
-        self.component_2 = component_2
-        self.component_2_port = component_2_port
         self.color = color
 
         self.num_segments = num_segments
@@ -363,8 +345,7 @@ class System:
 
 
             conductors.append(Interconnect(name=name,
-                                           component_1=component_1, component_1_port=component_1_port,
-                                           component_2=component_2, component_2_port=component_2_port, radius=radius,
+                                           radius=radius,
                                            color=color,
                                            num_segments=num_segments))
 

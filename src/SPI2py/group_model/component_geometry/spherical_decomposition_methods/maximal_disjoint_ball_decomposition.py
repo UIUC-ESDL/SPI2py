@@ -77,13 +77,14 @@ def mdbd(directory, input_filename, output_filename, num_spheres=1000, min_radiu
         # Plot object with PyVista
         plotter = pv.Plotter()
 
-        part2 = pv.read(directory+input_filename)
-        plotter.add_mesh(part2, color='white', opacity=0.5)
+        # part2 = pv.read(directory+input_filename)
+        # plotter.add_mesh(part2, color='white', opacity=0.5)
 
         # Plot the sphere
         for i in range(len(sphere_points)):
             sphere = pv.Sphere(center=sphere_points[i], radius=sphere_radii[i])
-            plotter.add_mesh(sphere, color='green', opacity=0.75)
+            # plotter.add_mesh(sphere, color='green', opacity=0.75)
+            plotter.add_mesh(sphere, color='purple', opacity=0.75)
 
         plotter.view_xz()
         plotter.background_color = 'white'
@@ -107,4 +108,4 @@ def mdbd_rectangular_prism(dims, directory, input_filename, output_filename, num
 
     box.save(directory+input_filename)
 
-    mdbd(directory, input_filename, output_filename, num_spheres=num_spheres, meshgrid_increment=meshgrid_increment, plot=False)
+    mdbd(directory, input_filename, output_filename, num_spheres=num_spheres, meshgrid_increment=meshgrid_increment, plot=plot)

@@ -19,8 +19,6 @@ system = System('input.toml')
 with open("spatial_configurations.toml", mode="rb") as fp:
     default_positions_dict = tomli.load(fp)
 
-# TODO Preprocess: Calculate centroids & principal axes, transform components to origin, etc.
-
 
 system.set_default_positions(default_positions_dict)
 
