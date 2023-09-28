@@ -69,12 +69,6 @@ class Component:
 
         return centroid
 
-    @property
-    def object_dict(self):
-        return {self.__repr__(): {'positions': self.positions,
-                                  'radii': self.radii,
-                                  'port_indices': self.port_indices}}
-
     def assemble_transformation_vectors(self, vector, check_dof=True):
 
         translation = torch.zeros((3, 1), dtype=torch.float64)
@@ -238,25 +232,13 @@ class Interconnect:
     def __repr__(self):
         return self.name
 
-
     @property
     def design_vector_size(self):
         # TODO Enable different degrees of freedom
-        # TODO Fix for collocation points
-        # num_dof_collocation = 3 * 2 * self.num_collocation_points
-        # num_dof_start = 3
-        # num_dof_stop = 3
-        # num_dof = num_dof_collocation + num_dof_start + num_dof_stop
 
         num_dof = 3 * self.num_nodes
 
         return num_dof
-
-    def map_design_vector_to_node_positions(self, design_vector):
-        # TODO Enable different degrees of freedom
-        # TODO Enable mapping constant terms for fixed dof
-        node_positions = design_vector.reshape((-1, 3))
-        return node_positions
 
     def calculate_segment_positions(self, start_position, stop_position):
 
@@ -276,9 +258,9 @@ class Interconnect:
 
         return positions
 
-    def calculate_positions(self, design_vector, objects_dict):
+    def calculate_positions(self, design_vector):
 
-        delta_node_positions = self.map_design_vector_to_node_positions(design_vector)
+        delta_node_positions = design_vector.reshape((-1, 3))
 
         start_positions = delta_node_positions[0:-1]
         stop_positions = delta_node_positions[1:None]
@@ -290,8 +272,7 @@ class Interconnect:
 
         positions = self.positions + positions
 
-        object_dict={}
-        object_dict[str(self)] = {'type': 'interconnect', 'positions': positions, 'radii': self.radii}
+        object_dict= {str(self): {'type': 'interconnect', 'positions': positions, 'radii': self.radii}}
 
         return object_dict
 
@@ -300,8 +281,8 @@ class Interconnect:
         self.positions = objects_dict[str(self)]['positions']
 
 
-    def set_default_positions(self, waypoints, objects_dict):
-        object_dict = self.calculate_positions(waypoints, objects_dict)
+    def set_default_positions(self, waypoints):
+        object_dict = self.calculate_positions(waypoints)
         self.set_positions(object_dict)
 
 
@@ -449,7 +430,7 @@ class System:
         self.objective = objective_function
 
     def calculate_positions(self, design_vector, limit_spheres=False):
-        # TODO Vectorize...
+
         design_vectors = self.decompose_design_vector(design_vector)
         design_vectors_components = design_vectors[:len(self.components)]
         design_vectors_interconnects = design_vectors[len(self.components):]
@@ -461,14 +442,12 @@ class System:
             objects_dict = {**objects_dict, **object_dict}
 
         for interconnect, design_vector in zip(self.interconnects, design_vectors_interconnects):
-            object_dict = interconnect.calculate_positions(design_vector=design_vector, objects_dict=objects_dict)
+            object_dict = interconnect.calculate_positions(design_vector=design_vector)
             objects_dict = {**objects_dict, **object_dict}
 
         return objects_dict
 
     def set_default_positions(self, default_positions_dict):
-
-        objects_dict = {}
 
         # Map components first
         for component in self.components:
@@ -476,13 +455,12 @@ class System:
             translation = torch.tensor(translation, dtype=torch.float64).reshape(3, 1)
             rotation = torch.tensor(rotation, dtype=torch.float64).reshape(3, 1)
             component.set_default_positions(translation, rotation)
-            objects_dict = {**objects_dict, **component.object_dict}
 
         # Now interconnects
         for interconnect in self.interconnects:
             waypoints = list(default_positions_dict[interconnect.__repr__()].values())
             waypoints = torch.tensor(waypoints, dtype=torch.float64)
-            interconnect.set_default_positions(waypoints, objects_dict)
+            interconnect.set_default_positions(waypoints)
 
     def set_positions(self, objects_dict):
         """set_positions Sets the positions of the objects in the layout.
