@@ -20,8 +20,19 @@ from src.SPI2py.group_model.utilities import kreisselmeier_steinhauser
 from src.SPI2py.group_model.component_kinematics.bounding_volumes import bounding_box
 from src.SPI2py.group_model.utilities import kreisselmeier_steinhauser
 
+class Body:
+    pass
 
-class Component:
+class RigidBody:
+    pass
+
+class DeformableBody:
+    pass
+
+class LinearSpline:
+    pass
+
+class Component(RigidBody):
 
     # TODO Preprocess: Calculate centroids & principal axes, transform components to origin, etc.
 
@@ -268,6 +279,9 @@ class Interconnect:
         self.set_positions(object_dict)
 
 
+class Domain:
+    pass
+
 class System:
     def __init__(self, input_file):
 
@@ -510,3 +524,4 @@ class System:
         p.show_bounds(color='black')
         p.background_color = 'white'
         p.show()
+

@@ -77,19 +77,42 @@ def mdbd(directory, input_filename, output_filename, num_spheres=1000, min_radiu
         # Plot object with PyVista
         plotter = pv.Plotter()
 
-        # part2 = pv.read(directory+input_filename)
-        # plotter.add_mesh(part2, color='white', opacity=0.5)
+        part2 = pv.read(directory+input_filename)
+        part2_slice = part2.slice(normal=[0,1,0])
+        # bounds = [0, 1, 0, 1, 0, 1]
+        # clipped = dataset.clip_box(bounds)
+        # clipped = part2.clip_box(bounds)
+        clipped = part2.clip(normal='y')
+        # plotter.add_mesh(part2, color='gray', opacity=0.95, silhouette=True)
+        plotter.add_mesh(clipped, color='gray', opacity=0.95, silhouette={'line_width': 2}, roughness=0)
 
         # Plot the sphere
+        spheres = []
         for i in range(len(sphere_points)):
             sphere = pv.Sphere(center=sphere_points[i], radius=sphere_radii[i])
             # plotter.add_mesh(sphere, color='green', opacity=0.75)
-            plotter.add_mesh(sphere, color='purple', opacity=0.75)
+            # plotter.add_mesh(sphere, color='green', opacity=0.25)
+            spheres.append(sphere)
 
+        merged = pv.MultiBlock(spheres).combine().extract_surface().clean()
+        merged_clipped = merged.clip(normal='y')
+        # merged_sliced = merged.slice(normal=[0,1,0])
+        # plotter.add_mesh(merged_sliced, color='green', opacity=0.25)
+        # plotter.add_mesh(merged_sliced, color='green')
+        # plotter.add_mesh(merged, color='green', opacity=0.95)
+        plotter.add_mesh(merged_clipped, color='green', opacity=0.25)
+
+        # plotter.view_isometric()
         plotter.view_xz()
+        # plotter.enable_shadows()
         plotter.background_color = 'white'
         plotter.show()
 
+
+
+
+        # slice = plotter.mesh.slice(normal=[1,1,0])
+        # slice.plot()
 
     # OUTPUT
 

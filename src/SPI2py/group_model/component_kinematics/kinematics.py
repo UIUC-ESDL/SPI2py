@@ -11,6 +11,8 @@ class KinematicsInterface(ExplicitComponent):
 
         self.kinematics = self.options['kinematics']
         x_default = torch.zeros(self.kinematics.design_vector_size)
+        x_rigidbody_default = 1
+        x_spline_default = 1
         f_default = self.kinematics.calculate_objective(x_default)
         g_default = self.kinematics.calculate_constraints(x_default)
 
