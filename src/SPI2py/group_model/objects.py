@@ -508,9 +508,17 @@ class System:
         objects = []
         colors = []
         for obj in self.objects:
+
+            spheres = []
             for position, radius in zip(obj.positions, obj.radii):
-                objects.append(pv.Sphere(radius=radius, center=position, theta_resolution=30, phi_resolution=30))
-                colors.append(obj.color)
+                spheres.append(pv.Sphere(radius=radius, center=position, theta_resolution=30, phi_resolution=30))
+
+            merged = pv.MultiBlock(spheres).combine().extract_surface().clean()
+            # merged_clipped = merged.clip(normal='z')
+            merged_slice = merged.slice(normal=[0, 0, 1])
+
+            objects.append(merged_slice)
+            colors.append(obj.color)
 
         # Plot the objects
         p = pv.Plotter(window_size=[1000, 1000])
@@ -520,8 +528,8 @@ class System:
 
         # p.view_isometric()
         p.view_xy()
-        p.show_axes()
-        p.show_bounds(color='black')
+        # p.show_axes()
+        # p.show_bounds(color='black')
         p.background_color = 'white'
         p.show()
 

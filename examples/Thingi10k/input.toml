@@ -1,0 +1,30 @@
+[info]
+name = "Chad Peterson"
+description = """Demo Problem"""
+
+[problem]
+objective = "bounding box volume"
+
+[admissibledomain.engine]
+filepath='cad_models/engine.stl'
+
+
+[components]
+
+[components.radiator_and_ion_exchanger_1a]
+color='purple'
+degrees_of_freedom=['x', 'y', 'z', 'rx', 'ry', 'rz']
+filepath='part_models/radiator_and_ion_exchanger.xyzr'
+num_spheres_collision_detection=25
+num_spheres_visualization=150
+ports=[{'name'= 'left', 'origin'= [-1.475, 0, 0], 'radius'= 0.05},
+       {'name'= 'right', 'origin'= [1.475, 0, 0], 'radius'= 0.05}]
+
+[components.radiator_and_ion_exchanger_1b]
+color='purple'
+degrees_of_freedom=['x', 'y', 'z', 'rx', 'ry', 'rz']
+filepath='part_models/radiator_and_ion_exchanger.xyzr'
+num_spheres_collision_detection=25
+num_spheres_visualization=150
+ports=[{'name'= 'left', 'origin'= [-1.475, 0, 0], 'radius'= 0.05},
+       {'name'= 'right', 'origin'= [1.475, 0, 0], 'radius'= 0.05}]

@@ -8,7 +8,7 @@ import pyvista as pv
 import trimesh
 
 
-def mdbd(directory, input_filename, output_filename, num_spheres=1000, min_radius=0.0001, meshgrid_increment=25, plot=True):
+def mdbd(directory, input_filename, output_filename, num_spheres=1000, min_radius=0.0001, meshgrid_increment=25, plot=True, color='green'):
 
     # Create the pyvista and trimesh objects. Both are required.
     mesh_trimesh = trimesh.exchange.load.load(directory+input_filename)
@@ -83,8 +83,8 @@ def mdbd(directory, input_filename, output_filename, num_spheres=1000, min_radiu
         # clipped = dataset.clip_box(bounds)
         # clipped = part2.clip_box(bounds)
         clipped = part2.clip(normal='y')
-        # plotter.add_mesh(part2, color='gray', opacity=0.95, silhouette=True)
-        plotter.add_mesh(clipped, color='gray', opacity=0.95, silhouette={'line_width': 2}, roughness=0)
+        plotter.add_mesh(part2, color='gray', opacity=0.95, silhouette=True)
+        # plotter.add_mesh(clipped, color='gray', opacity=0.95, silhouette={'line_width': 2}, roughness=0)
 
         # Plot the sphere
         spheres = []
@@ -99,8 +99,8 @@ def mdbd(directory, input_filename, output_filename, num_spheres=1000, min_radiu
         # merged_sliced = merged.slice(normal=[0,1,0])
         # plotter.add_mesh(merged_sliced, color='green', opacity=0.25)
         # plotter.add_mesh(merged_sliced, color='green')
-        # plotter.add_mesh(merged, color='green', opacity=0.95)
-        plotter.add_mesh(merged_clipped, color='green', opacity=0.25)
+        plotter.add_mesh(merged, color=color, opacity=0.95)
+        # plotter.add_mesh(merged_clipped, color='green', opacity=0.25)
 
         # plotter.view_isometric()
         plotter.view_xz()

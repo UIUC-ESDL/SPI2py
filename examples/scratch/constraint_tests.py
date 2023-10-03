@@ -1,39 +1,44 @@
-import numpy as np
-import torch
-from torch.autograd.functional import jacobian
+import autograd.numpy as np
+from autograd import grad
+# import numpy as np
+from scipy.sparse import csr_matrix, csc_matrix, coo_matrix, lil_matrix, dok_matrix, dia_matrix, bsr_matrix
 from scipy.optimize import minimize, LinearConstraint, NonlinearConstraint, approx_fprime, Bounds
 
 
 def f(x):
     """Minimize the distance between each point"""
 
-    x = torch.tensor(x, dtype=torch.float64)
+    f_val = np.sum((x[1:None] - x[0:-1])**2)
 
-    return torch.sum((x[1:None] - x[0:-1])**2)
+    return f_val
+
+
+def jac_f(x):
+
+    jac = np.zeros((1, len(x)))
+
+    jac[0][0] = -2*x[1] + 2*x[0]
+    jac[0][-1] = 2*x[-1] - 2*x[-2]
+
+    jac[0][1:-1] = 2*x[1:-1] - 2*x[0:-2] - 2*x[2:None] + 2*x[1:-1]
+
+    return jac
 
 def f_jac(x):
 
-    x = torch.tensor(x, dtype=torch.float64, requires_grad=True)
+    f_val = f(x)
 
-    def fi(xi): return torch.sum((xi[1:None] - xi[0:-1])**2)
+    jac_f_val = jac_f(x)
 
-    f_val = fi(x)
-    grad_f_val = jacobian(fi, x)
-
-    f_val = f_val.detach().numpy()
-    grad_f_val = grad_f_val.detach().numpy()
-
-    return f_val, grad_f_val
+    return f_val, jac_f_val
 
 def g(x):
-
-    x = torch.tensor(x, dtype=torch.float64)
 
     g_val = 0.1 - (x[0:-1] - x[1:None]) ** 2
 
     return g_val
 
-def an_jac_g(x):
+def jac_g(x):
 
     dg_dxi = np.zeros((len(x) - 1, len(x)))
     dg_dxip1 = np.zeros((len(x) - 1, len(x)))
@@ -50,41 +55,74 @@ def an_jac_g(x):
 
     return jac
 
-def jac_g(x):
+def g_agg(x):
 
-    x = torch.tensor(x, dtype=torch.float64, requires_grad=True)
+    g_val = 0.1 - (x[0:-1] - x[1:None]) ** 2
 
-    def gi(xi): return 0.00001 - (xi[0:-1] - xi[1:None]) ** 2
+    rho = 100
+    g_bar_ks = np.max(g_val) + 1 / rho * np.log(np.sum(np.exp(rho * (g_val - np.max(g_val)))))
 
-    grad_g_val = jacobian(gi, x)
+    return g_bar_ks
 
-    grad_g_val = grad_g_val.detach().numpy()
+jac_g_agg = grad(g_agg)
 
-    return grad_g_val
+# def jac_g_agg(x):
+#
+#     dg_dxi = np.zeros((len(x) - 1, len(x)))
+#     dg_dxip1 = np.zeros((len(x) - 1, len(x)))
+#
+#     xi_indices = np.arange(0, len(x)-1)
+#     xip1_indices = np.arange(1, len(x))
+#
+#     dg_dxip1[xi_indices, xip1_indices] = x[xip1_indices]
+#     dg_dxip1[xi_indices, xip1_indices] = x[xip1_indices]
+#     dg_dxi[xi_indices, xi_indices] = -2*x[xi_indices] + 2*x[xip1_indices]
+#     dg_dxip1[xi_indices, xip1_indices] = 2*x[xi_indices] - 2*x[xip1_indices]
+#
+#     jac = dg_dxi + dg_dxip1
+#
+#     return jac
 
+# def sjac_g(x):
+#
+#     dg_dxi = np.zeros((len(x) - 1, len(x)))
+#     dg_dxip1 = np.zeros((len(x) - 1, len(x)))
+#
+#     xi_indices = np.arange(0, len(x)-1)
+#     xip1_indices = np.arange(1, len(x))
+#
+#     dg_dxip1[xi_indices, xip1_indices] = x[xip1_indices]
+#     dg_dxip1[xi_indices, xip1_indices] = x[xip1_indices]
+#     dg_dxi[xi_indices, xi_indices] = -2*x[xi_indices] + 2*x[xip1_indices]
+#     dg_dxip1[xi_indices, xip1_indices] = 2*x[xi_indices] - 2*x[xip1_indices]
+#
+#     jac = dg_dxi + dg_dxip1
+#
+#     sjac = dia_matrix(jac)
+#
+#     return sjac
 
 def run_minimize(x):
 
     num_constraints = len(x) - 1
-    lb = -torch.inf * torch.ones(num_constraints)
-    ub = torch.zeros(num_constraints)
-    nlcs = NonlinearConstraint(g, lb, ub)
-
-    sol = minimize(f, x, method='SLSQP', constraints=nlcs)
-
-    return sol
-
-def run_minimize_grad(x):
-    num_constraints = len(x) - 1
-    lb = -torch.inf * torch.ones(num_constraints)
-    ub = torch.zeros(num_constraints)
+    lb = -np.inf * np.ones(num_constraints)
+    ub = np.zeros(num_constraints)
     nlcs = NonlinearConstraint(g, lb, ub, jac=jac_g)
 
     sol = minimize(f_jac, x, method='SLSQP', jac=True, constraints=nlcs)
 
     return sol
 
-
+# def run_minimize_sparse(x):
+#
+#     num_constraints = len(x) - 1
+#     lb = -np.inf * np.ones(num_constraints)
+#     ub = np.zeros(num_constraints)
+#     nlcs = NonlinearConstraint(g, lb, ub, jac=sjac_g)
+#
+#     sol = minimize(f_jac, x, method='SLSQP', jac=True, constraints=nlcs)
+#
+#     return sol
 
 # def run_minimize_eq(x, num_eq_constraints):
 #
@@ -99,56 +137,33 @@ def run_minimize_grad(x):
 #     sol = minimize(objective, x, method='SLSQP', constraints=[nlcs, eq_nlcs])
 #
 #     return sol
-#
+
+
 def run_minimize_bound(x, num_bounds):
 
-    num_constraints = len(x) - 1
-    glb = -torch.inf * torch.ones(num_constraints)
-    gub = torch.zeros(num_constraints)
-    nlcs = NonlinearConstraint(g, glb, gub)
-
-    c = torch.arange(num_bounds)
-    other = len(x) - num_bounds
+    c = x[0:num_bounds]
+    other = len(x) - len(c)
     c_lb = c
     c_ub = c
-    other_lb = -torch.inf * torch.ones(other)
-    other_ub = torch.inf * torch.ones(other)
+    other_lb = -np.inf * np.ones(other)
+    other_ub = np.inf * np.ones(other)
 
-    lb = torch.hstack((c_lb, other_lb))
-    ub = torch.hstack((c_ub, other_ub))
+    lb = np.hstack((c_lb, other_lb))
+    ub = np.hstack((c_ub, other_ub))
 
     bounds = Bounds(lb, ub)
 
-    sol = minimize(f, x, method='SLSQP', constraints=nlcs, bounds=bounds)
+    sol = minimize(f_jac, x, method='SLSQP', jac=True, bounds=bounds)
 
     return sol
 
-def run_minimize_bound_grad(x, num_bounds):
+def run_minimize_bound_con(x, num_bounds):
 
+    # TODO is this larger than bounded-removed variables?
     num_constraints = len(x) - 1
-    glb = -torch.inf * torch.ones(num_constraints)
-    gub = torch.zeros(num_constraints)
+    glb = -np.inf * np.ones(num_constraints)
+    gub = np.zeros(num_constraints)
     nlcs = NonlinearConstraint(g, glb, gub, jac=jac_g)
-
-    c = torch.arange(num_bounds)
-    other = len(x) - num_bounds
-    c_lb = c
-    c_ub = c
-    other_lb = -torch.inf * torch.ones(other)
-    other_ub = torch.inf * torch.ones(other)
-
-    lb = torch.hstack((c_lb, other_lb))
-    ub = torch.hstack((c_ub, other_ub))
-
-    bounds = Bounds(lb, ub)
-
-    sol = minimize(f_jac, x, method='SLSQP', jac=True, constraints=nlcs, bounds=bounds)
-
-    return sol
-
-def run_minimize_bound_no_con(x, num_bounds):
-
-    fi = torch.sum((x[1:None] - x[0:-1])**2)
 
     c = np.arange(num_bounds)
     other = len(x) - num_bounds
@@ -162,50 +177,74 @@ def run_minimize_bound_no_con(x, num_bounds):
 
     bounds = Bounds(lb, ub)
 
-    sol = minimize(f, x, method='SLSQP', bounds=bounds)
+    sol = minimize(f_jac, x, method='SLSQP', jac=True, constraints=nlcs, bounds=bounds)
 
     return sol
 
-# xe1 = torch.linspace(0, 999, 10)
-# xe2 = torch.linspace(0, 999, 100)
-# x2e2 = torch.linspace(0, 999, 200)
-# x3e2 = torch.linspace(0, 999, 300)
-# x4e2 = torch.linspace(0, 999, 400)
-# x5e2 = torch.linspace(0, 999, 500)
+
+def run_minimize_bound_aggcon(x, num_bounds):
+
+    nlcs = NonlinearConstraint(g_agg, -np.inf, 0, jac=jac_g_agg)
+
+    c = np.arange(num_bounds)
+    other = len(x) - num_bounds
+    c_lb = c
+    c_ub = c
+    other_lb = -np.inf * np.ones(other)
+    other_ub = np.inf * np.ones(other)
+
+    lb = np.hstack((c_lb, other_lb))
+    ub = np.hstack((c_ub, other_ub))
+
+    bounds = Bounds(lb, ub)
+
+    sol = minimize(f_jac, x, method='SLSQP', jac=True, constraints=nlcs, bounds=bounds)
+
+    return sol
+
+
+def run_minimize_bound_con_no_grad(x, num_bounds):
+
+    num_constraints = len(x) - 1
+    glb = -np.inf * np.ones(num_constraints)
+    gub = np.zeros(num_constraints)
+    nlcs = NonlinearConstraint(g, glb, gub)
+
+    c = np.arange(num_bounds)
+    other = len(x) - num_bounds
+    c_lb = c
+    c_ub = c
+    other_lb = -np.inf * np.ones(other)
+    other_ub = np.inf * np.ones(other)
+
+    lb = np.hstack((c_lb, other_lb))
+    ub = np.hstack((c_ub, other_ub))
+
+    bounds = Bounds(lb, ub)
+
+    sol = minimize(f, x, method='SLSQP', constraints=nlcs, bounds=bounds)
+
+    return sol
+
+
 
 xe1 = np.linspace(0, 999, 10)
 xe2 = np.linspace(0, 999, 100)
 x2e2 = np.linspace(0, 999, 200)
-
 x3e2 = np.linspace(0, 999, 300)
 x4e2 = np.linspace(0, 999, 400)
 x5e2 = np.linspace(0, 999, 500)
 xe3 = np.linspace(0, 999, 1000)
 
-# a = np.zeros((9,10))
-# xi_indices = np.arange(0, len(xe1)-1)
-# xip1_indices = np.arange(1, len(xe1))
-#
-# a[xi_indices, xi_indices] = xe1[xi_indices]
-# a[xi_indices, xip1_indices] = xe1[xip1_indices]
 
 
-# run_minimize(xe2)
+# run_minimize(x4e2)
 # run_minimize_bound(x2e2,100)
+# run_minimize_bound_con(x2e2, 100)
+
+run_minimize_bound(xe2, 0)
+# run_minimize_bound(xe2, 1)
 
 
 
-x = xe1
 
-dg_dxi = np.zeros((len(x) - 1, len(x)))
-dg_dxip1 = np.zeros((len(x) - 1, len(x)))
-
-xi_indices = np.arange(0, len(x)-1)
-xip1_indices = np.arange(1, len(x))
-
-dg_dxip1[xi_indices, xip1_indices] = x[xip1_indices]
-dg_dxip1[xi_indices, xip1_indices] = x[xip1_indices]
-dg_dxi[xi_indices, xi_indices] = -2*x[xi_indices] + 2*x[xip1_indices]
-dg_dxip1[xi_indices, xip1_indices] = 2*x[xi_indices] - 2*x[xip1_indices]
-
-jac = dg_dxi + dg_dxip1
