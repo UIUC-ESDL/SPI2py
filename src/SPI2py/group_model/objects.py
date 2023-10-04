@@ -13,23 +13,46 @@ import pyvista as pv
 from src.SPI2py.group_model.component_geometry.spherical_decomposition_methods.finite_sphere_method import \
     read_xyzr_file
 from src.SPI2py.group_model.component_kinematics.spatial_transformations import apply_homogenous_transformation
-from src.SPI2py.group_model.component_kinematics.bounding_volumes import bounding_box
+from src.SPI2py.group_model.component_kinematics.bounding_volumes import bounding_box_volume
 from src.SPI2py.group_model.component_kinematics.distance_calculations import signed_distances
 from src.SPI2py.group_model.utilities import kreisselmeier_steinhauser
 
-from src.SPI2py.group_model.component_kinematics.bounding_volumes import bounding_box
+from src.SPI2py.group_model.component_kinematics.bounding_volumes import bounding_box_volume
 from src.SPI2py.group_model.utilities import kreisselmeier_steinhauser
 
 
-class MDBD:
+class Object:
+    def __init__(self, name, color, material):
+        self.name = name
+        self.color = color
+        self.material = material
+
+    def __repr__(self):
+        return self.name
+
+    def __str__(self):
+        return self.name
+
+
+class RigidBody:
     """
     Maximal disjoint sphere decomposition
     Assumes no spheres overlap
     """
-    def __init__(self, input_file):
+    def __init__(self, input_file, prescale=1):
+
+
 
         self.positions, self.radii = read_xyzr_file(input_file)
+
+        self.positions = self.positions * prescale
+        self.radii = self.radii * prescale
+
         self.volume = torch.sum((4/3)*torch.pi*self.radii**3)
+
+    @property
+    def num_spheres(self):
+        return len(self.positions)
 
     @property
     def centroid(self):
@@ -44,20 +67,33 @@ class MDBD:
     def principal_axes(self):
         pass
 
+    @staticmethod
+    def assemble_transformation_matrix(translation, rotation):
 
-class Body:
-    pass
+        # Initialize the transformation matrix
+        t = torch.eye(4, dtype=torch.float64)
 
-class RigidBody:
-    pass
+        # Insert the translation vector
+        t[:3, [3]] = translation
 
-class DeformableBody:
-    pass
+        # Unpack the rotation angles (Euler)
+        a = rotation[0]  # alpha
+        b = rotation[1]  # beta
+        g = rotation[2]  # gamma
 
-class LinearSpline:
-    pass
+        # Calculate rotation matrix (R = R_z(gamma) @ R_y(beta) @ R_x(alpha))
+        r = torch.cat(
+            (cos(b) * cos(g), sin(a) * sin(b) * cos(g) - cos(a) * sin(g), cos(a) * sin(b) * cos(g) + sin(a) * sin(g),
+             cos(b) * sin(g), sin(a) * sin(b) * sin(g) + cos(a) * cos(g), cos(a) * sin(b) * sin(g) - sin(a) * cos(g),
+             -sin(b),         sin(a) * cos(b),                            cos(a) * cos(b))).view(3, 3)
 
-class Component(MDBD, RigidBody):
+        # Insert the rotation matrix
+        t[:3, :3] = r
+
+        return t
+
+
+class Component(RigidBody):
 
     # TODO Preprocess: Calculate centroids & principal axes, transform components to origin, etc.
 
@@ -66,18 +102,19 @@ class Component(MDBD, RigidBody):
                  color: str = None,
                  dof: Sequence[str] = ('x', 'y', 'z', 'rx', 'ry', 'rz'),
                  filepath=None,
-                 ports: Sequence[dict] = ()):
+                 ports: Sequence[dict] = (),
+                 prescale=1):
 
         # Assign the inputs
         self.name = name
-        self.color = color
+
         self.dof = dof
         self.filepath = filepath
         self.ports = ports
 
         # Extract the positions and radii of the spheres from the xyzr file
         # self.positions, self.radii = read_xyzr_file(filepath)
-        MDBD.__init__(self, filepath)
+        RigidBody.__init__(self, filepath, prescale=prescale)
 
         # Initialize the ports
         self.port_indices = {}
@@ -87,18 +124,11 @@ class Component(MDBD, RigidBody):
                 self.positions = torch.vstack((self.positions, torch.tensor(port['origin'], dtype=torch.float64)))
                 self.radii = torch.cat((self.radii, torch.tensor([port['radius']], dtype=torch.float64)))
 
-        self.num_spheres = len(self.positions)
-
         self.design_vector_indices = {dof_i: i for i, dof_i in enumerate(self.dof)}
         self.design_vector_size = len(self.design_vector_indices)
 
     def __repr__(self):
         return self.name
-
-
-
-    def align_component(self):
-        pass
 
     def assemble_transformation_vectors(self, vector, check_dof=True):
 
@@ -128,38 +158,14 @@ class Component(MDBD, RigidBody):
 
         return translation, rotation
 
-    def assemble_homogenous_transformation_matrix(self, vector, check_dof=True):
-
-        translation, rotation = self.assemble_transformation_vectors(vector, check_dof)
-
-        # Initialize the transformation matrix
-        t = torch.eye(4, dtype=torch.float64)
-
-        # Insert the translation vector
-        t[:3, [3]] = translation
-
-        # Unpack the rotation angles (Euler)
-        a = rotation[0]  # alpha
-        b = rotation[1]  # beta
-        g = rotation[2]  # gamma
-
-        # Calculate rotation matrix (R = R_z(gamma) @ R_y(beta) @ R_x(alpha))
-        r = torch.cat(
-            (cos(b) * cos(g), sin(a) * sin(b) * cos(g) - cos(a) * sin(g), cos(a) * sin(b) * cos(g) + sin(a) * sin(g),
-             cos(b) * sin(g), sin(a) * sin(b) * sin(g) + cos(a) * cos(g), cos(a) * sin(b) * sin(g) - sin(a) * cos(g),
-             -sin(b),         sin(a) * cos(b),                            cos(a) * cos(b))).view(3, 3)
-
-        # Insert the rotation matrix
-        t[:3, :3] = r
-
-        return t
-
-    def calculate_positions(self, design_vector):
+    def calculate_positions(self, design_vector, check_dof=True):
         """
         Calculates the positions of the object's spheres.
         """
 
-        t = self.assemble_homogenous_transformation_matrix(design_vector)
+        translation, rotation = self.assemble_transformation_vectors(design_vector, check_dof)
+
+        t = self.assemble_transformation_matrix(translation, rotation)
 
         new_positions = apply_homogenous_transformation(self.centroid.reshape(-1, 1),
                                                   self.positions.T,
@@ -176,9 +182,7 @@ class Component(MDBD, RigidBody):
         Calculates the positions of the object's spheres.
         """
 
-        vector = torch.cat((translation, rotation))
-
-        t = self.assemble_homogenous_transformation_matrix(vector, check_dof=False)
+        t = self.assemble_transformation_matrix(translation, rotation)
 
         new_positions = apply_homogenous_transformation(self.centroid.reshape(-1, 1),
                                                   self.positions.T,
@@ -200,6 +204,22 @@ class Component(MDBD, RigidBody):
         self.positions = objects_dict[self.__repr__()]['positions']
         self.radii = objects_dict[self.__repr__()]['radii']
 
+
+class Domain(RigidBody):
+    def __init__(self, name, filepath, color):
+
+        self.name = name
+        self.filepath = filepath
+        self.color = color
+
+        RigidBody.__init__(self, filepath)
+
+    def __repr__(self):
+        return self.name
+
+
+class LinearSpline:
+    pass
 
 class Interconnect:
 
@@ -291,17 +311,7 @@ class Interconnect:
         self.set_positions(object_dict)
 
 
-class Domain(MDBD):
-    def __init__(self, name, filepath, color):
 
-        self.name = name
-        self.filepath = filepath
-        self.color = color
-
-        MDBD.__init__(self, filepath)
-
-    def __repr__(self):
-        return self.name
 
 class System:
     def __init__(self, input_file):
@@ -314,7 +324,7 @@ class System:
         self.objects = self.components + self.interconnects
 
         # TODO Figure out how to handle objects w/ domains...
-        self.domains = self.create_domains()
+        # self.domains = self.create_domains()
 
         self.collision_detection_pairs = self.get_collision_detection_pairs()
 
@@ -348,9 +358,15 @@ class System:
             else:
                 ports = None
 
+            if 'prescale' in component_inputs.keys():
+                prescale = component_inputs['prescale']
+                prescale
+            else:
+                prescale = 1
+
             components.append(
                 Component(name=name, color=color, dof=degrees_of_freedom, filepath=filepath,
-                          ports=ports))
+                          ports=ports, prescale=prescale))
 
         return components
 
@@ -461,7 +477,7 @@ class System:
         # SELECT THE OBJECTIVE FUNCTION HANDLE
 
         if objective == 'bounding box volume':
-            _objective_function = bounding_box
+            _objective_function = bounding_box_volume
         else:
             raise NotImplementedError
 
@@ -583,42 +599,31 @@ class System:
             # merged_clipped = merged.clip(normal='z')
             # merged_slice = merged.slice(normal=[0, 0, 1])
 
-            # objects.append(merged)
-            # colors.append(obj.color)
-
-        for domain in self.domains[1:None]:
-            spheres = []
-            for position, radius in zip(domain.positions, domain.radii):
-                scale = 1000
-                spheres.append(pv.Sphere(radius=scale*radius, center=scale*position, theta_resolution=30, phi_resolution=30))
-            merged = pv.MultiBlock(spheres).combine().extract_surface().clean()
-            merged_clipped = merged.clip(normal='y')
-            # merged_slice = merged.slice(normal=[0, 0, 1])
-
             objects.append(merged)
-            colors.append(domain.color)
+            colors.append(obj.color)
+
+        # for domain in self.domains:
+        #     spheres = []
+        #     for position, radius in zip(domain.positions, domain.radii):
+        #         spheres.append(pv.Sphere(radius=radius, center=position, theta_resolution=30, phi_resolution=30))
+        #     merged = pv.MultiBlock(spheres).combine().extract_surface().clean()
+        #     # merged_clipped = merged.clip(normal='y')
+        #     # merged_slice = merged.slice(normal=[0, 0, 1])
+        #
+        #     objects.append(merged)
+        #     colors.append(domain.color)
+
 
         # Plot the objects
         p = pv.Plotter(window_size=[1000, 1000])
 
         for obj, color in zip(objects, colors):
-            p.add_mesh(obj, color=color, opacity=0.75)
+            p.add_mesh(obj, color=color)
 
-        for domain in self.domains[0:1]:
-            spheres = []
-            for position, radius in zip(domain.positions, domain.radii):
-                spheres.append(pv.Sphere(radius=radius, center=position, theta_resolution=30, phi_resolution=30))
-            merged = pv.MultiBlock(spheres).combine().extract_surface().clean()
-            # merged_clipped = merged.clip(normal='z')
-            # merged_slice = merged.slice(normal=[0, 0, 1])
-
-            p.add_mesh(merged, color=domain.color, opacity=1)
-
-
-        # p.view_isometric()
-        p.view_xy()
+        p.view_isometric()
+        # p.view_xy()
         p.show_axes()
-        # p.show_bounds(color='black')
+        p.show_bounds(color='black')
         p.background_color = 'white'
         p.show()
 

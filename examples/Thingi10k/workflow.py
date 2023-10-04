@@ -5,6 +5,7 @@ Author:     Chad Peterson
 
 # %% Import packages
 
+import numpy as np
 import tomli
 import torch
 import openmdao.api as om
@@ -16,11 +17,11 @@ system = System('input.toml')
 
 # %% Define the initial spatial configuration
 
-# with open("spatial_configurations.toml", mode="rb") as fp:
-#     default_positions_dict = tomli.load(fp)
-#
-#
-# system.set_default_positions(default_positions_dict)
+with open("spatial_configurations.toml", mode="rb") as fp:
+    default_positions_dict = tomli.load(fp)
+
+
+system.set_default_positions(default_positions_dict)
 
 # %% Define the system
 
@@ -32,7 +33,9 @@ kinematics_component.options.declare('kinematics', default=system)
 
 model.add_subsystem('kinematics', kinematics_component, promotes=['*'])
 
-prob.model.add_design_var('x')
+prob.model.add_design_var('translation', lower=-10, upper=10)
+prob.model.add_design_var('rotation', lower=-2*np.pi, upper=2*np.pi)
+# TODO Add routing...
 prob.model.add_objective('f')
 prob.model.add_constraint('g', upper=0)
 
@@ -48,7 +51,7 @@ prob.setup()
 # model.set_val('x', kinematics_component.kinematics.design_vector)
 
 prob.driver = om.ScipyOptimizeDriver()
-prob.driver.options['maxiter'] = 3
+prob.driver.options['maxiter'] = 20
 
 prob.run_model()
 
