@@ -8,23 +8,27 @@ objective = "bounding box volume"
 [domain.engine]
 filepath='cad_models/engine.xyzr'
 prescale = 1
+degrees_of_freedom=[]
 color = 'grey'
 
 [domain.engine_volume_fwd]
 filepath='cad_models/engine_vol_fwd.xyzr'
 prescale = 1
+degrees_of_freedom=[]
 color = 'green'
 
 
 [domain.engine_volume_middle]
 filepath='cad_models/engine_vol_mid.xyzr'
 prescale = 1
+degrees_of_freedom=[]
 color = 'blue'
 
 
 [domain.engine_volume_rear]
 filepath='cad_models/engine_vol_rear.xyzr'
 prescale = 1
+degrees_of_freedom=[]
 color = 'purple'
 
 [components.stepper_gear]

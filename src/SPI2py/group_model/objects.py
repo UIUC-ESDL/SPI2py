@@ -21,17 +21,17 @@ from src.SPI2py.group_model.component_kinematics.bounding_volumes import boundin
 from src.SPI2py.group_model.utilities import kreisselmeier_steinhauser
 
 
-class Object:
-    def __init__(self, name, color, material):
-        self.name = name
-        self.color = color
-        self.material = material
-
-    def __repr__(self):
-        return self.name
-
-    def __str__(self):
-        return self.name
+# class Object:
+#     def __init__(self, name, color, material):
+#         self.name = name
+#         self.color = color
+#         self.material = material
+#
+#     def __repr__(self):
+#         return self.name
+#
+#     def __str__(self):
+#         return self.name
 
 
 class RigidBody:
@@ -41,14 +41,14 @@ class RigidBody:
     """
     def __init__(self, input_file, prescale=1):
 
-
-
         self.positions, self.radii = read_xyzr_file(input_file)
 
         self.positions = self.positions * prescale
         self.radii = self.radii * prescale
 
         self.volume = torch.sum((4/3)*torch.pi*self.radii**3)
+
+        # translation
 
     @property
     def num_spheres(self):
@@ -111,6 +111,7 @@ class Component(RigidBody):
         self.dof = dof
         self.filepath = filepath
         self.ports = ports
+        self.color = color
 
         # Extract the positions and radii of the spheres from the xyzr file
         # self.positions, self.radii = read_xyzr_file(filepath)
@@ -313,7 +314,7 @@ class Interconnect:
 
 
 
-class System:
+class Problem:
     def __init__(self, input_file):
 
         self.input_file = input_file
@@ -334,6 +335,11 @@ class System:
         # TODO Convert local indexing to global indexing...
 
         # TODO Component-Interconnect collocation constraints
+
+        self.num_components = len(self.components)
+
+        # total number of interconnect segments
+        self.num_segments = sum([i.num_segments for i in self.interconnects])
 
     def read_input_file(self):
 

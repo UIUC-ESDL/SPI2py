@@ -35,7 +35,8 @@ model.add_subsystem('kinematics', kinematics_component, promotes=['*'])
 
 prob.model.add_design_var('translation', lower=-10, upper=10)
 prob.model.add_design_var('rotation', lower=-2*np.pi, upper=2*np.pi)
-# TODO Add routing...
+prob.model.add_design_var('routing', lower=-10, upper=10)
+
 prob.model.add_objective('f')
 prob.model.add_constraint('g', upper=0)
 
