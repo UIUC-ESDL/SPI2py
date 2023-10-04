@@ -20,6 +20,31 @@ from src.SPI2py.group_model.utilities import kreisselmeier_steinhauser
 from src.SPI2py.group_model.component_kinematics.bounding_volumes import bounding_box
 from src.SPI2py.group_model.utilities import kreisselmeier_steinhauser
 
+
+class MDBD:
+    """
+    Maximal disjoint sphere decomposition
+    Assumes no spheres overlap
+    """
+    def __init__(self, input_file):
+
+        self.positions, self.radii = read_xyzr_file(input_file)
+        self.volume = torch.sum((4/3)*torch.pi*self.radii**3)
+
+    @property
+    def centroid(self):
+
+        v_i = ((4 / 3) * torch.pi * self.radii ** 3).view(-1, 1)
+        v_total = torch.sum(v_i)
+
+        centroid = torch.sum(self.positions * v_i, 0) / v_total
+
+        return centroid
+
+    def principal_axes(self):
+        pass
+
+
 class Body:
     pass
 
@@ -32,7 +57,7 @@ class DeformableBody:
 class LinearSpline:
     pass
 
-class Component(RigidBody):
+class Component(MDBD, RigidBody):
 
     # TODO Preprocess: Calculate centroids & principal axes, transform components to origin, etc.
 
@@ -51,7 +76,8 @@ class Component(RigidBody):
         self.ports = ports
 
         # Extract the positions and radii of the spheres from the xyzr file
-        self.positions, self.radii = read_xyzr_file(filepath)
+        # self.positions, self.radii = read_xyzr_file(filepath)
+        MDBD.__init__(self, filepath)
 
         # Initialize the ports
         self.port_indices = {}
@@ -69,21 +95,7 @@ class Component(RigidBody):
     def __repr__(self):
         return self.name
 
-    @property
-    def centroid(self):
-        """
-        Returns the centroid of the object. Assumes no overlapping spheres.
-        """
 
-        v_i = ((4 / 3) * torch.pi * self.radii ** 3).view(-1, 1)
-        v_total = torch.sum(v_i)
-
-        centroid = torch.sum(self.positions * v_i, 0) / v_total
-
-        return centroid
-
-    def principal_axes(self):
-        pass
 
     def align_component(self):
         pass
@@ -279,14 +291,14 @@ class Interconnect:
         self.set_positions(object_dict)
 
 
-class Domain:
+class Domain(MDBD):
     def __init__(self, name, filepath, color):
 
         self.name = name
         self.filepath = filepath
         self.color = color
 
-        self.positions, self.radii = read_xyzr_file(filepath)
+        MDBD.__init__(self, filepath)
 
     def __repr__(self):
         return self.name
@@ -574,18 +586,13 @@ class System:
             # objects.append(merged)
             # colors.append(obj.color)
 
-        for domain in self.domains:
+        for domain in self.domains[1:None]:
             spheres = []
             for position, radius in zip(domain.positions, domain.radii):
-
-                if not domain.name == 'engine':
-                    scale = 1000
-                else:
-                    scale = 1
+                scale = 1000
                 spheres.append(pv.Sphere(radius=scale*radius, center=scale*position, theta_resolution=30, phi_resolution=30))
-
             merged = pv.MultiBlock(spheres).combine().extract_surface().clean()
-            # merged_clipped = merged.clip(normal='z')
+            merged_clipped = merged.clip(normal='y')
             # merged_slice = merged.slice(normal=[0, 0, 1])
 
             objects.append(merged)
@@ -595,11 +602,22 @@ class System:
         p = pv.Plotter(window_size=[1000, 1000])
 
         for obj, color in zip(objects, colors):
-            p.add_mesh(obj, color=color, opacity=0.5)
+            p.add_mesh(obj, color=color, opacity=0.75)
 
-        p.view_isometric()
-        # p.view_xy()
-        # p.show_axes()
+        for domain in self.domains[0:1]:
+            spheres = []
+            for position, radius in zip(domain.positions, domain.radii):
+                spheres.append(pv.Sphere(radius=radius, center=position, theta_resolution=30, phi_resolution=30))
+            merged = pv.MultiBlock(spheres).combine().extract_surface().clean()
+            # merged_clipped = merged.clip(normal='z')
+            # merged_slice = merged.slice(normal=[0, 0, 1])
+
+            p.add_mesh(merged, color=domain.color, opacity=1)
+
+
+        # p.view_isometric()
+        p.view_xy()
+        p.show_axes()
         # p.show_bounds(color='black')
         p.background_color = 'white'
         p.show()
