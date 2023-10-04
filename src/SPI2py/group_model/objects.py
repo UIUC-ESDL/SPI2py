@@ -280,7 +280,16 @@ class Interconnect:
 
 
 class Domain:
-    pass
+    def __init__(self, name, filepath, color):
+
+        self.name = name
+        self.filepath = filepath
+        self.color = color
+
+        self.positions, self.radii = read_xyzr_file(filepath)
+
+    def __repr__(self):
+        return self.name
 
 class System:
     def __init__(self, input_file):
@@ -292,9 +301,10 @@ class System:
         self.interconnects, self.collocation_constraint_indices = self.create_conductors()
         self.objects = self.components + self.interconnects
 
-        self.component_component_pairs = list(combinations(self.components, 2))
-        self.component_interconnect_pairs = list(product(self.components, self.interconnects))
-        self.interconnect_interconnect_pairs = list(combinations(self.interconnects, 2))
+        # TODO Figure out how to handle objects w/ domains...
+        self.domains = self.create_domains()
+
+        self.collision_detection_pairs = self.get_collision_detection_pairs()
 
         objective = self.input['problem']['objective']
         self.set_objective(objective)
@@ -320,7 +330,12 @@ class System:
             color = component_inputs['color']
             degrees_of_freedom = component_inputs['degrees_of_freedom']
             filepath = component_inputs['filepath']
-            ports = component_inputs['ports']
+
+            if 'ports' in component_inputs.keys():
+                ports = component_inputs['ports']
+            else:
+                ports = None
+
             components.append(
                 Component(name=name, color=color, dof=degrees_of_freedom, filepath=filepath,
                           ports=ports))
@@ -331,39 +346,58 @@ class System:
 
         # TODO Define collocation constraints
 
-        conductors_inputs = self.input['conductors']
+        if 'conductors' not in self.input.keys():
+            return [], []
+        else:
 
-        conductors = []
-        collocation_constraint_indices = []
-        for conductor_inputs in conductors_inputs.items():
-            name = conductor_inputs[0]
-            conductor_inputs = conductor_inputs[1]
+            conductors_inputs = self.input['conductors']
 
-            component_1 = conductor_inputs['component_1']
-            component_1_port = conductor_inputs['component_1_port']
-            component_2 = conductor_inputs['component_2']
-            component_2_port = conductor_inputs['component_2_port']
+            conductors = []
+            collocation_constraint_indices = []
+            for conductor_inputs in conductors_inputs.items():
+                name = conductor_inputs[0]
+                conductor_inputs = conductor_inputs[1]
 
-            component_1_index = self.components.index([i for i in self.components if repr(i) == component_1][0])
-            component_2_index = self.components.index([i for i in self.components if repr(i) == component_2][0])
-            component_1_port_index = self.components[component_1_index].port_indices[component_1_port]
-            component_2_port_index = self.components[component_2_index].port_indices[component_2_port]
-            collocation_constraint_1 = [component_1_port_index, 0]
-            collocation_constraint_2 = [component_2_port_index, -1]
-            collocation_constraint_indices.append(collocation_constraint_1)
-            collocation_constraint_indices.append(collocation_constraint_2)
+                component_1 = conductor_inputs['component_1']
+                component_1_port = conductor_inputs['component_1_port']
+                component_2 = conductor_inputs['component_2']
+                component_2_port = conductor_inputs['component_2_port']
 
-            radius = conductor_inputs['radius']
-            color = conductor_inputs['color']
-            num_segments = conductor_inputs['num_segments']
+                component_1_index = self.components.index([i for i in self.components if repr(i) == component_1][0])
+                component_2_index = self.components.index([i for i in self.components if repr(i) == component_2][0])
+                component_1_port_index = self.components[component_1_index].port_indices[component_1_port]
+                component_2_port_index = self.components[component_2_index].port_indices[component_2_port]
+                collocation_constraint_1 = [component_1_port_index, 0]
+                collocation_constraint_2 = [component_2_port_index, -1]
+                collocation_constraint_indices.append(collocation_constraint_1)
+                collocation_constraint_indices.append(collocation_constraint_2)
+
+                radius = conductor_inputs['radius']
+                color = conductor_inputs['color']
+                num_segments = conductor_inputs['num_segments']
 
 
-            conductors.append(Interconnect(name=name,
-                                           radius=radius,
-                                           color=color,
-                                           num_segments=num_segments))
+                conductors.append(Interconnect(name=name,
+                                               radius=radius,
+                                               color=color,
+                                               num_segments=num_segments))
 
-        return conductors, collocation_constraint_indices
+            return conductors, collocation_constraint_indices
+
+    def create_domains(self):
+
+        domains_inputs = self.input['domain']
+
+        domains = []
+        for domain_inputs in domains_inputs.items():
+            name = domain_inputs[0]
+            domain_inputs = domain_inputs[1]
+            color = domain_inputs['color']
+            filepath = domain_inputs['filepath']
+
+            domains.append(Domain(name=name, filepath=filepath, color=color))
+
+        return domains
 
     @property
     def design_vector_size(self):
@@ -469,6 +503,25 @@ class System:
         for obj in self.objects:
             obj.set_positions(objects_dict)
 
+    def get_collision_detection_pairs(self):
+
+        collision_detection_pairs = []
+
+        if 'components' in self.input.keys():
+            component_component_pairs = list(combinations(self.components, 2))
+            collision_detection_pairs.append(component_component_pairs)
+
+        if 'conductors' in self.input.keys():
+            interconnect_interconnect_pairs = list(combinations(self.interconnects, 2))
+            collision_detection_pairs.append(interconnect_interconnect_pairs)
+
+        if 'components' in self.input.keys() and 'conductors' in self.input.keys():
+            component_interconnect_pairs = list(product(self.components, self.interconnects))
+            collision_detection_pairs.append(component_interconnect_pairs)
+
+        return collision_detection_pairs
+
+
     def collision_detection(self, x, object_pair):
 
         # Calculate the positions of all spheres in layout given design vector x
@@ -491,11 +544,12 @@ class System:
 
     def calculate_constraints(self, x):
 
-        g_components_components = self.collision_detection(x, self.component_component_pairs).reshape(1, 1)
-        g_components_interconnects = self.collision_detection(x, self.component_interconnect_pairs).reshape(1, 1)
-        g_interconnects_interconnects = self.collision_detection(x, self.interconnect_interconnect_pairs).reshape(1, 1)
+        g = []
+        for cd_pair in self.collision_detection_pairs:
+            cd_constraint = self.collision_detection(x, cd_pair)
+            g.append(cd_constraint)
 
-        g = torch.cat((g_components_components, g_components_interconnects, g_interconnects_interconnects))
+        g = torch.tensor(g)
 
         return g
 
@@ -515,19 +569,36 @@ class System:
 
             merged = pv.MultiBlock(spheres).combine().extract_surface().clean()
             # merged_clipped = merged.clip(normal='z')
-            merged_slice = merged.slice(normal=[0, 0, 1])
+            # merged_slice = merged.slice(normal=[0, 0, 1])
 
-            objects.append(merged_slice)
-            colors.append(obj.color)
+            # objects.append(merged)
+            # colors.append(obj.color)
+
+        for domain in self.domains:
+            spheres = []
+            for position, radius in zip(domain.positions, domain.radii):
+
+                if not domain.name == 'engine':
+                    scale = 1000
+                else:
+                    scale = 1
+                spheres.append(pv.Sphere(radius=scale*radius, center=scale*position, theta_resolution=30, phi_resolution=30))
+
+            merged = pv.MultiBlock(spheres).combine().extract_surface().clean()
+            # merged_clipped = merged.clip(normal='z')
+            # merged_slice = merged.slice(normal=[0, 0, 1])
+
+            objects.append(merged)
+            colors.append(domain.color)
 
         # Plot the objects
         p = pv.Plotter(window_size=[1000, 1000])
 
         for obj, color in zip(objects, colors):
-            p.add_mesh(obj, color=color)
+            p.add_mesh(obj, color=color, opacity=0.5)
 
-        # p.view_isometric()
-        p.view_xy()
+        p.view_isometric()
+        # p.view_xy()
         # p.show_axes()
         # p.show_bounds(color='black')
         p.background_color = 'white'

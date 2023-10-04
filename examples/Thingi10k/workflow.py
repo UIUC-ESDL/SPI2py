@@ -16,11 +16,11 @@ system = System('input.toml')
 
 # %% Define the initial spatial configuration
 
-with open("spatial_configurations.toml", mode="rb") as fp:
-    default_positions_dict = tomli.load(fp)
-
-
-system.set_default_positions(default_positions_dict)
+# with open("spatial_configurations.toml", mode="rb") as fp:
+#     default_positions_dict = tomli.load(fp)
+#
+#
+# system.set_default_positions(default_positions_dict)
 
 # %% Define the system
 
