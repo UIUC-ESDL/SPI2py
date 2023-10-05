@@ -100,6 +100,7 @@ ports=[{'name'= 'left', 'origin'= [-0.7225, 0, 0], 'radius'= 0.05},
        {'name'= 'right', 'origin'= [0.7225, 0, 0], 'radius'= 0.05}]
 
 [conductors]
+spheres_per_segment=25
 
 [conductors.c1a_c1b]
 component_1='radiator_and_ion_exchanger_1a'

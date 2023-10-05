@@ -11,22 +11,18 @@ class KinematicsInterface(ExplicitComponent):
 
         self.kinematics = self.options['kinematics']
 
-        translation_default = torch.zeros((self.kinematics.num_components, 3))
-        rotation_default = torch.zeros((self.kinematics.num_components, 3))
+        translations_default = torch.zeros((self.kinematics.num_components, 3))
+        rotations_default = torch.zeros((self.kinematics.num_components, 3))
+        routings_default = torch.zeros((self.kinematics.num_segments, 3))
 
-        # TODO what to do if empty?
-        routing_default = torch.zeros((self.kinematics.num_segments, 3))
+        f_default = self.kinematics.calculate_objective(translations_default, rotations_default, routings_default)
+        g_default = self.kinematics.calculate_constraints(translations_default, rotations_default, routings_default)
 
-        f_default = self.kinematics.calculate_objective(translation_default, rotation_default, routing_default)
-        g_default = self.kinematics.calculate_constraints(translation_default, rotation_default, routing_default)
-
-        self.add_input('translation', val=translation_default)
-        self.add_input('rotation', val=rotation_default)
-        self.add_input('routing', val=routing_default)
+        self.add_input('translations', val=translations_default)
+        self.add_input('rotations', val=rotations_default)
+        self.add_input('routings', val=routings_default)
         self.add_output('f', val=f_default)
         self.add_output('g', val=g_default)
-
-        # TODO Set up collocation_constraints
 
 
     def setup_partials(self):
@@ -35,16 +31,16 @@ class KinematicsInterface(ExplicitComponent):
 
     def compute(self, inputs, outputs):
 
-        translation = inputs['translation']
-        rotation = inputs['rotation']
-        routing = inputs['routing']
+        translations = inputs['translations']
+        rotations = inputs['rotations']
+        routings = inputs['routings']
 
-        translation = torch.tensor(translation, dtype=torch.float64)
-        rotation = torch.tensor(rotation, dtype=torch.float64)
-        routing = torch.tensor(routing, dtype=torch.float64)
+        translations = torch.tensor(translations, dtype=torch.float64)
+        rotations = torch.tensor(rotations, dtype=torch.float64)
+        routings = torch.tensor(routings, dtype=torch.float64)
 
-        f = self.kinematics.calculate_objective(translation, rotation, routing)
-        g = self.kinematics.calculate_constraints(translation, rotation, routing)
+        f = self.kinematics.calculate_objective(translations, rotations, routings)
+        g = self.kinematics.calculate_constraints(translations, rotations, routings)
 
         f = f.detach().numpy()
         g = g.detach().numpy()
@@ -54,37 +50,37 @@ class KinematicsInterface(ExplicitComponent):
 
     def compute_partials(self, inputs, partials):
 
-        translation = inputs['translation']
-        rotation = inputs['rotation']
-        routing = inputs['routing']
+        translations = inputs['translations']
+        rotations = inputs['rotations']
+        routings = inputs['routings']
 
-        translation = torch.tensor(translation, dtype=torch.float64, requires_grad=True)
-        rotation = torch.tensor(rotation, dtype=torch.float64, requires_grad=True)
-        routing = torch.tensor(routing, dtype=torch.float64, requires_grad=True)
+        translations = torch.tensor(translations, dtype=torch.float64, requires_grad=True)
+        rotations = torch.tensor(rotations, dtype=torch.float64, requires_grad=True)
+        routings = torch.tensor(routings, dtype=torch.float64, requires_grad=True)
 
-        jac_f = jacobian(self.kinematics.calculate_objective, [translation, rotation, routing])
-        jac_g = jacobian(self.kinematics.calculate_constraints, [translation, rotation, routing])
+        jac_f = jacobian(self.kinematics.calculate_objective, [translations, rotations, routings])
+        jac_g = jacobian(self.kinematics.calculate_constraints, [translations, rotations, routings])
 
-        jac_f_translation = jac_f[0]
-        jac_f_rotation = jac_f[1]
-        jac_f_routing = jac_f[2]
+        jac_f_translations = jac_f[0]
+        jac_f_rotations = jac_f[1]
+        jac_f_routings = jac_f[2]
 
-        jac_g_translation = jac_g[0]
-        jac_g_rotation = jac_g[1]
-        jac_g_routing = jac_g[2]
+        jac_g_translations = jac_g[0]
+        jac_g_rotations = jac_g[1]
+        jac_g_routings = jac_g[2]
 
-        jac_f_translation = jac_f_translation.detach().numpy()
-        jac_f_rotation = jac_f_rotation.detach().numpy()
-        jac_f_routing = jac_f_routing.detach().numpy()
+        jac_f_translations = jac_f_translations.detach().numpy()
+        jac_f_rotations = jac_f_rotations.detach().numpy()
+        jac_f_routings = jac_f_routings.detach().numpy()
 
-        jac_g_translation = jac_g_translation.detach().numpy()
-        jac_g_rotation = jac_g_rotation.detach().numpy()
-        jac_g_routing = jac_g_routing.detach().numpy()
+        jac_g_translations = jac_g_translations.detach().numpy()
+        jac_g_rotations = jac_g_rotations.detach().numpy()
+        jac_g_routings = jac_g_routings.detach().numpy()
 
-        partials['f', 'translation'] = jac_f_translation
-        partials['f', 'rotation'] = jac_f_rotation
-        partials['f', 'routing'] = jac_f_routing
+        partials['f', 'translations'] = jac_f_translations
+        partials['f', 'rotations'] = jac_f_rotations
+        partials['f', 'routings'] = jac_f_routings
 
-        partials['g', 'translation'] = jac_g_translation
-        partials['g', 'rotation'] = jac_g_rotation
-        partials['g', 'routing'] = jac_g_routing
+        partials['g', 'translations'] = jac_g_translations
+        partials['g', 'rotations'] = jac_g_rotations
+        partials['g', 'routings'] = jac_g_routings

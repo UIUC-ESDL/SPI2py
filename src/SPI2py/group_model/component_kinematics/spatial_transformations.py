@@ -3,9 +3,34 @@
 """
 
 import torch
+from torch import sin, cos
 
 
-def apply_homogenous_transformation(reference_point, positions, transformation_matrix):
+def assemble_transformation_matrix(translation, rotation):
+    # Initialize the transformation matrix
+    t = torch.eye(4, dtype=torch.float64)
+
+    # Insert the translation vector
+    t[:3, [3]] = translation
+
+    # Unpack the rotation angles (Euler)
+    a = rotation[0]  # alpha
+    b = rotation[1]  # beta
+    g = rotation[2]  # gamma
+
+    # Calculate rotation matrix (R = R_z(gamma) @ R_y(beta) @ R_x(alpha))
+    r = torch.cat(
+        (cos(b) * cos(g), sin(a) * sin(b) * cos(g) - cos(a) * sin(g), cos(a) * sin(b) * cos(g) + sin(a) * sin(g),
+         cos(b) * sin(g), sin(a) * sin(b) * sin(g) + cos(a) * cos(g), cos(a) * sin(b) * sin(g) - sin(a) * cos(g),
+         -sin(b), sin(a) * cos(b), cos(a) * cos(b))).view(3, 3)
+
+    # Insert the rotation matrix
+    t[:3, :3] = r
+
+    return t
+
+
+def apply_transformation_matrix(reference_point, positions, transformation_matrix):
     """
     Assume transposed...?
     """
