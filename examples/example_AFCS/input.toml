@@ -11,7 +11,7 @@ objective = "bounding box volume"
 
 [components.radiator_and_ion_exchanger_1a]
 color='purple'
-degrees_of_freedom=['x', 'y', 'z', 'rx', 'ry', 'rz']
+dof=['x', 'y', 'z', 'rx', 'ry', 'rz']
 filepath='part_models/radiator_and_ion_exchanger.xyzr'
 num_spheres_collision_detection=25
 num_spheres_visualization=150
@@ -20,7 +20,7 @@ ports=[{'name'= 'left', 'origin'= [-1.475, 0, 0], 'radius'= 0.05},
 
 [components.radiator_and_ion_exchanger_1b]
 color='purple'
-degrees_of_freedom=['x', 'y', 'z', 'rx', 'ry', 'rz']
+dof=['x', 'y', 'z', 'rx', 'ry', 'rz']
 filepath='part_models/radiator_and_ion_exchanger.xyzr'
 num_spheres_collision_detection=25
 num_spheres_visualization=150
@@ -29,7 +29,7 @@ ports=[{'name'= 'left', 'origin'= [-1.475, 0, 0], 'radius'= 0.05},
 
 [components.pump_2a]
 color='blue'
-degrees_of_freedom=['x', 'y', 'z', 'rx', 'ry', 'rz']
+dof=['x', 'y', 'z', 'rx', 'ry', 'rz']
 filepath='part_models/pump.xyzr'
 num_spheres_collision_detection=25
 num_spheres_visualization=150
@@ -38,7 +38,7 @@ ports=[{'name'= 'top', 'origin'= [0, 0.275, 0], 'radius'= 0.05},
 
 [components.pump_2b]
 color='blue'
-degrees_of_freedom=['x', 'y', 'z', 'rx', 'ry', 'rz']
+dof=['x', 'y', 'z', 'rx', 'ry', 'rz']
 filepath='part_models/pump.xyzr'
 num_spheres_collision_detection=25
 num_spheres_visualization=150
@@ -47,7 +47,7 @@ ports=[{'name'= 'top', 'origin'= [0, 0.275, 0], 'radius'= 0.05},
 
 [components.particle_filter_3a]
 color='yellow'
-degrees_of_freedom=['x', 'y', 'z', 'rx', 'ry', 'rz']
+dof=['x', 'y', 'z', 'rx', 'ry', 'rz']
 filepath='part_models/particle_filter.xyzr'
 num_spheres_collision_detection=25
 num_spheres_visualization=150
@@ -56,7 +56,7 @@ ports=[{'name'= 'top', 'origin'= [0, 0.215, 0], 'radius'= 0.05},
 
 [components.particle_filter_3b]
 color='yellow'
-degrees_of_freedom=['x', 'y', 'z', 'rx', 'ry', 'rz']
+dof=['x', 'y', 'z', 'rx', 'ry', 'rz']
 filepath='part_models/particle_filter.xyzr'
 num_spheres_collision_detection=25
 num_spheres_visualization=150
@@ -65,7 +65,7 @@ ports=[{'name'= 'top', 'origin'= [0, 0.215, 0], 'radius'= 0.05},
 
 [components.fuel_cell_stack_4a]
 color='green'
-degrees_of_freedom=['x', 'y', 'z', 'rx', 'ry', 'rz']
+dof=['x', 'y', 'z', 'rx', 'ry', 'rz']
 filepath='part_models/fuel_cell_stack.xyzr'
 num_spheres_collision_detection=25
 num_spheres_visualization=150
@@ -74,7 +74,7 @@ ports=[{'name'= 'top', 'origin'= [0, 0.85, 0], 'radius'= 0.05},
 
 [components.fuel_cell_stack_4b]
 color='green'
-degrees_of_freedom=['x', 'y', 'z', 'rx', 'ry', 'rz']
+dof=['x', 'y', 'z', 'rx', 'ry', 'rz']
 filepath='part_models/fuel_cell_stack.xyzr'
 num_spheres_collision_detection=25
 num_spheres_visualization=150
@@ -83,7 +83,7 @@ ports=[{'name'= 'top', 'origin'= [0, 0.85, 0], 'radius'= 0.05},
 
 [components.WEG_heater_and_pump_5]
 color='gray'
-degrees_of_freedom=[]
+dof=[]
 filepath='part_models/WEG_heater_and_pump.xyzr'
 num_spheres_collision_detection=25
 num_spheres_visualization=150
@@ -92,15 +92,17 @@ ports=[{'name'= 'top', 'origin'= [0, 0.9665, 0], 'radius'= 0.05},
 
 [components.heater_core_6]
 color='red'
-degrees_of_freedom=[]
+dof=[]
 filepath='part_models/heater_core.xyzr'
 num_spheres_collision_detection=25
 num_spheres_visualization=150
 ports=[{'name'= 'left', 'origin'= [-0.7225, 0, 0], 'radius'= 0.05},
        {'name'= 'right', 'origin'= [0.7225, 0, 0], 'radius'= 0.05}]
 
+
 [conductors]
-spheres_per_segment=25
+num_segments=2
+num_spheres_per_segment=25
 
 [conductors.c1a_c1b]
 component_1='radiator_and_ion_exchanger_1a'
@@ -109,7 +111,6 @@ component_2='radiator_and_ion_exchanger_1b'
 component_2_port='left'
 radius=0.05
 color='black'
-num_segments=2
 
 [conductors.c1b_c2b]
 component_1='radiator_and_ion_exchanger_1b'
@@ -118,7 +119,6 @@ component_2='pump_2b'
 component_2_port='top'
 radius=0.05
 color='black'
-num_segments=2
 
 [conductors.c2b_c3b]
 component_1='pump_2b'
@@ -127,7 +127,6 @@ component_2='particle_filter_3b'
 component_2_port='top'
 radius=0.05
 color='black'
-num_segments=2
 
 [conductors.c3b_c4b]
 component_1='particle_filter_3b'
@@ -136,7 +135,6 @@ component_2='fuel_cell_stack_4b'
 component_2_port='top'
 radius=0.05
 color='black'
-num_segments=2
 
 [conductors.c4b_c5]
 component_1='fuel_cell_stack_4b'
@@ -145,7 +143,6 @@ component_2='WEG_heater_and_pump_5'
 component_2_port='top'
 radius=0.05
 color='black'
-num_segments=3
 
 [conductors.c5_c6]
 component_1='WEG_heater_and_pump_5'
@@ -154,7 +151,6 @@ component_2='heater_core_6'
 component_2_port='right'
 radius=0.05
 color='black'
-num_segments=3
 
 [conductors.c6_c4a]
 component_1='heater_core_6'
@@ -163,7 +159,6 @@ component_2='fuel_cell_stack_4a'
 component_2_port='bottom'
 radius=0.05
 color='black'
-num_segments=2
 
 [conductors.c4a_c3a]
 component_1='fuel_cell_stack_4a'
@@ -172,7 +167,6 @@ component_2='particle_filter_3a'
 component_2_port='bottom'
 radius=0.05
 color='black'
-num_segments=2
 
 [conductors.c3a_c2a]
 component_1='particle_filter_3a'
@@ -181,7 +175,6 @@ component_2='pump_2a'
 component_2_port='top'
 radius=0.05
 color='black'
-num_segments=2
 
 [conductors.c2a_c1a]
 component_1='pump_2a'
@@ -190,7 +183,6 @@ component_2='radiator_and_ion_exchanger_1a'
 component_2_port='left'
 radius=0.05
 color='black'
-num_segments=2
 
 [system]
 

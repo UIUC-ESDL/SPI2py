@@ -7,6 +7,13 @@ from torch import sin, cos
 
 
 def assemble_transformation_matrix(translation, rotation):
+
+    if translation.shape != (3, 1):
+        translation = translation.reshape(3, 1)
+
+    if rotation.shape != (3, 1):
+        rotation = rotation.reshape(3, 1)
+
     # Initialize the transformation matrix
     t = torch.eye(4, dtype=torch.float64)
 

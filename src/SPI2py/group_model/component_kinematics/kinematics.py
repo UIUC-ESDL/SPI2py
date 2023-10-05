@@ -11,9 +11,9 @@ class KinematicsInterface(ExplicitComponent):
 
         self.kinematics = self.options['kinematics']
 
-        translations_default = torch.zeros((self.kinematics.num_components, 3))
-        rotations_default = torch.zeros((self.kinematics.num_components, 3))
-        routings_default = torch.zeros((self.kinematics.num_segments, 3))
+        translations_default = torch.zeros((self.kinematics.translations_shape), dtype=torch.float64)
+        rotations_default = torch.zeros((self.kinematics.rotations_shape), dtype=torch.float64)
+        routings_default = torch.zeros((self.kinematics.routings_shape), dtype=torch.float64)
 
         f_default = self.kinematics.calculate_objective(translations_default, rotations_default, routings_default)
         g_default = self.kinematics.calculate_constraints(translations_default, rotations_default, routings_default)
@@ -26,8 +26,8 @@ class KinematicsInterface(ExplicitComponent):
 
 
     def setup_partials(self):
-        self.declare_partials('f', ['translation', 'rotation', 'routing'])
-        self.declare_partials('g', ['translation', 'rotation', 'routing'])
+        self.declare_partials('f', ['translations', 'rotations', 'routings'])
+        self.declare_partials('g', ['translations', 'rotations', 'routings'])
 
     def compute(self, inputs, outputs):
 

@@ -43,19 +43,21 @@ class Component(RigidBody):
 
     def __init__(self, inputs):
 
-        self.name = inputs['name']
-        self.filepath = inputs['filepath']
-        self.dof = inputs['dof']
+        self.name = inputs[0]
+        inputs_dict = inputs[1]
 
-        if 'ports' in inputs.keys():
-            self.ports = inputs['ports']
+        self.filepath = inputs_dict['filepath']
+        self.dof = inputs_dict['dof']
+
+        if 'ports' in inputs_dict.keys():
+            self.ports = inputs_dict['ports']
         else:
             self.ports = None
 
-        self.color = inputs['color']
+        self.color = inputs_dict['color']
 
-        if 'prescale' in inputs.keys():
-            self.prescale = inputs['prescale']
+        if 'prescale' in inputs_dict.keys():
+            self.prescale = inputs_dict['prescale']
         else:
             self.prescale = 1
 
@@ -77,40 +79,10 @@ class Component(RigidBody):
     def __repr__(self):
         return self.name
 
-    def assemble_transformation_vectors(self, vector, check_dof=True):
-
-        translation = torch.zeros((3, 1), dtype=torch.float64)
-        rotation = torch.zeros((3, 1), dtype=torch.float64)
-
-        if not check_dof:
-            translation[0] = vector[0]
-            translation[1] = vector[1]
-            translation[2] = vector[2]
-            rotation[0] = vector[3]
-            rotation[1] = vector[4]
-            rotation[2] = vector[5]
-        else:
-            if 'x' in self.dof:
-                translation[0] = vector[self.design_vector_indices['x']]
-            if 'y' in self.dof:
-                translation[1] = vector[self.design_vector_indices['y']]
-            if 'z' in self.dof:
-                translation[2] = vector[self.design_vector_indices['z']]
-            if 'rx' in self.dof:
-                rotation[0] = vector[self.design_vector_indices['rx']]
-            if 'ry' in self.dof:
-                rotation[1] = vector[self.design_vector_indices['ry']]
-            if 'rz' in self.dof:
-                rotation[2] = vector[self.design_vector_indices['rz']]
-
-        return translation, rotation
-
-    def calculate_positions(self, design_vector, check_dof=True):
+    def calculate_positions(self, translation, rotation):
         """
         Calculates the positions of the object's spheres.
         """
-
-        translation, rotation = self.assemble_transformation_vectors(design_vector, check_dof)
 
         t = assemble_transformation_matrix(translation, rotation)
 
@@ -129,15 +101,14 @@ class Component(RigidBody):
         Calculates the positions of the object's spheres.
         """
 
-        t = self.assemble_transformation_matrix(translation, rotation)
+        t = assemble_transformation_matrix(translation, rotation)
 
         new_positions = apply_transformation_matrix(self.centroid.reshape(-1, 1),
                                                     self.positions.T,
                                                     t).T
 
         self.positions = new_positions
-        self.translation = translation
-        self.rotation = rotation
+
 
     def set_positions(self, objects_dict: dict):
         """
@@ -173,19 +144,17 @@ class Domain(RigidBody):
 
 class Interconnect:
 
-    def __init__(self, inputs):
+    def __init__(self, inputs, num_segments, num_spheres_per_segment):
 
-        self.name = inputs['name']
-        self.color = inputs['color']
+        self.name = inputs[0]
+        inputs_dict = inputs[1]
+        self.color = inputs_dict['color']
 
-        self.num_segments = inputs['num_segments']
+        self.num_segments = num_segments
+        self.num_spheres_per_segment = num_spheres_per_segment
 
-        if 'num_spheres_per_segment' in inputs.keys():
-            self.num_spheres_per_segment = inputs['num_spheres_per_segment']
-        else:
-            self.num_spheres_per_segment = 25
 
-        self.radius = inputs['radius']
+        self.radius = inputs_dict['radius']
 
         self.num_nodes = self.num_segments + 1
         self.num_control_points = self.num_segments - 1

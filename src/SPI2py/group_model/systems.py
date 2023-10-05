@@ -21,8 +21,8 @@ class System:
         # Create the objects
         self.sphere_indices_component = []
         self.sphere_indices_interconnect = []
-        self.components = self.create_components()
-        self.interconnects, self.collocation_constraint_indices = self.create_conductors()
+        self.components, self.num_components = self.create_components()
+        self.interconnects, self.num_interconnects, self.num_nodes, self.collocation_constraint_indices = self.create_conductors()
         self.objects = self.components + self.interconnects
 
         # TODO Figure out how to handle objects w/ domains...
@@ -43,6 +43,11 @@ class System:
         # total number of interconnect segments
         self.num_segments = sum([i.num_segments for i in self.interconnects])
 
+
+        self.translations_shape = (self.num_components, 3)
+        self.rotations_shape = (self.num_components, 3)
+        self.routings_shape = (self.num_interconnects, self.num_nodes, 3)
+
     def read_input_file(self):
 
         with open(self.input_file, mode="rb") as fp:
@@ -56,49 +61,41 @@ class System:
         for component_inputs in components_inputs.items():
             component = Component(component_inputs)
             components.append(component)
-        return components
+
+        num_components = len(components)
+        return components, num_components
 
     def create_conductors(self):
 
-        # TODO Define collocation constraints
+        conductors_inputs = self.input['conductors']
+        conductors = []
+        collocation_constraint_indices = []
+        num_segments = conductors_inputs['num_segments']
+        num_spheres_per_segment = conductors_inputs['num_spheres_per_segment']
 
-        if 'conductors' not in self.input.keys():
-            return [], []
-        else:
+        for conductor_inputs in list(conductors_inputs.items())[2:None]:
 
-            conductors_inputs = self.input['conductors']
+            component_1 = conductor_inputs[1]['component_1']
+            component_1_port = conductor_inputs[1]['component_1_port']
+            component_2 = conductor_inputs[1]['component_2']
+            component_2_port = conductor_inputs[1]['component_2_port']
 
-            conductors = []
-            collocation_constraint_indices = []
-            for conductor_inputs in conductors_inputs.items():
-                name = conductor_inputs[0]
-                conductor_inputs = conductor_inputs[1]
+            component_1_index = self.components.index([i for i in self.components if repr(i) == component_1][0])
+            component_2_index = self.components.index([i for i in self.components if repr(i) == component_2][0])
+            component_1_port_index = self.components[component_1_index].port_indices[component_1_port]
+            component_2_port_index = self.components[component_2_index].port_indices[component_2_port]
+            collocation_constraint_1 = [component_1_port_index, 0]
+            collocation_constraint_2 = [component_2_port_index, -1]
+            collocation_constraint_indices.append(collocation_constraint_1)
+            collocation_constraint_indices.append(collocation_constraint_2)
 
-                component_1 = conductor_inputs['component_1']
-                component_1_port = conductor_inputs['component_1_port']
-                component_2 = conductor_inputs['component_2']
-                component_2_port = conductor_inputs['component_2_port']
+            conductor = Interconnect(conductor_inputs, num_segments, num_spheres_per_segment)
+            conductors.append(conductor)
 
-                component_1_index = self.components.index([i for i in self.components if repr(i) == component_1][0])
-                component_2_index = self.components.index([i for i in self.components if repr(i) == component_2][0])
-                component_1_port_index = self.components[component_1_index].port_indices[component_1_port]
-                component_2_port_index = self.components[component_2_index].port_indices[component_2_port]
-                collocation_constraint_1 = [component_1_port_index, 0]
-                collocation_constraint_2 = [component_2_port_index, -1]
-                collocation_constraint_indices.append(collocation_constraint_1)
-                collocation_constraint_indices.append(collocation_constraint_2)
+        num_interconnects = len(conductors)
+        num_nodes = num_segments + 1
 
-                radius = conductor_inputs['radius']
-                color = conductor_inputs['color']
-                num_segments = conductor_inputs['num_segments']
-
-
-                conductors.append(Interconnect(name=name,
-                                               radius=radius,
-                                               color=color,
-                                               num_segments=num_segments))
-
-            return conductors, collocation_constraint_indices
+        return conductors, num_interconnects, num_nodes, collocation_constraint_indices
 
     def create_domains(self):
 
@@ -199,7 +196,7 @@ class System:
 
         # Now interconnects
         for interconnect in self.interconnects:
-            waypoints = list(default_positions_dict[interconnect.__repr__()].values())
+            waypoints = list(default_positions_dict[interconnect.__repr__()].values())[0]
             waypoints = torch.tensor(waypoints, dtype=torch.float64)
             interconnect.set_default_positions(waypoints)
 
