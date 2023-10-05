@@ -3,14 +3,11 @@ Example 1:  Simple optimization of a 3D layout
 Author:     Chad Peterson
 """
 
-# %% Import packages
-
-import tomli
 import torch
 import openmdao.api as om
 from SPI2py import KinematicsInterface, Component, Interconnect, System
 
-# %% Define the system
+# Define the system
 
 system = System('input.toml')
 
@@ -47,11 +44,10 @@ routings_0 = torch.tensor([[[3.475, 7, 0], [3.75, 7, 0], [4.025, 7, 0]],
                            [[0.5, 4.715, 0], [0.5, 5, 0], [0.5, 5.725, 0]],
                            [[0.5, 6.275, 0], [0.5, 6.5, 0], [0.525, 7, 0]]], dtype=torch.float64)
 
-positions_dict = system.calculate_positions(translations_0, rotations_0, routings_0)
-system.set_positions(positions_dict)
+# positions_dict = system.calculate_positions(translations_0, rotations_0, routings_0)
+# system.set_positions(positions_dict)
 
-# %% Define the system
-
+# Define the OpenMDAO Interface
 
 prob = om.Problem()
 model = prob.model
@@ -69,21 +65,31 @@ prob.model.add_constraint('g', upper=0)
 
 prob.setup()
 
-# %% Run the optimization
+prob.set_val('translations', translations_0)
+prob.set_val('rotations', rotations_0)
+prob.set_val('routings', routings_0)
+
+prob.run_model()
+
+# Plot initial spatial configuration
+print('Initial objective: ', prob['f'])
+print('Initial constraint values: ', prob['g'])
+translations_i = prob['translations']
+rotations_i = prob['rotations']
+routings_i = prob['routings']
+translations_i = torch.tensor(translations_i, dtype=torch.float64)
+rotations_i = torch.tensor(rotations_i, dtype=torch.float64)
+routings_i = torch.tensor(routings_i, dtype=torch.float64)
+kinematics_component.kinematics.plot(translations_i, rotations_i, routings_i)
+
+
+# Run the optimization
 
 prob.driver = om.ScipyOptimizeDriver()
 prob.driver.options['maxiter'] = 3
 
-prob.run_model()
 
-# # Plot initial spatial configuration
-# # kinematics_component.kinematics_interface.plot()
-#
-# # Perform gradient-based optimization
-#
-# # print('Initial design vector: ', prob['x'])
-# # print('Initial objective: ', prob['f'])
-# # print('Initial constraint values: ', prob['g'])
+
 #
 # # x0 = torch.tensor(prob['x'], dtype=torch.float64)
 # # objects_dict = kinematics_component.kinematics_interface.calculate_positions(x0)
@@ -101,4 +107,4 @@ print('Optimized constraint values: ', prob['g'])
 # xf = torch.tensor(prob['x'], dtype=torch.float64)
 # objects_dict = kinematics_component.kinematics.calculate_positions(xf)
 # kinematics_component.kinematics.set_positions(objects_dict)
-kinematics_component.kinematics.plot()
+# kinematics_component.kinematics.plot()

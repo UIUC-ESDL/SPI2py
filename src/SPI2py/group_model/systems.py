@@ -261,18 +261,23 @@ class System:
 
         return g
 
-    def plot(self):
+    def plot(self, translations, rotations, routings):
         """
         Plot the model at a given state.
         """
+
+        positions_dict = self.calculate_positions(translations, rotations, routings)
 
         # Create the plot objects
         objects = []
         colors = []
         for obj in self.objects:
 
+            positions = positions_dict[str(obj)]['positions']
+            radii = positions_dict[str(obj)]['radii']
+
             spheres = []
-            for position, radius in zip(obj.positions, obj.radii):
+            for position, radius in zip(positions, radii):
                 spheres.append(pv.Sphere(radius=radius, center=position, theta_resolution=30, phi_resolution=30))
 
             merged = pv.MultiBlock(spheres).combine().extract_surface().clean()
