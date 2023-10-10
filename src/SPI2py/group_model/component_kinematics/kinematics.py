@@ -58,8 +58,8 @@ class KinematicsInterface(ExplicitComponent):
         rotations = torch.tensor(rotations, dtype=torch.float64, requires_grad=True)
         routings = torch.tensor(routings, dtype=torch.float64, requires_grad=True)
 
-        jac_f = jacobian(self.kinematics.calculate_objective, [translations, rotations, routings])
-        jac_g = jacobian(self.kinematics.calculate_constraints, [translations, rotations, routings])
+        jac_f = jacobian(self.kinematics.calculate_objective, (translations, rotations, routings))
+        jac_g = jacobian(self.kinematics.calculate_constraints, (translations, rotations, routings))
 
         jac_f_translations = jac_f[0]
         jac_f_rotations = jac_f[1]

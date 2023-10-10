@@ -33,17 +33,6 @@ class System:
         objective = self.input['problem']['objective']
         self.set_objective(objective)
 
-        # TODO Convert local indexing to global indexing...
-
-
-        # TODO Component-Interconnect collocation constraints
-
-        self.num_components = len(self.components)
-
-        # total number of interconnect segments
-        self.num_segments = sum([i.num_segments for i in self.interconnects])
-
-
         self.translations_shape = (self.num_components, 3)
         self.rotations_shape = (self.num_components, 3)
         self.routings_shape = (self.num_interconnects, self.num_nodes, 3)
@@ -112,40 +101,6 @@ class System:
 
         return domains
 
-    @property
-    def design_vector_size(self):
-
-        size = 0
-
-        for obj in self.objects:
-            size += obj.design_vector_size
-
-        return size
-
-    def decompose_design_vector(self, design_vector):
-
-        # Get the size of the design vector for each design vector object
-        design_vector_sizes = []
-        for obj in self.objects:
-            design_vector_size = obj.design_vector_size
-            design_vector_sizes.append(design_vector_size)
-
-        # Index values
-        start, stop = 0, 0
-        design_vectors = []
-
-        for i, size in enumerate(design_vector_sizes):
-            # Increment stop index
-
-            stop += design_vector_sizes[i]
-
-            design_vector_i = design_vector[start:stop]
-            design_vectors.append(design_vector_i)
-
-            # Increment start index
-            start = stop
-
-        return design_vectors
 
     def assemble_transformation_matrices(self):
         pass
@@ -185,32 +140,6 @@ class System:
 
         return objects_dict
 
-    def set_default_positions(self, default_positions_dict):
-
-        # Map components first
-        for component in self.components:
-            translation, rotation = list(default_positions_dict[component.__repr__()].values())
-            translation = torch.tensor(translation, dtype=torch.float64).reshape(3, 1)
-            rotation = torch.tensor(rotation, dtype=torch.float64).reshape(3, 1)
-            component.set_default_positions(translation, rotation)
-
-        # Now interconnects
-        for interconnect in self.interconnects:
-            waypoints = list(default_positions_dict[interconnect.__repr__()].values())[0]
-            waypoints = torch.tensor(waypoints, dtype=torch.float64)
-            interconnect.set_default_positions(waypoints)
-
-    def set_positions(self, objects_dict):
-        """set_positions Sets the positions of the objects in the layout.
-
-        Takes a flattened design vector and sets the positions of the objects in the layout.
-
-        :param positions_dict: A dictionary of positions for each object in the layout.
-        :type positions_dict: dict
-        """
-
-        for obj in self.objects:
-            obj.set_positions(objects_dict)
 
     def get_collision_detection_pairs(self):
 
