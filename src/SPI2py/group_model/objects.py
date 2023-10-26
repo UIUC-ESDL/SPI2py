@@ -186,21 +186,15 @@ class Interconnect:
 
     def calculate_segment_positions(self, start_position, stop_position):
 
-        x_start = start_position[0]
-        y_start = start_position[1]
-        z_start = start_position[2]
+        n = self.num_spheres_per_segment
 
-        x_stop = stop_position[0]
-        y_stop = stop_position[1]
-        z_stop = stop_position[2]
+        delta_xyz = stop_position - start_position
 
-        x = torch.linspace(x_start, x_stop, self.num_spheres_per_segment)
-        y = torch.linspace(y_start, y_stop, self.num_spheres_per_segment)
-        z = torch.linspace(z_start, z_stop, self.num_spheres_per_segment)
+        delta_xyz_n = delta_xyz / n
 
-        positions = torch.vstack((x, y, z)).T
+        sphere_positions = start_position + torch.arange(0, n).reshape(-1, 1) * delta_xyz_n.reshape(1, -1)
 
-        return positions
+        return sphere_positions
 
     def calculate_positions(self, design_vector):
 
