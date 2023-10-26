@@ -6,7 +6,7 @@ import torch
 
 from src.SPI2py import Component, Interconnect
 from src.SPI2py.group_model.component_kinematics.bounding_volumes import bounding_box_volume
-from src.SPI2py.group_model.component_kinematics.distance_calculations import signed_distances
+from src.SPI2py.group_model.component_kinematics.distance_calculations import aggregate_signed_distance
 from src.SPI2py.group_model.objects import Domain
 from src.SPI2py.group_model.utilities import kreisselmeier_steinhauser
 
@@ -28,7 +28,10 @@ class System:
         # TODO Figure out how to handle objects w/ domains...
         # self.domains = self.create_domains()
 
-        self.collision_detection_pairs = self.get_collision_detection_pairs()
+        self.component_pairs = self.get_component_pairs()
+        self.interconnect_pairs = self.get_interconnect_pairs()
+        self.component_interconnect_pairs = self.get_component_interconnect_pairs()
+
 
         objective = self.input['problem']['objective']
         self.set_objective(objective)
@@ -140,31 +143,32 @@ class System:
 
         return objects_dict
 
+    def get_component_pairs(self):
+        component_component_pairs = list(combinations(self.components, 2))
+        return component_component_pairs
 
-    def get_collision_detection_pairs(self):
+    def get_interconnect_pairs(self):
+        interconnect_interconnect_pairs = list(combinations(self.interconnects, 2))
+        return interconnect_interconnect_pairs
 
-        collision_detection_pairs = []
+    def get_component_interconnect_pairs(self):
+        component_interconnect_pairs = list(product(self.components, self.interconnects))
+        return component_interconnect_pairs
 
-        if 'components' in self.input.keys():
-            component_component_pairs = list(combinations(self.components, 2))
-            collision_detection_pairs.append(component_component_pairs)
-
-        if 'conductors' in self.input.keys():
-            interconnect_interconnect_pairs = list(combinations(self.interconnects, 2))
-            collision_detection_pairs.append(interconnect_interconnect_pairs)
-
-        if 'components' in self.input.keys() and 'conductors' in self.input.keys():
-            component_interconnect_pairs = list(product(self.components, self.interconnects))
-            collision_detection_pairs.append(component_interconnect_pairs)
-
-        return collision_detection_pairs
-
-
-    def collision_detection(self, positions_dict, object_pair):
-
-        signed_distance_vals = signed_distances(positions_dict, object_pair)
+    def collision_component_pairs(self, positions_dict):
+        signed_distance_vals = aggregate_signed_distance(positions_dict, self.component_pairs)
         max_signed_distance = kreisselmeier_steinhauser(signed_distance_vals)
+        return max_signed_distance
 
+    def collision_interconnect_pairs(self, positions_dict):
+        signed_distance_vals = aggregate_signed_distance(positions_dict, self.interconnect_pairs)
+        max_signed_distance = kreisselmeier_steinhauser(signed_distance_vals)
+        return max_signed_distance
+
+    def collision_component_interconnect_pairs(self, positions_dict):
+        # TODO Remove tolerance
+        signed_distance_vals = aggregate_signed_distance(positions_dict, self.component_interconnect_pairs)
+        max_signed_distance = kreisselmeier_steinhauser(signed_distance_vals) - 0.2
         return max_signed_distance
 
     def calculate_objective(self, translations, rotations, routings):
@@ -181,12 +185,10 @@ class System:
 
         positions_dict = self.calculate_positions(translations, rotations, routings)
 
-        g = []
-        for cd_pair in self.collision_detection_pairs:
-            cd_constraint = self.collision_detection(positions_dict, cd_pair)
-            g.append(cd_constraint)
-
-        g = torch.tensor(g)
+        g_component_pairs = self.collision_component_pairs(positions_dict)
+        g_interconnect_pairs = self.collision_interconnect_pairs(positions_dict)
+        g_component_interconnect_pairs = self.collision_component_interconnect_pairs(positions_dict)
+        g = torch.tensor((g_component_pairs, g_interconnect_pairs, g_component_interconnect_pairs))
 
         return g
 

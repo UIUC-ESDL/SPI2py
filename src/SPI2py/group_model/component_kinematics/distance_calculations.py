@@ -4,6 +4,7 @@ Provides functions to calculate the distance between classes in various ways.
 """
 
 import torch
+from ..utilities.aggregation import kreisselmeier_steinhauser
 
 
 def distances_points_points(a: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
@@ -72,14 +73,10 @@ def signed_distances_spheres_spheres(centers_a: torch.tensor,
     """
     Calculates the pairwise signed distance between two sets of spheres.
 
-    # TODO Check convention
     Convention:
     Signed Distance < 0 means no overlap
     Signed Distance = 0 means tangent
     Signed Distance > 0 means overlap
-
-    TODO Write unit tests
-    TODO Reformat Radii shape so we don't have to keep reshaping it
 
     :param centers_a: Set of 3D points, (-1, 3) ndarray
     :param radii_a: Set of radii, (-1) ndarray
@@ -97,8 +94,16 @@ def signed_distances_spheres_spheres(centers_a: torch.tensor,
 
     return signed_distances
 
+def aggregate_signed_distance_spheres_spheres(centers_a, radii_a, centers_b, radii_b):
 
-def signed_distances(positions_dict, object_pair):
+    signed_distances = signed_distances_spheres_spheres(centers_a, radii_a, centers_b, radii_b)
+
+    aggregate_signed_distance = kreisselmeier_steinhauser(signed_distances)
+
+    return aggregate_signed_distance
+
+
+def aggregate_signed_distance(positions_dict, object_pair):
     """
     Returns the signed distances between all pairs of objects in the layout.
 
@@ -128,11 +133,14 @@ def signed_distances(positions_dict, object_pair):
         positions_b = positions_dict[str(obj2)]['positions']
         radii_b = positions_dict[str(obj2)]['radii']
 
-        signed_distances = signed_distances_spheres_spheres(positions_a, radii_a, positions_b, radii_b).flatten()
+        signed_distances = aggregate_signed_distance_spheres_spheres(positions_a, radii_a, positions_b, radii_b).flatten()
 
         all_signed_distances.append(signed_distances)
 
     all_signed_distances = torch.cat(all_signed_distances)
+
+    # For troubleshooting (to see which objects are interfering)
+    object_pair_signed_distances = [(str(obj1), str(obj2), signed_distance) for (obj1, obj2), signed_distance in zip(object_pair, all_signed_distances)]
 
     return all_signed_distances
 
