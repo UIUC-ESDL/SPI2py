@@ -62,9 +62,11 @@ kinematics_component.options.declare('kinematics', default=system)
 
 model.add_subsystem('kinematics', kinematics_component, promotes=['*'])
 
-prob.model.add_design_var('translations', lower=-10, upper=10)
-prob.model.add_design_var('rotations', lower=-2 * torch.pi, upper=2 * torch.pi)
-prob.model.add_design_var('routings', lower=-10, upper=10)
+prob.model.add_design_var('translations', ref=10)
+prob.model.add_design_var('rotations', ref=2*torch.pi)
+
+# TODO Unbound routing
+prob.model.add_design_var('routings', ref=10, lower=routings_0, upper=routings_0)
 prob.model.add_objective('f')
 prob.model.add_constraint('g', upper=0)
 # prob.model.add_constraint('g_c', upper=0)
@@ -76,6 +78,9 @@ prob.setup()
 prob.set_val('translations', translations_0)
 prob.set_val('rotations', rotations_0)
 prob.set_val('routings', routings_0)
+
+
+# TODO Equality bound all the routing variables
 
 prob.run_model()
 
