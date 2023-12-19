@@ -59,6 +59,9 @@ class System:
 
     def create_conductors(self):
 
+        if 'conductors' not in self.input.keys():
+            return [], 0, 0, []
+
         conductors_inputs = self.input['conductors']
         conductors = []
         collocation_constraint_indices = []
@@ -185,14 +188,17 @@ class System:
 
         positions_dict = self.calculate_positions(translations, rotations, routings)
 
-        g_component_pairs = self.collision_component_pairs(positions_dict)
-        g_interconnect_pairs = self.collision_interconnect_pairs(positions_dict)
-        g_component_interconnect_pairs = self.collision_component_interconnect_pairs(positions_dict)
-        g = torch.tensor((g_component_pairs, g_interconnect_pairs, g_component_interconnect_pairs))
+        # g_component_pairs = self.collision_component_pairs(positions_dict)
+        # g_interconnect_pairs = self.collision_interconnect_pairs(positions_dict)
+        # g_component_interconnect_pairs = self.collision_component_interconnect_pairs(positions_dict)
+        # g = torch.tensor((g_component_pairs, g_interconnect_pairs, g_component_interconnect_pairs))
+
+        # TODO Add other constraints back in
+        g = self.collision_component_pairs(positions_dict)
 
         return g
 
-    def plot(self, translations, rotations, routings):
+    def plot_inputs(self, translations, rotations, routings):
         """
         Plot the model at a given state.
         """
@@ -218,27 +224,4 @@ class System:
             objects.append(merged)
             colors.append(obj.color)
 
-        # for domain in self.domains:
-        #     spheres = []
-        #     for position, radius in zip(domain.positions, domain.radii):
-        #         spheres.append(pv.Sphere(radius=radius, center=position, theta_resolution=30, phi_resolution=30))
-        #     merged = pv.MultiBlock(spheres).combine().extract_surface().clean()
-        #     # merged_clipped = merged.clip(normal='y')
-        #     # merged_slice = merged.slice(normal=[0, 0, 1])
-        #
-        #     objects.append(merged)
-        #     colors.append(domain.color)
-
-
-        # Plot the objects
-        p = pv.Plotter(window_size=[1000, 1000])
-
-        for obj, color in zip(objects, colors):
-            p.add_mesh(obj, color=color)
-
-        p.view_isometric()
-        # p.view_xy()
-        p.show_axes()
-        p.show_bounds(color='black')
-        p.background_color = 'white'
-        p.show()
+        return objects, colors

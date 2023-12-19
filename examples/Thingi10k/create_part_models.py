@@ -8,7 +8,7 @@ from SPI2py.group_model.component_geometry.spherical_decomposition_methods.maxim
 
 num_spheres = 1000
 min_radius = 0.01
-increments = 40
+increments = 30
 
 # for filename in filenames:
 #     mdbd('', 'cad_models/'+filename, 'mdbds/'+filename+'.xyzr', num_spheres=num_spheres, min_radius=min_radius, meshgrid_increment=increments)
@@ -28,4 +28,4 @@ increments = 40
 # mdbd('', 'poets/MarqueeAlphabet_T_fixed.stl', 'poets/MarqueeAlphabet_T_fixed.xyzr', color='#D02029', num_spheres=num_spheres, min_radius=min_radius, meshgrid_increment=increments)
 
 
-mdbd('', 'Thingi10k_models/stepper_gear.stl', 'Thingi10k_models/stepper_gear.xyzr', color='#1873BA', num_spheres=num_spheres, min_radius=min_radius, meshgrid_increment=increments)
+mdbd('', 'Compressor_reduced.stl', 'Compressor_reduced.xyzr', color='#1873BA', num_spheres=num_spheres, meshgrid_increment=increments)

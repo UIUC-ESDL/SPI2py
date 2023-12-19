@@ -19,9 +19,11 @@ class GeometricRepresentation:
 
 
 
-def read_xyzr_file(filepath, num_spheres=None, scale_factor=1):
+def read_xyzr_file(filepath, num_spheres=10, scale_factor=1):
     """
     Reads a .xyzr file and returns the positions and radii of the spheres.
+
+    TODO Remove num spheres
 
     :param filepath:
     :param num_spheres:

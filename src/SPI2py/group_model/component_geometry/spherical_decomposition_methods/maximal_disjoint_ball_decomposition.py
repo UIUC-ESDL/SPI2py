@@ -83,7 +83,7 @@ def mdbd(directory, input_filename, output_filename, num_spheres=1000, min_radiu
         # clipped = dataset.clip_box(bounds)
         # clipped = part2.clip_box(bounds)
         clipped = part2.clip(normal='y')
-        plotter.add_mesh(part2, color='gray', opacity=0.95, silhouette=True)
+        # plotter.add_mesh(part2, color='gray', opacity=0.95, silhouette=True)
         # plotter.add_mesh(clipped, color='gray', opacity=0.95, silhouette={'line_width': 2}, roughness=0)
 
         # Plot the sphere
