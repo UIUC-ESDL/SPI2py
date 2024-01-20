@@ -1,3 +1,3 @@
 from src.SPI2py.group_model.component_kinematics.kinematics import KinematicsInterface
-from src.SPI2py.group_model.objects import Component, Interconnect
-from src.SPI2py.group_model.systems import System
+from SPI2py.group_model.OpenMDAO_Objects.Interconnects import Interconnect
+from SPI2py.group_model.OpenMDAO_Objects.Components import Component
