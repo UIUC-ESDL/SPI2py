@@ -5,7 +5,7 @@ Author:     Chad Peterson
 
 import torch
 import openmdao.api as om
-from SPI2py import ComponentInterface, Interconnect, SystemInterface
+from SPI2py import Component, Interconnect, System
 from SPI2py.group_model.utilities.visualization import plot
 
 # Initialize the problem
@@ -13,16 +13,42 @@ prob = om.Problem()
 model = prob.model
 
 # Initialize the System
-# ...
+system = System()  # ...
 
+# Initialize components
+radiator_and_ion_exchanger_1a = Component(name='radiator_and_ion_exchanger_1a',
+                                          filepath='filepath',
+                                          translation_dof=[0, 1, 2],
+                                          rotation_dof=[0, 1, 2],
+                                          ports={'in': 1, 'out': 1},
+                                          color='red')
 
+radiator_and_ion_exchanger_1b = 1
+pump_2a = 1
+pump_2b = 1
+particle_filter_3a = 1
+particle_filter_3b = 1
+fuel_cell_Stack_4a = 1
+fuel_cell_Stack_4b = 1
+WEG_heater_and_pump_5 = 1
+heater_core_6 = 1
 
-# Initialize components and add them to the system
-
-
+# Add components to the system
 # system.add_subsystem()
 
-# Initialize interconnects and add them to the system
+# Initialize interconnects
+c1a_c1b = 1
+c1b_c2b = 1
+c2b_c3b = 1
+c3b_c4b = 1
+c4b_c5 = 1
+c5_c6 = 1
+c6_c4a = 1
+c4a_c3a = 1
+c3a_c2a = 1
+c2a_c1a = 1
+
+# Add interconnects to the system
 # system.add_subsystem()
 
 # Connect the components and interconnects as necessary
@@ -34,44 +60,30 @@ model = prob.model
 
 
 
-# Define the system
+# Configure the system
+# prob.set_val('system.radiator_and_ion_exchanger_1a.translation', [2, 7, 0])
+# prob.set_val('system.radiator_and_ion_exchanger_1b.translation', [5.5, 7, 0])
+# prob.set_val('system.pump_2a.translation', [0.5, 6, 0])
+# prob.set_val('system.pump_2b.translation', [7.5, 6, 0])
+# prob.set_val('system.particle_filter_3a.translation', [0.5, 4.5, 0])
+# prob.set_val('system.particle_filter_3b.translation', [7.5, 5, 0])
+# prob.set_val('system.fuel_cell_Stack_4a.translation', [0.5, 2, 0])
+# prob.set_val('system.fuel_cell_Stack_4b.translation', [7.5, 3, 0])
+# prob.set_val('system.WEG_heater_and_pump_5.translation', [6, 1, 0])
+# prob.set_val('system.heater_core_6.translation', [2, 0, 0])
 
-system = System('input.toml')
+# prob.set_val('system.c1a_c1b.control_points', [[3.475, 7, 0], [3.75, 7, 0], [4.025, 7, 0]])
+# prob.set_val('system.c1b_c2b.control_points', [[6.975, 7, 0], [7.5, 7, 0], [7.5, 6.275, 0]])
+# prob.set_val('system.c2b_c3b.control_points', [[7.5, 5.725, 0], [7.5, 5.47, 0], [7.5, 5.215, 0]])
+# prob.set_val('system.c3b_c4b.control_points', [[7.5, 4.785, 0], [7.5, 4.3175, 0], [7.5, 3.85, 0]])
+# prob.set_val('system.c4b_c5.control_points', [[7.5, 2.15, 0], [6.5, 2, 0], [6.0, 1.9665, 0]])
+# prob.set_val('system.c5_c6.control_points', [[5.1225, 1.0, 0], [3, 0, 0], [2.7225, 0, 0]])
+# prob.set_val('system.c6_c4a.control_points', [[1.2775, 0, 0], [0.5, 0, 0], [0.5, 1.15, 0]])
+# prob.set_val('system.c4a_c3a.control_points', [[0.5, 2.85, 0], [0.5, 3, 0], [0.5, 4.285, 0]])
+# prob.set_val('system.c3a_c2a.control_points', [[0.5, 4.715, 0], [0.5, 5, 0], [0.5, 5.725, 0]])
+# prob.set_val('system.c2a_c1a.control_points', [[0.5, 6.275, 0], [0.5, 6.5, 0], [0.525, 7, 0]])
 
-translations_0 = torch.tensor([[2, 7, 0],
-                               [5.5, 7, 0],
-                               [0.5, 6, 0],
-                               [7.5, 6, 0],
-                               [0.5, 4.5, 0],
-                               [7.5, 5, 0],
-                               [0.5, 2, 0],
-                               [7.5, 3, 0],
-                               [6, 1, 0],
-                               [2, 0, 0]], dtype=torch.float64)
 
-rotations_0 = torch.tensor([[0, 0, 0],
-                            [0, 0, 0],
-                            [0, 0, 0],
-                            [0, 0, 0],
-                            [0, 0, 0],
-                            [0, 0, 0],
-                            [0, 0, 0],
-                            [0, 0, 0],
-                            [0, 0, 0],
-                            [0, 0, 0]], dtype=torch.float64)
-
-routings_0 = torch.tensor([[[3.475, 7, 0], [3.75, 7, 0], [4.025, 7, 0]],
-                           [[6.975, 7, 0], [7.5, 7, 0], [7.5, 6.275, 0]],
-                           [[7.5, 5.725, 0], [7.5, 5.47, 0], [7.5, 5.215, 0]],
-                           [[7.5, 4.785, 0], [7.5, 4.3175, 0], [7.5, 3.85, 0]],
-                           [[7.5, 2.15, 0], [6.5, 2, 0], [6.0, 1.9665, 0]],
-                           [[5.1225, 1.0, 0], [3, 0, 0], [2.7225, 0, 0]],
-                           [[1.2775, 0, 0], [0.5, 0, 0], [0.5, 1.15, 0]],
-                           [[0.5, 2.85, 0], [0.5, 3, 0], [0.5, 4.285, 0]],
-                           [[0.5, 4.715, 0], [0.5, 5, 0], [0.5, 5.725, 0]],
-                           [[0.5, 6.275, 0], [0.5, 6.5, 0], [0.525, 7, 0]]], dtype=torch.float64)
-
-# routings_0 = torch.zeros((10, 3, 3), dtype=torch.float64)
 
 # from torch.autograd.functional import jacobian
 # translations = torch.tensor(translations_0, dtype=torch.float64, requires_grad=True)

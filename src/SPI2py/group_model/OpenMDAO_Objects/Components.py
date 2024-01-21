@@ -65,7 +65,19 @@ class Component(ExplicitComponent):
     #     d_port_positions/d_translation
     #     d_port_positions/d_rotation
 
-    def
+    def get_design_variables(self):
+        # TODO Static (?)
+
+        # Configure the translation design variables
+        translation = {'translation': {'ref': 1, 'ref0': 0}}
+
+        # Configure the rotation design variables
+        rotation = {'rotation': {'ref': 2 * torch.pi, 'ref0': 0}}
+
+        # Combine the design variables
+        design_vars = {**translation, **rotation}
+
+        return design_vars
 
 
 class Component:
@@ -100,9 +112,6 @@ class Component:
             inputs = tomli.load(fp)
 
         return inputs
-
-    def centroid(self):
-        return centroid(self.positions, self.radii)
 
     def set_default_positions(self, translation, rotation):
         """
@@ -146,9 +155,4 @@ class Component:
         self.positions = objects_dict[self.__repr__()]['positions']
         self.radii = objects_dict[self.__repr__()]['radii']
 
-    def get_design_vars(self):
-        # TODO Configure
-        translation = {'translation': {'ref': 1, 'ref0': 0}}
-        rotation = {'rotation': {'ref': 2*torch.pi, 'ref0': 0}}
-        design_vars = {**translation, **rotation}
-        return design_vars
+
