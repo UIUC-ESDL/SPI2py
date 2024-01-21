@@ -8,15 +8,30 @@ from openmdao.api import Group
 from SPI2py import Component, Interconnect
 from src.SPI2py.group_model.component_kinematics.bounding_volumes import bounding_box_volume
 from src.SPI2py.group_model.component_kinematics.distance_calculations import aggregate_signed_distance
-from SPI2py.group_model.OpenMDAO_Objects.objects import Domain
 from src.SPI2py.group_model.utilities import kreisselmeier_steinhauser
 
 
 
 class System(Group):
 
-    def setup(self):
+    def initialize(self):
+        pass
 
+    def setup(self):
+        pass
+
+    def setup_partials(self):
+        pass
+
+    def compute(self, inputs, outputs):
+        pass
+
+    def compute_partials(self, inputs, partials):
+        pass
+
+
+
+class _System:
     def __init__(self, input_file):
 
         self.input_file = input_file
