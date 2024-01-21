@@ -19,30 +19,56 @@ class Component(ExplicitComponent):
 
     def setup(self):
 
-        self.add_input('translation', val=translation_default, shape=(1, 3))
-        self.add_input('rotation', val=rotation_default, shape=(1, 3))
+        self.add_input('translation', val=torch.zeros((1, 3)), shape=(1, 3))
+        self.add_input('rotation', val=torch.zeros((1, 3)), shape=(1, 3))
+        self.add_output('sphere_positions', val=positions)
+        self.add_output('sphere_radii', val=radii)
+        self.add_output('port_positions', val=port_positions)
 
     # def setup_partials(self):
-    #     pass
+    #     d_sphere_positions/d_translation
+    #     d_sphere_positions/d_rotation
+    #     d_radii/d_translation (0)
+    #     d_radii/d_rotation (0)
+    #     d_port_positions/d_translation
+    #     d_port_positions/d_rotation
 
     def compute(self, inputs, outputs):
 
+        # Get the input variables
         translation = inputs['translation']
         rotation = inputs['rotation']
 
+        # Convert the input variables to torch tensors
         translation = torch.tensor(translation, dtype=torch.float64, requires_grad=True)
         rotation = torch.tensor(rotation, dtype=torch.float64, requires_grad=True)
 
-        object_dict = self.compute(translation, rotation)
+        # Calculate the transformed positions and radii
+        sphere_positions_transformed, sphere_radii_transformed = self.compute(translation, rotation)
+        port_positions_transformed = self.compute(translation, rotation)
 
-        outputs[self.__repr__()] = object_dict
+        # Convert to numpy
+        sphere_positions_transformed = sphere_positions_transformed.detach().numpy()
+        sphere_radii_transformed = sphere_radii_transformed.detach().numpy()
+        port_positions_transformed = port_positions_transformed.detach().numpy()
+
+        # Set the outputs
+        outputs['sphere_positions'] = sphere_positions_transformed
+        outputs['sphere_radii'] = sphere_radii_transformed
+        outputs['port_positions'] = port_positions_transformed
 
     # def compute_partials(self, inputs, partials):
-    #     pass
+    #     d_sphere_positions/d_translation
+    #     d_sphere_positions/d_rotation
+    #     d_radii/d_translation (0)
+    #     d_radii/d_rotation (0)
+    #     d_port_positions/d_translation
+    #     d_port_positions/d_rotation
+
+    def
 
 
-
-class _Component:
+class Component:
     def __init__(self, name, filepath, ports, color):
         self.name = name
         self.filepath = filepath
@@ -67,6 +93,13 @@ class _Component:
         # TODO Indices?
         self.translation_default = torch.zeros((1, 3), dtype=torch.float64)
         self.rotation_default = torch.zeros((1, 3), dtype=torch.float64)
+
+    def read_input_file(self):
+
+        with open(self.input_file, mode="rb") as fp:
+            inputs = tomli.load(fp)
+
+        return inputs
 
     def centroid(self):
         return centroid(self.positions, self.radii)

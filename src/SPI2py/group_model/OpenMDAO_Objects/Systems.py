@@ -12,40 +12,44 @@ from src.SPI2py.group_model.utilities import kreisselmeier_steinhauser
 
 
 
-class System(Group):
+class SystemInterface(Group):
 
     def initialize(self):
         pass
 
     def setup(self):
-        pass
+
+        self.System = System(self.components, self.interconnects)
 
     def setup_partials(self):
         pass
 
     def compute(self, inputs, outputs):
-        pass
+        translations = inputs['translations']
+        rotations = inputs['rotations']
+        control_points = inputs['control_points']
+
+        translations = torch.tensor(translations, dtype=torch.float64, requires_grad=True)
+        rotations = torch.tensor(rotations, dtype=torch.float64, requires_grad=True)
+        control_points = torch.tensor(control_points, dtype=torch.float64, requires_grad=True)
+
+        objective = self.calculate_objective(translations, rotations, control_points)
+        constraints = self.calculate_constraints(translations, rotations, control_points)
+
 
     def compute_partials(self, inputs, partials):
         pass
 
 
 
-class _System:
-    def __init__(self, input_file):
+class System:
+    def __init__(self, components, interconnects):
 
-        self.input_file = input_file
-        self.input = self.read_input_file()
 
-        # Create the objects
-        self.sphere_indices_component = []
-        self.sphere_indices_interconnect = []
-        self.components, self.num_components = self.create_components()
-        self.interconnects, self.num_interconnects, self.num_nodes, self.collocation_constraint_indices = self.create_conductors()
+        self.components = components
+        self.interconnects = interconnects
         self.objects = self.components + self.interconnects
 
-        # TODO Figure out how to handle objects w/ domains...
-        # self.domains = self.create_domains()
 
         self.component_pairs = self.get_component_pairs()
         self.interconnect_pairs = self.get_interconnect_pairs()
@@ -59,111 +63,40 @@ class _System:
         self.rotations_shape = (self.num_components, 3)
         self.routings_shape = (self.num_interconnects, self.num_nodes, 3)
 
-    def read_input_file(self):
-
-        with open(self.input_file, mode="rb") as fp:
-            inputs = tomli.load(fp)
-
-        return inputs
-
-    def create_components(self):
-        components_inputs = self.input['components']
-        components = []
-        for component_inputs in components_inputs.items():
-            component = Component(component_inputs)
-            components.append(component)
-
-        num_components = len(components)
-        return components, num_components
-
-    def create_conductors(self):
-
-        if 'conductors' not in self.input.keys():
-            return [], 0, 0, []
-
-        conductors_inputs = self.input['conductors']
-        conductors = []
-        collocation_constraint_indices = []
-        num_segments = conductors_inputs['num_segments']
-        num_spheres_per_segment = conductors_inputs['num_spheres_per_segment']
-
-        for conductor_inputs in list(conductors_inputs.items())[2:None]:
-
-            component_1 = conductor_inputs[1]['component_1']
-            component_1_port = conductor_inputs[1]['component_1_port']
-            component_2 = conductor_inputs[1]['component_2']
-            component_2_port = conductor_inputs[1]['component_2_port']
-
-            component_1_index = self.components.index([i for i in self.components if repr(i) == component_1][0])
-            component_2_index = self.components.index([i for i in self.components if repr(i) == component_2][0])
-            component_1_port_index = self.components[component_1_index].port_indices[component_1_port]
-            component_2_port_index = self.components[component_2_index].port_indices[component_2_port]
-            collocation_constraint_1 = [component_1_port_index, 0]
-            collocation_constraint_2 = [component_2_port_index, -1]
-            collocation_constraint_indices.append(collocation_constraint_1)
-            collocation_constraint_indices.append(collocation_constraint_2)
-
-            conductor = Interconnect(conductor_inputs, num_segments, num_spheres_per_segment)
-            conductors.append(conductor)
-
-        num_interconnects = len(conductors)
-        num_nodes = num_segments + 1
-
-        return conductors, num_interconnects, num_nodes, collocation_constraint_indices
-
-    def create_domains(self):
-
-        domains_inputs = self.input['domain']
-
-        domains = []
-        for domain_inputs in domains_inputs.items():
-            name = domain_inputs[0]
-            domain_inputs = domain_inputs[1]
-            color = domain_inputs['color']
-            filepath = domain_inputs['filepath']
-
-            domains.append(Domain(name=name, filepath=filepath, color=color))
-
-        return domains
-
-
-    def assemble_transformation_matrices(self):
-        pass
-
-    def set_objective(self, objective: str):
-
-        """
-        Add an objective to the design study.
-
-        :param objective: The objective function to be added.
-        :param options: The options for the objective function.
-        """
-
-        # SELECT THE OBJECTIVE FUNCTION HANDLE
-
-        if objective == 'bounding box volume':
-            _objective_function = bounding_box_volume
-        else:
-            raise NotImplementedError
-
-        def objective_function(positions):
-            return _objective_function(positions)
-
-        self.objective = objective_function
-
-    def calculate_positions(self, translations, rotations, routings):
-
-        objects_dict = {}
-
-        for component, translation, rotation in zip(self.components, translations, rotations):
-            object_dict = component.calculate_positions(translation, rotation)
-            objects_dict = {**objects_dict, **object_dict}
-
-        for interconnect, routing in zip(self.interconnects, routings):
-            object_dict = interconnect.calculate_positions(routing)
-            objects_dict = {**objects_dict, **object_dict}
-
-        return objects_dict
+    # def set_objective(self, objective: str):
+    #
+    #     """
+    #     Add an objective to the design study.
+    #
+    #     :param objective: The objective function to be added.
+    #     :param options: The options for the objective function.
+    #     """
+    #
+    #     # SELECT THE OBJECTIVE FUNCTION HANDLE
+    #
+    #     if objective == 'bounding box volume':
+    #         _objective_function = bounding_box_volume
+    #     else:
+    #         raise NotImplementedError
+    #
+    #     def objective_function(positions):
+    #         return _objective_function(positions)
+    #
+    #     self.objective = objective_function
+    #
+    # def calculate_positions(self, translations, rotations, routings):
+    #
+    #     objects_dict = {}
+    #
+    #     for component, translation, rotation in zip(self.components, translations, rotations):
+    #         object_dict = component.calculate_positions(translation, rotation)
+    #         objects_dict = {**objects_dict, **object_dict}
+    #
+    #     for interconnect, routing in zip(self.interconnects, routings):
+    #         object_dict = interconnect.calculate_positions(routing)
+    #         objects_dict = {**objects_dict, **object_dict}
+    #
+    #     return objects_dict
 
     def get_component_pairs(self):
         component_component_pairs = list(combinations(self.components, 2))

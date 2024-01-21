@@ -5,7 +5,7 @@ Author:     Chad Peterson
 
 import torch
 import openmdao.api as om
-from SPI2py import KinematicsInterface, Component, Interconnect, System
+from SPI2py import ComponentInterface, Interconnect, SystemInterface
 from SPI2py.group_model.utilities.visualization import plot
 
 # Initialize the problem
@@ -16,7 +16,10 @@ model = prob.model
 # ...
 
 
+
 # Initialize components and add them to the system
+
+
 # system.add_subsystem()
 
 # Initialize interconnects and add them to the system
