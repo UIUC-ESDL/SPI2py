@@ -59,15 +59,15 @@ heater_core_6 = Component(spheres_filepath='components/heater_core.xyzr',
 
 # Add components to the system
 model.components.add_subsystem('radiator_and_ion_exchanger_1a', radiator_and_ion_exchanger_1a)
-# model.add_subsystem('radiator_and_ion_exchanger_1b', radiator_and_ion_exchanger_1b)
-# model.add_subsystem('pump_2a', pump_2a)
-# model.add_subsystem('pump_2b', pump_2b)
-# model.add_subsystem('particle_filter_3a', particle_filter_3a)
-# model.add_subsystem('particle_filter_3b', particle_filter_3b)
-# model.add_subsystem('fuel_cell_Stack_4a', fuel_cell_Stack_4a)
-# model.add_subsystem('fuel_cell_Stack_4b', fuel_cell_Stack_4b)
-# model.add_subsystem('WEG_heater_and_pump_5', WEG_heater_and_pump_5)
-# model.add_subsystem('heater_core_6', heater_core_6)
+model.components.add_subsystem('radiator_and_ion_exchanger_1b', radiator_and_ion_exchanger_1b)
+# model.components.add_subsystem('pump_2a', pump_2a)
+# model.components.add_subsystem('pump_2b', pump_2b)
+# model.components.add_subsystem('particle_filter_3a', particle_filter_3a)
+# model.components.add_subsystem('particle_filter_3b', particle_filter_3b)
+# model.components.add_subsystem('fuel_cell_Stack_4a', fuel_cell_Stack_4a)
+# model.components.add_subsystem('fuel_cell_Stack_4b', fuel_cell_Stack_4b)
+# model.components.add_subsystem('WEG_heater_and_pump_5', WEG_heater_and_pump_5)
+# model.components.add_subsystem('heater_core_6', heater_core_6)
 
 # # Initialize interconnects
 # c1a_c1b = 1
@@ -89,19 +89,21 @@ model.components.add_subsystem('radiator_and_ion_exchanger_1a', radiator_and_ion
 # system.connect(...)
 
 # Initialize the System
-system = System()  # ...
+system = System(num_components=2)  # ...
 model.add_subsystem('system', system)
 
 model.connect('components.radiator_and_ion_exchanger_1a.sphere_positions', 'system.sphere_positions')
 model.connect('components.radiator_and_ion_exchanger_1a.sphere_radii', 'system.sphere_radii')
 
+model.connect('components.radiator_and_ion_exchanger_1b.sphere_positions', 'system.sphere_positions')
+model.connect('components.radiator_and_ion_exchanger_1b.sphere_radii', 'system.sphere_radii')
 
 # Set the initial state
 prob.setup()
 
 # Configure the system
 prob.set_val('components.radiator_and_ion_exchanger_1a.translation', [2, 7, 0])
-# prob.set_val('radiator_and_ion_exchanger_1b.translation', [5.5, 7, 0])
+prob.set_val('radiator_and_ion_exchanger_1b.translation', [5.5, 7, 0])
 # prob.set_val('pump_2a.translation', [0.5, 6, 0])
 # prob.set_val('pump_2b.translation', [7.5, 6, 0])
 # prob.set_val('particle_filter_3a.translation', [0.5, 4.5, 0])

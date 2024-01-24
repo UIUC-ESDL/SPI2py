@@ -13,15 +13,20 @@ from SPI2py.group_model.component_geometry.bounding_box_volume import bounding_b
 class System(ExplicitComponent):
 
     def initialize(self):
-        pass
+        self.options.declare('num_components', types=int)
 
     def setup(self):
 
-        self.add_input('sphere_positions', shape_by_conn=True)
-        self.add_input('sphere_radii', shape_by_conn=True)
+        num_components = self.options['num_components']
+        for i in range(num_components):
+            self.add_input(f'component_{i}_sphere_positions', shape_by_conn=True)
+            self.add_input(f'component_{i}_sphere_radii', shape_by_conn=True)
+
+        # self.add_input('sphere_positions', shape_by_conn=True)
+        # self.add_input('sphere_radii', shape_by_conn=True)
         # self.add_input('routings', shape_by_conn=True)
 
-        self.add_output('bounding box volume', val=0)
+        self.add_output('bounding box volume', val=1)
         # self.add_output('constraints', val=torch.zeros(1))
 
     # def setup_partials(self):
@@ -30,8 +35,10 @@ class System(ExplicitComponent):
     def compute(self, inputs, outputs):
 
         # Get the input variables
-        sphere_positions = inputs['sphere_positions']
-        sphere_radii = inputs['sphere_radii']
+        # sphere_positions = inputs['sphere_positions']
+        # sphere_radii = inputs['sphere_radii']
+        sphere_positions = [inputs[f'component_{i}_sphere_positions'] for i in range(self.options['num_components'])]
+        sphere_radii = [inputs[f'component_{i}_sphere_radii'] for i in range(self.options['num_components'])]
 
         # Convert the inputs to torch tensors
         sphere_positions = torch.tensor(sphere_positions, dtype=torch.float64)
