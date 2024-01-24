@@ -1,7 +1,7 @@
 import torch
 
 
-def bounding_box(positions, radii):
+def bounding_box_bounds(positions, radii):
     """
     Calculate the bounding box that contains all spheres.
 
@@ -19,18 +19,18 @@ def bounding_box(positions, radii):
     max_coords = positions + radii.view(-1, 1)
 
     # Find overall min and max coordinates
-    overall_min = torch.min(min_coords, dim=0)[0]
-    overall_max = torch.max(max_coords, dim=0)[0]
+    x_min, y_min, z_min = torch.min(min_coords, dim=0)[0].reshape(3, 1)
+    x_max, y_max, z_max = torch.max(max_coords, dim=0)[0].reshape(3, 1)
 
     # Combine into a single tensor representing the bounding box
-    bounding_box_vertices = torch.stack([overall_min, overall_max])
+    bounds = torch.concatenate((x_min, x_max, y_min, y_max, z_min, z_max))
 
-    return bounding_box_vertices
+    return bounds
 
 
-def bounding_box_volume(positions, radii):
+def bounding_box_volume(bounds):
 
-    (x_min, y_min, z_min), (x_max, y_max, z_max) = bounding_box(positions, radii)
+    x_min, x_max, y_min, y_max, z_min, z_max = bounds
 
     volume = (x_max - x_min) * (y_max - y_min) * (z_max - z_min)
 

@@ -6,7 +6,7 @@ from openmdao.api import ExplicitComponent
 
 from src.SPI2py.group_model.component_kinematics.distance_calculations import aggregate_signed_distance
 from src.SPI2py.group_model.utilities import kreisselmeier_steinhauser
-from SPI2py.group_model.component_geometry.bounding_box_volume import bounding_box_volume
+from SPI2py.group_model.component_geometry.bounding_box_volume import bounding_box_bounds, bounding_box_volume
 
 
 
@@ -23,6 +23,7 @@ class System(ExplicitComponent):
             self.add_input(f'comp_{i}_sphere_radii', shape_by_conn=True)
 
         self.add_output('bounding box volume', val=0)
+        self.add_output('bounding box bounds', val=(0, 0, 0, 0, 0, 0))
         # self.add_output('constraints', val=torch.zeros(1))
 
     # def setup_partials(self):
@@ -46,12 +47,16 @@ class System(ExplicitComponent):
         sphere_radii = torch.tensor(sphere_radii, dtype=torch.float64)
 
         # Calculate the bounding box volume
-        bbv = bounding_box_volume(sphere_positions, sphere_radii)
+        bb_bounds = bounding_box_bounds(sphere_positions, sphere_radii)
+        bb_volume = bounding_box_volume(bb_bounds)
 
         # Convert the outputs to numpy arrays
-        bbv = bbv.detach().numpy()
+        bb_bounds = bb_bounds.detach().numpy()
+        bb_volume = bb_volume.detach().numpy()
 
-        outputs['bounding box volume'] = bbv
+        # Set the outputs
+        outputs['bounding box bounds'] = bb_bounds
+        outputs['bounding box volume'] = bb_volume
         # outputs['constraints'] = constraints
 
     # def compute_partials(self, inputs, partials):

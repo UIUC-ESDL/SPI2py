@@ -1,6 +1,6 @@
 import pyvista as pv
 
-def plot(objects, colors):
+def plot(components, component_colors, bounding_box, bounding_box_color):
     """
     Plot the model at a given state.
     """
@@ -8,8 +8,11 @@ def plot(objects, colors):
     # Plot the objects
     p = pv.Plotter(window_size=[1000, 1000])
 
-    for obj, color in zip(objects, colors):
-        p.add_mesh(obj, color=color)
+    for comp, color in zip(components, component_colors):
+        p.add_mesh(comp, color=color)
+
+    # Plot the bounding box
+    p.add_mesh(bounding_box, color=bounding_box_color, opacity=0.2)
 
     p.view_isometric()
     # p.view_xy()

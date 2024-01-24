@@ -61,8 +61,8 @@ heater_core_6 = Component(spheres_filepath='components/heater_core.xyzr',
 # Add components to the system
 model.components.add_subsystem('radiator_and_ion_exchanger_1a', radiator_and_ion_exchanger_1a)
 model.components.add_subsystem('radiator_and_ion_exchanger_1b', radiator_and_ion_exchanger_1b)
-# model.components.add_subsystem('pump_2a', pump_2a)
-# model.components.add_subsystem('pump_2b', pump_2b)
+model.components.add_subsystem('pump_2a', pump_2a)
+model.components.add_subsystem('pump_2b', pump_2b)
 # model.components.add_subsystem('particle_filter_3a', particle_filter_3a)
 # model.components.add_subsystem('particle_filter_3b', particle_filter_3b)
 # model.components.add_subsystem('fuel_cell_Stack_4a', fuel_cell_Stack_4a)
@@ -90,15 +90,18 @@ model.components.add_subsystem('radiator_and_ion_exchanger_1b', radiator_and_ion
 # system.connect(...)
 
 # Initialize the System
-system = System(num_components=2)  # ...
+system = System(num_components=4)  # ...
 model.add_subsystem('system', system)
 
 
 model.connect('components.radiator_and_ion_exchanger_1a.sphere_positions', 'system.comp_0_sphere_positions')
 model.connect('components.radiator_and_ion_exchanger_1a.sphere_radii', 'system.comp_0_sphere_radii')
-
 model.connect('components.radiator_and_ion_exchanger_1b.sphere_positions', 'system.comp_1_sphere_positions')
 model.connect('components.radiator_and_ion_exchanger_1b.sphere_radii', 'system.comp_1_sphere_radii')
+model.connect('components.pump_2a.sphere_positions', 'system.comp_2_sphere_positions')
+model.connect('components.pump_2a.sphere_radii', 'system.comp_2_sphere_radii')
+model.connect('components.pump_2b.sphere_positions', 'system.comp_3_sphere_positions')
+model.connect('components.pump_2b.sphere_radii', 'system.comp_3_sphere_radii')
 
 # Set the initial state
 prob.setup()
@@ -106,14 +109,14 @@ prob.setup()
 # Configure the system
 prob.set_val('components.radiator_and_ion_exchanger_1a.translation', [2, 7, 0])
 prob.set_val('components.radiator_and_ion_exchanger_1b.translation', [5.5, 7, 0])
-# prob.set_val('pump_2a.translation', [0.5, 6, 0])
-# prob.set_val('pump_2b.translation', [7.5, 6, 0])
-# prob.set_val('particle_filter_3a.translation', [0.5, 4.5, 0])
-# prob.set_val('particle_filter_3b.translation', [7.5, 5, 0])
-# prob.set_val('fuel_cell_Stack_4a.translation', [0.5, 2, 0])
-# prob.set_val('fuel_cell_Stack_4b.translation', [7.5, 3, 0])
-# prob.set_val('WEG_heater_and_pump_5.translation', [6, 1, 0])
-# prob.set_val('heater_core_6.translation', [2, 0, 0])
+prob.set_val('components.pump_2a.translation', [0.5, 6, 0])
+prob.set_val('components.pump_2b.translation', [7.5, 6, 0])
+# prob.set_val('components.particle_filter_3a.translation', [0.5, 4.5, 0])
+# prob.set_val('components.particle_filter_3b.translation', [7.5, 5, 0])
+# prob.set_val('components.fuel_cell_Stack_4a.translation', [0.5, 2, 0])
+# prob.set_val('components.fuel_cell_Stack_4b.translation', [7.5, 3, 0])
+# prob.set_val('components.WEG_heater_and_pump_5.translation', [6, 1, 0])
+# prob.set_val('components.heater_core_6.translation', [2, 0, 0])
 
 # prob.set_val('system.c1a_c1b.control_points', [[3.475, 7, 0], [3.75, 7, 0], [4.025, 7, 0]])
 # prob.set_val('system.c1b_c2b.control_points', [[6.975, 7, 0], [7.5, 7, 0], [7.5, 6.275, 0]])
@@ -235,8 +238,8 @@ for subsystem in model.components._subsystems_myproc:
 import pyvista as pv
 
 # Create the plot objects
-objects = []
-colors = []
+components = []
+component_colors = []
 
 for subsystem in model.components._subsystems_myproc:
 
@@ -252,8 +255,17 @@ for subsystem in model.components._subsystems_myproc:
     # merged_clipped = merged.clip(normal='z')
     # merged_slice = merged.slice(normal=[0, 0, 1])
 
-    objects.append(merged)
-    colors.append(color)
+    components.append(merged)
+    component_colors.append(color)
+
+
+print('BB Bounds', prob.get_val('system.bounding box bounds'))
+
+# Plot the bounding box
+bounds = prob.get_val('system.bounding box bounds')
+bb_object = pv.Box(bounds=bounds)
+bb_color = 'black'
+
 
 from SPI2py.group_model.utilities.visualization import plot
-plot(objects, colors)
+plot(components, component_colors, bb_object, bb_color)
