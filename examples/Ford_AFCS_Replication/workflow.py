@@ -5,48 +5,79 @@ Author:     Chad Peterson
 
 import torch
 import openmdao.api as om
-from SPI2py import Component, Interconnect, System
-from SPI2py.group_model.utilities.visualization import plot
+# from SPI2py import Component, Interconnect, System
+# from SPI2py.group_model.utilities.visualization import plot
+from SPI2py.group_model.OpenMDAO_Objects.Components import Component
+# from SPI2py.group_model.OpenMDAO_Objects.Systems import System
 
 # Initialize the problem
 prob = om.Problem()
 model = prob.model
 
-# Initialize the System
-system = System()  # ...
-
 # Initialize components
-radiator_and_ion_exchanger_1a = Component(name='radiator_and_ion_exchanger_1a',
-                                          filepath='filepath',
-                                          translation_dof=[0, 1, 2],
-                                          rotation_dof=[0, 1, 2],
-                                          ports={'in': 1, 'out': 1},
+radiator_and_ion_exchanger_1a = Component(spheres_filepath='components/radiator_and_ion_exchanger.xyzr',
+                                          ports={'left': [-1.475, 0, 0], 'right': [1.475, 0, 0]},
                                           color='red')
 
-radiator_and_ion_exchanger_1b = 1
-pump_2a = 1
-pump_2b = 1
-particle_filter_3a = 1
-particle_filter_3b = 1
-fuel_cell_Stack_4a = 1
-fuel_cell_Stack_4b = 1
-WEG_heater_and_pump_5 = 1
-heater_core_6 = 1
+radiator_and_ion_exchanger_1b = Component(spheres_filepath='components/radiator_and_ion_exchanger.xyzr',
+                                          ports={'left': [-1.475, 0, 0], 'right': [1.475, 0, 0]},
+                                          color='red')
+
+pump_2a = Component(spheres_filepath='components/pump.xyzr',
+                    ports={'top': [0, 0.275, 0], 'bottom': [0, -0.275, 0]},
+                    color='blue')
+
+pump_2b = Component(spheres_filepath='components/pump.xyzr',
+                    ports={'top': [0, 0.275, 0], 'bottom': [0, -0.275, 0]},
+                    color='blue')
+
+particle_filter_3a = Component(spheres_filepath='components/particle_filter.xyzr',
+                               ports={'top': [0, 0.215, 0], 'bottom': [0, -0.215, 0]},
+                               color='yellow')
+
+particle_filter_3b = Component(spheres_filepath='components/particle_filter.xyzr',
+                               ports={'top': [0, 0.215, 0], 'bottom': [0, -0.215, 0]},
+                               color='yellow')
+
+fuel_cell_Stack_4a = Component(spheres_filepath='components/fuel_cell_Stack.xyzr',
+                               ports={'top': [0, 0.85, 0], 'bottom': [0, -0.85, 0]},
+                               color='green')
+
+fuel_cell_Stack_4b = Component(spheres_filepath='components/fuel_cell_Stack.xyzr',
+                               ports={'top': [0, 0.85, 0], 'bottom': [0, -0.85, 0]},
+                               color='green')
+
+WEG_heater_and_pump_5 = Component(spheres_filepath='components/WEG_heater_and_pump.xyzr',
+                                  ports={'top': [0, 0.9665, 0], 'left': [-0.8775, 0, 0]},
+                                  color='gray')
+
+heater_core_6 = Component(spheres_filepath='components/heater_core.xyzr',
+                          ports={'left': [-0.7225, 0, 0], 'right': [0.7225, 0, 0]},
+                          color='red')
 
 # Add components to the system
-# system.add_subsystem()
+model.add_subsystem('radiator_and_ion_exchanger_1a', radiator_and_ion_exchanger_1a)
+model.add_subsystem('radiator_and_ion_exchanger_1b', radiator_and_ion_exchanger_1b)
+# model.add_subsystem('pump_2a', pump_2a)
+# model.add_subsystem('pump_2b', pump_2b)
+# model.add_subsystem('particle_filter_3a', particle_filter_3a)
+# model.add_subsystem('particle_filter_3b', particle_filter_3b)
+# model.add_subsystem('fuel_cell_Stack_4a', fuel_cell_Stack_4a)
+# model.add_subsystem('fuel_cell_Stack_4b', fuel_cell_Stack_4b)
+# model.add_subsystem('WEG_heater_and_pump_5', WEG_heater_and_pump_5)
+# model.add_subsystem('heater_core_6', heater_core_6)
 
-# Initialize interconnects
-c1a_c1b = 1
-c1b_c2b = 1
-c2b_c3b = 1
-c3b_c4b = 1
-c4b_c5 = 1
-c5_c6 = 1
-c6_c4a = 1
-c4a_c3a = 1
-c3a_c2a = 1
-c2a_c1a = 1
+# # Initialize interconnects
+# c1a_c1b = 1
+# c1b_c2b = 1
+# c2b_c3b = 1
+# c3b_c4b = 1
+# c4b_c5 = 1
+# c5_c6 = 1
+# c6_c4a = 1
+# c4a_c3a = 1
+# c3a_c2a = 1
+# c2a_c1a = 1
 
 # Add interconnects to the system
 # system.add_subsystem()
@@ -55,22 +86,24 @@ c2a_c1a = 1
 # system.connect(...)
 # system.connect(...)
 
-# Connect
+# Initialize the System
+# system = System()  # ...
 
 
-
+# Set the initial state
+prob.setup()
 
 # Configure the system
-# prob.set_val('system.radiator_and_ion_exchanger_1a.translation', [2, 7, 0])
-# prob.set_val('system.radiator_and_ion_exchanger_1b.translation', [5.5, 7, 0])
-# prob.set_val('system.pump_2a.translation', [0.5, 6, 0])
-# prob.set_val('system.pump_2b.translation', [7.5, 6, 0])
-# prob.set_val('system.particle_filter_3a.translation', [0.5, 4.5, 0])
-# prob.set_val('system.particle_filter_3b.translation', [7.5, 5, 0])
-# prob.set_val('system.fuel_cell_Stack_4a.translation', [0.5, 2, 0])
-# prob.set_val('system.fuel_cell_Stack_4b.translation', [7.5, 3, 0])
-# prob.set_val('system.WEG_heater_and_pump_5.translation', [6, 1, 0])
-# prob.set_val('system.heater_core_6.translation', [2, 0, 0])
+prob.set_val('radiator_and_ion_exchanger_1a.translation', [2, 7, 0])
+prob.set_val('radiator_and_ion_exchanger_1b.translation', [5.5, 7, 0])
+# prob.set_val('pump_2a.translation', [0.5, 6, 0])
+# prob.set_val('pump_2b.translation', [7.5, 6, 0])
+# prob.set_val('particle_filter_3a.translation', [0.5, 4.5, 0])
+# prob.set_val('particle_filter_3b.translation', [7.5, 5, 0])
+# prob.set_val('fuel_cell_Stack_4a.translation', [0.5, 2, 0])
+# prob.set_val('fuel_cell_Stack_4b.translation', [7.5, 3, 0])
+# prob.set_val('WEG_heater_and_pump_5.translation', [6, 1, 0])
+# prob.set_val('heater_core_6.translation', [2, 0, 0])
 
 # prob.set_val('system.c1a_c1b.control_points', [[3.475, 7, 0], [3.75, 7, 0], [4.025, 7, 0]])
 # prob.set_val('system.c1b_c2b.control_points', [[6.975, 7, 0], [7.5, 7, 0], [7.5, 6.275, 0]])
@@ -95,45 +128,45 @@ c2a_c1a = 1
 
 
 
-kinematics_component = KinematicsInterface()
-kinematics_component.options.declare('kinematics', default=system)
+# kinematics_component = KinematicsInterface()
+# kinematics_component.options.declare('kinematics', default=system)
+#
+# model.add_subsystem('kinematics', kinematics_component, promotes=['*'])
+#
+# prob.model.add_design_var('translations', ref=10)
+# prob.model.add_design_var('rotations', ref=2*torch.pi)
+#
+# # TODO Unbound routing
+# prob.model.add_design_var('routings', ref=10, lower=routings_0, upper=routings_0)
+# prob.model.add_objective('f')
+# prob.model.add_constraint('g', upper=0)
+# # prob.model.add_constraint('g_c', upper=0)
+# # prob.model.add_constraint('g_i', upper=0)
+# # prob.model.add_constraint('g_ci', upper=0)
+#
 
-model.add_subsystem('kinematics', kinematics_component, promotes=['*'])
-
-prob.model.add_design_var('translations', ref=10)
-prob.model.add_design_var('rotations', ref=2*torch.pi)
-
-# TODO Unbound routing
-prob.model.add_design_var('routings', ref=10, lower=routings_0, upper=routings_0)
-prob.model.add_objective('f')
-prob.model.add_constraint('g', upper=0)
-# prob.model.add_constraint('g_c', upper=0)
-# prob.model.add_constraint('g_i', upper=0)
-# prob.model.add_constraint('g_ci', upper=0)
-
-prob.setup()
-
-prob.set_val('translations', translations_0)
-prob.set_val('rotations', rotations_0)
-prob.set_val('routings', routings_0)
-
-
-# TODO Equality bound all the routing variables
-
+#
+# prob.set_val('translations', translations_0)
+# prob.set_val('rotations', rotations_0)
+# prob.set_val('routings', routings_0)
+#
+#
+# # TODO Equality bound all the routing variables
+#
 prob.run_model()
-
-# Plot initial spatial configuration
-print('Initial objective: ', prob['f'])
-print('Initial constraint values: ', prob['g'])
-translations_i = prob['translations']
-rotations_i = prob['rotations']
-routings_i = prob['routings']
-translations_i = torch.tensor(translations_i, dtype=torch.float64)
-rotations_i = torch.tensor(rotations_i, dtype=torch.float64)
-routings_i = torch.tensor(routings_i, dtype=torch.float64)
-
-plot_objects, colors = kinematics_component.kinematics.plot_inputs(translations_i, rotations_i, routings_i)
-plot(plot_objects, colors)
+#
+# # Plot initial spatial configuration
+# print('Initial objective: ', prob['f'])
+# print('Initial constraint values: ', prob['g'])
+# translations_i = prob['translations']
+# rotations_i = prob['rotations']
+# routings_i = prob['routings']
+# translations_i = torch.tensor(translations_i, dtype=torch.float64)
+# rotations_i = torch.tensor(rotations_i, dtype=torch.float64)
+# routings_i = torch.tensor(routings_i, dtype=torch.float64)
+#
+# plot_objects, colors = kinematics_component.kinematics.plot_inputs(translations_i, rotations_i, routings_i)
+# plot(plot_objects, colors)
 
 #
 # # Run the optimization

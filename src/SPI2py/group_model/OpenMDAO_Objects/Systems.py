@@ -1,48 +1,68 @@
 from itertools import combinations, product
 
 import pyvista as pv
-import tomli
 import torch
-from openmdao.api import Group
+from openmdao.api import ExplicitComponent
 
-from SPI2py import Component, Interconnect
-from src.SPI2py.group_model.component_kinematics.bounding_volumes import bounding_box_volume
 from src.SPI2py.group_model.component_kinematics.distance_calculations import aggregate_signed_distance
 from src.SPI2py.group_model.utilities import kreisselmeier_steinhauser
+from SPI2py.group_model.component_geometry.bounding_box_volume import bounding_box_volume
 
 
 
-class SystemInterface(Group):
+class System(ExplicitComponent):
 
     def initialize(self):
         pass
 
     def setup(self):
 
-        self.System = System(self.components, self.interconnects)
+        self.add_input('sphere_positions', shape_by_conn=True)
+        self.add_input('sphere_radii', shape_by_conn=True)
+        # self.add_input('routings', shape_by_conn=True)
+
+        self.add_output('bounding box volume', val=0)
+        # self.add_output('constraints', val=torch.zeros(1))
 
     def setup_partials(self):
-        pass
+        self.declare_partials('bounding box volume', 'sphere_positions')
 
     def compute(self, inputs, outputs):
-        translations = inputs['translations']
-        rotations = inputs['rotations']
-        control_points = inputs['control_points']
+        # translations = inputs['translations']
+        # control_points = inputs['control_points']
 
-        translations = torch.tensor(translations, dtype=torch.float64, requires_grad=True)
-        rotations = torch.tensor(rotations, dtype=torch.float64, requires_grad=True)
-        control_points = torch.tensor(control_points, dtype=torch.float64, requires_grad=True)
+        sphere_positions = inputs['sphere_positions']
+        sphere_radii = inputs['sphere_radii']
 
-        objective = self.calculate_objective(translations, rotations, control_points)
-        constraints = self.calculate_constraints(translations, rotations, control_points)
+        # translations = torch.tensor(translations, dtype=torch.float64, requires_grad=True)
+        # rotations = torch.tensor(rotations, dtype=torch.float64, requires_grad=True)
+        # # control_points = torch.tensor(control_points, dtype=torch.float64, requires_grad=True)
+
+        # objective = self.calculate_objective(translations, rotations, control_points)
+        # constraints = self.calculate_constraints(translations, rotations, control_points)
+
+        outputs['objective'] = objective
+        # outputs['constraints'] = constraints
 
 
-    def compute_partials(self, inputs, partials):
-        pass
+    # def compute_partials(self, inputs, partials):
+    #     pass
+
+    def calculate_objective(self, translations, rotations, routings):
+
+        positions_dict = self.calculate_positions(translations, rotations, routings)
+
+        positions_array = torch.vstack([positions_dict[key]['positions'] for key in positions_dict.keys()])
+        radii_array = torch.vstack([positions_dict[key]['radii'].view(-1, 1) for key in positions_dict.keys()])
+
+        spheres = torch.hstack([positions_array, radii_array])
+
+        objective = self.objective(spheres)
+
+        return objective
 
 
-
-class System:
+class _System:
     def __init__(self, components, interconnects):
 
 
@@ -126,18 +146,7 @@ class System:
         max_signed_distance = kreisselmeier_steinhauser(signed_distance_vals) - 0.2
         return max_signed_distance
 
-    def calculate_objective(self, translations, rotations, routings):
 
-        positions_dict = self.calculate_positions(translations, rotations, routings)
-
-        positions_array = torch.vstack([positions_dict[key]['positions'] for key in positions_dict.keys()])
-        radii_array = torch.vstack([positions_dict[key]['radii'].view(-1, 1) for key in positions_dict.keys()])
-
-        spheres = torch.hstack([positions_array, radii_array])
-
-        objective = self.objective(spheres)
-
-        return objective
 
     def calculate_constraints(self, translations, rotations, routings):
 

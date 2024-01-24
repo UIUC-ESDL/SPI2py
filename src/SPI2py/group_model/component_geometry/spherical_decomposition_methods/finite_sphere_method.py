@@ -19,7 +19,7 @@ class GeometricRepresentation:
 
 
 
-def read_xyzr_file(filepath, num_spheres=10, scale_factor=1):
+def read_xyzr_file(filepath, num_spheres=100):
     """
     Reads a .xyzr file and returns the positions and radii of the spheres.
 
@@ -27,7 +27,6 @@ def read_xyzr_file(filepath, num_spheres=10, scale_factor=1):
 
     :param filepath:
     :param num_spheres:
-    :param scale_factor:
     :return: positions, radii
     """
 
@@ -49,9 +48,8 @@ def read_xyzr_file(filepath, num_spheres=10, scale_factor=1):
         positions.append([float(x), float(y), float(z)])
         radii.append(float(r))
 
-    # Scale the positions and radii if needed
-    positions = torch.tensor(positions, dtype=torch.float64)*scale_factor
-    radii = torch.tensor(radii, dtype=torch.float)*scale_factor
+    positions = torch.tensor(positions, dtype=torch.float64)
+    radii = torch.tensor(radii, dtype=torch.float)
 
     return positions, radii
 
