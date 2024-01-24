@@ -24,168 +24,134 @@ class System(ExplicitComponent):
         self.add_output('bounding box volume', val=0)
         # self.add_output('constraints', val=torch.zeros(1))
 
-    def setup_partials(self):
-        self.declare_partials('bounding box volume', 'sphere_positions')
+    # def setup_partials(self):
+    #     self.declare_partials('bounding box volume', 'sphere_positions')
 
     def compute(self, inputs, outputs):
-        # translations = inputs['translations']
-        # control_points = inputs['control_points']
 
+        # Get the input variables
         sphere_positions = inputs['sphere_positions']
         sphere_radii = inputs['sphere_radii']
 
-        # translations = torch.tensor(translations, dtype=torch.float64, requires_grad=True)
-        # rotations = torch.tensor(rotations, dtype=torch.float64, requires_grad=True)
-        # # control_points = torch.tensor(control_points, dtype=torch.float64, requires_grad=True)
+        # Convert the inputs to torch tensors
+        sphere_positions = torch.tensor(sphere_positions, dtype=torch.float64)
+        sphere_radii = torch.tensor(sphere_radii, dtype=torch.float64)
 
-        # objective = self.calculate_objective(translations, rotations, control_points)
-        # constraints = self.calculate_constraints(translations, rotations, control_points)
+        # Calculate the bounding box volume
+        bbv = bounding_box_volume(sphere_positions, sphere_radii)
 
-        outputs['objective'] = objective
+        # Convert the outputs to numpy arrays
+        bbv = bbv.detach().numpy()
+
+        outputs['bounding box volume'] = bbv
         # outputs['constraints'] = constraints
 
 
     # def compute_partials(self, inputs, partials):
     #     pass
 
-    def calculate_objective(self, translations, rotations, routings):
-
-        positions_dict = self.calculate_positions(translations, rotations, routings)
-
-        positions_array = torch.vstack([positions_dict[key]['positions'] for key in positions_dict.keys()])
-        radii_array = torch.vstack([positions_dict[key]['radii'].view(-1, 1) for key in positions_dict.keys()])
-
-        spheres = torch.hstack([positions_array, radii_array])
-
-        objective = self.objective(spheres)
-
-        return objective
-
-
-class _System:
-    def __init__(self, components, interconnects):
-
-
-        self.components = components
-        self.interconnects = interconnects
-        self.objects = self.components + self.interconnects
-
-
-        self.component_pairs = self.get_component_pairs()
-        self.interconnect_pairs = self.get_interconnect_pairs()
-        self.component_interconnect_pairs = self.get_component_interconnect_pairs()
-
-
-        objective = self.input['problem']['objective']
-        self.set_objective(objective)
-
-        self.translations_shape = (self.num_components, 3)
-        self.rotations_shape = (self.num_components, 3)
-        self.routings_shape = (self.num_interconnects, self.num_nodes, 3)
-
-    # def set_objective(self, objective: str):
-    #
-    #     """
-    #     Add an objective to the design study.
-    #
-    #     :param objective: The objective function to be added.
-    #     :param options: The options for the objective function.
-    #     """
-    #
-    #     # SELECT THE OBJECTIVE FUNCTION HANDLE
-    #
-    #     if objective == 'bounding box volume':
-    #         _objective_function = bounding_box_volume
-    #     else:
-    #         raise NotImplementedError
-    #
-    #     def objective_function(positions):
-    #         return _objective_function(positions)
-    #
-    #     self.objective = objective_function
-    #
-    # def calculate_positions(self, translations, rotations, routings):
-    #
-    #     objects_dict = {}
-    #
-    #     for component, translation, rotation in zip(self.components, translations, rotations):
-    #         object_dict = component.calculate_positions(translation, rotation)
-    #         objects_dict = {**objects_dict, **object_dict}
-    #
-    #     for interconnect, routing in zip(self.interconnects, routings):
-    #         object_dict = interconnect.calculate_positions(routing)
-    #         objects_dict = {**objects_dict, **object_dict}
-    #
-    #     return objects_dict
-
-    def get_component_pairs(self):
-        component_component_pairs = list(combinations(self.components, 2))
-        return component_component_pairs
-
-    def get_interconnect_pairs(self):
-        interconnect_interconnect_pairs = list(combinations(self.interconnects, 2))
-        return interconnect_interconnect_pairs
-
-    def get_component_interconnect_pairs(self):
-        component_interconnect_pairs = list(product(self.components, self.interconnects))
-        return component_interconnect_pairs
-
-    def collision_component_pairs(self, positions_dict):
-        signed_distance_vals = aggregate_signed_distance(positions_dict, self.component_pairs)
-        max_signed_distance = kreisselmeier_steinhauser(signed_distance_vals)
-        return max_signed_distance
-
-    def collision_interconnect_pairs(self, positions_dict):
-        signed_distance_vals = aggregate_signed_distance(positions_dict, self.interconnect_pairs)
-        max_signed_distance = kreisselmeier_steinhauser(signed_distance_vals)
-        return max_signed_distance
-
-    def collision_component_interconnect_pairs(self, positions_dict):
-        # TODO Remove tolerance
-        signed_distance_vals = aggregate_signed_distance(positions_dict, self.component_interconnect_pairs)
-        max_signed_distance = kreisselmeier_steinhauser(signed_distance_vals) - 0.2
-        return max_signed_distance
 
 
 
-    def calculate_constraints(self, translations, rotations, routings):
 
-        positions_dict = self.calculate_positions(translations, rotations, routings)
-
-        # g_component_pairs = self.collision_component_pairs(positions_dict)
-        # g_interconnect_pairs = self.collision_interconnect_pairs(positions_dict)
-        # g_component_interconnect_pairs = self.collision_component_interconnect_pairs(positions_dict)
-        # g = torch.tensor((g_component_pairs, g_interconnect_pairs, g_component_interconnect_pairs))
-
-        # TODO Add other constraints back in
-        g = self.collision_component_pairs(positions_dict)
-
-        return g
-
-    def plot_inputs(self, translations, rotations, routings):
-        """
-        Plot the model at a given state.
-        """
-
-        positions_dict = self.calculate_positions(translations, rotations, routings)
-
-        # Create the plot objects
-        objects = []
-        colors = []
-        for obj in self.objects:
-
-            positions = positions_dict[str(obj)]['positions']
-            radii = positions_dict[str(obj)]['radii']
-
-            spheres = []
-            for position, radius in zip(positions, radii):
-                spheres.append(pv.Sphere(radius=radius, center=position, theta_resolution=30, phi_resolution=30))
-
-            merged = pv.MultiBlock(spheres).combine().extract_surface().clean()
-            # merged_clipped = merged.clip(normal='z')
-            # merged_slice = merged.slice(normal=[0, 0, 1])
-
-            objects.append(merged)
-            colors.append(obj.color)
-
-        return objects, colors
+# class _System:
+#     def __init__(self, components, interconnects):
+#
+#
+#         self.components = components
+#         self.interconnects = interconnects
+#         self.objects = self.components + self.interconnects
+#
+#
+#         self.component_pairs = self.get_component_pairs()
+#         self.interconnect_pairs = self.get_interconnect_pairs()
+#         self.component_interconnect_pairs = self.get_component_interconnect_pairs()
+#
+#
+#         objective = self.input['problem']['objective']
+#         self.set_objective(objective)
+#
+#         self.translations_shape = (self.num_components, 3)
+#         self.rotations_shape = (self.num_components, 3)
+#         self.routings_shape = (self.num_interconnects, self.num_nodes, 3)
+#
+#     # def set_objective(self, objective: str):
+#     #
+#     #     """
+#     #     Add an objective to the design study.
+#     #
+#     #     :param objective: The objective function to be added.
+#     #     :param options: The options for the objective function.
+#     #     """
+#     #
+#     #     # SELECT THE OBJECTIVE FUNCTION HANDLE
+#     #
+#     #     if objective == 'bounding box volume':
+#     #         _objective_function = bounding_box_volume
+#     #     else:
+#     #         raise NotImplementedError
+#     #
+#     #     def objective_function(positions):
+#     #         return _objective_function(positions)
+#     #
+#     #     self.objective = objective_function
+#     #
+#     # def calculate_positions(self, translations, rotations, routings):
+#     #
+#     #     objects_dict = {}
+#     #
+#     #     for component, translation, rotation in zip(self.components, translations, rotations):
+#     #         object_dict = component.calculate_positions(translation, rotation)
+#     #         objects_dict = {**objects_dict, **object_dict}
+#     #
+#     #     for interconnect, routing in zip(self.interconnects, routings):
+#     #         object_dict = interconnect.calculate_positions(routing)
+#     #         objects_dict = {**objects_dict, **object_dict}
+#     #
+#     #     return objects_dict
+#
+#     def get_component_pairs(self):
+#         component_component_pairs = list(combinations(self.components, 2))
+#         return component_component_pairs
+#
+#     def get_interconnect_pairs(self):
+#         interconnect_interconnect_pairs = list(combinations(self.interconnects, 2))
+#         return interconnect_interconnect_pairs
+#
+#     def get_component_interconnect_pairs(self):
+#         component_interconnect_pairs = list(product(self.components, self.interconnects))
+#         return component_interconnect_pairs
+#
+#     def collision_component_pairs(self, positions_dict):
+#         signed_distance_vals = aggregate_signed_distance(positions_dict, self.component_pairs)
+#         max_signed_distance = kreisselmeier_steinhauser(signed_distance_vals)
+#         return max_signed_distance
+#
+#     def collision_interconnect_pairs(self, positions_dict):
+#         signed_distance_vals = aggregate_signed_distance(positions_dict, self.interconnect_pairs)
+#         max_signed_distance = kreisselmeier_steinhauser(signed_distance_vals)
+#         return max_signed_distance
+#
+#     def collision_component_interconnect_pairs(self, positions_dict):
+#         # TODO Remove tolerance
+#         signed_distance_vals = aggregate_signed_distance(positions_dict, self.component_interconnect_pairs)
+#         max_signed_distance = kreisselmeier_steinhauser(signed_distance_vals) - 0.2
+#         return max_signed_distance
+#
+#
+#
+#     def calculate_constraints(self, translations, rotations, routings):
+#
+#         positions_dict = self.calculate_positions(translations, rotations, routings)
+#
+#         # g_component_pairs = self.collision_component_pairs(positions_dict)
+#         # g_interconnect_pairs = self.collision_interconnect_pairs(positions_dict)
+#         # g_component_interconnect_pairs = self.collision_component_interconnect_pairs(positions_dict)
+#         # g = torch.tensor((g_component_pairs, g_interconnect_pairs, g_component_interconnect_pairs))
+#
+#         # TODO Add other constraints back in
+#         g = self.collision_component_pairs(positions_dict)
+#
+#         return g
+#
+#

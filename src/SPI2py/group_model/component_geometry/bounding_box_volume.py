@@ -1,7 +1,7 @@
 import torch
 
 
-def bounding_box(spheres):
+def bounding_box(positions, radii):
     """
     Calculate the bounding box that contains all spheres.
 
@@ -13,8 +13,10 @@ def bounding_box(spheres):
     """
 
     # Calculate min and max coordinates for each sphere
-    min_coords = spheres[:, :3] - spheres[:, 3].view(-1, 1)
-    max_coords = spheres[:, :3] + spheres[:, 3].view(-1, 1)
+    # min_coords = spheres[:, :3] - spheres[:, 3].view(-1, 1)
+    # max_coords = spheres[:, :3] + spheres[:, 3].view(-1, 1)
+    min_coords = positions - radii.view(-1, 1)
+    max_coords = positions + radii.view(-1, 1)
 
     # Find overall min and max coordinates
     overall_min = torch.min(min_coords, dim=0)[0]
@@ -26,9 +28,9 @@ def bounding_box(spheres):
     return bounding_box_vertices
 
 
-def bounding_box_volume(spheres):
+def bounding_box_volume(positions, radii):
 
-    (x_min, y_min, z_min), (x_max, y_max, z_max) = bounding_box(spheres)
+    (x_min, y_min, z_min), (x_max, y_max, z_max) = bounding_box(positions, radii)
 
     volume = (x_max - x_min) * (y_max - y_min) * (z_max - z_min)
 

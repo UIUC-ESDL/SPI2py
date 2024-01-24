@@ -8,11 +8,13 @@ import openmdao.api as om
 # from SPI2py import Component, Interconnect, System
 # from SPI2py.group_model.utilities.visualization import plot
 from SPI2py.group_model.OpenMDAO_Objects.Components import Component
+from SPI2py.group_model.OpenMDAO_Objects.Systems import System
 # from SPI2py.group_model.OpenMDAO_Objects.Systems import System
 
 # Initialize the problem
 prob = om.Problem()
 model = prob.model
+model.add_subsystem('components', om.Group())
 
 # Initialize components
 radiator_and_ion_exchanger_1a = Component(spheres_filepath='components/radiator_and_ion_exchanger.xyzr',
@@ -56,8 +58,8 @@ heater_core_6 = Component(spheres_filepath='components/heater_core.xyzr',
                           color='red')
 
 # Add components to the system
-model.add_subsystem('radiator_and_ion_exchanger_1a', radiator_and_ion_exchanger_1a)
-model.add_subsystem('radiator_and_ion_exchanger_1b', radiator_and_ion_exchanger_1b)
+model.components.add_subsystem('radiator_and_ion_exchanger_1a', radiator_and_ion_exchanger_1a)
+# model.add_subsystem('radiator_and_ion_exchanger_1b', radiator_and_ion_exchanger_1b)
 # model.add_subsystem('pump_2a', pump_2a)
 # model.add_subsystem('pump_2b', pump_2b)
 # model.add_subsystem('particle_filter_3a', particle_filter_3a)
@@ -87,15 +89,19 @@ model.add_subsystem('radiator_and_ion_exchanger_1b', radiator_and_ion_exchanger_
 # system.connect(...)
 
 # Initialize the System
-# system = System()  # ...
+system = System()  # ...
+model.add_subsystem('system', system)
+
+model.connect('components.radiator_and_ion_exchanger_1a.sphere_positions', 'system.sphere_positions')
+model.connect('components.radiator_and_ion_exchanger_1a.sphere_radii', 'system.sphere_radii')
 
 
 # Set the initial state
 prob.setup()
 
 # Configure the system
-prob.set_val('radiator_and_ion_exchanger_1a.translation', [2, 7, 0])
-prob.set_val('radiator_and_ion_exchanger_1b.translation', [5.5, 7, 0])
+prob.set_val('components.radiator_and_ion_exchanger_1a.translation', [2, 7, 0])
+# prob.set_val('radiator_and_ion_exchanger_1b.translation', [5.5, 7, 0])
 # prob.set_val('pump_2a.translation', [0.5, 6, 0])
 # prob.set_val('pump_2b.translation', [7.5, 6, 0])
 # prob.set_val('particle_filter_3a.translation', [0.5, 4.5, 0])
@@ -191,3 +197,59 @@ prob.run_model()
 # plot(plot_objects_f, colors_f)
 
 
+# def plot_inputs(self, translations, rotations, routings):
+#     """
+#     Plot the model at a given state.
+#     """
+#
+#     positions_dict = self.calculate_positions(translations, rotations, routings)
+#
+#     # Create the plot objects
+#     objects = []
+#     colors = []
+#     for obj in self.objects:
+#
+#         positions = positions_dict[str(obj)]['positions']
+#         radii = positions_dict[str(obj)]['radii']
+#
+#         spheres = []
+#         for position, radius in zip(positions, radii):
+#             spheres.append(pv.Sphere(radius=radius, center=position, theta_resolution=30, phi_resolution=30))
+#
+#         merged = pv.MultiBlock(spheres).combine().extract_surface().clean()
+#         # merged_clipped = merged.clip(normal='z')
+#         # merged_slice = merged.slice(normal=[0, 0, 1])
+#
+#         objects.append(merged)
+#         colors.append(obj.color)
+#
+#     return objects, colors
+
+for subsystem in model.components._subsystems_myproc:
+    print(subsystem.name, prob.get_val('components.' + subsystem.name + '.sphere_positions'))
+
+import pyvista as pv
+
+# Create the plot objects
+objects = []
+colors = []
+
+for subsystem in model.components._subsystems_myproc:
+
+    positions = prob.get_val('components.' + subsystem.name + '.sphere_positions')
+    radii = prob.get_val('components.' + subsystem.name + '.sphere_radii')
+    color = subsystem.options['color']
+
+    spheres = []
+    for position, radius in zip(positions, radii):
+        spheres.append(pv.Sphere(radius=radius, center=position, theta_resolution=30, phi_resolution=30))
+
+    merged = pv.MultiBlock(spheres).combine().extract_surface().clean()
+    # merged_clipped = merged.clip(normal='z')
+    # merged_slice = merged.slice(normal=[0, 0, 1])
+
+    objects.append(merged)
+    colors.append(color)
+
+from SPI2py.group_model.utilities.visualization import plot
+plot(objects, colors)
