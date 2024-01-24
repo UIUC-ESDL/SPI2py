@@ -17,6 +17,7 @@ model = prob.model
 model.add_subsystem('components', om.Group())
 
 # Initialize components
+# TODO Add names, number components...
 radiator_and_ion_exchanger_1a = Component(spheres_filepath='components/radiator_and_ion_exchanger.xyzr',
                                           ports={'left': [-1.475, 0, 0], 'right': [1.475, 0, 0]},
                                           color='red')
@@ -92,18 +93,19 @@ model.components.add_subsystem('radiator_and_ion_exchanger_1b', radiator_and_ion
 system = System(num_components=2)  # ...
 model.add_subsystem('system', system)
 
-model.connect('components.radiator_and_ion_exchanger_1a.sphere_positions', 'system.sphere_positions')
-model.connect('components.radiator_and_ion_exchanger_1a.sphere_radii', 'system.sphere_radii')
 
-model.connect('components.radiator_and_ion_exchanger_1b.sphere_positions', 'system.sphere_positions')
-model.connect('components.radiator_and_ion_exchanger_1b.sphere_radii', 'system.sphere_radii')
+model.connect('components.radiator_and_ion_exchanger_1a.sphere_positions', 'system.comp_0_sphere_positions')
+model.connect('components.radiator_and_ion_exchanger_1a.sphere_radii', 'system.comp_0_sphere_radii')
+
+model.connect('components.radiator_and_ion_exchanger_1b.sphere_positions', 'system.comp_1_sphere_positions')
+model.connect('components.radiator_and_ion_exchanger_1b.sphere_radii', 'system.comp_1_sphere_radii')
 
 # Set the initial state
 prob.setup()
 
 # Configure the system
 prob.set_val('components.radiator_and_ion_exchanger_1a.translation', [2, 7, 0])
-prob.set_val('radiator_and_ion_exchanger_1b.translation', [5.5, 7, 0])
+prob.set_val('components.radiator_and_ion_exchanger_1b.translation', [5.5, 7, 0])
 # prob.set_val('pump_2a.translation', [0.5, 6, 0])
 # prob.set_val('pump_2b.translation', [7.5, 6, 0])
 # prob.set_val('particle_filter_3a.translation', [0.5, 4.5, 0])

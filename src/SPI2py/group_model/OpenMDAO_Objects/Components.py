@@ -63,6 +63,7 @@ class Component(ExplicitComponent):
         outputs['port_positions'] = port_positions_transformed
 
     def compute_partials(self, inputs, partials):
+        # TODO Jacfwd instead of rev?
 
         # Get the input variables
         translation = inputs['translation']
