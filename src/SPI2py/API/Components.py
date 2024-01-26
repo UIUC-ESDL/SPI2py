@@ -2,8 +2,8 @@ import torch
 from torch.autograd.functional import jacobian
 from openmdao.api import ExplicitComponent
 
-from SPI2py.group_model.component_geometry.spherical_decomposition_methods.finite_sphere_method import read_xyzr_file
-from SPI2py.group_model.component_kinematics.spatial_transformations import assemble_transformation_matrix, \
+from SPI2py.models.geometry import read_xyzr_file
+from SPI2py.models.kinematics.spatial_transformations import assemble_transformation_matrix, \
     apply_transformation_matrix
 
 

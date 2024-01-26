@@ -1,5 +1,5 @@
 import numpy as np
-from SPI2py.group_model.group_spatial.component_kinematic.distance_calculations import minimum_distance_segment_segment
+from SPI2py.models.group_spatial.component_kinematic.distance_calculations import minimum_distance_segment_segment
 
 # TODO Add tests for all negative coordinates and mixed coordinates
 

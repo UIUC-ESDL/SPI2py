@@ -1,6 +1,6 @@
 import torch
 
-from SPI2py.group_model.component_kinematics.distance_calculations import signed_distances_spheres_spheres
+from SPI2py.models.kinematics.distance_calculations import signed_distances_spheres_spheres
 
 a = torch.tensor([[0, 0, 0], [0, 0, 0]], dtype=torch.float64)
 a_radii = torch.tensor([1, 1], dtype=torch.float64)

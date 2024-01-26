@@ -1,12 +1,8 @@
-from itertools import combinations, product
 import numpy as np
-import pyvista as pv
 import torch
 from openmdao.api import ExplicitComponent
 
-from src.SPI2py.group_model.component_kinematics.distance_calculations import aggregate_signed_distance
-from src.SPI2py.group_model.utilities import kreisselmeier_steinhauser
-from SPI2py.group_model.component_geometry.bounding_box_volume import bounding_box_bounds, bounding_box_volume
+from SPI2py.models.geometry.bounding_box_volume import bounding_box_bounds, bounding_box_volume
 
 
 

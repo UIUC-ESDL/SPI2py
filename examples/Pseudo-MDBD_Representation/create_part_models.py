@@ -1,8 +1,7 @@
 """
 
 """
-import os
-from SPI2py.group_model.component_geometry.spherical_decomposition_methods.maximal_disjoint_ball_decomposition import mdbd
+from SPI2py.models.geometry.maximal_disjoint_ball_decomposition import mdbd
 
 # filenames = os.listdir(path='Thingi10k_models/')
 

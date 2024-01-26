@@ -1,6 +1,6 @@
 import numpy as np
 from scipy.spatial.distance import cdist
-from SPI2py.group_model.group_spatial.component_kinematic.distance_calculations import distances_points_points
+from SPI2py.models.group_spatial.component_kinematic.distance_calculations import distances_points_points
 
 def test_pairwise_distance():
     """

@@ -2,8 +2,7 @@
 
 """
 
-from SPI2py.group_model.component_geometry import generate_rectangular_prisms
-from SPI2py.group_model.component_geometry.spherical_decomposition_methods.maximal_disjoint_ball_decomposition import mdbd, mdbd_rectangular_prism
+from SPI2py.models.geometry.maximal_disjoint_ball_decomposition import mdbd
 
 # a = pack_spheres('part_models/', 'engine_1.stl', 'engine_1.txt')
 

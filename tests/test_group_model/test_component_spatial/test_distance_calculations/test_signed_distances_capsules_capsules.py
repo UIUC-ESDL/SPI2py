@@ -1,5 +1,5 @@
 import numpy as np
-from SPI2py.group_model.group_spatial.component_kinematic.distance_calculations import signed_distances_capsules_capsules
+from SPI2py.models.group_spatial.component_kinematic.distance_calculations import signed_distances_capsules_capsules
 
 
 def test_capsule_capsule_tangent_1():

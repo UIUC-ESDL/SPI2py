@@ -1,5 +1,5 @@
 
-<img src="images/logo.png" width="200" class="center">
+<img src="docs/images/logo.png" width="200" class="center">
 
 <style>
 .center {
@@ -27,7 +27,7 @@ demonstrate an early working version by Fall 2023.
 
 ## Highlights
 
-<img src="images/SPI2py_example_before-after.png" width="200" class="center">
+<img src="docs/images/SPI2py_example_before-after.png" width="200" class="center">
 
 
 ## Publications
@@ -91,6 +91,6 @@ Electro-Thermal Systems (POETS) with Cooperative Agreement EEC-1449548.
 This work is supported by the University of Illinois at Urbana-Champaign Grainger College of Engineering through the
 [SPI2 Strategic Research Initiative](https://grainger.illinois.edu/research/sri/spi2).
 
-![NSF](images/NSF-Symbol.png)
-![NSF_POETS](images/NSF_POETS.png)
-![UIUC](images/UIUC_Logo.png)
+![NSF](docs/images/NSF-Symbol.png)
+![NSF_POETS](docs/images/NSF_POETS.png)
+![UIUC](docs/images/UIUC_Logo.png)
