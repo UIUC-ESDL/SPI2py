@@ -11,6 +11,7 @@ class System(ExplicitComponent):
     def initialize(self):
         self.options.declare('num_components', types=int)
 
+
     def setup(self):
 
         num_components = self.options['num_components']

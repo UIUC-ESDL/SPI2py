@@ -1,83 +1,55 @@
 import torch
+from openmdao.api import ExplicitComponent
+from SPI2py.models.kinematics.linear_spline_transformations import translate_linear_spline
 
+class Interconnect(ExplicitComponent):
 
-class Interconnect:
+    def initialize(self):
+        self.options.declare('num_segments',type=int)
+        self.options.declare('num_spheres_per_segment', type=int)
+        self.options.declare('radius', type=float)
+        self.options.declare('color', type=str)
 
-    def __init__(self, inputs, num_segments, num_spheres_per_segment):
+    def setup(self):
 
-        self.name = inputs[0]
-        inputs_dict = inputs[1]
-        self.color = inputs_dict['color']
+        # Unpack the options
+        self.num_segments = self.options['num_segments']
+        self.num_spheres_per_segment = self.options['num_spheres_per_segment']
+        self.radius = self.options['radius']
+        self.color = self.options['color']
 
-        self.num_segments = num_segments
-        self.num_spheres_per_segment = num_spheres_per_segment
+        # Define the inputs
+        self.add_input('start_point', shape_by_conn=True)
+        self.add_input('control_points', shape_by_conn=True)
+        self.add_input('end_point', shape_by_conn=True)
 
-
-        self.radius = inputs_dict['radius']
-
-        self.num_nodes = self.num_segments + 1
-        self.num_control_points = self.num_segments - 1
-        self.num_spheres = self.num_segments * self.num_spheres_per_segment
-
-        # The first and last indices of each segment
-        self.control_point_indices = []
-
-        # Initialize positions and radii tensors
+        # Calculate the initial intermediate positions
         self.positions = torch.zeros((self.num_spheres_per_segment * self.num_segments, 3), dtype=torch.float64)
         self.radii = self.radius * torch.ones((self.num_spheres_per_segment * self.num_segments, 1), dtype=torch.float64)
 
-        # Determine the sphere indices for collocation constraints
-        # segments = torch.arange(1, num_segments)
-        # collocation_indices_start = segments * torch.tensor([num_spheres_per_segment]) - 1
-        # collocation_indices_stop = segments * torch.tensor([num_spheres_per_segment])
-        # self.collocation_constraint_indices = torch.vstack((collocation_indices_start, collocation_indices_stop)).T
+        # Define the outputs
+        self.add_output('positions', shape_by_conn=True)
+        self.add_output('radii', shape_by_conn=True)
 
-    def __repr__(self):
-        return self.name
+    # def setup_partials(self):
+    #     pass
 
-    @property
-    def design_vector_size(self):
-        # TODO Enable different degrees of freedom
+    def compute(self, inputs, outputs):
 
-        num_dof = 3 * self.num_nodes
+        # Unpack the inputs
+        start_point = inputs['start_point']
+        control_points = inputs['control_points']
+        end_point = inputs['end_point']
 
-        return num_dof
+        # Convert the inputs to torch tensors
+        start_point = torch.tensor(start_point, dtype=torch.float64)
+        control_points = torch.tensor(control_points, dtype=torch.float64)
+        end_point = torch.tensor(end_point, dtype=torch.float64)
 
-    def calculate_segment_positions(self, start_position, stop_position):
-
-        n = self.num_spheres_per_segment
-
-        delta_xyz = stop_position - start_position
-
-        delta_xyz_n = delta_xyz / n
-
-        sphere_positions = start_position + torch.arange(0, n).reshape(-1, 1) * delta_xyz_n.reshape(1, -1)
-
-        return sphere_positions
-
-    def calculate_positions(self, design_vector):
-
-        delta_node_positions = design_vector.reshape((-1, 3))
-
-        start_positions = delta_node_positions[0:-1]
-        stop_positions = delta_node_positions[1:None]
-
-        positions = torch.empty((0, 3), dtype=torch.float64)
-        for start_position, stop_position in zip(start_positions, stop_positions):
-            segment_positions = self.calculate_segment_positions(start_position, stop_position)
-            positions = torch.vstack((positions, segment_positions))
-
-        positions = self.positions + positions
-
-        object_dict = {str(self): {'type': 'interconnect', 'positions': positions, 'radii': self.radii}}
-
-        return object_dict
+        # Calculate the positions
+        positions = compute_linear_spline_positions(positions, start_point, control_points, end_point, self.num_spheres_per_segment)
 
 
-    def set_positions(self, objects_dict):
-        self.positions = objects_dict[str(self)]['positions']
+    # def compute_partials(self, inputs, partials):
+    #     pass
 
-
-    def set_default_positions(self, waypoints):
-        object_dict = self.calculate_positions(waypoints)
-        self.set_positions(object_dict)
