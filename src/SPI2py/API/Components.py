@@ -2,8 +2,8 @@ import torch
 from torch.autograd.functional import jacobian
 from openmdao.api import ExplicitComponent
 
-from SPI2py.models.geometry import read_xyzr_file
-from SPI2py.models.kinematics.spatial_transformations import assemble_transformation_matrix, \
+from ..models.geometry.finite_sphere_method import read_xyzr_file
+from ..models.kinematics.rigid_body_transformations import assemble_transformation_matrix, \
     apply_transformation_matrix
 
 
@@ -26,7 +26,7 @@ class Component(ExplicitComponent):
         self.add_input('translation', val=torch.zeros((1, 3)), shape=(1, 3))
         self.add_input('rotation', val=torch.zeros((1, 3)), shape=(1, 3))
 
-        #
+        # TODO Specify individual ports... ?
         self.add_output('sphere_positions', val=self.sphere_positions)
         self.add_output('sphere_radii', val=self.sphere_radii)
         self.add_output('port_positions', val=self.port_positions)

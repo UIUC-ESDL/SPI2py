@@ -7,8 +7,11 @@ def translate_linear_spline(positions, start_point, control_points, end_point, n
     node_positions = torch.vstack((start_point, control_points, end_point))
 
     # Obtain the start and stop points for each line segment
-    start_positions = node_positions.view(-1, 6)[:, [0, 1, 2]]
-    stop_positions = node_positions.view(-1, 6)[:, [3, 4, 5]]
+    start_positions = node_positions[:-1]
+    stop_positions = node_positions[1:]
+
+    # start_positions = node_positions.view(-1, 6)[:, [0, 1, 2]]
+    # stop_positions = node_positions.view(-1, 6)[:, [3, 4, 5]]
 
     # Calculate the translations for each line segment
     translations = torch.empty((0, 3), dtype=torch.float64)
@@ -31,15 +34,11 @@ def compute_line_segment_intermediate_positions(start_position, stop_position, n
     y_stop = stop_position[1]
     z_stop = stop_position[2]
 
-    x_step = (x_stop - x_start) / (num_spheres_per_segment - 1)
-    y_step = (y_stop - y_start) / (num_spheres_per_segment - 1)
-    z_step = (z_stop - z_start) / (num_spheres_per_segment - 1)
+    x_linspace = torch.linspace(x_start, x_stop, num_spheres_per_segment)
+    y_linspace = torch.linspace(y_start, y_stop, num_spheres_per_segment)
+    z_linspace = torch.linspace(z_start, z_stop, num_spheres_per_segment)
 
-    x_arange = torch.arange(x_start, x_stop + x_step, x_step)
-    y_arange = torch.arange(y_start, y_stop + y_step, y_step)
-    z_arange = torch.arange(z_start, z_stop + z_step, z_step)
-
-    positions = torch.vstack((x_arange, y_arange, z_arange)).T
+    positions = torch.vstack((x_linspace, y_linspace, z_linspace)).T
 
     return positions
 

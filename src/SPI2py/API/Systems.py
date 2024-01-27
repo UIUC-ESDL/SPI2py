@@ -2,7 +2,7 @@ import numpy as np
 import torch
 from openmdao.api import ExplicitComponent
 
-from SPI2py.models.geometry.bounding_box_volume import bounding_box_bounds, bounding_box_volume
+from ..models.geometry.bounding_box_volume import bounding_box_bounds, bounding_box_volume
 
 
 

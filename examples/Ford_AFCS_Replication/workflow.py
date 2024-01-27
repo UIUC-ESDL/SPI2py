@@ -6,15 +6,17 @@ Author:     Chad Peterson
 import openmdao.api as om
 # from SPI2py import Component, Interconnect, System
 # from SPI2py.group_model.utilities.visualization import plot
-from SPI2py.API import Component
+from SPI2py.API.Components import Component
+from SPI2py.API.Interconnects import Interconnect
 from SPI2py.API.Systems import System
-# from SPI2py.group_model.OpenMDAO_Objects.Systems import System
+
 from SPI2py.models.utilities.visualization import plot_problem
 
 # Initialize the problem
 prob = om.Problem()
 model = prob.model
 model.add_subsystem('components', om.Group())
+model.add_subsystem('interconnects', om.Group())
 
 # Initialize components
 # TODO Add names, number components...
@@ -71,6 +73,8 @@ model.components.add_subsystem('WEG_heater_and_pump_5', WEG_heater_and_pump_5)
 model.components.add_subsystem('heater_core_6', heater_core_6)
 
 # # Initialize interconnects
+c1a_c1b = Interconnect(num_segments=3, num_spheres_per_segment=20, radius=0.1, color='black')
+
 # c1a_c1b = 1
 # c1b_c2b = 1
 # c2b_c3b = 1
@@ -83,7 +87,7 @@ model.components.add_subsystem('heater_core_6', heater_core_6)
 # c2a_c1a = 1
 
 # Add interconnects to the system
-# system.add_subsystem()
+model.interconnects.add_subsystem('c1a_c1b', c1a_c1b)
 
 # Connect the components and interconnects as necessary
 # system.connect(...)
@@ -115,6 +119,13 @@ model.connect('components.WEG_heater_and_pump_5.sphere_radii', 'system.comp_8_sp
 model.connect('components.heater_core_6.sphere_positions', 'system.comp_9_sphere_positions')
 model.connect('components.heater_core_6.sphere_radii', 'system.comp_9_sphere_radii')
 
+# Connect the interconnects to the system
+# Make specific ports outputs...
+model.connect('components.radiator_and_ion_exchanger_1a.port_positions', 'interconnects.c1a_c1b.start_point', src_indices=om.slicer[0, :])
+model.connect('components.radiator_and_ion_exchanger_1b.port_positions', 'interconnects.c1a_c1b.end_point', src_indices=om.slicer[1, :])
+
+
+
 # Set the initial state
 prob.setup()
 
@@ -130,16 +141,16 @@ prob.set_val('components.fuel_cell_Stack_4b.translation', [7.5, 3, 0])
 prob.set_val('components.WEG_heater_and_pump_5.translation', [6, 1, 0])
 prob.set_val('components.heater_core_6.translation', [2, 0, 0])
 
-# prob.set_val('system.c1a_c1b.control_points', [[3.475, 7, 0], [3.75, 7, 0], [4.025, 7, 0]])
-# prob.set_val('system.c1b_c2b.control_points', [[6.975, 7, 0], [7.5, 7, 0], [7.5, 6.275, 0]])
-# prob.set_val('system.c2b_c3b.control_points', [[7.5, 5.725, 0], [7.5, 5.47, 0], [7.5, 5.215, 0]])
-# prob.set_val('system.c3b_c4b.control_points', [[7.5, 4.785, 0], [7.5, 4.3175, 0], [7.5, 3.85, 0]])
-# prob.set_val('system.c4b_c5.control_points', [[7.5, 2.15, 0], [6.5, 2, 0], [6.0, 1.9665, 0]])
-# prob.set_val('system.c5_c6.control_points', [[5.1225, 1.0, 0], [3, 0, 0], [2.7225, 0, 0]])
-# prob.set_val('system.c6_c4a.control_points', [[1.2775, 0, 0], [0.5, 0, 0], [0.5, 1.15, 0]])
-# prob.set_val('system.c4a_c3a.control_points', [[0.5, 2.85, 0], [0.5, 3, 0], [0.5, 4.285, 0]])
-# prob.set_val('system.c3a_c2a.control_points', [[0.5, 4.715, 0], [0.5, 5, 0], [0.5, 5.725, 0]])
-# prob.set_val('system.c2a_c1a.control_points', [[0.5, 6.275, 0], [0.5, 6.5, 0], [0.525, 7, 0]])
+# prob.set_val('interconnects.c1a_c1b.control_points', [[3.475, 7, 0], [3.75, 7, 0], [4.025, 7, 0]])
+# prob.set_val('interconnects.c1b_c2b.control_points', [[6.975, 7, 0], [7.5, 7, 0], [7.5, 6.275, 0]])
+# prob.set_val('interconnects.c2b_c3b.control_points', [[7.5, 5.725, 0], [7.5, 5.47, 0], [7.5, 5.215, 0]])
+# prob.set_val('interconnects.c3b_c4b.control_points', [[7.5, 4.785, 0], [7.5, 4.3175, 0], [7.5, 3.85, 0]])
+# prob.set_val('interconnects.c4b_c5.control_points', [[7.5, 2.15, 0], [6.5, 2, 0], [6.0, 1.9665, 0]])
+# prob.set_val('interconnects.c5_c6.control_points', [[5.1225, 1.0, 0], [3, 0, 0], [2.7225, 0, 0]])
+# prob.set_val('interconnects.c6_c4a.control_points', [[1.2775, 0, 0], [0.5, 0, 0], [0.5, 1.15, 0]])
+# prob.set_val('interconnects.c4a_c3a.control_points', [[0.5, 2.85, 0], [0.5, 3, 0], [0.5, 4.285, 0]])
+# prob.set_val('interconnects.c3a_c2a.control_points', [[0.5, 4.715, 0], [0.5, 5, 0], [0.5, 5.725, 0]])
+# prob.set_val('interconnects.c2a_c1a.control_points', [[0.5, 6.275, 0], [0.5, 6.5, 0], [0.525, 7, 0]])
 
 
 
