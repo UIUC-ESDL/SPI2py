@@ -18,6 +18,10 @@ model = prob.model
 model.add_subsystem('components', om.Group())
 model.add_subsystem('interconnects', om.Group())
 
+# Initialize the System
+system = System(num_components=10)
+model.add_subsystem('system', system)
+
 # Initialize components
 # TODO Add names, number components...
 radiator_and_ion_exchanger_1a = Component(spheres_filepath='components/radiator_and_ion_exchanger.xyzr',
@@ -74,28 +78,31 @@ model.components.add_subsystem('heater_core_6', heater_core_6)
 
 # # Initialize interconnects
 c1a_c1b = Interconnect(num_segments=3, num_spheres_per_segment=20, radius=0.1, color='black')
-
-# c1a_c1b = 1
-# c1b_c2b = 1
-# c2b_c3b = 1
-# c3b_c4b = 1
-# c4b_c5 = 1
-# c5_c6 = 1
-# c6_c4a = 1
-# c4a_c3a = 1
-# c3a_c2a = 1
-# c2a_c1a = 1
+c1b_c2b = Interconnect(num_segments=3, num_spheres_per_segment=20, radius=0.1, color='black')
+c2b_c3b = Interconnect(num_segments=3, num_spheres_per_segment=20, radius=0.1, color='black')
+c3b_c4b = Interconnect(num_segments=3, num_spheres_per_segment=20, radius=0.1, color='black')
+c4b_c5 = Interconnect(num_segments=3, num_spheres_per_segment=20, radius=0.1, color='black')
+c5_c6 = Interconnect(num_segments=3, num_spheres_per_segment=20, radius=0.1, color='black')
+c6_c4a = Interconnect(num_segments=3, num_spheres_per_segment=20, radius=0.1, color='black')
+c4a_c3a = Interconnect(num_segments=3, num_spheres_per_segment=20, radius=0.1, color='black')
+c3a_c2a = Interconnect(num_segments=3, num_spheres_per_segment=20, radius=0.1, color='black')
+c2a_c1a = Interconnect(num_segments=3, num_spheres_per_segment=20, radius=0.1, color='black')
 
 # Add interconnects to the system
 model.interconnects.add_subsystem('c1a_c1b', c1a_c1b)
+model.interconnects.add_subsystem('c1b_c2b', c1b_c2b)
+model.interconnects.add_subsystem('c2b_c3b', c2b_c3b)
+model.interconnects.add_subsystem('c3b_c4b', c3b_c4b)
+model.interconnects.add_subsystem('c4b_c5', c4b_c5)
+model.interconnects.add_subsystem('c5_c6', c5_c6)
+model.interconnects.add_subsystem('c6_c4a', c6_c4a)
+model.interconnects.add_subsystem('c4a_c3a', c4a_c3a)
+model.interconnects.add_subsystem('c3a_c2a', c3a_c2a)
+model.interconnects.add_subsystem('c2a_c1a', c2a_c1a)
 
-# Connect the components and interconnects as necessary
-# system.connect(...)
-# system.connect(...)
 
-# Initialize the System
-system = System(num_components=10)
-model.add_subsystem('system', system)
+
+
 
 # Connect the components to the system
 model.connect('components.radiator_and_ion_exchanger_1a.sphere_positions', 'system.comp_0_sphere_positions')
@@ -121,10 +128,26 @@ model.connect('components.heater_core_6.sphere_radii', 'system.comp_9_sphere_rad
 
 # Connect the interconnects to the system
 # Make specific ports outputs...
-model.connect('components.radiator_and_ion_exchanger_1a.port_positions', 'interconnects.c1a_c1b.start_point', src_indices=om.slicer[0, :])
-model.connect('components.radiator_and_ion_exchanger_1b.port_positions', 'interconnects.c1a_c1b.end_point', src_indices=om.slicer[1, :])
-
-
+model.connect('components.radiator_and_ion_exchanger_1a.port_positions', 'interconnects.c1a_c1b.start_point', src_indices=om.slicer[1, :])
+model.connect('components.radiator_and_ion_exchanger_1b.port_positions', 'interconnects.c1a_c1b.end_point', src_indices=om.slicer[0, :])
+model.connect('components.radiator_and_ion_exchanger_1b.port_positions', 'interconnects.c1b_c2b.start_point', src_indices=om.slicer[1, :])
+model.connect('components.pump_2b.port_positions', 'interconnects.c1b_c2b.end_point', src_indices=om.slicer[0, :])
+model.connect('components.pump_2b.port_positions', 'interconnects.c2b_c3b.start_point', src_indices=om.slicer[1, :])
+model.connect('components.particle_filter_3b.port_positions', 'interconnects.c2b_c3b.end_point', src_indices=om.slicer[0, :])
+model.connect('components.particle_filter_3b.port_positions', 'interconnects.c3b_c4b.start_point', src_indices=om.slicer[1, :])
+model.connect('components.fuel_cell_Stack_4b.port_positions', 'interconnects.c3b_c4b.end_point', src_indices=om.slicer[0, :])
+model.connect('components.fuel_cell_Stack_4b.port_positions', 'interconnects.c4b_c5.start_point', src_indices=om.slicer[1, :])
+model.connect('components.WEG_heater_and_pump_5.port_positions', 'interconnects.c4b_c5.end_point', src_indices=om.slicer[0, :])
+model.connect('components.WEG_heater_and_pump_5.port_positions', 'interconnects.c5_c6.start_point', src_indices=om.slicer[1, :])
+model.connect('components.heater_core_6.port_positions', 'interconnects.c5_c6.end_point', src_indices=om.slicer[0, :])
+model.connect('components.heater_core_6.port_positions', 'interconnects.c6_c4a.start_point', src_indices=om.slicer[1, :])
+model.connect('components.fuel_cell_Stack_4a.port_positions', 'interconnects.c6_c4a.end_point', src_indices=om.slicer[0, :])
+model.connect('components.fuel_cell_Stack_4a.port_positions', 'interconnects.c4a_c3a.start_point', src_indices=om.slicer[1, :])
+model.connect('components.particle_filter_3a.port_positions', 'interconnects.c4a_c3a.end_point', src_indices=om.slicer[0, :])
+model.connect('components.particle_filter_3a.port_positions', 'interconnects.c3a_c2a.start_point', src_indices=om.slicer[1, :])
+model.connect('components.pump_2a.port_positions', 'interconnects.c3a_c2a.end_point', src_indices=om.slicer[0, :])
+model.connect('components.pump_2a.port_positions', 'interconnects.c2a_c1a.start_point', src_indices=om.slicer[1, :])
+model.connect('components.radiator_and_ion_exchanger_1a.port_positions', 'interconnects.c2a_c1a.end_point', src_indices=om.slicer[0, :])
 
 # Set the initial state
 prob.setup()
@@ -141,16 +164,16 @@ prob.set_val('components.fuel_cell_Stack_4b.translation', [7.5, 3, 0])
 prob.set_val('components.WEG_heater_and_pump_5.translation', [6, 1, 0])
 prob.set_val('components.heater_core_6.translation', [2, 0, 0])
 
-# prob.set_val('interconnects.c1a_c1b.control_points', [[3.475, 7, 0], [3.75, 7, 0], [4.025, 7, 0]])
-# prob.set_val('interconnects.c1b_c2b.control_points', [[6.975, 7, 0], [7.5, 7, 0], [7.5, 6.275, 0]])
-# prob.set_val('interconnects.c2b_c3b.control_points', [[7.5, 5.725, 0], [7.5, 5.47, 0], [7.5, 5.215, 0]])
-# prob.set_val('interconnects.c3b_c4b.control_points', [[7.5, 4.785, 0], [7.5, 4.3175, 0], [7.5, 3.85, 0]])
-# prob.set_val('interconnects.c4b_c5.control_points', [[7.5, 2.15, 0], [6.5, 2, 0], [6.0, 1.9665, 0]])
-# prob.set_val('interconnects.c5_c6.control_points', [[5.1225, 1.0, 0], [3, 0, 0], [2.7225, 0, 0]])
-# prob.set_val('interconnects.c6_c4a.control_points', [[1.2775, 0, 0], [0.5, 0, 0], [0.5, 1.15, 0]])
-# prob.set_val('interconnects.c4a_c3a.control_points', [[0.5, 2.85, 0], [0.5, 3, 0], [0.5, 4.285, 0]])
-# prob.set_val('interconnects.c3a_c2a.control_points', [[0.5, 4.715, 0], [0.5, 5, 0], [0.5, 5.725, 0]])
-# prob.set_val('interconnects.c2a_c1a.control_points', [[0.5, 6.275, 0], [0.5, 6.5, 0], [0.525, 7, 0]])
+prob.set_val('interconnects.c1a_c1b.control_points', [[3.75, 7, 0]])
+prob.set_val('interconnects.c1b_c2b.control_points', [[7.5, 7, 0]])
+prob.set_val('interconnects.c2b_c3b.control_points', [[7.5, 5.47, 0]])
+prob.set_val('interconnects.c3b_c4b.control_points', [[7.5, 4.3175, 0]])
+prob.set_val('interconnects.c4b_c5.control_points', [[6.5, 2, 0]])
+prob.set_val('interconnects.c5_c6.control_points', [[3, 0, 0]])
+prob.set_val('interconnects.c6_c4a.control_points', [[0.5, 0, 0]])
+prob.set_val('interconnects.c4a_c3a.control_points', [[0.5, 3, 0]])
+prob.set_val('interconnects.c3a_c2a.control_points', [[0.5, 5, 0]])
+prob.set_val('interconnects.c2a_c1a.control_points', [[0.5, 6.5, 0]])
 
 
 
