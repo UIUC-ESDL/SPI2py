@@ -45,7 +45,7 @@ def plot_problem(prob):
         interconnect_colors.append(color)
 
     # Plot the bounding box
-    bounds = prob.get_val('system.bounding box bounds')
+    bounds = prob.get_val('system.bounding_box_bounds')
     bounding_box = pv.Box(bounds=bounds)
     bounding_box_color = 'black'
 

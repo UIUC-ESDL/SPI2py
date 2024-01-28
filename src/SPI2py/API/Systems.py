@@ -19,8 +19,8 @@ class System(ExplicitComponent):
             self.add_input(f'comp_{i}_sphere_positions', shape_by_conn=True)
             self.add_input(f'comp_{i}_sphere_radii', shape_by_conn=True)
 
-        self.add_output('bounding box volume', val=0)
-        self.add_output('bounding box bounds', val=(0, 0, 0, 0, 0, 0))
+        self.add_output('bounding_box_volume', val=0)
+        self.add_output('bounding_box_bounds', val=(0, 0, 0, 0, 0, 0))
         # self.add_output('constraints', val=torch.zeros(1))
 
     # def setup_partials(self):
@@ -52,8 +52,8 @@ class System(ExplicitComponent):
         bb_volume = bb_volume.detach().numpy()
 
         # Set the outputs
-        outputs['bounding box bounds'] = bb_bounds
-        outputs['bounding box volume'] = bb_volume
+        outputs['bounding_box_bounds'] = bb_bounds
+        outputs['bounding_box_volume'] = bb_volume
         # outputs['constraints'] = constraints
 
     # def compute_partials(self, inputs, partials):

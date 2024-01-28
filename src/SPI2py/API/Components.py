@@ -1,10 +1,21 @@
 import torch
 from torch.autograd.functional import jacobian
-from openmdao.api import ExplicitComponent
+from openmdao.api import ExplicitComponent, Group
 
 from ..models.geometry.finite_sphere_method import read_xyzr_file
 from ..models.kinematics.rigid_body_transformations import assemble_transformation_matrix, \
     apply_transformation_matrix
+
+class Components(Group):
+    pass
+    # def setup(self):
+    #
+    #     # Iterate through components to add design variables
+    #     for subsys_name, subsys in self._subsystems_allprocs.items():
+    #         if hasattr(subsys, 'design_var_info'):
+    #             self.add_design_var(subsys_name + '.' + subsys.design_var_info['name'],
+    #                                 ref=subsys.design_var_info['ref'],
+    #                                 ref0=subsys.design_var_info['ref0'])
 
 
 class Component(ExplicitComponent):
@@ -13,6 +24,9 @@ class Component(ExplicitComponent):
         self.options.declare('spheres_filepath', types=str)
         self.options.declare('ports', types=dict)
         self.options.declare('color', types=str)
+
+        self.design_var_info = {'name':'translation', 'ref':1, 'ref0':0}
+        self.design_var_info = {'name':'rotation', 'ref':2*torch.pi, 'ref0':0}
 
     def setup(self):
 

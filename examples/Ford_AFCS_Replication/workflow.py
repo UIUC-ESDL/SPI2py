@@ -4,9 +4,9 @@ Author:     Chad Peterson
 """
 
 import openmdao.api as om
-# from SPI2py import Component, Interconnect, System
+# from SPI2py import Component, Components, Interconnect, System
 # from SPI2py.group_model.utilities.visualization import plot
-from SPI2py.API.Components import Component
+from SPI2py.API.Components import Component, Components
 from SPI2py.API.Interconnects import Interconnect
 from SPI2py.API.Systems import System
 
@@ -15,15 +15,11 @@ from SPI2py.models.utilities.visualization import plot_problem
 # Initialize the problem
 prob = om.Problem()
 model = prob.model
-model.add_subsystem('components', om.Group())
+model.add_subsystem('components', Components())
 model.add_subsystem('interconnects', om.Group())
-
-# Initialize the System
-system = System(num_components=10)
-model.add_subsystem('system', system)
+model.add_subsystem('system', System(num_components=10))
 
 # Initialize components
-# TODO Add names, number components...
 radiator_and_ion_exchanger_1a = Component(spheres_filepath='components/radiator_and_ion_exchanger.xyzr',
                                           ports={'left': [-1.475, 0, 0], 'right': [1.475, 0, 0]},
                                           color='red')
@@ -100,10 +96,6 @@ model.interconnects.add_subsystem('c4a_c3a', c4a_c3a)
 model.interconnects.add_subsystem('c3a_c2a', c3a_c2a)
 model.interconnects.add_subsystem('c2a_c1a', c2a_c1a)
 
-
-
-
-
 # Connect the components to the system
 model.connect('components.radiator_and_ion_exchanger_1a.sphere_positions', 'system.comp_0_sphere_positions')
 model.connect('components.radiator_and_ion_exchanger_1a.sphere_radii', 'system.comp_0_sphere_radii')
@@ -127,7 +119,6 @@ model.connect('components.heater_core_6.sphere_positions', 'system.comp_9_sphere
 model.connect('components.heater_core_6.sphere_radii', 'system.comp_9_sphere_radii')
 
 # Connect the interconnects to the system
-# Make specific ports outputs...
 model.connect('components.radiator_and_ion_exchanger_1a.port_positions', 'interconnects.c1a_c1b.start_point', src_indices=om.slicer[1, :])
 model.connect('components.radiator_and_ion_exchanger_1b.port_positions', 'interconnects.c1a_c1b.end_point', src_indices=om.slicer[0, :])
 model.connect('components.radiator_and_ion_exchanger_1b.port_positions', 'interconnects.c1b_c2b.start_point', src_indices=om.slicer[1, :])
@@ -148,6 +139,20 @@ model.connect('components.particle_filter_3a.port_positions', 'interconnects.c3a
 model.connect('components.pump_2a.port_positions', 'interconnects.c3a_c2a.end_point', src_indices=om.slicer[0, :])
 model.connect('components.pump_2a.port_positions', 'interconnects.c2a_c1a.start_point', src_indices=om.slicer[1, :])
 model.connect('components.radiator_and_ion_exchanger_1a.port_positions', 'interconnects.c2a_c1a.end_point', src_indices=om.slicer[0, :])
+
+# Define the variables, objective, and constraints
+prob.model.add_design_var('components.radiator_and_ion_exchanger_1a.translation', ref=10)
+prob.model.add_design_var('components.radiator_and_ion_exchanger_1b.translation', ref=10)
+
+prob.model.add_objective('system.bounding_box_volume', ref=1)
+# prob.model.add_constraint('g', upper=0)
+# # prob.model.add_constraint('g_c', upper=0)
+# # prob.model.add_constraint('g_i', upper=0)
+# # prob.model.add_constraint('g_ci', upper=0)
+#
+
+prob.driver = om.ScipyOptimizeDriver()
+prob.driver.options['maxiter'] = 50
 
 # Set the initial state
 prob.setup()
@@ -177,19 +182,6 @@ prob.set_val('interconnects.c2a_c1a.control_points', [[0.5, 6.5, 0]])
 
 
 
-# prob.model.add_design_var('translations', ref=10)
-# prob.model.add_design_var('rotations', ref=2*torch.pi)
-#
-# # TODO Unbound routing
-# prob.model.add_design_var('routings', ref=10, lower=routings_0, upper=routings_0)
-# prob.model.add_objective('f')
-# prob.model.add_constraint('g', upper=0)
-# # prob.model.add_constraint('g_c', upper=0)
-# # prob.model.add_constraint('g_i', upper=0)
-# # prob.model.add_constraint('g_ci', upper=0)
-#
-
-
 prob.run_model()
 
 # Plot initial spatial configuration
@@ -197,11 +189,10 @@ plot_problem(prob)
 
 
 
-# # Run the optimization
-# prob.driver = om.ScipyOptimizeDriver()
-# prob.driver.options['maxiter'] = 50
-#
-# prob.run_driver()
+# Run the optimization
+
+
+prob.run_driver()
 
 
 # # Plot optimized spatial
