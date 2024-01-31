@@ -60,9 +60,6 @@ class System(ExplicitComponent):
     #     pass
 
 
-
-
-
 # class _System:
 #     def __init__(self, components, interconnects):
 #

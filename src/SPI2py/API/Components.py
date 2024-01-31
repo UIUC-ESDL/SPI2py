@@ -59,10 +59,6 @@ class Component(ExplicitComponent):
         translation = torch.tensor(translation, dtype=torch.float64)
         rotation = torch.tensor(rotation, dtype=torch.float64)
 
-        # # Convert the state variables to torch tensors
-        # sphere_positions = self.sphere_positions, dtype=torch.float64)
-        # port_positions = torch.tensor(self.port_positions, dtype=torch.float64)
-
         # Calculate the transformed sphere positions and port positions
         sphere_positions_transformed = self.compute_transformation(self.sphere_positions, translation, rotation)
         port_positions_transformed = self.compute_transformation(self.port_positions, translation, rotation)
@@ -87,26 +83,34 @@ class Component(ExplicitComponent):
         translation = torch.tensor(translation, dtype=torch.float64, requires_grad=True)
         rotation = torch.tensor(rotation, dtype=torch.float64, requires_grad=True)
 
-        # Convert the state variables to torch tensors
-        # sphere_positions = torch.tensor(self.sphere_positions, dtype=torch.float64, requires_grad=False)
-        # port_positions = torch.tensor(self.port_positions, dtype=torch.float64, requires_grad=False)
-
         # Calculate the Jacobian matrices
         jac_sphere_positions = jacobian(self.compute_transformation, (self.sphere_positions, translation, rotation))
         jac_port_positions = jacobian(self.compute_transformation, (self.port_positions, translation, rotation))
 
-        # Convert to numpy
-        jac_sphere_positions = jac_sphere_positions.detach().numpy()
-        jac_port_positions = jac_port_positions.detach().numpy()
-
         # Slice the Jacobian matrices
+        grad_sphere_positions_sphere_positions = jac_sphere_positions[0]
+        grad_sphere_positions_translation = jac_sphere_positions[1]
+        grad_sphere_positions_rotation = jac_sphere_positions[2]
+
+        grad_port_positions_port_positions = jac_port_positions[0]
+        grad_port_positions_translation = jac_port_positions[1]
+        grad_port_positions_rotation = jac_port_positions[2]
+
+        # Convert to numpy
+        grad_sphere_positions_sphere_positions = grad_sphere_positions_sphere_positions.detach().numpy()
+        grad_sphere_positions_translation = grad_sphere_positions_translation.detach().numpy()
+        grad_sphere_positions_rotation = grad_sphere_positions_rotation.detach().numpy()
+
+        grad_port_positions_port_positions = grad_port_positions_port_positions.detach().numpy()
+        grad_port_positions_translation = grad_port_positions_translation.detach().numpy()
+        grad_port_positions_rotation = grad_port_positions_rotation.detach().numpy()
 
         # Set the outputs
-        partials['sphere_positions', 'translation'] = jac_sphere_positions[0]
-        partials['sphere_positions', 'rotation'] = jac_sphere_positions[1]
+        partials['sphere_positions', 'translation'] = grad_sphere_positions_translation
+        partials['sphere_positions', 'rotation'] = grad_sphere_positions_rotation
 
-        partials['port_positions', 'translation'] = jac_port_positions[0]
-        partials['port_positions', 'rotation'] = jac_port_positions[1]
+        partials['port_positions', 'translation'] = grad_port_positions_translation
+        partials['port_positions', 'rotation'] = grad_port_positions_rotation
 
     @staticmethod
     def compute_transformation(positions, translation, rotation):
@@ -122,16 +126,16 @@ class Component(ExplicitComponent):
 
         return positions_transformed
 
-    def get_design_variables(self):
-        # TODO Static (?)
-
-        # Configure the translation design variables
-        translation = {'translation': {'ref': 1, 'ref0': 0}}
-
-        # Configure the rotation design variables
-        rotation = {'rotation': {'ref': 2 * torch.pi, 'ref0': 0}}
-
-        # Combine the design variables
-        design_vars = {**translation, **rotation}
-
-        return design_vars
+    # def get_design_variables(self):
+    #     # TODO Static (?)
+    #
+    #     # Configure the translation design variables
+    #     translation = {'translation': {'ref': 1, 'ref0': 0}}
+    #
+    #     # Configure the rotation design variables
+    #     rotation = {'rotation': {'ref': 2 * torch.pi, 'ref0': 0}}
+    #
+    #     # Combine the design variables
+    #     design_vars = {**translation, **rotation}
+    #
+    #     return design_vars
