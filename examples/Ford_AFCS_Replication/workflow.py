@@ -9,6 +9,7 @@ import openmdao.api as om
 from SPI2py.API.Components import Component, Components
 from SPI2py.API.Interconnects import Interconnect
 from SPI2py.API.Systems import System
+from SPI2py.models.geometry.finite_sphere_method import read_xyzr_file
 
 from SPI2py.models.utilities.visualization import plot_problem
 
@@ -17,7 +18,7 @@ prob = om.Problem()
 model = prob.model
 model.add_subsystem('components', Components())
 # model.add_subsystem('interconnects', om.Group())
-model.add_subsystem('system', System(num_components=2))
+model.add_subsystem('system', System(num_components=3))
 
 # Initialize components
 radiator_and_ion_exchanger_1a = Component(spheres_filepath='components/radiator_and_ion_exchanger.xyzr',
@@ -28,9 +29,9 @@ radiator_and_ion_exchanger_1b = Component(spheres_filepath='components/radiator_
                                           ports={'left': [-1.475, 0, 0], 'right': [1.475, 0, 0]},
                                           color='red')
 
-# pump_2a = Component(spheres_filepath='components/pump.xyzr',
-#                     ports={'top': [0, 0.275, 0], 'bottom': [0, -0.275, 0]},
-#                     color='blue')
+pump_2a = Component(spheres_filepath='components/pump.xyzr',
+                    ports={'top': [0, 0.275, 0], 'bottom': [0, -0.275, 0]},
+                    color='blue')
 #
 # pump_2b = Component(spheres_filepath='components/pump.xyzr',
 #                     ports={'top': [0, 0.275, 0], 'bottom': [0, -0.275, 0]},
@@ -63,7 +64,7 @@ radiator_and_ion_exchanger_1b = Component(spheres_filepath='components/radiator_
 # Add components to the system
 model.components.add_subsystem('radiator_and_ion_exchanger_1a', radiator_and_ion_exchanger_1a)
 model.components.add_subsystem('radiator_and_ion_exchanger_1b', radiator_and_ion_exchanger_1b)
-# model.components.add_subsystem('pump_2a', pump_2a)
+model.components.add_subsystem('pump_2a', pump_2a)
 # model.components.add_subsystem('pump_2b', pump_2b)
 # model.components.add_subsystem('particle_filter_3a', particle_filter_3a)
 # model.components.add_subsystem('particle_filter_3b', particle_filter_3b)
@@ -73,7 +74,7 @@ model.components.add_subsystem('radiator_and_ion_exchanger_1b', radiator_and_ion
 # model.components.add_subsystem('heater_core_6', heater_core_6)
 
 # # Initialize interconnects
-c1a_c1b = Interconnect(num_segments=3, num_spheres_per_segment=20, radius=0.1, color='black')
+# c1a_c1b = Interconnect(num_segments=3, num_spheres_per_segment=20, radius=0.1, color='black')
 # c1b_c2b = Interconnect(num_segments=3, num_spheres_per_segment=20, radius=0.1, color='black')
 # c2b_c3b = Interconnect(num_segments=3, num_spheres_per_segment=20, radius=0.1, color='black')
 # c3b_c4b = Interconnect(num_segments=3, num_spheres_per_segment=20, radius=0.1, color='black')
@@ -101,8 +102,8 @@ model.connect('components.radiator_and_ion_exchanger_1a.sphere_positions', 'syst
 model.connect('components.radiator_and_ion_exchanger_1a.sphere_radii', 'system.comp_0_sphere_radii')
 model.connect('components.radiator_and_ion_exchanger_1b.sphere_positions', 'system.comp_1_sphere_positions')
 model.connect('components.radiator_and_ion_exchanger_1b.sphere_radii', 'system.comp_1_sphere_radii')
-# model.connect('components.pump_2a.sphere_positions', 'system.comp_2_sphere_positions')
-# model.connect('components.pump_2a.sphere_radii', 'system.comp_2_sphere_radii')
+model.connect('components.pump_2a.sphere_positions', 'system.comp_2_sphere_positions')
+model.connect('components.pump_2a.sphere_radii', 'system.comp_2_sphere_radii')
 # model.connect('components.pump_2b.sphere_positions', 'system.comp_3_sphere_positions')
 # model.connect('components.pump_2b.sphere_radii', 'system.comp_3_sphere_radii')
 # model.connect('components.particle_filter_3a.sphere_positions', 'system.comp_4_sphere_positions')
@@ -143,7 +144,7 @@ model.connect('components.radiator_and_ion_exchanger_1b.sphere_radii', 'system.c
 # Define the variables, objective, and constraints
 model.add_design_var('components.radiator_and_ion_exchanger_1a.translation', ref=10)
 model.add_design_var('components.radiator_and_ion_exchanger_1b.translation', ref=10)
-# prob.model.add_design_var('components.pump_2a.translation', ref=10)
+prob.model.add_design_var('components.pump_2a.translation', ref=10)
 # prob.model.add_design_var('components.pump_2b.translation', ref=10)
 # prob.model.add_design_var('components.particle_filter_3a.translation', ref=10)
 # prob.model.add_design_var('components.particle_filter_3b.translation', ref=10)
@@ -167,9 +168,8 @@ prob.setup()
 
 # Configure the system
 prob.set_val('components.radiator_and_ion_exchanger_1a.translation', [2, 7, 0])
-prob.set_val('components.radiator_and_ion_exchanger_1b.translation', [5.5, 4, 0])
-# ORIGINAL prob.set_val('components.radiator_and_ion_exchanger_1b.translation', [5.5, 7, 0])
-# prob.set_val('components.pump_2a.translation', [0.5, 6, 0])
+prob.set_val('components.radiator_and_ion_exchanger_1b.translation', [5.5, 7, 0])
+prob.set_val('components.pump_2a.translation', [0.5, 6, 0])
 # prob.set_val('components.pump_2b.translation', [7.5, 6, 0])
 # prob.set_val('components.particle_filter_3a.translation', [0.5, 4.5, 0])
 # prob.set_val('components.particle_filter_3b.translation', [7.5, 5, 0])

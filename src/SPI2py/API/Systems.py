@@ -20,12 +20,13 @@ class System(ExplicitComponent):
             self.add_input(f'comp_{i}_sphere_radii', shape_by_conn=True)
 
         self.add_output('bounding_box_volume', val=0)
-        self.add_output('bounding_box_bounds', val=(0, 0, 0, 0, 0, 0))
+        self.add_output('bounding_box_bounds', shape=(1, 6))
         # self.add_output('constraints', val=torch.zeros(1))
 
-    # def setup_partials(self):
-    #     for i in range(self.options['num_components']):
-    #         self.declare_partials('bounding box volume', f'comp_{i}_sphere_positions')
+    def setup_partials(self):
+        # for i in range(self.options['num_components']):
+        #     self.declare_partials('bounding box volume', f'comp_{i}_sphere_positions')
+        self.declare_partials('*', '*')
 
     def compute(self, inputs, outputs):
 
