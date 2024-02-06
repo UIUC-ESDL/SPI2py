@@ -1,17 +1,24 @@
-import jax.numpy as np
-from jax import grad, jacrev
+import torch
+from torch.autograd.functional import jacobian
+
+def translate_points(points, translation):
+    return points + translation
 
 
-a = np.array([1., 2., 3.])
+points = torch.ones((10, 3), dtype=torch.float64, requires_grad=False)
+translation_1D = torch.tensor([1.0, 1.0, 1.0], dtype=torch.float64, requires_grad=True)
+translation_2D = torch.tensor([[1.0, 1.0, 1.0]], dtype=torch.float64, requires_grad=True)
 
-def f(x):
+translated_points_1D = translate_points(points, translation_1D)
+translated_points_2D = translate_points(points, translation_2D)
 
-    my_dict = {'a': x[0], 'b': x[1], 'c': x[2]}
+jacobian_1D = jacobian(translate_points, (points, translation_1D))
+jacobian_2D = jacobian(translate_points, (points, translation_2D))
 
-    x_new = np.array([my_dict['a'], my_dict['b'], my_dict['c']])
+print('Jacobian 1D shapes')
+print(jacobian_1D[0].shape)
+print(jacobian_1D[1].shape)
 
-    return np.sum(x_new**2)
-
-print(grad(f)(a))
-
-print(jacrev(f)(a))
+print('Jacobian 2D shapes')
+print(jacobian_2D[0].shape)
+print(jacobian_2D[1].shape)

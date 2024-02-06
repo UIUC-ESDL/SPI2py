@@ -1,5 +1,6 @@
 import numpy as np
 import torch
+from torch.autograd.functional import jacobian
 from openmdao.api import ExplicitComponent
 
 from ..models.geometry.bounding_box_volume import bounding_box_bounds, bounding_box_volume
@@ -19,46 +20,104 @@ class System(ExplicitComponent):
             self.add_input(f'comp_{i}_sphere_positions', shape_by_conn=True)
             self.add_input(f'comp_{i}_sphere_radii', shape_by_conn=True)
 
-        self.add_output('bounding_box_volume', val=0)
-        self.add_output('bounding_box_bounds', shape=(1, 6))
+        self.add_output('bounding_box_volume', val=1.0)
+        # self.add_output('bounding_box_bounds', shape=(6,))
         # self.add_output('constraints', val=torch.zeros(1))
 
     def setup_partials(self):
-        # for i in range(self.options['num_components']):
-        #     self.declare_partials('bounding box volume', f'comp_{i}_sphere_positions')
-        self.declare_partials('*', '*')
+        for i in range(self.options['num_components']):
+            self.declare_partials('bounding_box_volume', f'comp_{i}_sphere_positions')
+        # self.declare_partials('*', '*')
 
     def compute(self, inputs, outputs):
 
         # Get the input variables
         # sphere_positions = inputs['sphere_positions']
         # sphere_radii = inputs['sphere_radii']
-        sphere_positions = [inputs[f'comp_{i}_sphere_positions'] for i in range(self.options['num_components']) ]
-        sphere_radii = [inputs[f'comp_{i}_sphere_radii'] for i in range(self.options['num_components']) ]
+        # sphere_positions = [inputs[f'comp_{i}_sphere_positions'] for i in range(self.options['num_components']) ]
+        # sphere_radii = [inputs[f'comp_{i}_sphere_radii'] for i in range(self.options['num_components']) ]
+        spheres_positions = [inputs[f'comp_{i}_sphere_positions'] for i in range(self.options['num_components'])]
+        spheres_radii = [inputs[f'comp_{i}_sphere_radii'] for i in range(self.options['num_components'])]
 
         # Vertically stack the sphere positions and radii
-        sphere_positions = np.vstack(sphere_positions)
-        sphere_radii = np.vstack(sphere_radii)
+        # sphere_positions = np.vstack(sphere_positions)
+        # sphere_radii = np.vstack(sphere_radii)
 
         # Convert the inputs to torch tensors
-        sphere_positions = torch.tensor(sphere_positions, dtype=torch.float64)
-        sphere_radii = torch.tensor(sphere_radii, dtype=torch.float64)
+        # sphere_positions = torch.tensor(sphere_positions, dtype=torch.float64)
+        # sphere_radii = torch.tensor(sphere_radii, dtype=torch.float64)
+
+        spheres_list = []
+        radii_list = []
+        for sphere_positions, sphere_radii in zip(spheres_positions, spheres_radii):
+            sphere_positions = torch.tensor(sphere_positions, dtype=torch.float64)
+            sphere_radii = torch.tensor(sphere_radii, dtype=torch.float64)
+            spheres_list.append(sphere_positions)
+            radii_list.append(sphere_radii)
 
         # Calculate the bounding box volume
-        bb_bounds = bounding_box_bounds(sphere_positions, sphere_radii)
-        bb_volume = bounding_box_volume(bb_bounds)
+        # bb_bounds = bounding_box_bounds(sphere_positions, sphere_radii)
+        bb_volume = self.compute_bounding_box_volume(spheres_list, radii_list)
 
         # Convert the outputs to numpy arrays
-        bb_bounds = bb_bounds.detach().numpy()
+        # bb_bounds = bb_bounds.detach().numpy()
         bb_volume = bb_volume.detach().numpy()
 
         # Set the outputs
-        outputs['bounding_box_bounds'] = bb_bounds
+        # outputs['bounding_box_bounds'] = bb_bounds
         outputs['bounding_box_volume'] = bb_volume
         # outputs['constraints'] = constraints
 
-    # def compute_partials(self, inputs, partials):
-    #     pass
+    def compute_partials(self, inputs, partials):
+
+        # Get the input variables
+        # sphere_positions = inputs['sphere_positions']
+        # sphere_radii = inputs['sphere_radii']
+        spheres_positions = [inputs[f'comp_{i}_sphere_positions'] for i in range(self.options['num_components'])]
+        spheres_radii = [inputs[f'comp_{i}_sphere_radii'] for i in range(self.options['num_components'])]
+
+        # Vertically stack the sphere positions and radii
+        # FIXME ?
+        # sphere_positions = np.vstack(sphere_positions)
+        # sphere_radii = np.vstack(sphere_radii)
+
+        # Convert the inputs to torch tensors
+        # sphere_positions = torch.tensor(sphere_positions, dtype=torch.float64, requires_grad=True)
+        # sphere_radii = torch.tensor(sphere_radii, dtype=torch.float64, requires_grad=False)
+
+        spheres_list = []
+        radii_list = []
+        for sphere_positions, sphere_radii in zip(spheres_positions, spheres_radii):
+            sphere_positions = torch.tensor(sphere_positions, dtype=torch.float64, requires_grad=True)
+            sphere_radii = torch.tensor(sphere_radii, dtype=torch.float64, requires_grad=False)
+            spheres_list.append(sphere_positions)
+            radii_list.append(sphere_radii)
+
+        # Calculate the bounding box volume
+        jac_bb_volume = jacobian(self.compute_bounding_box_volume, (sphere_positions, sphere_radii))
+
+        # Convert the outputs to numpy arrays
+        jac_bb_volume = jac_bb_volume.detach().numpy()
+
+        # Set the outputs
+        # TODO ok one problem seems to be list of inputs and assigning them to paritlas. Maybe **args?
+        for i in range(self.options['num_components']):
+            partials['bounding_box_volume', f'comp_{i}_sphere_positions'] = jac_bb_volume[0][i]
+
+    @staticmethod
+    def compute_bounding_box_volume(spheres_positions, spheres_radii, include_bounds=False):
+
+        # Combine the tensors
+        sphere_positions = torch.vstack(spheres_positions)
+        sphere_radii = torch.vstack(spheres_radii)
+
+        bb_bounds = bounding_box_bounds(sphere_positions, sphere_radii)
+        bb_volume = bounding_box_volume(bb_bounds)
+
+        if include_bounds:
+            return bb_volume, bb_bounds
+        else:
+            return bb_volume
 
 
 # class _System:

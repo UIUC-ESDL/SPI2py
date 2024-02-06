@@ -1,202 +1,172 @@
-[info]
-name = "Chad Peterson"
-description = """Demo Problem based on DOI 10.2514/6.2022-0804:
-Underhood Spatial Packing and Routing of an Automotive Fuel Cell System
-(AFCS) Using 2D Geometric Projection"""
-
-[problem]
-objective = "bounding box volume"
-
-[components]
-
-[components.radiator_and_ion_exchanger_1a]
+[components.0]
+name = 'radiator_and_ion_exchanger_1a'
+spheres_filepath='part_models/radiator_and_ion_exchanger.xyzr'
+port_indices = [0, 1]
+port_positions = [[-1.475, 0, 0], [1.475, 0, 0]]
 color='purple'
-dof=['x', 'y', 'z', 'rx', 'ry', 'rz']
-filepath='part_models/radiator_and_ion_exchanger.xyzr'
-num_spheres_collision_detection=25
-num_spheres_visualization=150
-ports=[{'name'= 'left', 'origin'= [-1.475, 0, 0], 'radius'= 0.05},
-       {'name'= 'right', 'origin'= [1.475, 0, 0], 'radius'= 0.05}]
 
-[components.radiator_and_ion_exchanger_1b]
+[components.1]
+name = 'radiator_and_ion_exchanger_1b'
+spheres_filepath='part_models/radiator_and_ion_exchanger.xyzr'
+port_indices = [0, 1]
+port_positions = [[-1.475, 0, 0], [1.475, 0, 0]]
 color='purple'
-dof=['x', 'y', 'z', 'rx', 'ry', 'rz']
-filepath='part_models/radiator_and_ion_exchanger.xyzr'
-num_spheres_collision_detection=25
-num_spheres_visualization=150
-ports=[{'name'= 'left', 'origin'= [-1.475, 0, 0], 'radius'= 0.05},
-       {'name'= 'right', 'origin'= [1.475, 0, 0], 'radius'= 0.05}]
 
-[components.pump_2a]
+[components.2]
+name = 'pump_2a'
+spheres_filepath='part_models/pump.xyzr'
+port_indices = [0, 1]
+port_positions = [[-1.475, 0, 0], [1.475, 0, 0]]
 color='blue'
-dof=['x', 'y', 'z', 'rx', 'ry', 'rz']
-filepath='part_models/pump.xyzr'
-num_spheres_collision_detection=25
-num_spheres_visualization=150
-ports=[{'name'= 'top', 'origin'= [0, 0.275, 0], 'radius'= 0.05},
-       {'name'= 'bottom', 'origin'= [0, -0.275, 0], 'radius'= 0.05}]
 
-[components.pump_2b]
+[components.3]
+name = 'pump_2b'
+spheres_filepath='part_models/pump.xyzr'
+port_indices = [0, 1]
+port_positions = [[0, 0.275, 0], [0, -0.275, 0]]
 color='blue'
-dof=['x', 'y', 'z', 'rx', 'ry', 'rz']
-filepath='part_models/pump.xyzr'
-num_spheres_collision_detection=25
-num_spheres_visualization=150
-ports=[{'name'= 'top', 'origin'= [0, 0.275, 0], 'radius'= 0.05},
-       {'name'= 'bottom', 'origin'= [0, -0.275, 0], 'radius'= 0.05}]
 
-[components.particle_filter_3a]
+[components.4]
+name = 'particle_filter_3a'
+spheres_filepath='part_models/particle_filter.xyzr'
+port_indices = [0, 1]
+port_positions = [[0, 0.215, 0], [0, -0.215, 0]]
 color='yellow'
-dof=['x', 'y', 'z', 'rx', 'ry', 'rz']
-filepath='part_models/particle_filter.xyzr'
-num_spheres_collision_detection=25
-num_spheres_visualization=150
-ports=[{'name'= 'top', 'origin'= [0, 0.215, 0], 'radius'= 0.05},
-       {'name'= 'bottom', 'origin'= [0, -0.215, 0], 'radius'= 0.05}]
 
-[components.particle_filter_3b]
+[components.5]
+name = 'particle_filter_3b'
+spheres_filepath='part_models/particle_filter.xyzr'
+port_indices = [0, 1]
+port_positions = [[0, 0.215, 0], [0, -0.215, 0]]
 color='yellow'
-dof=['x', 'y', 'z', 'rx', 'ry', 'rz']
-filepath='part_models/particle_filter.xyzr'
-num_spheres_collision_detection=25
-num_spheres_visualization=150
-ports=[{'name'= 'top', 'origin'= [0, 0.215, 0], 'radius'= 0.05},
-       {'name'= 'bottom', 'origin'= [0, -0.215, 0], 'radius'= 0.05}]
 
-[components.fuel_cell_stack_4a]
+[components.6]
+name = 'fuel_cell_stack_4a'
+spheres_filepath='part_models/fuel_cell_stack.xyzr'
+port_indices = [0, 1]
+port_positions = [[0, 0.85, 0], [0, -0.85, 0]]
 color='green'
-dof=['x', 'y', 'z', 'rx', 'ry', 'rz']
-filepath='part_models/fuel_cell_stack.xyzr'
-num_spheres_collision_detection=25
-num_spheres_visualization=150
-ports=[{'name'= 'top', 'origin'= [0, 0.85, 0], 'radius'= 0.05},
-       {'name'= 'bottom', 'origin'= [0, -0.85, 0], 'radius'= 0.05}]
 
-[components.fuel_cell_stack_4b]
+[components.7]
+name = 'fuel_cell_stack_4b'
+spheres_filepath='part_models/fuel_cell_stack.xyzr'
+port_indices = [0, 1]
+port_positions = [[0, 0.85, 0], [0, -0.85, 0]]
 color='green'
-dof=['x', 'y', 'z', 'rx', 'ry', 'rz']
-filepath='part_models/fuel_cell_stack.xyzr'
-num_spheres_collision_detection=25
-num_spheres_visualization=150
-ports=[{'name'= 'top', 'origin'= [0, 0.85, 0], 'radius'= 0.05},
-       {'name'= 'bottom', 'origin'= [0, -0.85, 0], 'radius'= 0.05}]
 
-[components.WEG_heater_and_pump_5]
+[components.8]
+name = 'WEG_heater_and_pump_5'
+spheres_filepath='part_models/WEG_heater_and_pump.xyzr'
+port_indices = [0, 1]
+port_positions = [[0, 0.9665, 0], [-0.8775, 0, 0]]
 color='gray'
-dof=[]
-filepath='part_models/WEG_heater_and_pump.xyzr'
-num_spheres_collision_detection=25
-num_spheres_visualization=150
-ports=[{'name'= 'top', 'origin'= [0, 0.9665, 0], 'radius'= 0.05},
-       {'name'= 'left', 'origin'= [-0.8775, 0, 0], 'radius'= 0.05}]
 
-[components.heater_core_6]
+[components.9]
+name = 'heater_core_6'
+spheres_filepath='part_models/heater_core.xyzr'
+port_indices = [0, 1]
+port_positions = [[0, -0.7225, 0], [0, 0.7225, 0]]
 color='red'
-dof=[]
-filepath='part_models/heater_core.xyzr'
-num_spheres_collision_detection=25
-num_spheres_visualization=150
-ports=[{'name'= 'left', 'origin'= [-0.7225, 0, 0], 'radius'= 0.05},
-       {'name'= 'right', 'origin'= [0.7225, 0, 0], 'radius'= 0.05}]
 
-
-[conductors]
-num_segments=2
-num_spheres_per_segment=25
-
-[conductors.c1a_c1b]
-component_1='radiator_and_ion_exchanger_1a'
-component_1_port='right'
-component_2='radiator_and_ion_exchanger_1b'
-component_2_port='left'
+[interconnects.0]
+component_1 = 0
+port_1 = 1
+component_2 = 1
+port_2='left'
+n_segments=3
+n_spheres_per_segment=25
 radius=0.05
 color='black'
 
-[conductors.c1b_c2b]
-component_1='radiator_and_ion_exchanger_1b'
-component_1_port='right'
-component_2='pump_2b'
-component_2_port='top'
+[interconnects.1]
+component_1=1
+port_1=1
+component_2=3
+port_2=0
+n_segments=3
+n_spheres_per_segment=25
 radius=0.05
 color='black'
 
-[conductors.c2b_c3b]
-component_1='pump_2b'
-component_1_port='bottom'
-component_2='particle_filter_3b'
-component_2_port='top'
+[interconnects.2]
+component_1=3
+port_1=1
+component_2=5
+port_2=0
+n_segments=3
+n_spheres_per_segment=25
 radius=0.05
 color='black'
 
-[conductors.c3b_c4b]
-component_1='particle_filter_3b'
-component_1_port='bottom'
-component_2='fuel_cell_stack_4b'
-component_2_port='top'
+[interconnects.3]
+component_1=5
+port_1=1
+component_2=7
+port_2=0
+n_segments=3
+n_spheres_per_segment=25
 radius=0.05
 color='black'
 
-[conductors.c4b_c5]
-component_1='fuel_cell_stack_4b'
-component_1_port='bottom'
-component_2='WEG_heater_and_pump_5'
-component_2_port='top'
+[interconnects.4]
+component_1=7
+port_1=1
+component_2=8
+port_2=0
+n_segments=3
+n_spheres_per_segment=25
 radius=0.05
 color='black'
 
-[conductors.c5_c6]
-component_1='WEG_heater_and_pump_5'
-component_1_port='left'
-component_2='heater_core_6'
-component_2_port='right'
+[interconnects.5]
+component_1=8
+port_1=1
+component_2=9
+port_2=0
+n_segments=3
+n_spheres_per_segment=25
 radius=0.05
 color='black'
 
-[conductors.c6_c4a]
-component_1='heater_core_6'
-component_1_port='left'
-component_2='fuel_cell_stack_4a'
-component_2_port='bottom'
+[interconnects.6]
+component_1=9
+port_1=1
+component_2=6
+port_2=0
+n_segments=3
+n_spheres_per_segment=25
 radius=0.05
 color='black'
 
-[conductors.c4a_c3a]
-component_1='fuel_cell_stack_4a'
-component_1_port='top'
-component_2='particle_filter_3a'
-component_2_port='bottom'
+[interconnects.7]
+component_1=6
+port_1=1
+component_2=4
+port_2=0
+n_segments=3
+n_spheres_per_segment=25
 radius=0.05
 color='black'
 
-[conductors.c3a_c2a]
-component_1='particle_filter_3a'
-component_1_port='top'
-component_2='pump_2a'
-component_2_port='top'
+[interconnects.8]
+component_1=4
+port_1=1
+component_2=2
+port_2=0
+n_segments=3
+n_spheres_per_segment=25
 radius=0.05
 color='black'
 
-[conductors.c2a_c1a]
-component_1='pump_2a'
-component_1_port='top'
-component_2='radiator_and_ion_exchanger_1a'
-component_2_port='left'
+[interconnects.9]
+component_1=2
+port_1=1
+component_2=0
+port_2=0
+n_segments=3
+n_spheres_per_segment=25
 radius=0.05
 color='black'
 
-[system]
 
 
-[geometry]
-
-[kinematics]
-
-
-[projection]
-
-[physics.lumped_parameter]
-
-[physics.finite_element]
-
-
-[visualization]

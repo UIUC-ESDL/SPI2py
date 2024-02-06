@@ -19,7 +19,7 @@ class GeometricRepresentation:
 
 
 
-def read_xyzr_file(filepath, num_spheres=100,):
+def read_xyzr_file(filepath, num_spheres=100):
     """
     Reads a .xyzr file and returns the positions and radii of the spheres.
 

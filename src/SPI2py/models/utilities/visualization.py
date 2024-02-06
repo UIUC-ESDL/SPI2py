@@ -12,8 +12,8 @@ def plot_problem(prob):
 
     for subsystem in prob.model.components._subsystems_myproc:
 
-        positions = prob.get_val('components.' + subsystem.name + '.sphere_positions')
-        radii = prob.get_val('components.' + subsystem.name + '.sphere_radii')
+        positions = prob.get_val('components.' + subsystem.name + '.transformed_sphere_positions')
+        radii = prob.get_val('components.' + subsystem.name + '.transformed_sphere_radii')
         color = subsystem.options['color']
 
         spheres = []
