@@ -21,74 +21,31 @@ input_file = read_input_file('input.toml')
 
 n_components = len(list(input_file['components'].keys()))
 n_interconnects = len(list(input_file['interconnects'].keys()))
-n_segments_per_interconnect = [input_file['interconnects'][interconnect]['n_segments'] for interconnect in input_file['interconnects'].keys()]
+n_segments_per_interconnect = [input_file['interconnects'][interconnect]['n_segments'] for interconnect in
+                               input_file['interconnects'].keys()]
 
 # Get the source indices
-indices_translations, indices_rotations, indices_interconnects = get_src_indices(n_components, n_interconnects, n_segments_per_interconnect)
+indices_translations, indices_rotations, indices_interconnects = get_src_indices(n_components, n_interconnects,
+                                                                                 n_segments_per_interconnect)
 
+# Initialize the problem
+prob = om.Problem()
+model = prob.model
 
+model.set_input_defaults('translation', [0, 0, 0, 0, 0, 0])
+model.set_input_defaults('rotation', [0, 0, 0, 0, 0, 0])
 
-
-# # Initialize the problem
-# prob = om.Problem()
-# model = prob.model
-# model.add_subsystem('components', Components())
-# # model.add_subsystem('interconnects', om.Group())
+model.add_subsystem('components', Components(input_dict=input_file), promotes_inputs=['translation', 'rotation'])
+# model.add_subsystem('interconnects', om.Group())
 # model.add_subsystem('system', System(num_components=2))
-#
-# # Initialize components
-# radiator_and_ion_exchanger_1a = Component(spheres_filepath='components/radiator_and_ion_exchanger.xyzr',
-#                                           ports={'left': [-1.475, 0, 0], 'right': [1.475, 0, 0]},
-#                                           color='red')
-#
-# radiator_and_ion_exchanger_1b = Component(spheres_filepath='components/radiator_and_ion_exchanger.xyzr',
-#                                           ports={'left': [-1.475, 0, 0], 'right': [1.475, 0, 0]},
-#                                           color='blue')
-#
-# # pump_2a = Component(spheres_filepath='components/pump.xyzr',
-# #                     ports={'top': [0, 0.275, 0], 'bottom': [0, -0.275, 0]},
-# #                     color='blue')
-# #
-# # pump_2b = Component(spheres_filepath='components/pump.xyzr',
-# #                     ports={'top': [0, 0.275, 0], 'bottom': [0, -0.275, 0]},
-# #                     color='blue')
-# #
-# # particle_filter_3a = Component(spheres_filepath='components/particle_filter.xyzr',
-# #                                ports={'top': [0, 0.215, 0], 'bottom': [0, -0.215, 0]},
-# #                                color='yellow')
-# #
-# # particle_filter_3b = Component(spheres_filepath='components/particle_filter.xyzr',
-# #                                ports={'top': [0, 0.215, 0], 'bottom': [0, -0.215, 0]},
-# #                                color='yellow')
-# #
-# # fuel_cell_Stack_4a = Component(spheres_filepath='components/fuel_cell_Stack.xyzr',
-# #                                ports={'top': [0, 0.85, 0], 'bottom': [0, -0.85, 0]},
-# #                                color='green')
-# #
-# # fuel_cell_Stack_4b = Component(spheres_filepath='components/fuel_cell_Stack.xyzr',
-# #                                ports={'top': [0, 0.85, 0], 'bottom': [0, -0.85, 0]},
-# #                                color='green')
-# #
-# # WEG_heater_and_pump_5 = Component(spheres_filepath='components/WEG_heater_and_pump.xyzr',
-# #                                   ports={'top': [0, 0.9665, 0], 'left': [-0.8775, 0, 0]},
-# #                                   color='gray')
-# #
-# # heater_core_6 = Component(spheres_filepath='components/heater_core.xyzr',
-# #                           ports={'left': [-0.7225, 0, 0], 'right': [0.7225, 0, 0]},
-# #                           color='red')
-#
+
+
+# components = create_components(input_file)
+
 # # Add components to the system
-# model.components.add_subsystem('radiator_and_ion_exchanger_1a', radiator_and_ion_exchanger_1a)
-# model.components.add_subsystem('radiator_and_ion_exchanger_1b', radiator_and_ion_exchanger_1b)
-# # model.components.add_subsystem('pump_2a', pump_2a)
-# # model.components.add_subsystem('pump_2b', pump_2b)
-# # model.components.add_subsystem('particle_filter_3a', particle_filter_3a)
-# # model.components.add_subsystem('particle_filter_3b', particle_filter_3b)
-# # model.components.add_subsystem('fuel_cell_Stack_4a', fuel_cell_Stack_4a)
-# # model.components.add_subsystem('fuel_cell_Stack_4b', fuel_cell_Stack_4b)
-# # model.components.add_subsystem('WEG_heater_and_pump_5', WEG_heater_and_pump_5)
-# # model.components.add_subsystem('heater_core_6', heater_core_6)
-#
+# for i, component in enumerate(components):
+#     model.components.add_subsystem(f'comp_{i}', component)
+
 # # # Initialize interconnects
 # # c1a_c1b = Interconnect(num_segments=3, num_spheres_per_segment=20, radius=0.1, color='black')
 # # c1b_c2b = Interconnect(num_segments=3, num_spheres_per_segment=20, radius=0.1, color='black')
@@ -112,8 +69,10 @@ indices_translations, indices_rotations, indices_interconnects = get_src_indices
 # # model.interconnects.add_subsystem('c4a_c3a', c4a_c3a)
 # # model.interconnects.add_subsystem('c3a_c2a', c3a_c2a)
 # # model.interconnects.add_subsystem('c2a_c1a', c2a_c1a)
-#
-# # Connect the components to the system
+
+# Connect the components to the system
+
+
 # model.connect('components.radiator_and_ion_exchanger_1a.transformed_sphere_positions', 'system.comp_0_sphere_positions')
 # model.connect('components.radiator_and_ion_exchanger_1a.transformed_sphere_radii', 'system.comp_0_sphere_radii')
 # model.connect('components.radiator_and_ion_exchanger_1b.transformed_sphere_positions', 'system.comp_1_sphere_positions')
@@ -183,10 +142,10 @@ indices_translations, indices_rotations, indices_interconnects = get_src_indices
 #
 # # prob.driver = om.ScipyOptimizeDriver()
 # # prob.driver.options['maxiter'] = 15
-#
-# # Set the initial state
-# prob.setup()
-#
+
+# Set the initial state
+prob.setup()
+
 # # Configure the system
 # prob.set_val('components.radiator_and_ion_exchanger_1a.translation', [2, 7, 0])
 # prob.set_val('components.radiator_and_ion_exchanger_1b.translation', [5.5, 7, 0])
@@ -209,15 +168,13 @@ indices_translations, indices_rotations, indices_interconnects = get_src_indices
 # # prob.set_val('interconnects.c4a_c3a.control_points', [[0.5, 3, 0]])
 # # prob.set_val('interconnects.c3a_c2a.control_points', [[0.5, 5, 0]])
 # # prob.set_val('interconnects.c2a_c1a.control_points', [[0.5, 6.5, 0]])
-#
-#
-#
-# prob.run_model()
-# # Plot initial spatial configuration
-# # plot_problem(prob)
-#
-#
-#
+
+
+prob.run_model()
+# Plot initial spatial configuration
+# plot_problem(prob)
+
+
 # # Run the optimization
 #
 # # print(prob.model.list_inputs(is_design_var=True))
@@ -227,10 +184,3 @@ indices_translations, indices_rotations, indices_interconnects = get_src_indices
 # # # Plot optimized spatial
 # # plot_problem(prob)
 #
-
-
-
-
-
-
-

@@ -1,3 +1,4 @@
+import numpy as np
 import torch
 from torch.autograd.functional import jacobian
 from openmdao.api import ExplicitComponent, Group
@@ -7,8 +8,58 @@ from ..models.kinematics.rigid_body_transformations import assemble_transformati
     apply_transformation_matrix
 
 class Components(Group):
-    pass
-    # def setup(self):
+    def initialize(self):
+        self.options.declare('input_dict', types=dict)
+
+    def setup(self):
+
+        input_dict = self.options['input_dict']
+
+        # Create the Component Objects
+        components = self.create_components(input_dict)
+
+        # Add the Component Objects to the Group
+        self.indices_translations, self.indices_rotations = self.get_src_indices(len(components))
+
+        for i, component in enumerate(components):
+            self.add_subsystem(f'comp_{i}', component)
+    def configure(self):
+
+        for i, (translations_i, rotations_i) in enumerate(zip(self.indices_translations, self.indices_rotations)):
+            self.promotes(f'comp_{i}', inputs=['translation'], src_indices=translations_i)
+            self.promotes(f'comp_{i}', inputs=['rotation'], src_indices=rotations_i)
+
+    def create_components(self, input_dict):
+        components = []
+        for component in input_dict['components'].keys():
+            name = input_dict['components'][component]['name']
+            spheres_filepath = input_dict['components'][component]['spheres_filepath']
+            port_positions = input_dict['components'][component]['port_positions']
+            color = input_dict['components'][component]['color']
+
+            component_object = Component(name=name, spheres_filepath=spheres_filepath, port_positions=port_positions,
+                                         color=color)
+
+            components.append(component_object)
+
+        return components
+
+    def get_src_indices(self, n_components):
+
+        translations_dof = np.arange(3 * n_components).reshape(-1, 3)
+        rotations_dof = np.arange(3 * n_components).reshape(-1, 3)
+
+        # Split up the indices
+        indices_translations = np.split(translations_dof, n_components)
+        indices_rotations = np.split(rotations_dof, n_components)
+
+        # Convert arrays to lists
+        indices_translations = [indices.flatten().tolist() for indices in indices_translations]
+        indices_rotations = [indices.flatten().tolist() for indices in indices_rotations]
+
+        return indices_translations, indices_rotations
+
+
     #
     #     # Iterate through components to add design variables
     #     for subsys_name, subsys in self._subsystems_allprocs.items():
@@ -26,8 +77,9 @@ class Components(Group):
 class Component(ExplicitComponent):
 
     def initialize(self):
+        self.options.declare('name', types=str)
         self.options.declare('spheres_filepath', types=str)
-        self.options.declare('ports', types=dict)
+        self.options.declare('port_positions', types=list)
         self.options.declare('color', types=str)
 
         # self.design_var_info = {'name':'translation', 'ref':1, 'ref0':0}
@@ -35,18 +87,21 @@ class Component(ExplicitComponent):
 
     def setup(self):
 
-        # Get the options
-        initial_sphere_positions, initial_sphere_radii = read_xyzr_file(self.options['spheres_filepath'])
-        # port_names = self.options['ports'].keys()
-        # initial_port_positions = torch.tensor([self.options['ports'][port_name] for port_name in port_names])
+        self.name = self.options['name']
+        self.spheres_filepath = self.options['spheres_filepath']
+        self.port_positions = self.options['port_positions']
         self.color = self.options['color']
+
+        # Get the options
+        initial_sphere_positions, initial_sphere_radii = read_xyzr_file(self.spheres_filepath)
+        # initial_port_positions = torch.tensor(self.port_positions)
 
         # Define the input shapes
         self.add_input('sphere_positions', val=initial_sphere_positions)
         self.add_input('sphere_radii', val=initial_sphere_radii)
         # self.add_input('port_positions', val=initial_port_positions)
-        self.add_input('translation', val=torch.zeros(1, 3))
-        self.add_input('rotation', val=torch.zeros(1, 3))
+        self.add_input('translation', val=[0.0, 0.0, 0.0])
+        self.add_input('rotation', val=[0.0, 0.0, 0.0])
 
         # Define the outputs
         self.add_output('transformed_sphere_positions', val=initial_sphere_positions)
@@ -71,8 +126,8 @@ class Component(ExplicitComponent):
         sphere_positions = torch.tensor(sphere_positions, dtype=torch.float64)
         sphere_radii = torch.tensor(sphere_radii, dtype=torch.float64)
         # port_positions = torch.tensor(port_positions, dtype=torch.float64)
-        translation = torch.tensor(translation, dtype=torch.float64)
-        rotation = torch.tensor(rotation, dtype=torch.float64)
+        translation = torch.tensor(translation, dtype=torch.float64).reshape((1, 3))
+        rotation = torch.tensor(rotation, dtype=torch.float64).reshape((1, 3))
 
         # Calculate the transformed sphere positions and port positions
         sphere_positions_transformed = self.compute_transformation(sphere_positions, translation, rotation)
@@ -101,8 +156,8 @@ class Component(ExplicitComponent):
         sphere_positions = torch.tensor(sphere_positions, dtype=torch.float64, requires_grad=False)
         # sphere_radii = torch.tensor(sphere_radii, dtype=torch.float64, requires_grad=True)
         # port_positions = torch.tensor(port_positions, dtype=torch.float64, requires_grad=True)
-        translation = torch.tensor(translation, dtype=torch.float64, requires_grad=True)
-        rotation = torch.tensor(rotation, dtype=torch.float64, requires_grad=True)
+        translation = torch.tensor(translation, dtype=torch.float64, requires_grad=True).reshape((1, 3))
+        rotation = torch.tensor(rotation, dtype=torch.float64, requires_grad=True).reshape((1, 3))
 
         # Calculate the Jacobian matrices
         jac_sphere_positions = jacobian(self.compute_transformation, (sphere_positions, translation, rotation))

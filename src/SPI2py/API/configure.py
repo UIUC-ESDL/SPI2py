@@ -5,6 +5,10 @@ Edges: Tuples of component numbers
 
 import numpy as np
 
+from .Components import Component
+from .Interconnects import Interconnect
+from .Systems import System
+
 def get_src_indices(n_components, n_interconnects, n_segments_per_interconnect):
 
     # Check the inputs
@@ -44,6 +48,9 @@ def get_src_indices(n_components, n_interconnects, n_segments_per_interconnect):
     indices = (indices_translations, indices_rotations, indices_interconnects)
 
     return indices
+
+
+
 
 
 
