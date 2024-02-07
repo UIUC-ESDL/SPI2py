@@ -53,6 +53,20 @@ def get_src_indices(n_components, n_interconnects, n_segments_per_interconnect):
 
 
 
+def calculate_component_indices(n_components, n_spheres_per_component, n_ports_per_component):
+
+    indices_sphere_positions = []
+    indices_sphere_radii = []
+    indices_port_positions = []
+
+    shape_translation = []
+    shape_rotation = []
+
+    default_translation = []
+    default_rotation = []
+
+
+
 
 
 

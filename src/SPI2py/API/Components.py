@@ -1,7 +1,7 @@
 import numpy as np
 import torch
 from torch.autograd.functional import jacobian
-from openmdao.api import ExplicitComponent, Group
+from openmdao.api import ExplicitComponent, Group, MuxComp
 
 from ..models.geometry.finite_sphere_method import read_xyzr_file
 from ..models.kinematics.rigid_body_transformations import assemble_transformation_matrix, \
@@ -39,7 +39,17 @@ class Components(Group):
             self.aggregate_sphere_radii.append(sphere_radii)
             self.aggregate_port_positins.append(port_positions)
 
+        n_components = len(components_dict.keys())
+        n_total_spheres = sum([len(sphere_positions) for sphere_positions in self.aggregate_sphere_positions])
 
+        # Add MuxComp to aggregate outputs. Specify the number of inputs to mux and the axis along which to concatenate
+        # self.add_subsystem('aggregate_outputs', MuxComp(vec_size=n_components))
+
+        # Connect component outputs to the MuxComp
+        # for i in range(n_components):
+            # self.connect(f'comp_{i}.transformed_sphere_positions', f'aggregate_outputs.inputs:{i}')
+        # self.connect('radiator_and_ion_exchanger_1b.transformed_sphere_positions', f'aggregate_outputs.inputs:0')
+        # self.connect('radiator_and_ion_exchanger_1a.transformed_sphere_positions', f'aggregate_outputs.inputs:0')
 
     def configure(self):
 
@@ -106,12 +116,6 @@ class Components(Group):
             #               inputs=['port_positions'],
             #               src_indices=self.indices_ports[i],
             #               flat_src_indices=True)
-
-            # self.promotes(f'comp_{component}',
-            #                 outputs=['transformed_sphere_positions'],
-            #                 src_indices=spheres_i,
-            #                 flat_src_indices=True)
-
 
 
     # @staticmethod
