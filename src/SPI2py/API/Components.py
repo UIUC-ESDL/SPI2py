@@ -14,14 +14,37 @@ class Components(Group):
     def setup(self):
 
         # Create the components
+        self.aggregate_sphere_positions = []
+        self.aggregate_sphere_radii = []
+        self.aggregate_port_positins = []
+
         components_dict = self.options['input_dict']['components']
         for i, key in enumerate(components_dict.keys()):
-            component = self._create_component(components_dict, key)
+            name = components_dict[key]['name']
+            spheres_filepath = components_dict[key]['spheres_filepath']
+            n_spheres = components_dict[key]['n_spheres']
+            port_positions = components_dict[key]['port_positions']
+            color = components_dict[key]['color']
+
+            sphere_positions, sphere_radii = read_xyzr_file(spheres_filepath, num_spheres=n_spheres)
+
+            component = Component(name=name,
+                                  color=color,
+                                  sphere_positions=sphere_positions,
+                                  sphere_radii=sphere_radii,
+                                  port_positions=port_positions)
+
             self.add_subsystem(f'comp_{i}', component)
+
+            self.aggregate_sphere_positions.append(sphere_positions)
+            self.aggregate_sphere_radii.append(sphere_radii)
+            self.aggregate_port_positins.append(port_positions)
+
 
 
     def configure(self):
 
+        # TODO Don't override default positions from Component
         components_dict = self.options['input_dict']['components']
 
         # Determine input/output shapes
@@ -36,15 +59,12 @@ class Components(Group):
         indices_translations, indices_rotations = self._get_src_indices(n_components)
         indices_spheres, indices_radii = self._get_sphere_indices(n_spheres)
 
-
-
-        # Set the default state variable inputs
-        default_sphere_positions = np.zeros((total_n_spheres, 3))
-        default_sphere_radii = np.zeros((total_n_spheres, 1))
-        # default_port_positions = 1
-
-        self.set_input_defaults('sphere_positions', default_sphere_positions)
-        self.set_input_defaults('sphere_radii', default_sphere_radii)
+        # Get the default sphere positions and radii from each component setup
+        sphere_positions = np.vstack(self.aggregate_sphere_positions)
+        sphere_radii = np.hstack(self.aggregate_sphere_radii)
+        # default_port_positions = np.vstack(self.aggregate_port_positins)
+        self.set_input_defaults('sphere_positions', sphere_positions)
+        self.set_input_defaults('sphere_radii', sphere_radii)
         # self.set_input_defaults('port_positions', default_port_positions)
 
 
@@ -85,24 +105,24 @@ class Components(Group):
 
 
 
-    @staticmethod
-    def _create_component(components_dict, key):
-
-        comp_name = components_dict[key]['name']
-        comp_spheres_filepath = components_dict[key]['spheres_filepath']
-        comp_n_spheres = components_dict[key]['n_spheres']
-        comp_port_positions = components_dict[key]['port_positions']
-        comp_color = components_dict[key]['color']
-
-        comp_sphere_positions, comp_sphere_radii = read_xyzr_file(comp_spheres_filepath, num_spheres=comp_n_spheres)
-        # FIXME Make radii (-1, 1) not (-1,)
-        component = Component(name=comp_name,
-                              color=comp_color,
-                              sphere_positions=comp_sphere_positions,
-                              sphere_radii=comp_sphere_radii,
-                              port_positions=comp_port_positions)
-
-        return component
+    # @staticmethod
+    # def _create_component(components_dict, key):
+    #
+    #     comp_name = components_dict[key]['name']
+    #     comp_spheres_filepath = components_dict[key]['spheres_filepath']
+    #     comp_n_spheres = components_dict[key]['n_spheres']
+    #     comp_port_positions = components_dict[key]['port_positions']
+    #     comp_color = components_dict[key]['color']
+    #
+    #     comp_sphere_positions, comp_sphere_radii = read_xyzr_file(comp_spheres_filepath, num_spheres=comp_n_spheres)
+    #     # FIXME Make radii (-1, 1) not (-1,)
+    #     component = Component(name=comp_name,
+    #                           color=comp_color,
+    #                           sphere_positions=comp_sphere_positions,
+    #                           sphere_radii=comp_sphere_radii,
+    #                           port_positions=comp_port_positions)
+    #
+    #     return component
 
     @staticmethod
     def _get_src_indices(n_components):

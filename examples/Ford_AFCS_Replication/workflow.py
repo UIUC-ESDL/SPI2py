@@ -139,7 +139,7 @@ prob.setup()
 
 prob.run_model()
 # Plot initial spatial configuration
-# plot_problem(prob)
+plot_problem(prob)
 
 
 # # Run the optimization
