@@ -8,7 +8,8 @@ color='purple'
 name = 'radiator_and_ion_exchanger_1b'
 spheres_filepath='components/radiator_and_ion_exchanger.xyzr'
 port_positions = [[-1.475, 0, 0], [1.475, 0, 0]]
-color='purple'
+color='orange'
+#color='purple'
 
 #[components.2]
 #name = 'pump_2a'

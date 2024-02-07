@@ -62,11 +62,15 @@ class Components(Group):
         indices_translations, indices_rotations = self._get_src_indices(n_components)
         indices_spheres, indices_radii = self._get_sphere_indices(n_spheres)
 
+        # TODO Try list
+        sphere_positions = sphere_positions.tolist()
+        sphere_radii = sphere_radii.tolist()
 
-        # self.set_input_defaults('sphere_positions', sphere_positions)
-        # self.set_input_defaults('sphere_radii', sphere_radii)
+        self.set_input_defaults('sphere_positions', sphere_positions)
+        self.set_input_defaults('sphere_radii', sphere_radii)
         # self.set_input_defaults('port_positions', default_port_positions)
 
+        # self.set_output_
 
         # Set the default design variable inputs
         default_translation = np.zeros((n_components, 3))
@@ -88,20 +92,25 @@ class Components(Group):
                           src_indices=rotations_i,
                           flat_src_indices=True)
 
-            # self.promotes(f'comp_{component}',
-            #               inputs=['sphere_positions'],
-            #               src_indices=spheres_i,
-            #               flat_src_indices=True)
-            #
-            # self.promotes(f'comp_{component}',
-            #                 inputs=['sphere_radii'],
-            #                 src_indices=radii_i,
-            #                 flat_src_indices=True)
+            self.promotes(f'comp_{component}',
+                          inputs=['sphere_positions'],
+                          src_indices=spheres_i,
+                          flat_src_indices=True)
+
+            self.promotes(f'comp_{component}',
+                            inputs=['sphere_radii'],
+                            src_indices=radii_i,
+                            flat_src_indices=True)
 
             # self.promotes(f'comp_{component}',
             #               inputs=['port_positions'],
             #               src_indices=self.indices_ports[i],
             #               flat_src_indices=True)
+
+            # self.promotes(f'comp_{component}',
+            #                 outputs=['transformed_sphere_positions'],
+            #                 src_indices=spheres_i,
+            #                 flat_src_indices=True)
 
 
 
@@ -143,6 +152,7 @@ class Components(Group):
     @staticmethod
     def _get_sphere_indices(n_spheres):
         # FIXME (-1,3) not (-1, 1)?
+        # FIXME It looks like i is not multiplied by 3
 
         indices_spheres = []
         i = 0
@@ -150,7 +160,7 @@ class Components(Group):
             n_variables = 3 * n_sphere  # 3 for x, y, z
             indices_component_spheres = [j for j in range(i, i + n_variables)]
             indices_spheres.append(indices_component_spheres)
-            i += n_sphere
+            i += 3 * n_sphere
 
         indices_radii = []
         i = 0
@@ -158,7 +168,7 @@ class Components(Group):
             n_variables = n_sphere  # 1 for radius
             indices_component_radii = [j for j in range(i, i + n_variables)]
             indices_radii.append(indices_component_radii)
-            i += n_sphere
+            i += 1 * n_sphere
 
         return indices_spheres, indices_radii
 
