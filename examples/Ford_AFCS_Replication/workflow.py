@@ -2,7 +2,7 @@
 Example 1:  Simple optimization of a 3D layout
 Author:     Chad Peterson
 """
-
+import numpy as np
 import openmdao.api as om
 # from SPI2py import Component, Components, Interconnect, System
 # from SPI2py.group_model.utilities.visualization import plot
@@ -32,8 +32,11 @@ indices_translations, indices_rotations, indices_interconnects = get_src_indices
 prob = om.Problem()
 model = prob.model
 
-model.set_input_defaults('translation', [0, 0, 0, 0, 0, 0])
-model.set_input_defaults('rotation', [0, 0, 0, 0, 0, 0])
+# model.set_input_defaults('translation', [0, 0, 0, 0, 0, 0])
+# model.set_input_defaults('rotation', [0, 0, 0, 0, 0, 0])
+model.set_input_defaults('translation', np.zeros((n_components, 3)))
+model.set_input_defaults('rotation', np.zeros((n_components, 3)))
+
 
 model.add_subsystem('components', Components(input_dict=input_file), promotes_inputs=['translation', 'rotation'])
 # model.add_subsystem('interconnects', om.Group())

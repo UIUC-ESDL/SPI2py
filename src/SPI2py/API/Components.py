@@ -26,8 +26,16 @@ class Components(Group):
     def configure(self):
 
         for i, (translations_i, rotations_i) in enumerate(zip(self.indices_translations, self.indices_rotations)):
-            self.promotes(f'comp_{i}', inputs=['translation'], src_indices=translations_i)
-            self.promotes(f'comp_{i}', inputs=['rotation'], src_indices=rotations_i)
+
+            self.promotes(f'comp_{i}',
+                          inputs=['translation'],
+                          src_indices=translations_i,
+                          flat_src_indices=True)
+
+            self.promotes(f'comp_{i}',
+                          inputs=['rotation'],
+                          src_indices=rotations_i,
+                          flat_src_indices=True)
 
     def create_components(self, input_dict):
         components = []
@@ -126,8 +134,8 @@ class Component(ExplicitComponent):
         sphere_positions = torch.tensor(sphere_positions, dtype=torch.float64)
         sphere_radii = torch.tensor(sphere_radii, dtype=torch.float64)
         # port_positions = torch.tensor(port_positions, dtype=torch.float64)
-        translation = torch.tensor(translation, dtype=torch.float64).reshape((1, 3))
-        rotation = torch.tensor(rotation, dtype=torch.float64).reshape((1, 3))
+        translation = torch.tensor(translation, dtype=torch.float64).reshape(1, 3)
+        rotation = torch.tensor(rotation, dtype=torch.float64).reshape(1, 3)
 
         # Calculate the transformed sphere positions and port positions
         sphere_positions_transformed = self.compute_transformation(sphere_positions, translation, rotation)
@@ -156,8 +164,8 @@ class Component(ExplicitComponent):
         sphere_positions = torch.tensor(sphere_positions, dtype=torch.float64, requires_grad=False)
         # sphere_radii = torch.tensor(sphere_radii, dtype=torch.float64, requires_grad=True)
         # port_positions = torch.tensor(port_positions, dtype=torch.float64, requires_grad=True)
-        translation = torch.tensor(translation, dtype=torch.float64, requires_grad=True).reshape((1, 3))
-        rotation = torch.tensor(rotation, dtype=torch.float64, requires_grad=True).reshape((1, 3))
+        translation = torch.tensor(translation, dtype=torch.float64, requires_grad=True).reshape(1, 3)
+        rotation = torch.tensor(rotation, dtype=torch.float64, requires_grad=True).reshape(1, 3)
 
         # Calculate the Jacobian matrices
         jac_sphere_positions = jacobian(self.compute_transformation, (sphere_positions, translation, rotation))
