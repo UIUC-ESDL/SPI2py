@@ -12,42 +12,21 @@ from SPI2py.API.Systems import System
 from SPI2py.models.geometry.finite_sphere_method import read_xyzr_file
 
 from SPI2py.models.utilities.visualization import plot_problem
-# from SPI2py.API.src_indices import *
-from SPI2py.API.configure import get_src_indices
+
 from SPI2py.models.utilities.inputs import read_input_file
 
 # Read the input file
 input_file = read_input_file('input.toml')
 
-n_components = len(list(input_file['components'].keys()))
-n_interconnects = len(list(input_file['interconnects'].keys()))
-n_segments_per_interconnect = [input_file['interconnects'][interconnect]['n_segments'] for interconnect in
-                               input_file['interconnects'].keys()]
-
-# Get the source indices
-indices_translations, indices_rotations, indices_interconnects = get_src_indices(n_components, n_interconnects,
-                                                                                 n_segments_per_interconnect)
-
 # Initialize the problem
 prob = om.Problem()
 model = prob.model
 
-# model.set_input_defaults('translation', [0, 0, 0, 0, 0, 0])
-# model.set_input_defaults('rotation', [0, 0, 0, 0, 0, 0])
-model.set_input_defaults('translation', np.zeros((n_components, 3)))
-model.set_input_defaults('rotation', np.zeros((n_components, 3)))
 
-
-model.add_subsystem('components', Components(input_dict=input_file), promotes_inputs=['translation', 'rotation'])
+model.add_subsystem('components', Components(input_dict=input_file))
 # model.add_subsystem('interconnects', om.Group())
 # model.add_subsystem('system', System(num_components=2))
 
-
-# components = create_components(input_file)
-
-# # Add components to the system
-# for i, component in enumerate(components):
-#     model.components.add_subsystem(f'comp_{i}', component)
 
 # # # Initialize interconnects
 # # c1a_c1b = Interconnect(num_segments=3, num_spheres_per_segment=20, radius=0.1, color='black')

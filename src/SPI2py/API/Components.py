@@ -20,9 +20,32 @@ class Components(Group):
 
         # Add the Component Objects to the Group
         self.indices_translations, self.indices_rotations = self.get_src_indices(len(components))
+        self.indices_spheres, self.indices_radii = self.get_sphere_indices(input_dict)
 
         for i, component in enumerate(components):
             self.add_subsystem(f'comp_{i}', component)
+
+
+        n_components = len(components)
+
+        # Set the default state variable inputs
+        default_sphere_positions = 1
+        default_sphere_radii = 1
+        default_port_positions = 1
+
+        self.set_input_defaults('sphere_positions', default_sphere_positions)
+        self.set_input_defaults('sphere_radii', default_sphere_radii)
+        self.set_input_defaults('port_positions', default_port_positions)
+
+        # Set the default design variable inputs
+        default_translation = np.zeros((n_components, 3))
+        default_rotation = np.zeros((n_components, 3))
+
+        self.set_input_defaults('translation', default_translation)
+        self.set_input_defaults('rotation', default_rotation)
+
+
+
     def configure(self):
 
         for i, (translations_i, rotations_i) in enumerate(zip(self.indices_translations, self.indices_rotations)):
@@ -37,16 +60,34 @@ class Components(Group):
                           src_indices=rotations_i,
                           flat_src_indices=True)
 
+            self.promotes(f'comp_{i}',
+                          inputs=['sphere_positions'],
+                          src_indices=self.indices_spheres[i],
+                          flat_src_indices=True)
+
+            self.promotes(f'comp_{i}',
+                            inputs=['sphere_radii'],
+                            src_indices=self.indices_radii[i],
+                            flat_src_indices=True)
+
+            # self.promotes(f'comp_{i}',
+            #               inputs=['port_positions'],
+            #               src_indices=self.indices_ports[i],
+            #               flat_src_indices=True)
+
+
+
     def create_components(self, input_dict):
         components = []
         for component in input_dict['components'].keys():
             name = input_dict['components'][component]['name']
             spheres_filepath = input_dict['components'][component]['spheres_filepath']
+            n_spheres = input_dict['components'][component]['n_spheres']
             port_positions = input_dict['components'][component]['port_positions']
             color = input_dict['components'][component]['color']
 
-            component_object = Component(name=name, spheres_filepath=spheres_filepath, port_positions=port_positions,
-                                         color=color)
+            component_object = Component(name=name, spheres_filepath=spheres_filepath, n_spheres=n_spheres,
+                                         port_positions=port_positions, color=color)
 
             components.append(component_object)
 
@@ -66,6 +107,28 @@ class Components(Group):
         indices_rotations = [indices.flatten().tolist() for indices in indices_rotations]
 
         return indices_translations, indices_rotations
+
+    def get_sphere_indices(self, input_dict):
+        # FIXME (-1,3) not (-1, 1)?
+
+        indices_spheres = []
+        i = 0
+        for component in input_dict['components'].keys():
+            n_spheres = input_dict['components'][component]['n_spheres']
+            n_variables = n_spheres * 3  # 3 for x, y, z
+            indices_component_spheres = [j for j in range(i, i + n_variables)]
+            indices_spheres.append(indices_component_spheres)
+            i += n_spheres
+
+        indices_radii = []
+        i=0
+        for component in input_dict['components'].keys():
+            n_spheres = input_dict['components'][component]['n_spheres']
+            indices_component_radii = [j for j in range(i, i + n_spheres)]
+            indices_radii.append(indices_component_radii)
+            i += n_spheres
+
+        return indices_spheres, indices_radii
 
 
     #
@@ -87,6 +150,7 @@ class Component(ExplicitComponent):
     def initialize(self):
         self.options.declare('name', types=str)
         self.options.declare('spheres_filepath', types=str)
+        self.options.declare('n_spheres', types=int)
         self.options.declare('port_positions', types=list)
         self.options.declare('color', types=str)
 
@@ -97,11 +161,13 @@ class Component(ExplicitComponent):
 
         self.name = self.options['name']
         self.spheres_filepath = self.options['spheres_filepath']
+        self.n_spheres = self.options['n_spheres']
         self.port_positions = self.options['port_positions']
         self.color = self.options['color']
 
         # Get the options
-        initial_sphere_positions, initial_sphere_radii = read_xyzr_file(self.spheres_filepath)
+        initial_sphere_positions, initial_sphere_radii = read_xyzr_file(self.spheres_filepath, num_spheres=self.n_spheres)
+        assert len(initial_sphere_positions) == self.n_spheres
         # initial_port_positions = torch.tensor(self.port_positions)
 
         # Define the input shapes
