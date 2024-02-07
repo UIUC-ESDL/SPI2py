@@ -4,15 +4,10 @@ Author:     Chad Peterson
 """
 import numpy as np
 import openmdao.api as om
-# from SPI2py import Component, Components, Interconnect, System
-# from SPI2py.group_model.utilities.visualization import plot
 from SPI2py.API.Components import Component, Components
 from SPI2py.API.Interconnects import Interconnect
 from SPI2py.API.Systems import System
-from SPI2py.models.geometry.finite_sphere_method import read_xyzr_file
-
 from SPI2py.models.utilities.visualization import plot_problem
-
 from SPI2py.models.utilities.inputs import read_input_file
 
 # Read the input file
@@ -28,18 +23,8 @@ model.add_subsystem('components', Components(input_dict=input_file))
 # model.add_subsystem('system', System(num_components=2))
 
 
-# # # Initialize interconnects
-# # c1a_c1b = Interconnect(num_segments=3, num_spheres_per_segment=20, radius=0.1, color='black')
-# # c1b_c2b = Interconnect(num_segments=3, num_spheres_per_segment=20, radius=0.1, color='black')
-# # c2b_c3b = Interconnect(num_segments=3, num_spheres_per_segment=20, radius=0.1, color='black')
-# # c3b_c4b = Interconnect(num_segments=3, num_spheres_per_segment=20, radius=0.1, color='black')
-# # c4b_c5 = Interconnect(num_segments=3, num_spheres_per_segment=20, radius=0.1, color='black')
-# # c5_c6 = Interconnect(num_segments=3, num_spheres_per_segment=20, radius=0.1, color='black')
-# # c6_c4a = Interconnect(num_segments=3, num_spheres_per_segment=20, radius=0.1, color='black')
-# # c4a_c3a = Interconnect(num_segments=3, num_spheres_per_segment=20, radius=0.1, color='black')
-# # c3a_c2a = Interconnect(num_segments=3, num_spheres_per_segment=20, radius=0.1, color='black')
-# # c2a_c1a = Interconnect(num_segments=3, num_spheres_per_segment=20, radius=0.1, color='black')
-#
+# Initialize interconnects
+
 # # Add interconnects to the system
 # # model.interconnects.add_subsystem('c1a_c1b', c1a_c1b)
 # # model.interconnects.add_subsystem('c1b_c2b', c1b_c2b)

@@ -13,29 +13,40 @@ class Components(Group):
 
     def setup(self):
 
-        input_dict = self.options['input_dict']
-
-        # Create the Component Objects
-        components = self.create_components(input_dict)
-
-        # Add the Component Objects to the Group
-        self.indices_translations, self.indices_rotations = self.get_src_indices(len(components))
-        self.indices_spheres, self.indices_radii = self.get_sphere_indices(input_dict)
-
-        for i, component in enumerate(components):
+        # Create the components
+        components_dict = self.options['input_dict']['components']
+        for i, key in enumerate(components_dict.keys()):
+            component = self._create_component(components_dict, key)
             self.add_subsystem(f'comp_{i}', component)
 
 
+    def configure(self):
+
+        components_dict = self.options['input_dict']['components']
+
+        # Determine input/output shapes
+
+        # Get the components
+        components = list(components_dict.keys())
         n_components = len(components)
+        n_spheres = [components_dict[component]['n_spheres'] for component in components]
+        total_n_spheres = sum(n_spheres)
+
+        # Add the Component Objects to the Group
+        indices_translations, indices_rotations = self._get_src_indices(n_components)
+        indices_spheres, indices_radii = self._get_sphere_indices(n_spheres)
+
+
 
         # Set the default state variable inputs
-        default_sphere_positions = 1
-        default_sphere_radii = 1
-        default_port_positions = 1
+        default_sphere_positions = np.zeros((total_n_spheres, 3))
+        default_sphere_radii = np.zeros((total_n_spheres, 1))
+        # default_port_positions = 1
 
         self.set_input_defaults('sphere_positions', default_sphere_positions)
         self.set_input_defaults('sphere_radii', default_sphere_radii)
-        self.set_input_defaults('port_positions', default_port_positions)
+        # self.set_input_defaults('port_positions', default_port_positions)
+
 
         # Set the default design variable inputs
         default_translation = np.zeros((n_components, 3))
@@ -45,55 +56,56 @@ class Components(Group):
         self.set_input_defaults('rotation', default_rotation)
 
 
+        for component, translations_i, rotations_i, spheres_i, radii_i in zip(components, indices_translations, indices_rotations, indices_spheres, indices_radii):
 
-    def configure(self):
-
-        for i, (translations_i, rotations_i) in enumerate(zip(self.indices_translations, self.indices_rotations)):
-
-            self.promotes(f'comp_{i}',
+            self.promotes(f'comp_{component}',
                           inputs=['translation'],
                           src_indices=translations_i,
                           flat_src_indices=True)
 
-            self.promotes(f'comp_{i}',
+            self.promotes(f'comp_{component}',
                           inputs=['rotation'],
                           src_indices=rotations_i,
                           flat_src_indices=True)
 
-            self.promotes(f'comp_{i}',
+            self.promotes(f'comp_{component}',
                           inputs=['sphere_positions'],
-                          src_indices=self.indices_spheres[i],
+                          src_indices=spheres_i,
                           flat_src_indices=True)
 
-            self.promotes(f'comp_{i}',
+            self.promotes(f'comp_{component}',
                             inputs=['sphere_radii'],
-                            src_indices=self.indices_radii[i],
+                            src_indices=radii_i,
                             flat_src_indices=True)
 
-            # self.promotes(f'comp_{i}',
+            # self.promotes(f'comp_{component}',
             #               inputs=['port_positions'],
             #               src_indices=self.indices_ports[i],
             #               flat_src_indices=True)
 
 
 
-    def create_components(self, input_dict):
-        components = []
-        for component in input_dict['components'].keys():
-            name = input_dict['components'][component]['name']
-            spheres_filepath = input_dict['components'][component]['spheres_filepath']
-            n_spheres = input_dict['components'][component]['n_spheres']
-            port_positions = input_dict['components'][component]['port_positions']
-            color = input_dict['components'][component]['color']
+    @staticmethod
+    def _create_component(components_dict, key):
 
-            component_object = Component(name=name, spheres_filepath=spheres_filepath, n_spheres=n_spheres,
-                                         port_positions=port_positions, color=color)
+        comp_name = components_dict[key]['name']
+        comp_spheres_filepath = components_dict[key]['spheres_filepath']
+        comp_n_spheres = components_dict[key]['n_spheres']
+        comp_port_positions = components_dict[key]['port_positions']
+        comp_color = components_dict[key]['color']
 
-            components.append(component_object)
+        comp_sphere_positions, comp_sphere_radii = read_xyzr_file(comp_spheres_filepath, num_spheres=comp_n_spheres)
+        # FIXME Make radii (-1, 1) not (-1,)
+        component = Component(name=comp_name,
+                              color=comp_color,
+                              sphere_positions=comp_sphere_positions,
+                              sphere_radii=comp_sphere_radii,
+                              port_positions=comp_port_positions)
 
-        return components
+        return component
 
-    def get_src_indices(self, n_components):
+    @staticmethod
+    def _get_src_indices(n_components):
 
         translations_dof = np.arange(3 * n_components).reshape(-1, 3)
         rotations_dof = np.arange(3 * n_components).reshape(-1, 3)
@@ -108,25 +120,25 @@ class Components(Group):
 
         return indices_translations, indices_rotations
 
-    def get_sphere_indices(self, input_dict):
+    @staticmethod
+    def _get_sphere_indices(n_spheres):
         # FIXME (-1,3) not (-1, 1)?
 
         indices_spheres = []
         i = 0
-        for component in input_dict['components'].keys():
-            n_spheres = input_dict['components'][component]['n_spheres']
-            n_variables = n_spheres * 3  # 3 for x, y, z
+        for n_sphere in n_spheres:
+            n_variables = 3 * n_sphere  # 3 for x, y, z
             indices_component_spheres = [j for j in range(i, i + n_variables)]
             indices_spheres.append(indices_component_spheres)
-            i += n_spheres
+            i += n_sphere
 
         indices_radii = []
-        i=0
-        for component in input_dict['components'].keys():
-            n_spheres = input_dict['components'][component]['n_spheres']
-            indices_component_radii = [j for j in range(i, i + n_spheres)]
+        i = 0
+        for n_sphere in n_spheres:
+            n_variables = n_sphere  # 1 for radius
+            indices_component_radii = [j for j in range(i, i + n_variables)]
             indices_radii.append(indices_component_radii)
-            i += n_spheres
+            i += n_sphere
 
         return indices_spheres, indices_radii
 
@@ -149,10 +161,10 @@ class Component(ExplicitComponent):
 
     def initialize(self):
         self.options.declare('name', types=str)
-        self.options.declare('spheres_filepath', types=str)
-        self.options.declare('n_spheres', types=int)
-        self.options.declare('port_positions', types=list)
         self.options.declare('color', types=str)
+        self.options.declare('sphere_positions', types=list)
+        self.options.declare('sphere_radii', types=list)
+        self.options.declare('port_positions', types=list)
 
         # self.design_var_info = {'name':'translation', 'ref':1, 'ref0':0}
         # self.design_var_info = {'name':'rotation', 'ref':2*torch.pi, 'ref0':0}
@@ -160,27 +172,31 @@ class Component(ExplicitComponent):
     def setup(self):
 
         self.name = self.options['name']
-        self.spheres_filepath = self.options['spheres_filepath']
-        self.n_spheres = self.options['n_spheres']
-        self.port_positions = self.options['port_positions']
         self.color = self.options['color']
 
-        # Get the options
-        initial_sphere_positions, initial_sphere_radii = read_xyzr_file(self.spheres_filepath, num_spheres=self.n_spheres)
-        assert len(initial_sphere_positions) == self.n_spheres
-        # initial_port_positions = torch.tensor(self.port_positions)
+        sphere_positions = self.options['sphere_positions']
+        sphere_radii = self.options['sphere_radii']
+        port_positions = self.options['port_positions']
+
+        # Convert the lists to numpy arrays
+        sphere_positions = np.array(sphere_positions)
+        sphere_radii = np.array(sphere_radii)
+        port_positions = np.array(port_positions)
+
+        default_translation = [0.0, 0.0, 0.0]
+        default_rotation = [0.0, 0.0, 0.0]
 
         # Define the input shapes
-        self.add_input('sphere_positions', val=initial_sphere_positions)
-        self.add_input('sphere_radii', val=initial_sphere_radii)
-        # self.add_input('port_positions', val=initial_port_positions)
-        self.add_input('translation', val=[0.0, 0.0, 0.0])
-        self.add_input('rotation', val=[0.0, 0.0, 0.0])
+        self.add_input('sphere_positions', val=sphere_positions)
+        self.add_input('sphere_radii', val=sphere_radii)
+        self.add_input('port_positions', val=port_positions)
+        self.add_input('translation', val=default_translation)
+        self.add_input('rotation', val=default_rotation)
 
         # Define the outputs
-        self.add_output('transformed_sphere_positions', val=initial_sphere_positions)
-        self.add_output('transformed_sphere_radii', val=initial_sphere_radii)
-        # self.add_output('transformed_port_positions', val=initial_port_positions)
+        self.add_output('transformed_sphere_positions', val=sphere_positions)
+        self.add_output('transformed_sphere_radii', val=sphere_radii)
+        # self.add_output('transformed_port_positions', val=port_positions)
 
     def setup_partials(self):
         self.declare_partials('transformed_sphere_positions', ['translation', 'rotation'])
