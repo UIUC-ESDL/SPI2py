@@ -44,24 +44,8 @@ model.add_subsystem('components', Components(input_dict=input_file))
 # model.connect('components.radiator_and_ion_exchanger_1a.transformed_sphere_radii', 'system.comp_0_sphere_radii')
 # model.connect('components.radiator_and_ion_exchanger_1b.transformed_sphere_positions', 'system.comp_1_sphere_positions')
 # model.connect('components.radiator_and_ion_exchanger_1b.transformed_sphere_radii', 'system.comp_1_sphere_radii')
-#
-# # model.connect('components.pump_2a.sphere_positions', 'system.comp_2_sphere_positions')
-# # model.connect('components.pump_2a.sphere_radii', 'system.comp_2_sphere_radii')
-# # model.connect('components.pump_2b.sphere_positions', 'system.comp_3_sphere_positions')
-# # model.connect('components.pump_2b.sphere_radii', 'system.comp_3_sphere_radii')
-# # model.connect('components.particle_filter_3a.sphere_positions', 'system.comp_4_sphere_positions')
-# # model.connect('components.particle_filter_3a.sphere_radii', 'system.comp_4_sphere_radii')
-# # model.connect('components.particle_filter_3b.sphere_positions', 'system.comp_5_sphere_positions')
-# # model.connect('components.particle_filter_3b.sphere_radii', 'system.comp_5_sphere_radii')
-# # model.connect('components.fuel_cell_Stack_4a.sphere_positions', 'system.comp_6_sphere_positions')
-# # model.connect('components.fuel_cell_Stack_4a.sphere_radii', 'system.comp_6_sphere_radii')
-# # model.connect('components.fuel_cell_Stack_4b.sphere_positions', 'system.comp_7_sphere_positions')
-# # model.connect('components.fuel_cell_Stack_4b.sphere_radii', 'system.comp_7_sphere_radii')
-# # model.connect('components.WEG_heater_and_pump_5.sphere_positions', 'system.comp_8_sphere_positions')
-# # model.connect('components.WEG_heater_and_pump_5.sphere_radii', 'system.comp_8_sphere_radii')
-# # model.connect('components.heater_core_6.sphere_positions', 'system.comp_9_sphere_positions')
-# # model.connect('components.heater_core_6.sphere_radii', 'system.comp_9_sphere_radii')
-#
+
+
 # # Connect the interconnects to the system
 # # model.connect('components.radiator_and_ion_exchanger_1a.port_positions', 'interconnects.c1a_c1b.start_point', src_indices=om.slicer[1, :])
 # # model.connect('components.radiator_and_ion_exchanger_1b.port_positions', 'interconnects.c1a_c1b.end_point', src_indices=om.slicer[0, :])
@@ -114,6 +98,9 @@ model.add_subsystem('components', Components(input_dict=input_file))
 prob.setup()
 
 # # Configure the system
+
+prob.set_val('components.translation', [[2, 7, 0], [5.5, 7, 0]])
+
 # prob.set_val('components.radiator_and_ion_exchanger_1a.translation', [2, 7, 0])
 # prob.set_val('components.radiator_and_ion_exchanger_1b.translation', [5.5, 7, 0])
 # # prob.set_val('components.pump_2a.translation', [0.5, 6, 0])

@@ -22,11 +22,10 @@ class Components(Group):
         for i, key in enumerate(components_dict.keys()):
             name = components_dict[key]['name']
             spheres_filepath = components_dict[key]['spheres_filepath']
-            n_spheres = components_dict[key]['n_spheres']
             port_positions = components_dict[key]['port_positions']
             color = components_dict[key]['color']
 
-            sphere_positions, sphere_radii = read_xyzr_file(spheres_filepath, num_spheres=n_spheres)
+            sphere_positions, sphere_radii = read_xyzr_file(spheres_filepath)
 
             component = Component(name=name,
                                   color=color,
@@ -47,24 +46,25 @@ class Components(Group):
         # TODO Don't override default positions from Component
         components_dict = self.options['input_dict']['components']
 
+        # Get the default sphere positions and radii from each component setup
+        sphere_positions = np.vstack(self.aggregate_sphere_positions)
+        sphere_radii = np.hstack(self.aggregate_sphere_radii)
+        # default_port_positions = np.vstack(self.aggregate_port_positins)
+
         # Determine input/output shapes
 
         # Get the components
         components = list(components_dict.keys())
         n_components = len(components)
-        n_spheres = [components_dict[component]['n_spheres'] for component in components]
-        total_n_spheres = sum(n_spheres)
+        n_spheres = [len(sphere_positions) for sphere_positions in self.aggregate_sphere_positions]
 
         # Add the Component Objects to the Group
         indices_translations, indices_rotations = self._get_src_indices(n_components)
         indices_spheres, indices_radii = self._get_sphere_indices(n_spheres)
 
-        # Get the default sphere positions and radii from each component setup
-        sphere_positions = np.vstack(self.aggregate_sphere_positions)
-        sphere_radii = np.hstack(self.aggregate_sphere_radii)
-        # default_port_positions = np.vstack(self.aggregate_port_positins)
-        self.set_input_defaults('sphere_positions', sphere_positions)
-        self.set_input_defaults('sphere_radii', sphere_radii)
+
+        # self.set_input_defaults('sphere_positions', sphere_positions)
+        # self.set_input_defaults('sphere_radii', sphere_radii)
         # self.set_input_defaults('port_positions', default_port_positions)
 
 
@@ -88,15 +88,15 @@ class Components(Group):
                           src_indices=rotations_i,
                           flat_src_indices=True)
 
-            self.promotes(f'comp_{component}',
-                          inputs=['sphere_positions'],
-                          src_indices=spheres_i,
-                          flat_src_indices=True)
-
-            self.promotes(f'comp_{component}',
-                            inputs=['sphere_radii'],
-                            src_indices=radii_i,
-                            flat_src_indices=True)
+            # self.promotes(f'comp_{component}',
+            #               inputs=['sphere_positions'],
+            #               src_indices=spheres_i,
+            #               flat_src_indices=True)
+            #
+            # self.promotes(f'comp_{component}',
+            #                 inputs=['sphere_radii'],
+            #                 src_indices=radii_i,
+            #                 flat_src_indices=True)
 
             # self.promotes(f'comp_{component}',
             #               inputs=['port_positions'],

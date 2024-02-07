@@ -1,70 +1,60 @@
 [components.0]
 name = 'radiator_and_ion_exchanger_1a'
 spheres_filepath='components/radiator_and_ion_exchanger.xyzr'
-n_spheres=100
 port_positions = [[-1.475, 0, 0], [1.475, 0, 0]]
 color='purple'
 
 [components.1]
 name = 'radiator_and_ion_exchanger_1b'
 spheres_filepath='components/radiator_and_ion_exchanger.xyzr'
-n_spheres=100
 port_positions = [[-1.475, 0, 0], [1.475, 0, 0]]
 color='purple'
 
 #[components.2]
 #name = 'pump_2a'
 #spheres_filepath='components/pump.xyzr'
-#n_spheres=100
 #port_positions = [[-1.475, 0, 0], [1.475, 0, 0]]
 #color='blue'
 #
 #[components.3]
 #name = 'pump_2b'
 #spheres_filepath='components/pump.xyzr'
-#n_spheres=100
 #port_positions = [[0, 0.275, 0], [0, -0.275, 0]]
 #color='blue'
 #
 #[components.4]
 #name = 'particle_filter_3a'
 #spheres_filepath='components/particle_filter.xyzr'
-#n_spheres=100
 #port_positions = [[0, 0.215, 0], [0, -0.215, 0]]
 #color='yellow'
 #
 #[components.5]
 #name = 'particle_filter_3b'
 #spheres_filepath='components/particle_filter.xyzr'
-#n_spheres=100
 #port_positions = [[0, 0.215, 0], [0, -0.215, 0]]
 #color='yellow'
 #
 #[components.6]
 #name = 'fuel_cell_stack_4a'
 #spheres_filepath='components/fuel_cell_stack.xyzr'
-#n_spheres=100
 #port_positions = [[0, 0.85, 0], [0, -0.85, 0]]
 #color='green'
 #
 #[components.7]
 #name = 'fuel_cell_stack_4b'
 #spheres_filepath='components/fuel_cell_stack.xyzr'
-#n_spheres=100
 #port_positions = [[0, 0.85, 0], [0, -0.85, 0]]
 #color='green'
 #
 #[components.8]
 #name = 'WEG_heater_and_pump_5'
 #spheres_filepath='components/WEG_heater_and_pump.xyzr'
-#n_spheres=100
 #port_positions = [[0, 0.9665, 0], [-0.8775, 0, 0]]
 #color='gray'
 #
 #[components.9]
 #name = 'heater_core_6'
 #spheres_filepath='components/heater_core.xyzr'
-#n_spheres=100
 #port_positions = [[0, -0.7225, 0], [0, 0.7225, 0]]
 #color='red'
 
