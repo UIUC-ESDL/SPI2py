@@ -28,23 +28,26 @@ class VerticalStackComp(ExplicitComponent):
         self.add_output('stacked_output', shape=(total_rows, column_size))
 
         # Declare partials for each input-output pair
-        start_idx = 0
-        for i, size in enumerate(input_sizes):
-            # rows: Each input contributes size*column_size elements in the output
-            rows = np.arange(start_idx, start_idx + size * column_size)
+        # start_idx = 0
+        # for i, size in enumerate(input_sizes):
+        #     # rows: Each input contributes size*column_size elements in the output
+        #     rows = np.arange(start_idx, start_idx + size * column_size)
+        #
+        #     # cols: Need to ensure cols aligns with how OpenMDAO flattens the inputs for each partial
+        #     # For a single input, OpenMDAO flattens it as [row1_col1, row1_col2, ..., row2_col1, row2_col2, ...]
+        #     # Therefore, we need to create a pattern that matches this flattening
+        #     if column_size == 1:
+        #         # For (n, 1) inputs, it's a direct mapping
+        #         cols = np.arange(size)
+        #     elif column_size == 3:
+        #         # For (n, 3) inputs, repeat each index 3 times to account for each column
+        #         cols = np.repeat(np.arange(size), column_size)
+        #
+        #     self.declare_partials('stacked_output', f'input_{i}', rows=rows, cols=cols, val=1.0)
+        #     start_idx += size * column_size
 
-            # cols: Need to ensure cols aligns with how OpenMDAO flattens the inputs for each partial
-            # For a single input, OpenMDAO flattens it as [row1_col1, row1_col2, ..., row2_col1, row2_col2, ...]
-            # Therefore, we need to create a pattern that matches this flattening
-            if column_size == 1:
-                # For (n, 1) inputs, it's a direct mapping
-                cols = np.arange(size)
-            elif column_size == 3:
-                # For (n, 3) inputs, repeat each index 3 times to account for each column
-                cols = np.repeat(np.arange(size), column_size)
-
-            self.declare_partials('stacked_output', f'input_{i}', rows=rows, cols=cols, val=1.0)
-            start_idx += size * column_size
+    def setup_partials(self):
+        self.declare_partials('*', '*', method='fd')
 
     def compute(self, inputs, outputs):
         # Stack inputs vertically
@@ -73,8 +76,9 @@ class System(ExplicitComponent):
         # self.add_output('constraints', val=torch.zeros(1))
 
     def setup_partials(self):
-        self.declare_partials('bounding_box_volume', 'transformed_sphere_positions')
-        self.declare_partials('bounding_box_volume', 'transformed_sphere_radii')
+        self.declare_partials('*', '*', method='fd')
+        # self.declare_partials('bounding_box_volume', 'transformed_sphere_positions')
+        # self.declare_partials('bounding_box_volume', 'transformed_sphere_radii')
 
         # for i in range(self.options['num_components']):
         #     self.declare_partials('bounding_box_volume', f'comp_{i}_sphere_positions')
@@ -105,24 +109,26 @@ class System(ExplicitComponent):
         # outputs['constraints'] = constraints
 
     def compute_partials(self, inputs, partials):
-
-        # Get the input variables
-        sphere_positions = inputs['transformed_sphere_positions']
-        sphere_radii = inputs['transformed_sphere_radii']
-
-        # Convert the inputs to torch tensors
-        sphere_positions = torch.tensor(sphere_positions, dtype=torch.float64, requires_grad=True)
-        sphere_radii = torch.tensor(sphere_radii, dtype=torch.float64, requires_grad=True)  # TODO Remove True
-
-        # Calculate the bounding box volume
-        jac_bb_volume = jacobian(self.compute_bounding_box_volume, (sphere_positions, sphere_radii))
-
-        # Convert the outputs to numpy arrays
-        jac_bb_volume = jac_bb_volume.detach().numpy()
-
-        # Set the outputs
-        partials['bounding_box_volume', 'transformed_sphere_positions'] = jac_bb_volume[0]
-        partials['bounding_box_volume', 'transformed_sphere_radii'] = jac_bb_volume[1]
+        pass
+        # # Get the input variables
+        # sphere_positions = inputs['transformed_sphere_positions']
+        # sphere_radii = inputs['transformed_sphere_radii']
+        #
+        # # Convert the inputs to torch tensors
+        # sphere_positions = torch.tensor(sphere_positions, dtype=torch.float64, requires_grad=True)
+        # sphere_radii = torch.tensor(sphere_radii, dtype=torch.float64, requires_grad=True)  # TODO Remove True
+        #
+        # # Calculate the bounding box volume
+        # jac_bb_volume = jacobian(self.compute_bounding_box_volume, (sphere_positions, sphere_radii))
+        #
+        # # Convert the outputs to numpy arrays
+        # # jac_bb_volume = jac_bb_volume.detach().numpy()
+        # jac_bbv_positions = jac_bb_volume[0].detach().numpy()
+        # jac_bbv_radii = jac_bb_volume[1].detach().numpy()
+        #
+        # # Set the outputs
+        # partials['bounding_box_volume', 'transformed_sphere_positions'] = jac_bbv_positions
+        # partials['bounding_box_volume', 'transformed_sphere_radii'] = jac_bbv_radii
 
 
     @staticmethod
