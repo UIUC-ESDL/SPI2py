@@ -122,8 +122,8 @@ prob.model.add_objective('system.bounding_box_volume')
 
 prob.driver = om.ScipyOptimizeDriver()
 prob.driver.options['maxiter'] = 15
-prob.driver.options['optimizer'] = 'SLSQP'  #'BFGS'
-prob.driver.options['tol'] = 1e-9
+prob.driver.options['optimizer'] = 'SLSQP'
+prob.driver.options['tol'] = 1e-8
 
 # Set the initial state
 prob.setup()

@@ -156,7 +156,7 @@ class System(ExplicitComponent):
     @staticmethod
     def compute_bounding_box_volume(sphere_positions, sphere_radii, include_bounds=False):
 
-        # bb_bounds = smooth_bounding_box_bounds(sphere_positions, sphere_radii)
+        bb_bounds_s = smooth_bounding_box_bounds(sphere_positions, sphere_radii)
         bb_bounds = bounding_box_bounds(sphere_positions, sphere_radii)
         bb_volume = bounding_box_volume(bb_bounds)
 
