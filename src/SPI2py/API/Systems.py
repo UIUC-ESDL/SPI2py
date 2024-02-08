@@ -3,7 +3,7 @@ import torch
 from torch.autograd.functional import jacobian
 from openmdao.api import ExplicitComponent
 
-from ..models.geometry.bounding_box_volume import bounding_box_bounds, bounding_box_volume
+from ..models.geometry.bounding_box_volume import bounding_box_bounds, bounding_box_volume, smooth_bounding_box_bounds
 # from ..models.kinematics.distance_calculations import distances_points_points
 
 
@@ -72,11 +72,13 @@ class System(ExplicitComponent):
         # self.add_input('transformed_sphere_positions', shape_by_conn=True)
         # self.add_input('transformed_sphere_radii', shape_by_conn=True)
         self.add_input('comp_0_transformed_sphere_positions', shape_by_conn=True)
+        self.add_input('comp_0_transformed_sphere_radii', shape_by_conn=True)
         self.add_input('comp_1_transformed_sphere_positions', shape_by_conn=True)
+        self.add_input('comp_1_transformed_sphere_radii', shape_by_conn=True)
 
-        self.add_output('distance')
-        # self.add_output('bounding_box_volume', val=1.0)
-        # self.add_output('bounding_box_bounds', shape=(6,))
+        # self.add_output('distance')
+        self.add_output('bounding_box_volume', val=1.0)
+        self.add_output('bounding_box_bounds', shape=(6,))
         # self.add_output('constraints', val=torch.zeros(1))
 
     def setup_partials(self):
@@ -94,29 +96,37 @@ class System(ExplicitComponent):
         # sphere_positions = inputs['transformed_sphere_positions']
         # sphere_radii = inputs['transformed_sphere_radii']
         comp_0_transformed_sphere_positions = inputs['comp_0_transformed_sphere_positions']
+        comp_0_transformed_sphere_radii = inputs['comp_0_transformed_sphere_radii']
         comp_1_transformed_sphere_positions = inputs['comp_1_transformed_sphere_positions']
+        comp_1_transformed_sphere_radii = inputs['comp_1_transformed_sphere_radii']
 
         # Convert the inputs to torch tensors
         # sphere_positions = torch.tensor(sphere_positions, dtype=torch.float64)
         # sphere_radii = torch.tensor(sphere_radii, dtype=torch.float64)
         comp_0_transformed_sphere_positions = torch.tensor(comp_0_transformed_sphere_positions, dtype=torch.float64)
         comp_1_transformed_sphere_positions = torch.tensor(comp_1_transformed_sphere_positions, dtype=torch.float64)
+        comp_0_transformed_sphere_radii = torch.tensor(comp_0_transformed_sphere_radii, dtype=torch.float64)
+        comp_1_transformed_sphere_radii = torch.tensor(comp_1_transformed_sphere_radii, dtype=torch.float64)
 
         # Calculate the bounding box volume
         # bb_bounds = bounding_box_bounds(sphere_positions, sphere_radii)
         # bb_volume = self.compute_bounding_box_volume(sphere_positions, sphere_radii)
-        objective = self.sum_of_pairwise_distances(comp_0_transformed_sphere_positions, comp_1_transformed_sphere_positions)
+        # objective = self.sum_of_pairwise_distances(comp_0_transformed_sphere_positions, comp_1_transformed_sphere_positions)
+        bb_volume, bb_bounds = self.compute_bounding_box_volume(comp_0_transformed_sphere_positions,
+                                                     comp_0_transformed_sphere_radii,
+                                                     comp_1_transformed_sphere_positions,
+                                                     comp_1_transformed_sphere_radii)
 
         # Convert the outputs to numpy arrays
-        # bb_bounds = bb_bounds.detach().numpy()
-        # bb_volume = bb_volume.detach().numpy()
-        objective = objective.detach().numpy()
+        bb_bounds = bb_bounds.detach().numpy()
+        bb_volume = bb_volume.detach().numpy()
+        # objective = objective.detach().numpy()
 
         # Set the outputs
-        # outputs['bounding_box_bounds'] = bb_bounds
-        # outputs['bounding_box_volume'] = bb_volume
+        outputs['bounding_box_bounds'] = bb_bounds
+        outputs['bounding_box_volume'] = bb_volume
         # outputs['constraints'] = constraints
-        outputs['distance'] = objective
+        # outputs['distance'] = objective
 
     def compute_partials(self, inputs, partials):
         pass
@@ -140,39 +150,51 @@ class System(ExplicitComponent):
         # partials['bounding_box_volume', 'transformed_sphere_positions'] = jac_bbv_positions
         # partials['bounding_box_volume', 'transformed_sphere_radii'] = jac_bbv_radii
 
+    # @staticmethod
+    # def sum_of_pairwise_distances(A, B):
+    #     # A is (n, 3), B is (m, 3)
+    #     # Expand A and B to make their shapes compatible for broadcasting
+    #     A_expanded = A.unsqueeze(1)  # Shape becomes (n, 1, 3)
+    #     B_expanded = B.unsqueeze(0)  # Shape becomes (1, m, 3)
+    #
+    #     # Compute the squared differences using broadcasting, resulting in a (n, m, 3) tensor
+    #     squared_diffs = (A_expanded - B_expanded) ** 2
+    #
+    #     # Sum the squared differences along the last dimension to get squared Euclidean distances, resulting in a (n, m) tensor
+    #     squared_dists = torch.sum(squared_diffs, dim=2)
+    #
+    #     # Take the square root to get Euclidean distances and sum all the distances
+    #     sum_dists = torch.sum(torch.sqrt(squared_dists))
+    #
+    #     return sum_dists
+
+
+    # @staticmethod
+    # def compute_distance(sphere_positions_0, sphere_positions_1):
+    #     return torch.norm(sphere_positions_0 - sphere_positions_1, dim=1).max()
+
+    # @staticmethod
+    # def compute_bounding_box_volume(sphere_positions, sphere_radii, include_bounds=False):
+    #
+    #     # bb_bounds = smooth_bounding_box_bounds(sphere_positions, sphere_radii)
+    #     bb_bounds = bounding_box_bounds(sphere_positions, sphere_radii)
+    #     bb_volume = bounding_box_volume(bb_bounds)
+    #
+    #     if include_bounds:
+    #         return bb_volume, bb_bounds
+    #     else:
+    #         return bb_volume
+
     @staticmethod
-    def sum_of_pairwise_distances(A, B):
-        # A is (n, 3), B is (m, 3)
-        # Expand A and B to make their shapes compatible for broadcasting
-        A_expanded = A.unsqueeze(1)  # Shape becomes (n, 1, 3)
-        B_expanded = B.unsqueeze(0)  # Shape becomes (1, m, 3)
+    def compute_bounding_box_volume(sphere_positions_0, sphere_radii_0, sphere_positions_1, sphere_radii_1):
 
-        # Compute the squared differences using broadcasting, resulting in a (n, m, 3) tensor
-        squared_diffs = (A_expanded - B_expanded) ** 2
-
-        # Sum the squared differences along the last dimension to get squared Euclidean distances, resulting in a (n, m) tensor
-        squared_dists = torch.sum(squared_diffs, dim=2)
-
-        # Take the square root to get Euclidean distances and sum all the distances
-        sum_dists = torch.sum(torch.sqrt(squared_dists))
-
-        return sum_dists
-
-
-    @staticmethod
-    def compute_distance(sphere_positions_0, sphere_positions_1):
-        return torch.norm(sphere_positions_0 - sphere_positions_1, dim=1).max()
-
-    @staticmethod
-    def compute_bounding_box_volume(sphere_positions, sphere_radii, include_bounds=False):
-
-        bb_bounds = bounding_box_bounds(sphere_positions, sphere_radii)
+        # bb_bounds = smooth_bounding_box_bounds(sphere_positions, sphere_radii)
+        bb_bounds = bounding_box_bounds(sphere_positions_0, sphere_radii_0, sphere_positions_1, sphere_radii_1)
         bb_volume = bounding_box_volume(bb_bounds)
 
-        if include_bounds:
-            return bb_volume, bb_bounds
-        else:
-            return bb_volume
+
+        return bb_volume, bb_bounds
+
 
 
 # class _System:

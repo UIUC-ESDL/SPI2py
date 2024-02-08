@@ -40,9 +40,13 @@ model.add_subsystem('system', System(num_components=2))
 # model.connect('vstack_sphere_positions.stacked_output', 'system.transformed_sphere_positions')
 # model.connect('vstack_sphere_radii.stacked_output', 'system.transformed_sphere_radii')
 
+# model.connect('components.comp_0.transformed_sphere_positions', 'system.comp_0_transformed_sphere_positions')
+# model.connect('components.comp_1.transformed_sphere_positions', 'system.comp_1_transformed_sphere_positions')
+
 model.connect('components.comp_0.transformed_sphere_positions', 'system.comp_0_transformed_sphere_positions')
 model.connect('components.comp_1.transformed_sphere_positions', 'system.comp_1_transformed_sphere_positions')
-
+model.connect('components.comp_0.transformed_sphere_radii', 'system.comp_0_transformed_sphere_radii')
+model.connect('components.comp_1.transformed_sphere_radii', 'system.comp_1_transformed_sphere_radii')
 
 
 # Initialize interconnects
@@ -93,9 +97,9 @@ model.connect('components.comp_1.transformed_sphere_positions', 'system.comp_1_t
 # # Define the variables, objective, and constraints
 #
 model.add_design_var('components.comp_0.translation', ref=10)
-# model.add_design_var('components.radiator_and_ion_exchanger_1a.rotation', ref=2*3.14159)
+model.add_design_var('components.comp_0.rotation', ref=2*3.14159)
 model.add_design_var('components.comp_1.translation', ref=10)
-# model.add_design_var('components.radiator_and_ion_exchanger_1b.rotation', ref=2*3.14159)
+model.add_design_var('components.comp_1.rotation', ref=2*3.14159)
 
 # # prob.model.add_design_var('components.pump_2a.translation', ref=10)
 # # prob.model.add_design_var('components.pump_2b.translation', ref=10)
@@ -106,8 +110,8 @@ model.add_design_var('components.comp_1.translation', ref=10)
 # # prob.model.add_design_var('components.WEG_heater_and_pump_5.translation', ref=10)
 # # prob.model.add_design_var('components.heater_core_6.translation', ref=10)
 
-prob.model.add_objective('system.distance', ref=40000)
-# prob.model.add_objective('system.bounding_box_volume')
+# prob.model.add_objective('system.distance', ref=40000)
+prob.model.add_objective('system.bounding_box_volume')
 # # prob.model.add_constraint('g', upper=0)
 # # # prob.model.add_constraint('g_c', upper=0)
 # # # prob.model.add_constraint('g_i', upper=0)
@@ -115,8 +119,9 @@ prob.model.add_objective('system.distance', ref=40000)
 
 
 prob.driver = om.ScipyOptimizeDriver()
-prob.driver.options['maxiter'] = 15
-prob.driver.options['optimizer'] = 'BFGS'
+# prob.driver.options['maxiter'] = 15
+prob.driver.options['optimizer'] = 'SLSQP'  #'BFGS'
+prob.driver.options['tol'] = 1e-9
 
 # Set the initial state
 prob.setup()
@@ -146,8 +151,8 @@ prob.set_val('components.comp_1.translation', [5.5, 7, 0])
 
 
 prob.run_model()
-print('Objective 1:', prob.get_val('system.distance'))
-# print('Objective 1:', prob.get_val('system.bounding_box_volume'))
+# print('Objective 1:', prob.get_val('system.distance'))
+print('Objective 1:', prob.get_val('system.bounding_box_volume'))
 # Plot initial spatial configuration
 # plot_problem(prob)
 
@@ -160,13 +165,13 @@ prob.run_driver()
 
 
 # Plot optimized spatial
-# plot_problem(prob)
+plot_problem(prob)
 
 
 # prob.set_val('components.comp_0.translation', [12, 7, 0])
 # prob.set_val('components.comp_1.translation', [5.5, 7, 1])
 
 prob.run_model()
-print('Objective 2:', prob.get_val('system.distance'))
+# print('Objective 2:', prob.get_val('system.distance'))
 plot_problem(prob)
-# print('Objective 2:', prob.get_val('system.bounding_box_volume'))
+print('Objective 2:', prob.get_val('system.bounding_box_volume'))

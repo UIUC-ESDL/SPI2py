@@ -1,7 +1,7 @@
 import torch
 
 
-def kreisselmeier_steinhauser(g, rho=100):
+def kreisselmeier_steinhauser(g, rho=100, type='max'):
     """
     The Kreisselmeier-Steinhauser (KS) method for constraint aggregation.
 
@@ -17,7 +17,14 @@ def kreisselmeier_steinhauser(g, rho=100):
     :return:
     """
 
-    g_bar_ks = torch.max(g) + 1/rho * torch.log(torch.sum(torch.exp(rho * (g - torch.max(g)))))
+    if type == 'max':
+        g = g
+    elif type == 'min':
+        g = -g
+    else:
+        raise ValueError('Invalid type. Must be either "max" or "min".')
+
+    g_bar_ks = torch.max(g) + 1 / rho * torch.log(torch.sum(torch.exp(rho * (g - torch.max(g)))))
 
     return g_bar_ks
 

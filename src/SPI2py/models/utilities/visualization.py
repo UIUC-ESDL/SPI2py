@@ -44,10 +44,10 @@ def plot_problem(prob):
     #     interconnects.append(merged)
     #     interconnect_colors.append(color)
 
-    # # Plot the bounding box
-    # bounds = prob.get_val('system.bounding_box_bounds')
-    # bounding_box = pv.Box(bounds=bounds)
-    # bounding_box_color = 'black'
+    # Plot the bounding box
+    bounds = prob.get_val('system.bounding_box_bounds')
+    bounding_box = pv.Box(bounds=bounds)
+    bounding_box_color = 'black'
 
 
     # Plot the objects
@@ -59,8 +59,8 @@ def plot_problem(prob):
     # for inter, color in zip(interconnects, interconnect_colors):
     #     p.add_mesh(inter, color=color)
 
-    # # Plot the bounding box
-    # p.add_mesh(bounding_box, color=bounding_box_color, opacity=0.2)
+    # Plot the bounding box
+    p.add_mesh(bounding_box, color=bounding_box_color, opacity=0.2)
 
     p.view_isometric()
     # p.view_xy()

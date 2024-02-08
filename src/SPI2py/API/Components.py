@@ -53,9 +53,6 @@ class Component(ExplicitComponent):
         self.options.declare('sphere_radii', types=list)
         self.options.declare('port_positions', types=list)
 
-        # self.design_var_info = {'name':'translation', 'ref':1, 'ref0':0}
-        # self.design_var_info = {'name':'rotation', 'ref':2*torch.pi, 'ref0':0}
-
     def setup(self):
 
         self.description = self.options['description']
@@ -78,7 +75,7 @@ class Component(ExplicitComponent):
         self.add_input('sphere_radii', val=sphere_radii)
         self.add_input('port_positions', val=port_positions)
         self.add_input('translation', val=default_translation)
-        # self.add_input('rotation', val=default_rotation)
+        self.add_input('rotation', val=default_rotation)
 
         # Define the outputs
         self.add_output('transformed_sphere_positions', val=sphere_positions)
@@ -86,8 +83,8 @@ class Component(ExplicitComponent):
         # self.add_output('transformed_port_positions', val=port_positions)
 
     def setup_partials(self):
-        self.declare_partials('*', '*', method='fd')
-        # self.declare_partials('transformed_sphere_positions', ['translation', 'rotation'])
+        # self.declare_partials('*', '*', method='fd')
+        self.declare_partials('transformed_sphere_positions', ['translation', 'rotation'])
         # self.declare_partials('port_positions', ['translation', 'rotation'])
         # self.declare_partials('*', '*')
 
@@ -98,8 +95,8 @@ class Component(ExplicitComponent):
         sphere_radii = inputs['sphere_radii']
         # port_positions = inputs['port_positions']
         translation = inputs['translation']
-        # rotation = inputs['rotation']
-        rotation = [0.0, 0.0, 0.0]
+        rotation = inputs['rotation']
+        # rotation = [0.0, 0.0, 0.0]
 
         # Convert the input variables to torch tensors
         sphere_positions = torch.tensor(sphere_positions, dtype=torch.float64)
@@ -122,52 +119,52 @@ class Component(ExplicitComponent):
         # outputs['transformed_port_positions'] = port_positions_transformed
 
     def compute_partials(self, inputs, partials):
-        pass
-        # # TODO Jacfwd instead of rev?
-        #
-        # # Get the input variables
-        # sphere_positions = inputs['sphere_positions']
-        # # sphere_radii = inputs['sphere_radii']
-        # # port_positions = inputs['port_positions']
-        # translation = inputs['translation']
-        # rotation = inputs['rotation']
-        #
-        # # Convert the input variables to torch tensors
-        # sphere_positions = torch.tensor(sphere_positions, dtype=torch.float64, requires_grad=False)
-        # # sphere_radii = torch.tensor(sphere_radii, dtype=torch.float64, requires_grad=True)
-        # # port_positions = torch.tensor(port_positions, dtype=torch.float64, requires_grad=True)
-        # translation = torch.tensor(translation, dtype=torch.float64, requires_grad=True).reshape(1, 3)
-        # rotation = torch.tensor(rotation, dtype=torch.float64, requires_grad=True).reshape(1, 3)
-        #
-        # # Calculate the Jacobian matrices
-        # jac_sphere_positions = jacobian(self.compute_transformation, (sphere_positions, translation, rotation))
-        # # jac_port_positions = jacobian(self.compute_transformation, (port_positions, translation, rotation))
-        #
-        # # Slice the Jacobian matrices
-        # # TODO Verify no zeroth index for sphere_positions
-        # # grad_sphere_positions_sphere_positions = jac_sphere_positions[0]
-        # grad_sphere_positions_translation = jac_sphere_positions[1]
-        # grad_sphere_positions_rotation = jac_sphere_positions[2]
-        #
-        # # grad_port_positions_port_positions = jac_port_positions[0]
-        # # grad_port_positions_translation = jac_port_positions[1]
-        # # grad_port_positions_rotation = jac_port_positions[2]
-        #
-        # # Convert to numpy
-        # # grad_sphere_positions_sphere_positions = grad_sphere_positions_sphere_positions.detach().numpy()
-        # grad_sphere_positions_translation = grad_sphere_positions_translation.detach().numpy()
-        # grad_sphere_positions_rotation = grad_sphere_positions_rotation.detach().numpy()
-        #
-        # # grad_port_positions_port_positions = grad_port_positions_port_positions.detach().numpy()
-        # # grad_port_positions_translation = grad_port_positions_translation.detach().numpy()
-        # # grad_port_positions_rotation = grad_port_positions_rotation.detach().numpy()
-        #
-        # # Set the outputs
-        # partials['transformed_sphere_positions', 'translation'] = grad_sphere_positions_translation
-        # partials['transformed_sphere_positions', 'rotation'] = grad_sphere_positions_rotation
-        #
-        # # partials['port_positions', 'translation'] = grad_port_positions_translation
-        # # partials['port_positions', 'rotation'] = grad_port_positions_rotation
+        # pass
+        # TODO Jacfwd instead of rev?
+
+        # Get the input variables
+        sphere_positions = inputs['sphere_positions']
+        # sphere_radii = inputs['sphere_radii']
+        # port_positions = inputs['port_positions']
+        translation = inputs['translation']
+        rotation = inputs['rotation']
+
+        # Convert the input variables to torch tensors
+        sphere_positions = torch.tensor(sphere_positions, dtype=torch.float64, requires_grad=False)
+        # sphere_radii = torch.tensor(sphere_radii, dtype=torch.float64, requires_grad=False)
+        # port_positions = torch.tensor(port_positions, dtype=torch.float64, requires_grad=False)
+        translation = torch.tensor(translation, dtype=torch.float64, requires_grad=True).reshape(1, 3)
+        rotation = torch.tensor(rotation, dtype=torch.float64, requires_grad=True).reshape(1, 3)
+
+        # Calculate the Jacobian matrices
+        jac_sphere_positions = jacobian(self.compute_transformation, (sphere_positions, translation, rotation))
+        # jac_port_positions = jacobian(self.compute_transformation, (port_positions, translation, rotation))
+
+        # Slice the Jacobian matrices
+        # TODO Verify no zeroth index for sphere_positions
+        # grad_sphere_positions_sphere_positions = jac_sphere_positions[0]
+        grad_sphere_positions_translation = jac_sphere_positions[1]
+        grad_sphere_positions_rotation = jac_sphere_positions[2]
+
+        # grad_port_positions_port_positions = jac_port_positions[0]
+        # grad_port_positions_translation = jac_port_positions[1]
+        # grad_port_positions_rotation = jac_port_positions[2]
+
+        # Convert to numpy
+        # grad_sphere_positions_sphere_positions = grad_sphere_positions_sphere_positions.detach().numpy()
+        grad_sphere_positions_translation = grad_sphere_positions_translation.detach().numpy()
+        grad_sphere_positions_rotation = grad_sphere_positions_rotation.detach().numpy()
+
+        # grad_port_positions_port_positions = grad_port_positions_port_positions.detach().numpy()
+        # grad_port_positions_translation = grad_port_positions_translation.detach().numpy()
+        # grad_port_positions_rotation = grad_port_positions_rotation.detach().numpy()
+
+        # Set the outputs
+        partials['transformed_sphere_positions', 'translation'] = grad_sphere_positions_translation
+        partials['transformed_sphere_positions', 'rotation'] = grad_sphere_positions_rotation
+
+        # partials['port_positions', 'translation'] = grad_port_positions_translation
+        # partials['port_positions', 'rotation'] = grad_port_positions_rotation
 
     @staticmethod
     def compute_transformation(positions, translation, rotation):
