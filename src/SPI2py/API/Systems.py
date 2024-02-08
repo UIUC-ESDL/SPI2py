@@ -3,7 +3,7 @@ import torch
 from torch.autograd.functional import jacobian
 from openmdao.api import ExplicitComponent
 
-from ..models.geometry.bounding_box_volume import bounding_box_bounds, bounding_box_volume, smooth_bounding_box_bounds, smooth_revised_bounding_box_bounds
+from ..models.geometry.bounding_box_volume import bounding_box_bounds, bounding_box_volume, smooth_bounding_box_bounds
 
 
 
@@ -156,25 +156,15 @@ class System(ExplicitComponent):
     @staticmethod
     def compute_bounding_box_volume(sphere_positions, sphere_radii, include_bounds=False):
 
-        bb_bounds_s = smooth_bounding_box_bounds(sphere_positions, sphere_radii)
-        bb_bounds = smooth_revised_bounding_box_bounds(sphere_positions, sphere_radii)
-        bb_bounds_n = bounding_box_bounds(sphere_positions, sphere_radii)
+
+        # bb_bounds = smooth_bounding_box_bounds(sphere_positions, sphere_radii, rho=100)
+        bb_bounds = bounding_box_bounds(sphere_positions, sphere_radii)
         bb_volume = bounding_box_volume(bb_bounds)
 
         if include_bounds:
             return bb_volume, bb_bounds
         else:
             return bb_volume
-
-    # @staticmethod
-    # def compute_bounding_box_volume(sphere_positions_0, sphere_radii_0, sphere_positions_1, sphere_radii_1):
-    #
-    #     # bb_bounds = smooth_bounding_box_bounds(sphere_positions, sphere_radii)
-    #     bb_bounds = bounding_box_bounds(sphere_positions_0, sphere_radii_0, sphere_positions_1, sphere_radii_1)
-    #     bb_volume = bounding_box_volume(bb_bounds)
-    #
-    #
-    #     return bb_volume, bb_bounds
 
 
 
