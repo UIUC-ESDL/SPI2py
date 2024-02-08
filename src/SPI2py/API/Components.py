@@ -78,7 +78,7 @@ class Component(ExplicitComponent):
         self.add_input('sphere_radii', val=sphere_radii)
         self.add_input('port_positions', val=port_positions)
         self.add_input('translation', val=default_translation)
-        self.add_input('rotation', val=default_rotation)
+        # self.add_input('rotation', val=default_rotation)
 
         # Define the outputs
         self.add_output('transformed_sphere_positions', val=sphere_positions)
@@ -98,7 +98,8 @@ class Component(ExplicitComponent):
         sphere_radii = inputs['sphere_radii']
         # port_positions = inputs['port_positions']
         translation = inputs['translation']
-        rotation = inputs['rotation']
+        # rotation = inputs['rotation']
+        rotation = [0.0, 0.0, 0.0]
 
         # Convert the input variables to torch tensors
         sphere_positions = torch.tensor(sphere_positions, dtype=torch.float64)

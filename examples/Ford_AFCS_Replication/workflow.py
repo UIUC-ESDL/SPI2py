@@ -25,32 +25,23 @@ model.add_subsystem('system', System(num_components=2))
 
 
 
-vstack_sphere_positions = VerticalStackComp(input_sizes=[100, 100], column_size=3)
-model.add_subsystem('vstack_sphere_positions', vstack_sphere_positions)
-
-for i in range(2):
-    model.connect(f'components.comp_{i}.transformed_sphere_positions', f'vstack_sphere_positions.input_{i}')
-
-vstack_sphere_radii = VerticalStackComp(input_sizes=[100, 100], column_size=1)
-model.add_subsystem('vstack_sphere_radii', vstack_sphere_radii)
-
-for i in range(2):
-    model.connect(f'components.comp_{i}.transformed_sphere_radii', f'vstack_sphere_radii.input_{i}')
-
-model.connect('vstack_sphere_positions.stacked_output', 'system.transformed_sphere_positions')
-model.connect('vstack_sphere_radii.stacked_output', 'system.transformed_sphere_radii')
-
-
-
-
-# mux = MuxComp()
-# model.add_subsystem('mux', mux)
-# n = 2
-# # for i in range(n):
-# mux.add_var('transformed_sphere_positions', shape=(100, 3), axis=0)
+# vstack_sphere_positions = VerticalStackComp(input_sizes=[100, 100], column_size=3)
+# model.add_subsystem('vstack_sphere_positions', vstack_sphere_positions)
 #
-# for i in range(n):
-#     model.connect(f'components.comp_{i}.transformed_sphere_positions', f'mux.transformed_sphere_positions_{i}')
+# for i in range(2):
+#     model.connect(f'components.comp_{i}.transformed_sphere_positions', f'vstack_sphere_positions.input_{i}')
+#
+# vstack_sphere_radii = VerticalStackComp(input_sizes=[100, 100], column_size=1)
+# model.add_subsystem('vstack_sphere_radii', vstack_sphere_radii)
+#
+# for i in range(2):
+#     model.connect(f'components.comp_{i}.transformed_sphere_radii', f'vstack_sphere_radii.input_{i}')
+#
+# model.connect('vstack_sphere_positions.stacked_output', 'system.transformed_sphere_positions')
+# model.connect('vstack_sphere_radii.stacked_output', 'system.transformed_sphere_radii')
+
+model.connect('components.comp_0.transformed_sphere_positions', 'system.comp_0_transformed_sphere_positions')
+model.connect('components.comp_1.transformed_sphere_positions', 'system.comp_1_transformed_sphere_positions')
 
 
 
@@ -115,7 +106,8 @@ model.add_design_var('components.comp_1.translation', ref=10)
 # # prob.model.add_design_var('components.WEG_heater_and_pump_5.translation', ref=10)
 # # prob.model.add_design_var('components.heater_core_6.translation', ref=10)
 
-prob.model.add_objective('system.bounding_box_volume', ref=0.001)
+prob.model.add_objective('system.distance', ref=40000)
+# prob.model.add_objective('system.bounding_box_volume')
 # # prob.model.add_constraint('g', upper=0)
 # # # prob.model.add_constraint('g_c', upper=0)
 # # # prob.model.add_constraint('g_i', upper=0)
@@ -154,7 +146,8 @@ prob.set_val('components.comp_1.translation', [5.5, 7, 0])
 
 
 prob.run_model()
-print('Objective 1:', prob.get_val('system.bounding_box_volume'))
+print('Objective 1:', prob.get_val('system.distance'))
+# print('Objective 1:', prob.get_val('system.bounding_box_volume'))
 # Plot initial spatial configuration
 # plot_problem(prob)
 
@@ -162,7 +155,8 @@ print('Objective 1:', prob.get_val('system.bounding_box_volume'))
 # Run the optimization
 
 # print(prob.model.list_inputs(is_design_var=True))
-# prob.run_driver()
+prob.run_driver()
+
 
 
 # Plot optimized spatial
@@ -172,5 +166,7 @@ print('Objective 1:', prob.get_val('system.bounding_box_volume'))
 # prob.set_val('components.comp_0.translation', [12, 7, 0])
 # prob.set_val('components.comp_1.translation', [5.5, 7, 1])
 
-# prob.run_model()
+prob.run_model()
+print('Objective 2:', prob.get_val('system.distance'))
+plot_problem(prob)
 # print('Objective 2:', prob.get_val('system.bounding_box_volume'))
