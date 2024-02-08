@@ -14,168 +14,22 @@ class Components(Group):
     def setup(self):
 
         # Create the components
-        self.aggregate_sphere_positions = []
-        self.aggregate_sphere_radii = []
-        self.aggregate_port_positins = []
-
         components_dict = self.options['input_dict']['components']
         for i, key in enumerate(components_dict.keys()):
-            name = components_dict[key]['name']
+            description = components_dict[key]['description']
             spheres_filepath = components_dict[key]['spheres_filepath']
             port_positions = components_dict[key]['port_positions']
             color = components_dict[key]['color']
 
             sphere_positions, sphere_radii = read_xyzr_file(spheres_filepath)
 
-            component = Component(name=name,
+            component = Component(description=description,
                                   color=color,
                                   sphere_positions=sphere_positions,
                                   sphere_radii=sphere_radii,
                                   port_positions=port_positions)
 
             self.add_subsystem(f'comp_{i}', component)
-
-            self.aggregate_sphere_positions.append(sphere_positions)
-            self.aggregate_sphere_radii.append(sphere_radii)
-            self.aggregate_port_positins.append(port_positions)
-
-        n_components = len(components_dict.keys())
-        n_total_spheres = sum([len(sphere_positions) for sphere_positions in self.aggregate_sphere_positions])
-
-        # Add MuxComp to aggregate outputs. Specify the number of inputs to mux and the axis along which to concatenate
-        # self.add_subsystem('aggregate_outputs', MuxComp(vec_size=n_components))
-
-        # Connect component outputs to the MuxComp
-        # for i in range(n_components):
-            # self.connect(f'comp_{i}.transformed_sphere_positions', f'aggregate_outputs.inputs:{i}')
-        # self.connect('radiator_and_ion_exchanger_1b.transformed_sphere_positions', f'aggregate_outputs.inputs:0')
-        # self.connect('radiator_and_ion_exchanger_1a.transformed_sphere_positions', f'aggregate_outputs.inputs:0')
-
-    def configure(self):
-
-        # TODO Don't override default positions from Component
-        components_dict = self.options['input_dict']['components']
-
-        # Get the default sphere positions and radii from each component setup
-        sphere_positions = np.vstack(self.aggregate_sphere_positions)
-        sphere_radii = np.hstack(self.aggregate_sphere_radii)
-        # default_port_positions = np.vstack(self.aggregate_port_positins)
-
-        # Determine input/output shapes
-
-        # Get the components
-        components = list(components_dict.keys())
-        n_components = len(components)
-        n_spheres = [len(sphere_positions) for sphere_positions in self.aggregate_sphere_positions]
-
-        # Add the Component Objects to the Group
-        indices_translations, indices_rotations = self._get_src_indices(n_components)
-        indices_spheres, indices_radii = self._get_sphere_indices(n_spheres)
-
-        # TODO Try list
-        sphere_positions = sphere_positions.tolist()
-        sphere_radii = sphere_radii.tolist()
-
-        self.set_input_defaults('sphere_positions', sphere_positions)
-        self.set_input_defaults('sphere_radii', sphere_radii)
-        # self.set_input_defaults('port_positions', default_port_positions)
-
-        # self.set_output_
-
-        # Set the default design variable inputs
-        default_translation = np.zeros((n_components, 3))
-        default_rotation = np.zeros((n_components, 3))
-
-        self.set_input_defaults('translation', default_translation)
-        self.set_input_defaults('rotation', default_rotation)
-
-
-        for component, translations_i, rotations_i, spheres_i, radii_i in zip(components, indices_translations, indices_rotations, indices_spheres, indices_radii):
-
-            self.promotes(f'comp_{component}',
-                          inputs=['translation'],
-                          src_indices=translations_i,
-                          flat_src_indices=True)
-
-            self.promotes(f'comp_{component}',
-                          inputs=['rotation'],
-                          src_indices=rotations_i,
-                          flat_src_indices=True)
-
-            self.promotes(f'comp_{component}',
-                          inputs=['sphere_positions'],
-                          src_indices=spheres_i,
-                          flat_src_indices=True)
-
-            self.promotes(f'comp_{component}',
-                            inputs=['sphere_radii'],
-                            src_indices=radii_i,
-                            flat_src_indices=True)
-
-            # self.promotes(f'comp_{component}',
-            #               inputs=['port_positions'],
-            #               src_indices=self.indices_ports[i],
-            #               flat_src_indices=True)
-
-
-    # @staticmethod
-    # def _create_component(components_dict, key):
-    #
-    #     comp_name = components_dict[key]['name']
-    #     comp_spheres_filepath = components_dict[key]['spheres_filepath']
-    #     comp_n_spheres = components_dict[key]['n_spheres']
-    #     comp_port_positions = components_dict[key]['port_positions']
-    #     comp_color = components_dict[key]['color']
-    #
-    #     comp_sphere_positions, comp_sphere_radii = read_xyzr_file(comp_spheres_filepath, num_spheres=comp_n_spheres)
-    #     # FIXME Make radii (-1, 1) not (-1,)
-    #     component = Component(name=comp_name,
-    #                           color=comp_color,
-    #                           sphere_positions=comp_sphere_positions,
-    #                           sphere_radii=comp_sphere_radii,
-    #                           port_positions=comp_port_positions)
-    #
-    #     return component
-
-    @staticmethod
-    def _get_src_indices(n_components):
-
-        translations_dof = np.arange(3 * n_components).reshape(-1, 3)
-        rotations_dof = np.arange(3 * n_components).reshape(-1, 3)
-
-        # Split up the indices
-        indices_translations = np.split(translations_dof, n_components)
-        indices_rotations = np.split(rotations_dof, n_components)
-
-        # Convert arrays to lists
-        indices_translations = [indices.flatten().tolist() for indices in indices_translations]
-        indices_rotations = [indices.flatten().tolist() for indices in indices_rotations]
-
-        return indices_translations, indices_rotations
-
-    @staticmethod
-    def _get_sphere_indices(n_spheres):
-        # FIXME (-1,3) not (-1, 1)?
-        # FIXME It looks like i is not multiplied by 3
-
-        indices_spheres = []
-        i = 0
-        for n_sphere in n_spheres:
-            n_variables = 3 * n_sphere  # 3 for x, y, z
-            indices_component_spheres = [j for j in range(i, i + n_variables)]
-            indices_spheres.append(indices_component_spheres)
-            i += 3 * n_sphere
-
-        indices_radii = []
-        i = 0
-        for n_sphere in n_spheres:
-            n_variables = n_sphere  # 1 for radius
-            indices_component_radii = [j for j in range(i, i + n_variables)]
-            indices_radii.append(indices_component_radii)
-            i += 1 * n_sphere
-
-        return indices_spheres, indices_radii
-
 
     #
     #     # Iterate through components to add design variables
@@ -194,7 +48,7 @@ class Components(Group):
 class Component(ExplicitComponent):
 
     def initialize(self):
-        self.options.declare('name', types=str)
+        self.options.declare('description', types=str)
         self.options.declare('color', types=str)
         self.options.declare('sphere_positions', types=list)
         self.options.declare('sphere_radii', types=list)
@@ -205,7 +59,7 @@ class Component(ExplicitComponent):
 
     def setup(self):
 
-        self.name = self.options['name']
+        self.description = self.options['description']
         self.color = self.options['color']
 
         sphere_positions = self.options['sphere_positions']

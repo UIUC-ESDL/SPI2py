@@ -65,7 +65,42 @@ def calculate_component_indices(n_components, n_spheres_per_component, n_ports_p
     default_translation = []
     default_rotation = []
 
-
+# @staticmethod
+#     def _get_src_indices(n_components):
+#
+#         translations_dof = np.arange(3 * n_components).reshape(-1, 3)
+#         rotations_dof = np.arange(3 * n_components).reshape(-1, 3)
+#
+#         # Split up the indices
+#         indices_translations = np.split(translations_dof, n_components)
+#         indices_rotations = np.split(rotations_dof, n_components)
+#
+#         # Convert arrays to lists
+#         indices_translations = [indices.flatten().tolist() for indices in indices_translations]
+#         indices_rotations = [indices.flatten().tolist() for indices in indices_rotations]
+#
+#         return indices_translations, indices_rotations
+#
+#     @staticmethod
+#     def _get_sphere_indices(n_spheres):
+#
+#         indices_spheres = []
+#         i = 0
+#         for n_sphere in n_spheres:
+#             n_variables = 3 * n_sphere  # 3 for x, y, z
+#             indices_component_spheres = [j for j in range(i, i + n_variables)]
+#             indices_spheres.append(indices_component_spheres)
+#             i += 3 * n_sphere
+#
+#         indices_radii = []
+#         i = 0
+#         for n_sphere in n_spheres:
+#             n_variables = n_sphere  # 1 for radius
+#             indices_component_radii = [j for j in range(i, i + n_variables)]
+#             indices_radii.append(indices_component_radii)
+#             i += 1 * n_sphere
+#
+#         return indices_spheres, indices_radii
 
 
 

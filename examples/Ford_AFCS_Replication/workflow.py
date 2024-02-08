@@ -9,6 +9,7 @@ from SPI2py.API.Interconnects import Interconnect
 from SPI2py.API.Systems import System
 from SPI2py.models.utilities.visualization import plot_problem
 from SPI2py.models.utilities.inputs import read_input_file
+from openmdao.api import MuxComp
 
 # Read the input file
 input_file = read_input_file('input.toml')
@@ -21,6 +22,15 @@ model = prob.model
 model.add_subsystem('components', Components(input_dict=input_file))
 # model.add_subsystem('interconnects', om.Group())
 # model.add_subsystem('system', System(num_components=2))
+
+mux = MuxComp()
+model.add_subsystem('mux', mux)
+n = 2
+# for i in range(n):
+mux.add_var('transformed_sphere_positions', shape=(100, 3))
+
+for i in range(n):
+    model.connect(f'components.comp_{i}.transformed_sphere_positions', f'mux.transformed_sphere_positions_{i}')
 
 
 # Initialize interconnects
@@ -40,10 +50,10 @@ model.add_subsystem('components', Components(input_dict=input_file))
 # Connect the components to the system
 
 
-# model.connect('components.radiator_and_ion_exchanger_1a.transformed_sphere_positions', 'system.comp_0_sphere_positions')
-# model.connect('components.radiator_and_ion_exchanger_1a.transformed_sphere_radii', 'system.comp_0_sphere_radii')
-# model.connect('components.radiator_and_ion_exchanger_1b.transformed_sphere_positions', 'system.comp_1_sphere_positions')
-# model.connect('components.radiator_and_ion_exchanger_1b.transformed_sphere_radii', 'system.comp_1_sphere_radii')
+# model.connect('components.comp_0.transformed_sphere_positions', 'system.comp_0_sphere_positions')
+# model.connect('components.comp_0.transformed_sphere_radii', 'system.comp_0_sphere_radii')
+# model.connect('components.comp_1.transformed_sphere_positions', 'system.comp_1_sphere_positions')
+# model.connect('components.comp_1.transformed_sphere_radii', 'system.comp_1_sphere_radii')
 
 
 # # Connect the interconnects to the system
@@ -70,11 +80,11 @@ model.add_subsystem('components', Components(input_dict=input_file))
 #
 # # Define the variables, objective, and constraints
 #
-# # model.add_design_var('components.radiator_and_ion_exchanger_1a.translation', ref=10)
-# # model.add_design_var('components.radiator_and_ion_exchanger_1a.rotation', ref=2*3.14159)
-# # model.add_design_var('components.radiator_and_ion_exchanger_1b.translation', ref=10)
-# # model.add_design_var('components.radiator_and_ion_exchanger_1b.rotation', ref=2*3.14159)
-#
+# model.add_design_var('components.comp_0.translation', ref=10)
+# model.add_design_var('components.radiator_and_ion_exchanger_1a.rotation', ref=2*3.14159)
+# model.add_design_var('components.comp_1.translation', ref=10)
+# model.add_design_var('components.radiator_and_ion_exchanger_1b.rotation', ref=2*3.14159)
+
 # # prob.model.add_design_var('components.pump_2a.translation', ref=10)
 # # prob.model.add_design_var('components.pump_2b.translation', ref=10)
 # # prob.model.add_design_var('components.particle_filter_3a.translation', ref=10)
@@ -83,34 +93,31 @@ model.add_subsystem('components', Components(input_dict=input_file))
 # # prob.model.add_design_var('components.fuel_cell_Stack_4b.translation', ref=10)
 # # prob.model.add_design_var('components.WEG_heater_and_pump_5.translation', ref=10)
 # # prob.model.add_design_var('components.heater_core_6.translation', ref=10)
-#
-# # prob.model.add_objective('system.bounding_box_volume', ref=50)
+
+# prob.model.add_objective('system.bounding_box_volume', ref=50)
 # # prob.model.add_constraint('g', upper=0)
 # # # prob.model.add_constraint('g_c', upper=0)
 # # # prob.model.add_constraint('g_i', upper=0)
 # # # prob.model.add_constraint('g_ci', upper=0)
-# #
-#
-# # prob.driver = om.ScipyOptimizeDriver()
-# # prob.driver.options['maxiter'] = 15
+
+
+# prob.driver = om.ScipyOptimizeDriver()
+# prob.driver.options['maxiter'] = 15
 
 # Set the initial state
 prob.setup()
 
-# # Configure the system
-
-prob.set_val('components.translation', [[2, 7, 0], [5.5, 7, 0]])
-
-# prob.set_val('components.radiator_and_ion_exchanger_1a.translation', [2, 7, 0])
-# prob.set_val('components.radiator_and_ion_exchanger_1b.translation', [5.5, 7, 0])
-# # prob.set_val('components.pump_2a.translation', [0.5, 6, 0])
-# # prob.set_val('components.pump_2b.translation', [7.5, 6, 0])
-# # prob.set_val('components.particle_filter_3a.translation', [0.5, 4.5, 0])
-# # prob.set_val('components.particle_filter_3b.translation', [7.5, 5, 0])
-# # prob.set_val('components.fuel_cell_Stack_4a.translation', [0.5, 2, 0])
-# # prob.set_val('components.fuel_cell_Stack_4b.translation', [7.5, 3, 0])
-# # prob.set_val('components.WEG_heater_and_pump_5.translation', [6, 1, 0])
-# # prob.set_val('components.heater_core_6.translation', [2, 0, 0])
+# Configure the system
+prob.set_val('components.comp_0.translation', [2, 7, 0])
+prob.set_val('components.comp_1.translation', [5.5, 7, 0])
+# # prob.set_val('components.comp_2.translation', [0.5, 6, 0])
+# # prob.set_val('components.comp_3.translation', [7.5, 6, 0])
+# # prob.set_val('components.comp_4.translation', [0.5, 4.5, 0])
+# # prob.set_val('components.comp_5.translation', [7.5, 5, 0])
+# # prob.set_val('components.comp_6.translation', [0.5, 2, 0])
+# # prob.set_val('components.comp_7.translation', [7.5, 3, 0])
+# # prob.set_val('components.comp_8.translation', [6, 1, 0])
+# # prob.set_val('components.comp_9.translation', [2, 0, 0])
 #
 # # prob.set_val('interconnects.c1a_c1b.control_points', [[3.75, 7, 0]])
 # # prob.set_val('interconnects.c1b_c2b.control_points', [[7.5, 7, 0]])
@@ -126,15 +133,15 @@ prob.set_val('components.translation', [[2, 7, 0], [5.5, 7, 0]])
 
 prob.run_model()
 # Plot initial spatial configuration
-plot_problem(prob)
+# plot_problem(prob)
 
 
-# # Run the optimization
-#
-# # print(prob.model.list_inputs(is_design_var=True))
-# # prob.run_driver()
-#
-#
+# Run the optimization
+
+# print(prob.model.list_inputs(is_design_var=True))
+# prob.run_driver()
+
+
 # # # Plot optimized spatial
 # # plot_problem(prob)
 #

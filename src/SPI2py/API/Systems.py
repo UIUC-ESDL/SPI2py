@@ -55,6 +55,8 @@ class System(ExplicitComponent):
             spheres_list.append(sphere_positions)
             radii_list.append(sphere_radii)
 
+        spheres, radii = self.combine_inputs(spheres_list, radii_list)
+
         # Calculate the bounding box volume
         # bb_bounds = bounding_box_bounds(sphere_positions, sphere_radii)
         bb_volume = self.compute_bounding_box_volume(spheres_list, radii_list)
@@ -85,13 +87,12 @@ class System(ExplicitComponent):
         # sphere_positions = torch.tensor(sphere_positions, dtype=torch.float64, requires_grad=True)
         # sphere_radii = torch.tensor(sphere_radii, dtype=torch.float64, requires_grad=False)
 
-        spheres_list = []
-        radii_list = []
+        jac_inputs = ()
         for sphere_positions, sphere_radii in zip(spheres_positions, spheres_radii):
             sphere_positions = torch.tensor(sphere_positions, dtype=torch.float64, requires_grad=True)
             sphere_radii = torch.tensor(sphere_radii, dtype=torch.float64, requires_grad=False)
-            spheres_list.append(sphere_positions)
-            radii_list.append(sphere_radii)
+            jac_inputs = jac_inputs + (sphere_positions,)
+            jac_inputs = jac_inputs + (sphere_radii,)
 
         # Calculate the bounding box volume
         jac_bb_volume = jacobian(self.compute_bounding_box_volume, (sphere_positions, sphere_radii))
@@ -103,6 +104,14 @@ class System(ExplicitComponent):
         # TODO ok one problem seems to be list of inputs and assigning them to paritlas. Maybe **args?
         for i in range(self.options['num_components']):
             partials['bounding_box_volume', f'comp_{i}_sphere_positions'] = jac_bb_volume[0][i]
+
+    @staticmethod
+    def combine_positions(spheres_positions):
+        return torch.vstack(spheres_positions)
+
+    @staticmethod
+    def combine_radii(spheres_radii):
+        return torch.vstack(spheres_radii)
 
     @staticmethod
     def compute_bounding_box_volume(spheres_positions, spheres_radii, include_bounds=False):
