@@ -113,7 +113,7 @@ model.add_design_var('components.comp_1.rotation', ref=2*3.14159)
 # # prob.model.add_design_var('components.heater_core_6.translation', ref=10)
 
 # prob.model.add_objective('system.distance', ref=40000)
-prob.model.add_objective('system.bounding_box_volume')
+prob.model.add_objective('system.bounding_box_volume', ref=500, ref0=0)
 # # prob.model.add_constraint('g', upper=0)
 # # # prob.model.add_constraint('g_c', upper=0)
 # # # prob.model.add_constraint('g_i', upper=0)
@@ -123,7 +123,7 @@ prob.model.add_objective('system.bounding_box_volume')
 prob.driver = om.ScipyOptimizeDriver()
 prob.driver.options['maxiter'] = 15
 prob.driver.options['optimizer'] = 'SLSQP'
-prob.driver.options['tol'] = 1e-8
+prob.driver.options['tol'] = 1e-11
 
 # Set the initial state
 prob.setup()
@@ -157,26 +157,26 @@ prob.run_model()
 print('Objective 1:', prob.get_val('system.bounding_box_volume'))
 print('Bounding Box 1:', prob.get_val('system.bounding_box_bounds'))
 # Plot initial spatial configuration
-plot_problem(prob)
+# plot_problem(prob)
 
 
 # # Run the optimization
 
 # # print(prob.model.list_inputs(is_design_var=True))
-prob.run_driver()
-
-
-
-# Plot optimized spatial
-
-
-# prob.set_val('components.comp_0.translation', [12, 7, 0])
-# prob.set_val('components.comp_1.translation', [5.5, 7, 1])
-
-# prob.run_model()
-# print('Objective 2:', prob.get_val('system.distance'))
-plot_problem(prob)
-print('Objective 2:', prob.get_val('system.bounding_box_volume'))
-print('Bounding Box 2:', prob.get_val('system.bounding_box_bounds'))
-
-# prob.check_partials(show_only_incorrect=True, compact_print=True,includes=['system'])
+# prob.run_driver()
+#
+#
+#
+# # Plot optimized spatial
+#
+#
+# # prob.set_val('components.comp_0.translation', [12, 7, 0])
+# # prob.set_val('components.comp_1.translation', [5.5, 7, 1])
+#
+# # prob.run_model()
+# # print('Objective 2:', prob.get_val('system.distance'))
+# plot_problem(prob)
+# print('Objective 2:', prob.get_val('system.bounding_box_volume'))
+# print('Bounding Box 2:', prob.get_val('system.bounding_box_bounds'))
+#
+# # prob.check_partials(show_only_incorrect=True, compact_print=True,includes=['system'])
