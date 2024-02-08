@@ -64,51 +64,36 @@ class System(ExplicitComponent):
 
     def setup(self):
 
-        num_components = self.options['num_components']
-        for i in range(num_components):
-            self.add_input(f'comp_{i}_sphere_positions', shape_by_conn=True)
-            self.add_input(f'comp_{i}_sphere_radii', shape_by_conn=True)
+
+        self.add_input('transformed_sphere_positions', shape_by_conn=True)
+        self.add_input('transformed_sphere_radii', shape_by_conn=True)
 
         self.add_output('bounding_box_volume', val=1.0)
         # self.add_output('bounding_box_bounds', shape=(6,))
         # self.add_output('constraints', val=torch.zeros(1))
 
     def setup_partials(self):
-        for i in range(self.options['num_components']):
-            self.declare_partials('bounding_box_volume', f'comp_{i}_sphere_positions')
+        self.declare_partials('bounding_box_volume', 'transformed_sphere_positions')
+        self.declare_partials('bounding_box_volume', 'transformed_sphere_radii')
+
+        # for i in range(self.options['num_components']):
+        #     self.declare_partials('bounding_box_volume', f'comp_{i}_sphere_positions')
         # self.declare_partials('*', '*')
 
     def compute(self, inputs, outputs):
 
         # Get the input variables
-        # sphere_positions = inputs['sphere_positions']
-        # sphere_radii = inputs['sphere_radii']
-        # sphere_positions = [inputs[f'comp_{i}_sphere_positions'] for i in range(self.options['num_components']) ]
-        # sphere_radii = [inputs[f'comp_{i}_sphere_radii'] for i in range(self.options['num_components']) ]
-        spheres_positions = [inputs[f'comp_{i}_sphere_positions'] for i in range(self.options['num_components'])]
-        spheres_radii = [inputs[f'comp_{i}_sphere_radii'] for i in range(self.options['num_components'])]
-
-        # Vertically stack the sphere positions and radii
-        # sphere_positions = np.vstack(sphere_positions)
-        # sphere_radii = np.vstack(sphere_radii)
+        sphere_positions = inputs['transformed_sphere_positions']
+        sphere_radii = inputs['transformed_sphere_radii']
 
         # Convert the inputs to torch tensors
-        # sphere_positions = torch.tensor(sphere_positions, dtype=torch.float64)
-        # sphere_radii = torch.tensor(sphere_radii, dtype=torch.float64)
+        sphere_positions = torch.tensor(sphere_positions, dtype=torch.float64)
+        sphere_radii = torch.tensor(sphere_radii, dtype=torch.float64)
 
-        spheres_list = []
-        radii_list = []
-        for sphere_positions, sphere_radii in zip(spheres_positions, spheres_radii):
-            sphere_positions = torch.tensor(sphere_positions, dtype=torch.float64)
-            sphere_radii = torch.tensor(sphere_radii, dtype=torch.float64)
-            spheres_list.append(sphere_positions)
-            radii_list.append(sphere_radii)
-
-        spheres, radii = self.combine_inputs(spheres_list, radii_list)
 
         # Calculate the bounding box volume
         # bb_bounds = bounding_box_bounds(sphere_positions, sphere_radii)
-        bb_volume = self.compute_bounding_box_volume(spheres_list, radii_list)
+        bb_volume = self.compute_bounding_box_volume(sphere_positions, sphere_radii)
 
         # Convert the outputs to numpy arrays
         # bb_bounds = bb_bounds.detach().numpy()
@@ -122,26 +107,12 @@ class System(ExplicitComponent):
     def compute_partials(self, inputs, partials):
 
         # Get the input variables
-        # sphere_positions = inputs['sphere_positions']
-        # sphere_radii = inputs['sphere_radii']
-        spheres_positions = [inputs[f'comp_{i}_sphere_positions'] for i in range(self.options['num_components'])]
-        spheres_radii = [inputs[f'comp_{i}_sphere_radii'] for i in range(self.options['num_components'])]
-
-        # Vertically stack the sphere positions and radii
-        # FIXME ?
-        # sphere_positions = np.vstack(sphere_positions)
-        # sphere_radii = np.vstack(sphere_radii)
+        sphere_positions = inputs['transformed_sphere_positions']
+        sphere_radii = inputs['transformed_sphere_radii']
 
         # Convert the inputs to torch tensors
-        # sphere_positions = torch.tensor(sphere_positions, dtype=torch.float64, requires_grad=True)
-        # sphere_radii = torch.tensor(sphere_radii, dtype=torch.float64, requires_grad=False)
-
-        jac_inputs = ()
-        for sphere_positions, sphere_radii in zip(spheres_positions, spheres_radii):
-            sphere_positions = torch.tensor(sphere_positions, dtype=torch.float64, requires_grad=True)
-            sphere_radii = torch.tensor(sphere_radii, dtype=torch.float64, requires_grad=False)
-            jac_inputs = jac_inputs + (sphere_positions,)
-            jac_inputs = jac_inputs + (sphere_radii,)
+        sphere_positions = torch.tensor(sphere_positions, dtype=torch.float64, requires_grad=True)
+        sphere_radii = torch.tensor(sphere_radii, dtype=torch.float64, requires_grad=True)  # TODO Remove True
 
         # Calculate the bounding box volume
         jac_bb_volume = jacobian(self.compute_bounding_box_volume, (sphere_positions, sphere_radii))
@@ -150,24 +121,12 @@ class System(ExplicitComponent):
         jac_bb_volume = jac_bb_volume.detach().numpy()
 
         # Set the outputs
-        # TODO ok one problem seems to be list of inputs and assigning them to paritlas. Maybe **args?
-        for i in range(self.options['num_components']):
-            partials['bounding_box_volume', f'comp_{i}_sphere_positions'] = jac_bb_volume[0][i]
+        partials['bounding_box_volume', 'transformed_sphere_positions'] = jac_bb_volume[0]
+        partials['bounding_box_volume', 'transformed_sphere_radii'] = jac_bb_volume[1]
+
 
     @staticmethod
-    def combine_positions(spheres_positions):
-        return torch.vstack(spheres_positions)
-
-    @staticmethod
-    def combine_radii(spheres_radii):
-        return torch.vstack(spheres_radii)
-
-    @staticmethod
-    def compute_bounding_box_volume(spheres_positions, spheres_radii, include_bounds=False):
-
-        # Combine the tensors
-        sphere_positions = torch.vstack(spheres_positions)
-        sphere_radii = torch.vstack(spheres_radii)
+    def compute_bounding_box_volume(sphere_positions, sphere_radii, include_bounds=False):
 
         bb_bounds = bounding_box_bounds(sphere_positions, sphere_radii)
         bb_volume = bounding_box_volume(bb_bounds)

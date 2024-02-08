@@ -21,7 +21,7 @@ model = prob.model
 
 model.add_subsystem('components', Components(input_dict=input_file))
 # model.add_subsystem('interconnects', om.Group())
-# model.add_subsystem('system', System(num_components=2))
+model.add_subsystem('system', System(num_components=2))
 
 
 
@@ -31,12 +31,14 @@ model.add_subsystem('vstack_sphere_positions', vstack_sphere_positions)
 for i in range(2):
     model.connect(f'components.comp_{i}.transformed_sphere_positions', f'vstack_sphere_positions.input_{i}')
 
-# input_dims_sphere_radii = [(100,), (100,)]
-# aggregate_sphere_radii = AggregateInputs(input_dims=input_dims_sphere_radii)
-# model.add_subsystem('aggregate_sphere_radii', aggregate_sphere_radii)
-#
-# for i, (n_i, m_i) in enumerate(input_dims_sphere_radii):
-#     model.connect(f'components.comp_{i}.transformed_sphere_radii', f'aggregate_sphere_radii.input_{i}')
+vstack_sphere_radii = VerticalStackComp(input_sizes=[100, 100], column_size=1)
+model.add_subsystem('vstack_sphere_radii', vstack_sphere_radii)
+
+for i in range(2):
+    model.connect(f'components.comp_{i}.transformed_sphere_radii', f'vstack_sphere_radii.input_{i}')
+
+model.connect('vstack_sphere_positions.stacked_output', 'system.transformed_sphere_positions')
+model.connect('vstack_sphere_radii.stacked_output', 'system.transformed_sphere_radii')
 
 
 
