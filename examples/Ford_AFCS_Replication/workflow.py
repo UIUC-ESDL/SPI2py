@@ -123,7 +123,7 @@ prob.model.add_objective('system.bounding_box_volume')
 prob.driver = om.ScipyOptimizeDriver()
 prob.driver.options['maxiter'] = 15
 prob.driver.options['optimizer'] = 'SLSQP'  #'BFGS'
-# prob.driver.options['tol'] = 1e-9
+prob.driver.options['tol'] = 1e-9
 
 # Set the initial state
 prob.setup()
@@ -178,3 +178,5 @@ prob.run_driver()
 plot_problem(prob)
 print('Objective 2:', prob.get_val('system.bounding_box_volume'))
 print('Bounding Box 2:', prob.get_val('system.bounding_box_bounds'))
+
+# prob.check_partials(show_only_incorrect=True, compact_print=True,includes=['system'])
