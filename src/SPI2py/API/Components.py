@@ -44,7 +44,6 @@ class Components(Group):
 
 
 
-
 class Component(ExplicitComponent):
 
     def initialize(self):

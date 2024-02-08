@@ -6,6 +6,55 @@ from openmdao.api import ExplicitComponent
 from ..models.geometry.bounding_box_volume import bounding_box_bounds, bounding_box_volume
 
 
+class VerticalStackComp(ExplicitComponent):
+    """
+    An ExplicitComponent that vertically stacks a series of inputs with sizes (n, 3) or (n, 1).
+    """
+
+    def initialize(self):
+        # Initialize with a list of sizes for each input
+        self.options.declare('input_sizes', types=list, desc='List of sizes (n) for each input array')
+        self.options.declare('column_size', types=int, desc='Column size, either 1 or 3')
+
+    def setup(self):
+        input_sizes = self.options['input_sizes']
+        column_size = self.options['column_size']
+        total_rows = sum(input_sizes)
+
+        # Define inputs and output
+        for i, size in enumerate(input_sizes):
+            self.add_input(f'input_{i}', shape=(size, column_size))
+
+        self.add_output('stacked_output', shape=(total_rows, column_size))
+
+        # Declare partials for each input-output pair
+        start_idx = 0
+        for i, size in enumerate(input_sizes):
+            # rows: Each input contributes size*column_size elements in the output
+            rows = np.arange(start_idx, start_idx + size * column_size)
+
+            # cols: Need to ensure cols aligns with how OpenMDAO flattens the inputs for each partial
+            # For a single input, OpenMDAO flattens it as [row1_col1, row1_col2, ..., row2_col1, row2_col2, ...]
+            # Therefore, we need to create a pattern that matches this flattening
+            if column_size == 1:
+                # For (n, 1) inputs, it's a direct mapping
+                cols = np.arange(size)
+            elif column_size == 3:
+                # For (n, 3) inputs, repeat each index 3 times to account for each column
+                cols = np.repeat(np.arange(size), column_size)
+
+            self.declare_partials('stacked_output', f'input_{i}', rows=rows, cols=cols, val=1.0)
+            start_idx += size * column_size
+
+    def compute(self, inputs, outputs):
+        # Stack inputs vertically
+        outputs['stacked_output'] = np.vstack([inputs[f'input_{i}'] for i in range(len(self.options['input_sizes']))])
+
+    def compute_partials(self, inputs, partials):
+        # The partial derivatives have been declared in setup as constant 1.0, so no further action is needed.
+        pass
+
+
 
 class System(ExplicitComponent):
 

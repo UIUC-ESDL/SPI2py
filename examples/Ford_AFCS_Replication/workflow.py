@@ -6,7 +6,7 @@ import numpy as np
 import openmdao.api as om
 from SPI2py.API.Components import Component, Components
 from SPI2py.API.Interconnects import Interconnect
-from SPI2py.API.Systems import System
+from SPI2py.API.Systems import System, VerticalStackComp
 from SPI2py.models.utilities.visualization import plot_problem
 from SPI2py.models.utilities.inputs import read_input_file
 from openmdao.api import MuxComp
@@ -23,14 +23,33 @@ model.add_subsystem('components', Components(input_dict=input_file))
 # model.add_subsystem('interconnects', om.Group())
 # model.add_subsystem('system', System(num_components=2))
 
-mux = MuxComp()
-model.add_subsystem('mux', mux)
-n = 2
-# for i in range(n):
-mux.add_var('transformed_sphere_positions', shape=(100, 3))
 
-for i in range(n):
-    model.connect(f'components.comp_{i}.transformed_sphere_positions', f'mux.transformed_sphere_positions_{i}')
+
+vstack_sphere_positions = VerticalStackComp(input_sizes=[100, 100], column_size=3)
+model.add_subsystem('vstack_sphere_positions', vstack_sphere_positions)
+
+for i in range(2):
+    model.connect(f'components.comp_{i}.transformed_sphere_positions', f'vstack_sphere_positions.input_{i}')
+
+# input_dims_sphere_radii = [(100,), (100,)]
+# aggregate_sphere_radii = AggregateInputs(input_dims=input_dims_sphere_radii)
+# model.add_subsystem('aggregate_sphere_radii', aggregate_sphere_radii)
+#
+# for i, (n_i, m_i) in enumerate(input_dims_sphere_radii):
+#     model.connect(f'components.comp_{i}.transformed_sphere_radii', f'aggregate_sphere_radii.input_{i}')
+
+
+
+
+# mux = MuxComp()
+# model.add_subsystem('mux', mux)
+# n = 2
+# # for i in range(n):
+# mux.add_var('transformed_sphere_positions', shape=(100, 3), axis=0)
+#
+# for i in range(n):
+#     model.connect(f'components.comp_{i}.transformed_sphere_positions', f'mux.transformed_sphere_positions_{i}')
+
 
 
 # Initialize interconnects
@@ -145,3 +164,6 @@ prob.run_model()
 # # # Plot optimized spatial
 # # plot_problem(prob)
 #
+
+# a = prob.get_val('mux.transformed_sphere_positions')
+# c0out = prob.get_val('components.comp_0.transformed_sphere_positions')
