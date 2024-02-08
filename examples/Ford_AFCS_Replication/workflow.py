@@ -25,13 +25,13 @@ model.add_subsystem('components', Components(input_dict=input_file))
 
 
 
-vstack_sphere_positions = VerticalStackComp(column_size=3)
+vstack_sphere_positions = VerticalStackComp(input_sizes=[100, 100], column_size=3)
 model.add_subsystem('vstack_sphere_positions', vstack_sphere_positions)
 
 for i in range(2):
     model.connect(f'components.comp_{i}.transformed_sphere_positions', f'vstack_sphere_positions.input_{i}')
 
-vstack_sphere_radii = VerticalStackComp(column_size=1)
+vstack_sphere_radii = VerticalStackComp(input_sizes=[100, 100], column_size=1)
 model.add_subsystem('vstack_sphere_radii', vstack_sphere_radii)
 
 for i in range(2):
@@ -121,7 +121,7 @@ prob.model.add_objective('system.bounding_box_volume')
 
 
 prob.driver = om.ScipyOptimizeDriver()
-prob.driver.options['maxiter'] = 35
+prob.driver.options['maxiter'] = 15
 prob.driver.options['optimizer'] = 'SLSQP'  #'BFGS'
 # prob.driver.options['tol'] = 1e-9
 
