@@ -21,32 +21,34 @@ model = prob.model
 
 model.add_subsystem('components', Components(input_dict=input_file))
 # model.add_subsystem('interconnects', om.Group())
+
+
+
+
+vstack_sphere_positions = VerticalStackComp(column_size=3)
+model.add_subsystem('vstack_sphere_positions', vstack_sphere_positions)
+
+for i in range(2):
+    model.connect(f'components.comp_{i}.transformed_sphere_positions', f'vstack_sphere_positions.input_{i}')
+
+vstack_sphere_radii = VerticalStackComp(column_size=1)
+model.add_subsystem('vstack_sphere_radii', vstack_sphere_radii)
+
+for i in range(2):
+    model.connect(f'components.comp_{i}.transformed_sphere_radii', f'vstack_sphere_radii.input_{i}')
+
 model.add_subsystem('system', System(num_components=2))
 
-
-
-# vstack_sphere_positions = VerticalStackComp(input_sizes=[100, 100], column_size=3)
-# model.add_subsystem('vstack_sphere_positions', vstack_sphere_positions)
-#
-# for i in range(2):
-#     model.connect(f'components.comp_{i}.transformed_sphere_positions', f'vstack_sphere_positions.input_{i}')
-#
-# vstack_sphere_radii = VerticalStackComp(input_sizes=[100, 100], column_size=1)
-# model.add_subsystem('vstack_sphere_radii', vstack_sphere_radii)
-#
-# for i in range(2):
-#     model.connect(f'components.comp_{i}.transformed_sphere_radii', f'vstack_sphere_radii.input_{i}')
-#
-# model.connect('vstack_sphere_positions.stacked_output', 'system.transformed_sphere_positions')
-# model.connect('vstack_sphere_radii.stacked_output', 'system.transformed_sphere_radii')
+model.connect('vstack_sphere_positions.stacked_output', 'system.transformed_sphere_positions')
+model.connect('vstack_sphere_radii.stacked_output', 'system.transformed_sphere_radii')
 
 # model.connect('components.comp_0.transformed_sphere_positions', 'system.comp_0_transformed_sphere_positions')
 # model.connect('components.comp_1.transformed_sphere_positions', 'system.comp_1_transformed_sphere_positions')
 
-model.connect('components.comp_0.transformed_sphere_positions', 'system.comp_0_transformed_sphere_positions')
-model.connect('components.comp_1.transformed_sphere_positions', 'system.comp_1_transformed_sphere_positions')
-model.connect('components.comp_0.transformed_sphere_radii', 'system.comp_0_transformed_sphere_radii')
-model.connect('components.comp_1.transformed_sphere_radii', 'system.comp_1_transformed_sphere_radii')
+# model.connect('components.comp_0.transformed_sphere_positions', 'system.comp_0_transformed_sphere_positions')
+# model.connect('components.comp_1.transformed_sphere_positions', 'system.comp_1_transformed_sphere_positions')
+# model.connect('components.comp_0.transformed_sphere_radii', 'system.comp_0_transformed_sphere_radii')
+# model.connect('components.comp_1.transformed_sphere_radii', 'system.comp_1_transformed_sphere_radii')
 
 
 # Initialize interconnects
@@ -119,9 +121,9 @@ prob.model.add_objective('system.bounding_box_volume')
 
 
 prob.driver = om.ScipyOptimizeDriver()
-# prob.driver.options['maxiter'] = 15
+prob.driver.options['maxiter'] = 35
 prob.driver.options['optimizer'] = 'SLSQP'  #'BFGS'
-prob.driver.options['tol'] = 1e-9
+# prob.driver.options['tol'] = 1e-9
 
 # Set the initial state
 prob.setup()
@@ -137,7 +139,7 @@ prob.set_val('components.comp_1.translation', [5.5, 7, 0])
 # # prob.set_val('components.comp_7.translation', [7.5, 3, 0])
 # # prob.set_val('components.comp_8.translation', [6, 1, 0])
 # # prob.set_val('components.comp_9.translation', [2, 0, 0])
-#
+
 # # prob.set_val('interconnects.c1a_c1b.control_points', [[3.75, 7, 0]])
 # # prob.set_val('interconnects.c1b_c2b.control_points', [[7.5, 7, 0]])
 # # prob.set_val('interconnects.c2b_c3b.control_points', [[7.5, 5.47, 0]])
@@ -153,25 +155,26 @@ prob.set_val('components.comp_1.translation', [5.5, 7, 0])
 prob.run_model()
 # print('Objective 1:', prob.get_val('system.distance'))
 print('Objective 1:', prob.get_val('system.bounding_box_volume'))
+print('Bounding Box 1:', prob.get_val('system.bounding_box_bounds'))
 # Plot initial spatial configuration
-# plot_problem(prob)
+plot_problem(prob)
 
 
-# Run the optimization
+# # Run the optimization
 
-# print(prob.model.list_inputs(is_design_var=True))
+# # print(prob.model.list_inputs(is_design_var=True))
 prob.run_driver()
 
 
 
 # Plot optimized spatial
-plot_problem(prob)
 
 
 # prob.set_val('components.comp_0.translation', [12, 7, 0])
 # prob.set_val('components.comp_1.translation', [5.5, 7, 1])
 
-prob.run_model()
+# prob.run_model()
 # print('Objective 2:', prob.get_val('system.distance'))
 plot_problem(prob)
 print('Objective 2:', prob.get_val('system.bounding_box_volume'))
+print('Bounding Box 2:', prob.get_val('system.bounding_box_bounds'))

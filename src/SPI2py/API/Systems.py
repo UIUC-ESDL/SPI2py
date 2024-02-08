@@ -7,6 +7,57 @@ from ..models.geometry.bounding_box_volume import bounding_box_bounds, bounding_
 # from ..models.kinematics.distance_calculations import distances_points_points
 
 
+# class VerticalStackComp(ExplicitComponent):
+#     """
+#     An ExplicitComponent that vertically stacks a series of inputs with sizes (n, 3) or (n, 1).
+#     """
+#
+#     def initialize(self):
+#         # Initialize with a list of sizes for each input
+#         self.options.declare('input_sizes', types=list, desc='List of sizes (n) for each input array')
+#         self.options.declare('column_size', types=int, desc='Column size, either 1 or 3')
+#
+#     def setup(self):
+#         input_sizes = self.options['input_sizes']
+#         column_size = self.options['column_size']
+#         total_rows = sum(input_sizes)
+#
+#         # Define inputs and output
+#         for i, size in enumerate(input_sizes):
+#             self.add_input(f'input_{i}', shape=(size, column_size))
+#
+#         self.add_output('stacked_output', shape=(total_rows, column_size))
+#
+#         # Declare partials for each input-output pair
+#         # start_idx = 0
+#         # for i, size in enumerate(input_sizes):
+#         #     # rows: Each input contributes size*column_size elements in the output
+#         #     rows = np.arange(start_idx, start_idx + size * column_size)
+#         #
+#         #     # cols: Need to ensure cols aligns with how OpenMDAO flattens the inputs for each partial
+#         #     # For a single input, OpenMDAO flattens it as [row1_col1, row1_col2, ..., row2_col1, row2_col2, ...]
+#         #     # Therefore, we need to create a pattern that matches this flattening
+#         #     if column_size == 1:
+#         #         # For (n, 1) inputs, it's a direct mapping
+#         #         cols = np.arange(size)
+#         #     elif column_size == 3:
+#         #         # For (n, 3) inputs, repeat each index 3 times to account for each column
+#         #         cols = np.repeat(np.arange(size), column_size)
+#         #
+#         #     self.declare_partials('stacked_output', f'input_{i}', rows=rows, cols=cols, val=1.0)
+#         #     start_idx += size * column_size
+#
+#     def setup_partials(self):
+#         self.declare_partials('*', '*', method='fd')
+#
+#     def compute(self, inputs, outputs):
+#         # Stack inputs vertically
+#         outputs['stacked_output'] = np.vstack([inputs[f'input_{i}'] for i in range(len(self.options['input_sizes']))])
+#
+#     def compute_partials(self, inputs, partials):
+#         # The partial derivatives have been declared in setup as constant 1.0, so no further action is needed.
+#         pass
+
 class VerticalStackComp(ExplicitComponent):
     """
     An ExplicitComponent that vertically stacks a series of inputs with sizes (n, 3) or (n, 1).
@@ -14,51 +65,37 @@ class VerticalStackComp(ExplicitComponent):
 
     def initialize(self):
         # Initialize with a list of sizes for each input
-        self.options.declare('input_sizes', types=list, desc='List of sizes (n) for each input array')
+    #     self.options.declare('input_sizes', types=list, desc='List of sizes (n) for each input array')
         self.options.declare('column_size', types=int, desc='Column size, either 1 or 3')
 
     def setup(self):
-        input_sizes = self.options['input_sizes']
+        # input_sizes = self.options['input_sizes']
         column_size = self.options['column_size']
-        total_rows = sum(input_sizes)
+        # total_rows = sum(input_sizes)
 
-        # Define inputs and output
-        for i, size in enumerate(input_sizes):
-            self.add_input(f'input_{i}', shape=(size, column_size))
-
-        self.add_output('stacked_output', shape=(total_rows, column_size))
-
-        # Declare partials for each input-output pair
-        # start_idx = 0
+        # # Define inputs and output
         # for i, size in enumerate(input_sizes):
-        #     # rows: Each input contributes size*column_size elements in the output
-        #     rows = np.arange(start_idx, start_idx + size * column_size)
-        #
-        #     # cols: Need to ensure cols aligns with how OpenMDAO flattens the inputs for each partial
-        #     # For a single input, OpenMDAO flattens it as [row1_col1, row1_col2, ..., row2_col1, row2_col2, ...]
-        #     # Therefore, we need to create a pattern that matches this flattening
-        #     if column_size == 1:
-        #         # For (n, 1) inputs, it's a direct mapping
-        #         cols = np.arange(size)
-        #     elif column_size == 3:
-        #         # For (n, 3) inputs, repeat each index 3 times to account for each column
-        #         cols = np.repeat(np.arange(size), column_size)
-        #
-        #     self.declare_partials('stacked_output', f'input_{i}', rows=rows, cols=cols, val=1.0)
-        #     start_idx += size * column_size
+        #     self.add_input(f'input_{i}', shape=(size, column_size))
+        self.add_input('input_0', shape=(100, column_size))
+        self.add_input('input_1', shape=(100, column_size))
+
+        # self.add_output('stacked_output', shape=(total_rows, column_size))
+        self.add_output('stacked_output', shape=(200, column_size))
 
     def setup_partials(self):
         self.declare_partials('*', '*', method='fd')
 
     def compute(self, inputs, outputs):
         # Stack inputs vertically
-        outputs['stacked_output'] = np.vstack([inputs[f'input_{i}'] for i in range(len(self.options['input_sizes']))])
+        # outputs['stacked_output'] = np.vstack([inputs[f'input_{i}'] for i in range(len(self.options['input_sizes']))])
+        input_0 = inputs['input_0']
+        input_1 = inputs['input_1']
+        stacked_output = np.vstack((input_0, input_1))
+        outputs['stacked_output'] = stacked_output
 
     def compute_partials(self, inputs, partials):
         # The partial derivatives have been declared in setup as constant 1.0, so no further action is needed.
         pass
-
-
 
 class System(ExplicitComponent):
 
@@ -69,15 +106,15 @@ class System(ExplicitComponent):
     def setup(self):
 
 
-        # self.add_input('transformed_sphere_positions', shape_by_conn=True)
-        # self.add_input('transformed_sphere_radii', shape_by_conn=True)
-        self.add_input('comp_0_transformed_sphere_positions', shape_by_conn=True)
-        self.add_input('comp_0_transformed_sphere_radii', shape_by_conn=True)
-        self.add_input('comp_1_transformed_sphere_positions', shape_by_conn=True)
-        self.add_input('comp_1_transformed_sphere_radii', shape_by_conn=True)
+        self.add_input('transformed_sphere_positions', shape_by_conn=True)
+        self.add_input('transformed_sphere_radii', shape_by_conn=True)
+        # self.add_input('comp_0_transformed_sphere_positions', shape_by_conn=True)
+        # self.add_input('comp_0_transformed_sphere_radii', shape_by_conn=True)
+        # self.add_input('comp_1_transformed_sphere_positions', shape_by_conn=True)
+        # self.add_input('comp_1_transformed_sphere_radii', shape_by_conn=True)
 
         # self.add_output('distance')
-        self.add_output('bounding_box_volume', val=1.0)
+        self.add_output('bounding_box_volume', val=1)
         self.add_output('bounding_box_bounds', shape=(6,))
         # self.add_output('constraints', val=torch.zeros(1))
 
@@ -93,29 +130,29 @@ class System(ExplicitComponent):
     def compute(self, inputs, outputs):
 
         # Get the input variables
-        # sphere_positions = inputs['transformed_sphere_positions']
-        # sphere_radii = inputs['transformed_sphere_radii']
-        comp_0_transformed_sphere_positions = inputs['comp_0_transformed_sphere_positions']
-        comp_0_transformed_sphere_radii = inputs['comp_0_transformed_sphere_radii']
-        comp_1_transformed_sphere_positions = inputs['comp_1_transformed_sphere_positions']
-        comp_1_transformed_sphere_radii = inputs['comp_1_transformed_sphere_radii']
+        sphere_positions = inputs['transformed_sphere_positions']
+        sphere_radii = inputs['transformed_sphere_radii']
+        # comp_0_transformed_sphere_positions = inputs['comp_0_transformed_sphere_positions']
+        # comp_0_transformed_sphere_radii = inputs['comp_0_transformed_sphere_radii']
+        # comp_1_transformed_sphere_positions = inputs['comp_1_transformed_sphere_positions']
+        # comp_1_transformed_sphere_radii = inputs['comp_1_transformed_sphere_radii']
 
         # Convert the inputs to torch tensors
-        # sphere_positions = torch.tensor(sphere_positions, dtype=torch.float64)
-        # sphere_radii = torch.tensor(sphere_radii, dtype=torch.float64)
-        comp_0_transformed_sphere_positions = torch.tensor(comp_0_transformed_sphere_positions, dtype=torch.float64)
-        comp_1_transformed_sphere_positions = torch.tensor(comp_1_transformed_sphere_positions, dtype=torch.float64)
-        comp_0_transformed_sphere_radii = torch.tensor(comp_0_transformed_sphere_radii, dtype=torch.float64)
-        comp_1_transformed_sphere_radii = torch.tensor(comp_1_transformed_sphere_radii, dtype=torch.float64)
+        sphere_positions = torch.tensor(sphere_positions, dtype=torch.float64)
+        sphere_radii = torch.tensor(sphere_radii, dtype=torch.float64)
+        # comp_0_transformed_sphere_positions = torch.tensor(comp_0_transformed_sphere_positions, dtype=torch.float64)
+        # comp_1_transformed_sphere_positions = torch.tensor(comp_1_transformed_sphere_positions, dtype=torch.float64)
+        # comp_0_transformed_sphere_radii = torch.tensor(comp_0_transformed_sphere_radii, dtype=torch.float64)
+        # comp_1_transformed_sphere_radii = torch.tensor(comp_1_transformed_sphere_radii, dtype=torch.float64)
 
         # Calculate the bounding box volume
-        # bb_bounds = bounding_box_bounds(sphere_positions, sphere_radii)
-        # bb_volume = self.compute_bounding_box_volume(sphere_positions, sphere_radii)
+        bb_bounds = bounding_box_bounds(sphere_positions, sphere_radii)
+        bb_volume = self.compute_bounding_box_volume(sphere_positions, sphere_radii)
         # objective = self.sum_of_pairwise_distances(comp_0_transformed_sphere_positions, comp_1_transformed_sphere_positions)
-        bb_volume, bb_bounds = self.compute_bounding_box_volume(comp_0_transformed_sphere_positions,
-                                                     comp_0_transformed_sphere_radii,
-                                                     comp_1_transformed_sphere_positions,
-                                                     comp_1_transformed_sphere_radii)
+        # bb_volume, bb_bounds = self.compute_bounding_box_volume(comp_0_transformed_sphere_positions,
+        #                                              comp_0_transformed_sphere_radii,
+        #                                              comp_1_transformed_sphere_positions,
+        #                                              comp_1_transformed_sphere_radii)
 
         # Convert the outputs to numpy arrays
         bb_bounds = bb_bounds.detach().numpy()
@@ -173,27 +210,27 @@ class System(ExplicitComponent):
     # def compute_distance(sphere_positions_0, sphere_positions_1):
     #     return torch.norm(sphere_positions_0 - sphere_positions_1, dim=1).max()
 
-    # @staticmethod
-    # def compute_bounding_box_volume(sphere_positions, sphere_radii, include_bounds=False):
-    #
-    #     # bb_bounds = smooth_bounding_box_bounds(sphere_positions, sphere_radii)
-    #     bb_bounds = bounding_box_bounds(sphere_positions, sphere_radii)
-    #     bb_volume = bounding_box_volume(bb_bounds)
-    #
-    #     if include_bounds:
-    #         return bb_volume, bb_bounds
-    #     else:
-    #         return bb_volume
-
     @staticmethod
-    def compute_bounding_box_volume(sphere_positions_0, sphere_radii_0, sphere_positions_1, sphere_radii_1):
+    def compute_bounding_box_volume(sphere_positions, sphere_radii, include_bounds=False):
 
         # bb_bounds = smooth_bounding_box_bounds(sphere_positions, sphere_radii)
-        bb_bounds = bounding_box_bounds(sphere_positions_0, sphere_radii_0, sphere_positions_1, sphere_radii_1)
+        bb_bounds = bounding_box_bounds(sphere_positions, sphere_radii)
         bb_volume = bounding_box_volume(bb_bounds)
 
+        if include_bounds:
+            return bb_volume, bb_bounds
+        else:
+            return bb_volume
 
-        return bb_volume, bb_bounds
+    # @staticmethod
+    # def compute_bounding_box_volume(sphere_positions_0, sphere_radii_0, sphere_positions_1, sphere_radii_1):
+    #
+    #     # bb_bounds = smooth_bounding_box_bounds(sphere_positions, sphere_radii)
+    #     bb_bounds = bounding_box_bounds(sphere_positions_0, sphere_radii_0, sphere_positions_1, sphere_radii_1)
+    #     bb_volume = bounding_box_volume(bb_bounds)
+    #
+    #
+    #     return bb_volume, bb_bounds
 
 
 
