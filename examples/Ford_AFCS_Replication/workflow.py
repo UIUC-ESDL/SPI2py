@@ -6,10 +6,11 @@ import numpy as np
 import openmdao.api as om
 from SPI2py.API.Components import Component, Components
 from SPI2py.API.Interconnects import Interconnect
-from SPI2py.API.Systems import System, VerticalStackComp
+from SPI2py.API.Systems import System, PairwiseCollisionDetection
+from SPI2py.API.utilities import Multiplexer, MaxAggregator
 from SPI2py.models.utilities.visualization import plot_problem
 from SPI2py.models.utilities.inputs import read_input_file
-from openmdao.api import MuxComp
+
 
 # Read the input file
 input_file = read_input_file('input.toml')
@@ -25,13 +26,13 @@ model.add_subsystem('components', Components(input_dict=input_file))
 
 
 
-vstack_sphere_positions = VerticalStackComp(input_sizes=[100, 100], column_size=3)
+vstack_sphere_positions = Multiplexer(input_sizes=[10, 10], column_size=3)
 model.add_subsystem('vstack_sphere_positions', vstack_sphere_positions)
 
 for i in range(2):
     model.connect(f'components.comp_{i}.transformed_sphere_positions', f'vstack_sphere_positions.input_{i}')
 
-vstack_sphere_radii = VerticalStackComp(input_sizes=[100, 100], column_size=1)
+vstack_sphere_radii = Multiplexer(input_sizes=[10, 10], column_size=1)
 model.add_subsystem('vstack_sphere_radii', vstack_sphere_radii)
 
 for i in range(2):
@@ -49,6 +50,17 @@ model.connect('vstack_sphere_radii.stacked_output', 'system.transformed_sphere_r
 # model.connect('components.comp_1.transformed_sphere_positions', 'system.comp_1_transformed_sphere_positions')
 # model.connect('components.comp_0.transformed_sphere_radii', 'system.comp_0_transformed_sphere_radii')
 # model.connect('components.comp_1.transformed_sphere_radii', 'system.comp_1_transformed_sphere_radii')
+
+collision = PairwiseCollisionDetection()
+model.add_subsystem('collision', collision)
+model.connect('components.comp_0.transformed_sphere_positions', 'collision.positions_a')
+model.connect('components.comp_0.transformed_sphere_radii', 'collision.radii_a')
+model.connect('components.comp_1.transformed_sphere_positions', 'collision.positions_b')
+model.connect('components.comp_1.transformed_sphere_radii', 'collision.radii_b')
+
+collision_aggregation = MaxAggregator()
+model.add_subsystem('collision_aggregation', collision_aggregation)
+model.connect('collision.signed_distances', 'collision_aggregation.input_vector')
 
 
 # Initialize interconnects
@@ -114,7 +126,7 @@ model.add_design_var('components.comp_1.rotation', ref=2*3.14159)
 
 # prob.model.add_objective('system.distance', ref=40000)
 prob.model.add_objective('system.bounding_box_volume', ref=1, ref0=0)
-# # prob.model.add_constraint('g', upper=0)
+prob.model.add_constraint('collision_aggregation.aggregated_output', upper=0.0)
 # # # prob.model.add_constraint('g_c', upper=0)
 # # # prob.model.add_constraint('g_i', upper=0)
 # # # prob.model.add_constraint('g_ci', upper=0)
@@ -123,7 +135,7 @@ prob.model.add_objective('system.bounding_box_volume', ref=1, ref0=0)
 prob.driver = om.ScipyOptimizeDriver()
 prob.driver.options['maxiter'] = 15
 prob.driver.options['optimizer'] = 'SLSQP'
-prob.driver.options['tol'] = 1e-25
+prob.driver.options['tol'] = 1e-12
 
 # Set the initial state
 prob.setup()
@@ -150,6 +162,9 @@ prob.set_val('components.comp_1.translation', [5.5, 7, 0])
 # # prob.set_val('interconnects.c4a_c3a.control_points', [[0.5, 3, 0]])
 # # prob.set_val('interconnects.c3a_c2a.control_points', [[0.5, 5, 0]])
 # # prob.set_val('interconnects.c2a_c1a.control_points', [[0.5, 6.5, 0]])
+
+
+
 
 
 prob.run_model()

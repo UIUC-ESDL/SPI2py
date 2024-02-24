@@ -1,11 +1,4 @@
 import torch
-from ..utilities.aggregation import kreisselmeier_steinhauser_max, kreisselmeier_steinhauser_min
-
-def softmax(x, tau=1.0):
-    return torch.sum(x * torch.exp(x / tau)) / torch.sum(torch.exp(x / tau))
-
-def softmin(x, tau=1.0):
-    return -softmax(-x, tau)
 
 def bounding_box_bounds(positions, radii):
     """
@@ -31,34 +24,6 @@ def bounding_box_bounds(positions, radii):
 
     return bounds
 
-def smooth_bounding_box_bounds(positions, radii, rho=100, tau=0.01):
-
-    # Calculate min and max coordinates for each sphere
-    min_coords = positions - radii.view(-1, 1)
-    max_coords = positions + radii.view(-1, 1)
-
-    # # Find overall min and max coordinates
-    # x_min = kreisselmeier_steinhauser_min(min_coords[:, 0], rho=rho)
-    # y_min = kreisselmeier_steinhauser_min(min_coords[:, 1], rho=rho)
-    # z_min = kreisselmeier_steinhauser_min(min_coords[:, 2], rho=rho)
-    #
-    # x_max = kreisselmeier_steinhauser_max(max_coords[:, 0], rho=rho)
-    # y_max = kreisselmeier_steinhauser_max(max_coords[:, 1], rho=rho)
-    # z_max = kreisselmeier_steinhauser_max(max_coords[:, 2], rho=rho)
-
-    # Find overall min and max coordinates
-    x_min = softmin(min_coords[:, 0], tau=tau)
-    y_min = softmin(min_coords[:, 1], tau=tau)
-    z_min = softmin(min_coords[:, 2], tau=tau)
-
-    x_max = softmax(max_coords[:, 0], tau=tau)
-    y_max = softmax(max_coords[:, 1], tau=tau)
-    z_max = softmax(max_coords[:, 2], tau=tau)
-
-    # Combine into a single tensor representing the bounding box
-    bounds = torch.tensor([x_min, x_max, y_min, y_max, z_min, z_max])
-
-    return bounds
 
 def bounding_box_volume(bounds):
 

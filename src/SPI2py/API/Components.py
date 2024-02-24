@@ -18,10 +18,11 @@ class Components(Group):
         for i, key in enumerate(components_dict.keys()):
             description = components_dict[key]['description']
             spheres_filepath = components_dict[key]['spheres_filepath']
+            num_spheres = components_dict[key]['num_spheres']
             port_positions = components_dict[key]['port_positions']
             color = components_dict[key]['color']
 
-            sphere_positions, sphere_radii = read_xyzr_file(spheres_filepath)
+            sphere_positions, sphere_radii = read_xyzr_file(spheres_filepath, num_spheres=num_spheres)
 
             component = Component(description=description,
                                   color=color,
@@ -63,9 +64,9 @@ class Component(ExplicitComponent):
         port_positions = self.options['port_positions']
 
         # Convert the lists to numpy arrays
-        sphere_positions = np.array(sphere_positions)
-        sphere_radii = np.array(sphere_radii)
-        port_positions = np.array(port_positions)
+        sphere_positions = np.array(sphere_positions).reshape(-1, 3)
+        sphere_radii = np.array(sphere_radii).reshape(-1, 1)
+        port_positions = np.array(port_positions).reshape(-1, 3)
 
         default_translation = [0.0, 0.0, 0.0]
         default_rotation = [0.0, 0.0, 0.0]

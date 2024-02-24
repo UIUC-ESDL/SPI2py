@@ -1,91 +1,84 @@
-import numpy as np
 import torch
 from torch.autograd.functional import jacobian
 from openmdao.api import ExplicitComponent
 
-from ..models.geometry.bounding_box_volume import bounding_box_bounds, bounding_box_volume, smooth_bounding_box_bounds
+from ..models.geometry.bounding_box_volume import bounding_box_bounds, bounding_box_volume
+from ..models.kinematics.distance_calculations import signed_distances_spheres_spheres
 
+class PairwiseCollisionDetection(ExplicitComponent):
 
-
-class VerticalStackComp(ExplicitComponent):
-    """
-    An ExplicitComponent that vertically stacks a series of inputs with sizes (n, 3) or (n, 1).
-    """
-
-    def initialize(self):
-        # Initialize with a list of sizes for each input
-        self.options.declare('input_sizes', types=list, desc='List of sizes (n) for each input array')
-        self.options.declare('column_size', types=int, desc='Column size, either 1 or 3')
+    # def initialize(self):
+        # self.options.declare('components', types=list)
+        # self.options.declare('interconnects', types=list)
 
     def setup(self):
-        input_sizes = self.options['input_sizes']
-        column_size = self.options['column_size']
-        total_rows = sum(input_sizes)
+        self.add_input('positions_a', shape_by_conn=True)
+        self.add_input('radii_a', shape_by_conn=True)
 
-        # Define inputs and output
-        for i, size in enumerate(input_sizes):
-            self.add_input(f'input_{i}', shape=(size, column_size))
+        self.add_input('positions_b', shape_by_conn=True)
+        self.add_input('radii_b', shape_by_conn=True)
 
-        self.add_output('stacked_output', shape=(total_rows, column_size))
+        # FIXME Hard-coded
+        self.add_output('signed_distances', shape=(10, 10))
 
     def setup_partials(self):
-        self.declare_partials('*', '*')
+        self.declare_partials('signed_distances', 'positions_a')
+        self.declare_partials('signed_distances', 'radii_a')
+        self.declare_partials('signed_distances', 'positions_b')
+        self.declare_partials('signed_distances', 'radii_b')
 
     def compute(self, inputs, outputs):
 
-        # Get the options
-        input_sizes = self.options['input_sizes']
+        # Extract the inputs
+        positions_a = inputs['positions_a']
+        radii_a = inputs['radii_a']
+        positions_b = inputs['positions_b']
+        radii_b = inputs['radii_b']
 
-        # Get the input arrays
-        input_arrays = ()
-        for i in range(len(input_sizes)):
-            input_arrays = input_arrays + (inputs[f'input_{i}'],)
+        # Convert the inputs to torch tensors
+        positions_a = torch.tensor(positions_a, dtype=torch.float64)
+        radii_a = torch.tensor(radii_a, dtype=torch.float64)
+        positions_b = torch.tensor(positions_b, dtype=torch.float64)
+        radii_b = torch.tensor(radii_b, dtype=torch.float64)
 
-        # Convert the input arrays to torch tensors
-        input_tensors = ()
-        for input_array in input_arrays:
-            input_tensors = input_tensors + (torch.tensor(input_array, dtype=torch.float64),)
+        signed_distances = self._compute_signed_distances(positions_a, radii_a, positions_b, radii_b)
 
-        # Stack inputs vertically
-        stacked_output = self._compute_vstack(*input_tensors)
-
-        # Convert the stacked output to a numpy array
-        stacked_output = stacked_output.detach().numpy()
-
-        # Set the output
-        outputs['stacked_output'] = stacked_output
+        outputs['signed_distances'] = signed_distances
 
     def compute_partials(self, inputs, partials):
 
-        # Get the options
-        input_sizes = self.options['input_sizes']
+        # Extract the inputs
+        positions_a = inputs['positions_a']
+        radii_a = inputs['radii_a']
+        positions_b = inputs['positions_b']
+        radii_b = inputs['radii_b']
 
-        # Get the input arrays
-        input_arrays = ()
-        for i in range(len(input_sizes)):
-            input_arrays = input_arrays + (inputs[f'input_{i}'],)
-
-        # Convert the input arrays to torch tensors
-        input_tensors = ()
-        for input_array in input_arrays:
-            input_tensors = input_tensors + (torch.tensor(input_array, dtype=torch.float64, requires_grad=True),)
+        # Convert the inputs to torch tensors
+        positions_a = torch.tensor(positions_a, dtype=torch.float64, requires_grad=True)
+        radii_a = torch.tensor(radii_a, dtype=torch.float64, requires_grad=True)
+        positions_b = torch.tensor(positions_b, dtype=torch.float64, requires_grad=True)
+        radii_b = torch.tensor(radii_b, dtype=torch.float64, requires_grad=True)
 
         # Calculate the partial derivatives
-        jac_stacked_output = jacobian(self._compute_vstack, input_tensors)
+        jac_signed_distances = jacobian(self._compute_signed_distances, (positions_a, radii_a, positions_b, radii_b))
 
-        # Convert the partial derivatives to numpy arrays
-        jac_stacked_output_np = []
-        for jac in jac_stacked_output:
-            jac_stacked_output_np.append(jac.detach().numpy())
+        # Slice the Jacobian
+        jac_signed_distances_positions_a = jac_signed_distances[0].detach().numpy()
+        jac_signed_distances_radii_a = jac_signed_distances[1].detach().numpy()
+        jac_signed_distances_positions_b = jac_signed_distances[2].detach().numpy()
+        jac_signed_distances_radii_b = jac_signed_distances[3].detach().numpy()
 
-        # Set the partial derivatives
-        for i in range(len(input_sizes)):
-            partials['stacked_output', f'input_{i}'] = jac_stacked_output_np[i]
+        # Write the outputs
+        partials['signed_distances', 'positions_a'] = jac_signed_distances_positions_a
+        partials['signed_distances', 'radii_a'] = jac_signed_distances_radii_a
+        partials['signed_distances', 'positions_b'] = jac_signed_distances_positions_b
+        partials['signed_distances', 'radii_b'] = jac_signed_distances_radii_b
 
 
     @staticmethod
-    def _compute_vstack(*args):
-        return torch.vstack(args)
+    def _compute_signed_distances(positions_a, radii_a, positions_b, radii_b):
+        signed_distances = signed_distances_spheres_spheres(positions_a, radii_a, positions_b, radii_b)
+        return signed_distances
 
 
 class System(ExplicitComponent):
@@ -156,8 +149,6 @@ class System(ExplicitComponent):
     @staticmethod
     def compute_bounding_box_volume(sphere_positions, sphere_radii, include_bounds=False):
 
-
-        # bb_bounds = smooth_bounding_box_bounds(sphere_positions, sphere_radii, rho=100)
         bb_bounds = bounding_box_bounds(sphere_positions, sphere_radii)
         bb_volume = bounding_box_volume(bb_bounds)
 
@@ -167,6 +158,63 @@ class System(ExplicitComponent):
             return bb_volume
 
 
+class CollisionDetection(ExplicitComponent):
+
+    def initialize(self):
+        self.options.declare('components', types=list)
+        # self.options.declare('interconnects', types=list)
+
+    def setup(self):
+
+        self.components = self.options['components']
+        self.interconnects = self.options['interconnects']
+
+        self.component_pairs = self.get_component_pairs()
+        self.interconnect_pairs = self.get_interconnect_pairs()
+        self.component_interconnect_pairs = self.get_component_interconnect_pairs()
+
+        self.add_input('translations', shape=(len(self.components), 3))
+        self.add_input('rotations', shape=(len(self.components), 3))
+        self.add_input('routings', shape=(len(self.interconnects), 3))
+
+        self.add_output('g', shape=(3,))
+
+    def setup_partials(self):
+        self.declare_partials('g', 'translations')
+        self.declare_partials('g', 'rotations')
+        self.declare_partials('g', 'routings')
+
+    def compute(self, inputs, outputs):
+
+        translations = inputs['translations']
+        rotations = inputs['rotations']
+        routings = inputs['routings']
+
+        positions_dict = self.calculate_positions(translations, rotations, routings)
+
+        g_component_pairs = self.collision_component_pairs(positions_dict)
+        g_interconnect_pairs = self.collision_interconnect_pairs(positions_dict)
+        g_component_interconnect_pairs = self.collision_component_interconnect_pairs(positions_dict)
+
+        g = torch.tensor((g_component_pairs, g_interconnect_pairs, g_component_interconnect_pairs))
+
+        outputs['g'] = g
+
+    def compute_partials(self, inputs, partials):
+
+        translations = inputs['translations']
+        rotations = inputs['rotations']
+        routings = inputs['routings']
+
+        positions_dict = self.calculate_positions(translations, rotations, routings)
+
+        g_component_pairs = self.collision_component_pairs(positions_dict)
+        g_interconnect_pairs = self.collision_interconnect_pairs(positions_dict)
+        g_component_interconnect_pairs = self.collision_component_interconnect_pairs(positions_dict)
+
+        g = torch.tensor((g_component_pairs, g_interconnect_pairs, g_component_interconnect_pairs))
+
+        partials['g', 'translations'] = self.calculate_positions
 
 # class _System:
 #     def __init__(self, components, interconnects):

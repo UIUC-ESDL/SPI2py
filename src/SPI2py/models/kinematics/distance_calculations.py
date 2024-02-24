@@ -4,7 +4,6 @@ Provides functions to calculate the distance between classes in various ways.
 """
 
 import torch
-from ..utilities.aggregation import kreisselmeier_steinhauser
 
 
 def distances_points_points(a: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
@@ -44,24 +43,29 @@ def distances_points_points(a: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
     bb = b.reshape(1, -1, 3)
     cc = aa-bb
 
-    cc = cc.reshape(-1, 3)
+    # ccr = cc.reshape(-1, 3)
 
-    c = torch.linalg.norm(cc, axis=-1)
+    # c = torch.linalg.norm(cc, axis=-1, keepdim=True)
+    c = torch.linalg.norm(cc, dim=2)
 
     # Reshape the output to a 1D array
-    c = c.flatten()
+    # c = c.flatten()
 
     return c
 
 
 def sum_radii(a, b):
     # Sum radii
-    aa = a.reshape(-1, 1, 1)
-    bb = b.reshape(1, -1, 1)
+    # aa = a.reshape(-1, 1, 1)
+    # bb = b.reshape(1, -1, 1)
+
+    aa = a.reshape(-1, 1)
+    bb = b.reshape(1, -1)
 
     c = aa + bb
 
-    c = c.flatten()
+    # c = c.flatten()
+    # c.reshape(-1, 1)
 
     return c
 
@@ -90,70 +94,57 @@ def signed_distances_spheres_spheres(centers_a: torch.tensor,
 
     signed_distances = delta_radii - delta_positions
 
-    signed_distances.flatten()
+    # signed_distances.flatten()
 
     return signed_distances
 
-def aggregate_signed_distance_spheres_spheres(centers_a, radii_a, centers_b, radii_b):
+# def aggregate_signed_distance_spheres_spheres(centers_a, radii_a, centers_b, radii_b):
+#
+#     signed_distances = signed_distances_spheres_spheres(centers_a, radii_a, centers_b, radii_b)
+#
+#     aggregate_signed_distance = kreisselmeier_steinhauser(signed_distances)
+#
+#     return aggregate_signed_distance
+#
+#
+# def aggregate_signed_distance(positions_dict, object_pair):
+#     """
+#     Returns the signed distances between all pairs of objects in the layout.
+#
+#     To be consistent with constraint function notation, this function returns negative values
+#     for objects that are not interfering with each other, and positive values for objects that
+#     are interfering with each other.
+#
+#     TODO Preallocate array and vectorize this function
+#     TODO Write unit tests
+#
+#     :param x: Design vector (1D array)
+#     :param model: The SpatialConfiguration object used to query positions at x
+#     :param object_pair: The list of object pairs to calculate the signed distance between
+#     :return: An array of signed distances between each object pair
+#     """
+#
+#
+#     # Calculate the interferences between each sphere of each object pair
+#     all_signed_distances = []
+#
+#     # TODO MAKE ORDER STATIC
+#     for obj1, obj2 in object_pair:
+#
+#         positions_a = positions_dict[str(obj1)]['positions']
+#         radii_a = positions_dict[str(obj1)]['radii']
+#
+#         positions_b = positions_dict[str(obj2)]['positions']
+#         radii_b = positions_dict[str(obj2)]['radii']
+#
+#         signed_distances = aggregate_signed_distance_spheres_spheres(positions_a, radii_a, positions_b, radii_b).flatten()
+#
+#         all_signed_distances.append(signed_distances)
+#
+#     all_signed_distances = torch.cat(all_signed_distances)
+#
+#     # For troubleshooting (to see which objects are interfering)
+#     object_pair_signed_distances = [(str(obj1), str(obj2), signed_distance) for (obj1, obj2), signed_distance in zip(object_pair, all_signed_distances)]
+#
+#     return all_signed_distances
 
-    signed_distances = signed_distances_spheres_spheres(centers_a, radii_a, centers_b, radii_b)
-
-    aggregate_signed_distance = kreisselmeier_steinhauser(signed_distances)
-
-    return aggregate_signed_distance
-
-
-def aggregate_signed_distance(positions_dict, object_pair):
-    """
-    Returns the signed distances between all pairs of objects in the layout.
-
-    To be consistent with constraint function notation, this function returns negative values
-    for objects that are not interfering with each other, and positive values for objects that
-    are interfering with each other.
-
-    TODO Preallocate array and vectorize this function
-    TODO Write unit tests
-
-    :param x: Design vector (1D array)
-    :param model: The SpatialConfiguration object used to query positions at x
-    :param object_pair: The list of object pairs to calculate the signed distance between
-    :return: An array of signed distances between each object pair
-    """
-
-
-    # Calculate the interferences between each sphere of each object pair
-    all_signed_distances = []
-
-    # TODO MAKE ORDER STATIC
-    for obj1, obj2 in object_pair:
-
-        positions_a = positions_dict[str(obj1)]['positions']
-        radii_a = positions_dict[str(obj1)]['radii']
-
-        positions_b = positions_dict[str(obj2)]['positions']
-        radii_b = positions_dict[str(obj2)]['radii']
-
-        signed_distances = aggregate_signed_distance_spheres_spheres(positions_a, radii_a, positions_b, radii_b).flatten()
-
-        all_signed_distances.append(signed_distances)
-
-    all_signed_distances = torch.cat(all_signed_distances)
-
-    # For troubleshooting (to see which objects are interfering)
-    object_pair_signed_distances = [(str(obj1), str(obj2), signed_distance) for (obj1, obj2), signed_distance in zip(object_pair, all_signed_distances)]
-
-    return all_signed_distances
-
-
-def centroid(positions, radii):
-
-    v_i = ((4 / 3) * torch.pi * radii ** 3).view(-1, 1)
-    v_total = torch.sum(v_i)
-
-    centroid_val = torch.sum(positions * v_i, 0) / v_total
-
-    return centroid_val
-
-
-def principal_axes(self):
-    pass
