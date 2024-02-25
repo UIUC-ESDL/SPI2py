@@ -1,6 +1,5 @@
 import numpy as np
 import torch
-from openmdao.core.explicitcomponent import ExplicitComponent
 from torch.autograd.functional import jacobian
 from openmdao.api import ExplicitComponent, Group, MuxComp
 

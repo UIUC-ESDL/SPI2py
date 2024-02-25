@@ -160,7 +160,6 @@ prob.model.add_constraint('collision_multiplexer.stacked_output', upper=0.0)
 prob.driver = om.ScipyOptimizeDriver()
 # prob.driver.options['maxiter'] = 50
 prob.driver.options['optimizer'] = 'SLSQP'
-# prob.driver.options['optimizer'] = 'trust-constr'
 # prob.driver.options['tol'] = 1e-12
 
 # Set the initial state
@@ -211,4 +210,4 @@ print('Final Collision:', prob.get_val('collision_multiplexer.stacked_output'))
 
 
 # Troubleshooting/Debugging
-# prob.check_partials(show_only_incorrect=True, compact_print=True,includes=['system'])
+# prob.check_partials(show_only_incorrect=True, compact_print=True,includes=['bbv'])
