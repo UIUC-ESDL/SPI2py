@@ -1,9 +1,13 @@
-import torch
-from openmdao.core.explicitcomponent import ExplicitComponent
-from torch.autograd.functional import jacobian
+# import torch
+import jax.numpy as np
+from jax import grad, jacfwd, jacrev
+from openmdao.api import ExplicitComponent, Group
+# from torch.autograd.functional import jacobian
 
 from SPI2py.models.kinematics.distance_calculations import signed_distances_spheres_spheres
 
+class CombinatorialCollisionDetection(Group):
+    pass
 
 class PairwiseCollisionDetection(ExplicitComponent):
 
@@ -36,10 +40,14 @@ class PairwiseCollisionDetection(ExplicitComponent):
         radii_b = inputs['radii_b']
 
         # Convert the inputs to torch tensors
-        positions_a = torch.tensor(positions_a, dtype=torch.float64)
-        radii_a = torch.tensor(radii_a, dtype=torch.float64)
-        positions_b = torch.tensor(positions_b, dtype=torch.float64)
-        radii_b = torch.tensor(radii_b, dtype=torch.float64)
+        # positions_a = torch.tensor(positions_a, dtype=torch.float64)
+        # radii_a = torch.tensor(radii_a, dtype=torch.float64)
+        # positions_b = torch.tensor(positions_b, dtype=torch.float64)
+        # radii_b = torch.tensor(radii_b, dtype=torch.float64)
+        positions_a = np.array(positions_a)
+        radii_a = np.array(radii_a)
+        positions_b = np.array(positions_b)
+        radii_b = np.array(radii_b)
 
         signed_distances = self._compute_signed_distances(positions_a, radii_a, positions_b, radii_b)
 
@@ -54,19 +62,30 @@ class PairwiseCollisionDetection(ExplicitComponent):
         radii_b = inputs['radii_b']
 
         # Convert the inputs to torch tensors
-        positions_a = torch.tensor(positions_a, dtype=torch.float64, requires_grad=True)
-        radii_a = torch.tensor(radii_a, dtype=torch.float64, requires_grad=True)
-        positions_b = torch.tensor(positions_b, dtype=torch.float64, requires_grad=True)
-        radii_b = torch.tensor(radii_b, dtype=torch.float64, requires_grad=True)
+        # positions_a = torch.tensor(positions_a, dtype=torch.float64, requires_grad=True)
+        # radii_a = torch.tensor(radii_a, dtype=torch.float64, requires_grad=True)
+        # positions_b = torch.tensor(positions_b, dtype=torch.float64, requires_grad=True)
+        # radii_b = torch.tensor(radii_b, dtype=torch.float64, requires_grad=True)
+        positions_a = np.array(positions_a)
+        radii_a = np.array(radii_a)
+        positions_b = np.array(positions_b)
+        radii_b = np.array(radii_b)
 
         # Calculate the partial derivatives
-        jac_signed_distances = jacobian(self._compute_signed_distances, (positions_a, radii_a, positions_b, radii_b))
+        # jac_signed_distances = jacobian(self._compute_signed_distances, (positions_a, radii_a, positions_b, radii_b))
+        jac_signed_distances = jacfwd(self._compute_signed_distances, (0, 1, 2, 3))(positions_a, radii_a, positions_b, radii_b)
 
-        # Slice the Jacobian
-        jac_signed_distances_positions_a = jac_signed_distances[0].detach().numpy()
-        jac_signed_distances_radii_a = jac_signed_distances[1].detach().numpy()
-        jac_signed_distances_positions_b = jac_signed_distances[2].detach().numpy()
-        jac_signed_distances_radii_b = jac_signed_distances[3].detach().numpy()
+
+        # # Slice the Jacobian
+        # jac_signed_distances_positions_a = jac_signed_distances[0].detach().numpy()
+        # jac_signed_distances_radii_a = jac_signed_distances[1].detach().numpy()
+        # jac_signed_distances_positions_b = jac_signed_distances[2].detach().numpy()
+        # jac_signed_distances_radii_b = jac_signed_distances[3].detach().numpy()
+
+        jac_signed_distances_positions_a = jac_signed_distances[0]
+        jac_signed_distances_radii_a = jac_signed_distances[1]
+        jac_signed_distances_positions_b = jac_signed_distances[2]
+        jac_signed_distances_radii_b = jac_signed_distances[3]
 
         # Write the outputs
         partials['signed_distances', 'positions_a'] = jac_signed_distances_positions_a
