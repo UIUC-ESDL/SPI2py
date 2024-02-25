@@ -10,15 +10,15 @@ description = 'radiator and ion exchanger 1b'
 spheres_filepath='components/radiator_and_ion_exchanger.xyzr'
 num_spheres=10
 port_positions = [[-1.475, 0, 0], [1.475, 0, 0]]
-color='orange'
-#color='purple'
+color='purple'
 
-#[components.2]
-#description = 'pump 2a'
-#spheres_filepath='components/pump.xyzr'
-#port_positions = [[-1.475, 0, 0], [1.475, 0, 0]]
-#color='blue'
-#
+[components.2]
+description = 'pump 2a'
+spheres_filepath='components/pump.xyzr'
+num_spheres=10
+port_positions = [[-1.475, 0, 0], [1.475, 0, 0]]
+color='blue'
+
 #[components.3]
 #description = 'pump 2b'
 #spheres_filepath='components/pump.xyzr'
