@@ -47,7 +47,7 @@ class Multiplexer(ExplicitComponent):
             input_tensors = input_tensors + (torch.tensor(input_array, dtype=torch.float64),)
 
         # Stack inputs vertically
-        stacked_output = self._compute_vstack(*input_tensors)
+        stacked_output = self._multiplex(*input_tensors)
 
         # Convert the stacked output to a numpy array
         stacked_output = stacked_output.detach().numpy()
@@ -71,7 +71,7 @@ class Multiplexer(ExplicitComponent):
             input_tensors = input_tensors + (torch.tensor(input_array, dtype=torch.float64, requires_grad=True),)
 
         # Calculate the partial derivatives
-        jac_stacked_output = jacobian(self._compute_vstack, input_tensors)
+        jac_stacked_output = jacobian(self._multiplex, input_tensors)
 
         # Convert the partial derivatives to numpy arrays
         jac_stacked_output_np = []
@@ -84,12 +84,14 @@ class Multiplexer(ExplicitComponent):
 
 
     @staticmethod
-    def _compute_vstack(*args):
+    def _multiplex(*args):
         return torch.vstack(args)
 
 
 class Aggregator(ExplicitComponent):
-
+    """
+    Takes an array and aggregates it into a single value.
+    """
     def setup(self):
 
         # Define inputs and output

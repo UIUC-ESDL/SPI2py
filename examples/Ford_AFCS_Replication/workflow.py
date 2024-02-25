@@ -4,9 +4,9 @@ Author:     Chad Peterson
 """
 import numpy as np
 import openmdao.api as om
-from SPI2py.API.Components import Component, Components
-from SPI2py.API.Interconnects import Interconnect
-from SPI2py.API.Systems import System, PairwiseCollisionDetection
+from SPI2py.API.system import Component, Components, Interconnect
+from SPI2py.API.objectives import BoundingBoxVolume
+from SPI2py.API.constraints import PairwiseCollisionDetection
 from SPI2py.API.utilities import Multiplexer, MaxAggregator
 from SPI2py.models.utilities.visualization import plot_problem
 from SPI2py.models.utilities.inputs import read_input_file
@@ -38,10 +38,10 @@ model.add_subsystem('vstack_sphere_radii', vstack_sphere_radii)
 for i in range(2):
     model.connect(f'components.comp_{i}.transformed_sphere_radii', f'vstack_sphere_radii.input_{i}')
 
-model.add_subsystem('system', System(num_components=2))
+model.add_subsystem('bbv', BoundingBoxVolume(num_components=2))
 
-model.connect('vstack_sphere_positions.stacked_output', 'system.transformed_sphere_positions')
-model.connect('vstack_sphere_radii.stacked_output', 'system.transformed_sphere_radii')
+model.connect('vstack_sphere_positions.stacked_output', 'bbv.positions')
+model.connect('vstack_sphere_radii.stacked_output', 'bbv.radii')
 
 # model.connect('components.comp_0.transformed_sphere_positions', 'system.comp_0_transformed_sphere_positions')
 # model.connect('components.comp_1.transformed_sphere_positions', 'system.comp_1_transformed_sphere_positions')
@@ -51,6 +51,7 @@ model.connect('vstack_sphere_radii.stacked_output', 'system.transformed_sphere_r
 # model.connect('components.comp_0.transformed_sphere_radii', 'system.comp_0_transformed_sphere_radii')
 # model.connect('components.comp_1.transformed_sphere_radii', 'system.comp_1_transformed_sphere_radii')
 
+# Component-Component Collision Detection
 collision = PairwiseCollisionDetection()
 model.add_subsystem('collision', collision)
 model.connect('components.comp_0.transformed_sphere_positions', 'collision.positions_a')
@@ -125,7 +126,7 @@ model.add_design_var('components.comp_1.rotation', ref=2*3.14159)
 # # prob.model.add_design_var('components.heater_core_6.translation', ref=10)
 
 # prob.model.add_objective('system.distance', ref=40000)
-prob.model.add_objective('system.bounding_box_volume', ref=1, ref0=0)
+prob.model.add_objective('bbv.bounding_box_volume', ref=1, ref0=0)
 prob.model.add_constraint('collision_aggregation.aggregated_output', upper=0.0)
 # # # prob.model.add_constraint('g_c', upper=0)
 # # # prob.model.add_constraint('g_i', upper=0)
@@ -133,9 +134,10 @@ prob.model.add_constraint('collision_aggregation.aggregated_output', upper=0.0)
 
 
 prob.driver = om.ScipyOptimizeDriver()
-prob.driver.options['maxiter'] = 15
+# prob.driver.options['maxiter'] = 50
 prob.driver.options['optimizer'] = 'SLSQP'
-prob.driver.options['tol'] = 1e-12
+# prob.driver.options['optimizer'] = 'trust-constr'
+# prob.driver.options['tol'] = 1e-12
 
 # Set the initial state
 prob.setup()
@@ -169,8 +171,8 @@ prob.set_val('components.comp_1.translation', [5.5, 7, 0])
 
 prob.run_model()
 # print('Objective 1:', prob.get_val('system.distance'))
-print('Objective 1:', prob.get_val('system.bounding_box_volume'))
-print('Bounding Box 1:', prob.get_val('system.bounding_box_bounds'))
+print('Objective 1:', prob.get_val('bbv.bounding_box_volume'))
+print('Bounding Box 1:', prob.get_val('bbv.bounding_box_bounds'))
 # Plot initial spatial configuration
 # plot_problem(prob)
 
@@ -191,7 +193,8 @@ prob.run_driver()
 # prob.run_model()
 # print('Objective 2:', prob.get_val('system.distance'))
 plot_problem(prob)
-print('Objective 2:', prob.get_val('system.bounding_box_volume'))
-print('Bounding Box 2:', prob.get_val('system.bounding_box_bounds'))
+print('Objective 2:', prob.get_val('bbv.bounding_box_volume'))
+# print('Bounding Box 2:', prob.get_val('system.bounding_box_bounds'))
+print('Collision:', prob.get_val('collision_aggregation.aggregated_output'))
 
 # prob.check_partials(show_only_incorrect=True, compact_print=True,includes=['system'])
