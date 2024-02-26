@@ -11,7 +11,7 @@ from ..models.kinematics.rigid_body_transformations import assemble_transformati
 
 class Components(Group):
     """
-    Used to create Component Objects from an input file and add them to the system.
+    A Group used to create Component Objects from an input file and add them to the system.
     """
     def initialize(self):
         self.options.declare('input_dict', types=dict)
@@ -61,8 +61,8 @@ class Component(ExplicitComponent):
         sphere_radii = np.array(sphere_radii).reshape(-1, 1)
         port_positions = np.array(port_positions).reshape(-1, 3)
 
-        default_translation = [0.0, 0.0, 0.0]
-        default_rotation = [0.0, 0.0, 0.0]
+        default_translation = np.array([[0.0, 0.0, 0.0]])
+        default_rotation = np.array([[0.0, 0.0, 0.0]])
 
         # Define the input shapes
         self.add_input('sphere_positions', val=sphere_positions)
@@ -93,8 +93,8 @@ class Component(ExplicitComponent):
         sphere_positions = torch.tensor(sphere_positions, dtype=torch.float64)
         sphere_radii = torch.tensor(sphere_radii, dtype=torch.float64)
         port_positions = torch.tensor(port_positions, dtype=torch.float64)
-        translation = torch.tensor(translation, dtype=torch.float64).reshape(1, 3)
-        rotation = torch.tensor(rotation, dtype=torch.float64).reshape(1, 3)
+        translation = torch.tensor(translation, dtype=torch.float64)
+        rotation = torch.tensor(rotation, dtype=torch.float64)
 
         # Calculate the transformed sphere positions and port positions
         sphere_positions_transformed = self.compute_transformation(sphere_positions, translation, rotation)
@@ -113,17 +113,15 @@ class Component(ExplicitComponent):
 
         # Get the input variables
         sphere_positions = inputs['sphere_positions']
-        sphere_radii = inputs['sphere_radii']
         port_positions = inputs['port_positions']
         translation = inputs['translation']
         rotation = inputs['rotation']
 
         # Convert the input variables to torch tensors
         sphere_positions = torch.tensor(sphere_positions, dtype=torch.float64, requires_grad=False)
-        sphere_radii = torch.tensor(sphere_radii, dtype=torch.float64, requires_grad=False)
         port_positions = torch.tensor(port_positions, dtype=torch.float64, requires_grad=False)
-        translation = torch.tensor(translation, dtype=torch.float64, requires_grad=True).reshape(1, 3)
-        rotation = torch.tensor(rotation, dtype=torch.float64, requires_grad=True).reshape(1, 3)
+        translation = torch.tensor(translation, dtype=torch.float64, requires_grad=True)
+        rotation = torch.tensor(rotation, dtype=torch.float64, requires_grad=True)
 
         # Define the Jacobian matrices using PyTorch Autograd
         jac_sphere_positions = jacfwd(self.compute_transformation, argnums=(1, 2))
@@ -148,7 +146,6 @@ class Component(ExplicitComponent):
         # Set the outputs
         partials['transformed_sphere_positions', 'translation'] = grad_sphere_positions_translation
         partials['transformed_sphere_positions', 'rotation'] = grad_sphere_positions_rotation
-
         partials['transformed_port_positions', 'translation'] = grad_port_positions_translation
         partials['transformed_port_positions', 'rotation'] = grad_port_positions_rotation
 
