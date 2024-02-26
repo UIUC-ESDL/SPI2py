@@ -1,6 +1,5 @@
 import numpy as np
 import torch
-from torch.autograd.functional import jacobian
 from torch.func import jacrev, jacfwd
 from openmdao.api import ExplicitComponent, Group
 

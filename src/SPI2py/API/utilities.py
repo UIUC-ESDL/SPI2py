@@ -1,8 +1,7 @@
 import torch
 from openmdao.core.explicitcomponent import ExplicitComponent
-from torch.autograd.functional import jacobian
+from torch.func import jacrev, jacfwd
 from ..models.utilities.aggregation import kreisselmeier_steinhauser_max, kreisselmeier_steinhauser_min
-
 
 
 class Multiplexer(ExplicitComponent):
@@ -21,7 +20,6 @@ class Multiplexer(ExplicitComponent):
         n_i = self.options['n_i']
         n = sum(n_i)
         m = self.options['m']
-
 
         # Define inputs and output
         for i, size in enumerate(n_i):
@@ -72,7 +70,7 @@ class Multiplexer(ExplicitComponent):
             input_tensors = input_tensors + (torch.tensor(input_array, dtype=torch.float64, requires_grad=True),)
 
         # Calculate the partial derivatives
-        jac_stacked_output = jacobian(self._multiplex, input_tensors)
+        jac_stacked_output = jacfwd(self._multiplex, argnums=(0, 1, 2))(*input_tensors)
 
         # Convert the partial derivatives to numpy arrays
         jac_stacked_output_np = []
@@ -135,7 +133,7 @@ class Aggregator(ExplicitComponent):
         input_vector = torch.tensor(input_vector, dtype=torch.float64)
 
         # Calculate the partial derivatives
-        jac_aggregated_output = jacobian(self._compute_aggregation, input_vector)
+        jac_aggregated_output = jacrev(self._compute_aggregation)(input_vector)
 
         # Convert the partial derivatives to numpy arrays
         jac_aggregated_output_np = jac_aggregated_output.detach().numpy()

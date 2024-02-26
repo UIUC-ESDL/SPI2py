@@ -1,5 +1,5 @@
 import torch
-from torch.autograd.functional import jacobian
+from torch.func import jacfwd
 from openmdao.api import ExplicitComponent, Group
 
 from SPI2py.models.kinematics.distance_calculations import signed_distances_spheres_spheres
@@ -69,14 +69,17 @@ class PairwiseCollisionDetection(ExplicitComponent):
         positions_b = torch.tensor(positions_b, dtype=torch.float64, requires_grad=True)
         radii_b = torch.tensor(radii_b, dtype=torch.float64, requires_grad=True)
 
-        # Calculate the partial derivatives
-        jac_signed_distances = jacobian(self._compute_signed_distances, (positions_a, radii_a, positions_b, radii_b))
+        # Define the Jacobian matrices using PyTorch Autograd
+        jac_signed_distances = jacfwd(self._compute_signed_distances, argnums=(0, 1, 2, 3))
+
+        # Evaluate the Jacobian matrices
+        jac_signed_distances_vals = jac_signed_distances(positions_a, radii_a, positions_b, radii_b)
 
         # Slice the Jacobian
-        jac_signed_distances_positions_a = jac_signed_distances[0].detach().numpy()
-        jac_signed_distances_radii_a = jac_signed_distances[1].detach().numpy()
-        jac_signed_distances_positions_b = jac_signed_distances[2].detach().numpy()
-        jac_signed_distances_radii_b = jac_signed_distances[3].detach().numpy()
+        jac_signed_distances_positions_a = jac_signed_distances_vals[0].detach().numpy()
+        jac_signed_distances_radii_a = jac_signed_distances_vals[1].detach().numpy()
+        jac_signed_distances_positions_b = jac_signed_distances_vals[2].detach().numpy()
+        jac_signed_distances_radii_b = jac_signed_distances_vals[3].detach().numpy()
 
         # Write the outputs
         partials['signed_distances', 'positions_a'] = jac_signed_distances_positions_a

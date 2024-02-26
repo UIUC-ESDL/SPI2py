@@ -1,5 +1,5 @@
 import torch
-from torch.autograd.functional import jacobian
+from torch.func import jacrev
 from openmdao.api import ExplicitComponent
 from ..models.geometry.bounding_box_volume import bounding_box_bounds, bounding_box_volume
 
@@ -50,12 +50,15 @@ class BoundingBoxVolume(ExplicitComponent):
         sphere_positions = torch.tensor(sphere_positions, dtype=torch.float64, requires_grad=True)
         sphere_radii = torch.tensor(sphere_radii, dtype=torch.float64, requires_grad=True)
 
-        # Define the Jacobian with PyTorch Autograd
-        jac_bbv = jacobian(self._bounding_box_volume_no_bounds, (sphere_positions, sphere_radii))
+        # Define the Jacobian matrices using PyTorch Autograd
+        jac_bbv = jacrev(self._bounding_box_volume_no_bounds, argnums=(0, 1))
+
+        # Evaluate the Jacobian matrices
+        jac_bbv_val = jac_bbv(sphere_positions, sphere_radii)
 
         # Convert the outputs to numpy arrays
-        jac_bbv_positions = jac_bbv[0].detach().numpy()
-        jac_bbv_radii = jac_bbv[1].detach().numpy()
+        jac_bbv_positions = jac_bbv_val[0].detach().numpy()
+        jac_bbv_radii = jac_bbv_val[1].detach().numpy()
 
         # Set the outputs
         partials['bounding_box_volume', 'positions'] = jac_bbv_positions
