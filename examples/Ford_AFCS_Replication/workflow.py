@@ -22,65 +22,66 @@ model = prob.model
 # Parameters
 n_components = 3
 n_spheres = 10
+n_spheres_per_object = [n_spheres, n_spheres, n_spheres]
 
 # Initialize the components and interconnects
 model.add_subsystem('components', Components(input_dict=input_file))
 # model.add_subsystem('interconnects', om.Group())
 
 # Add a Multiplexer for component sphere positions
-mux_comp_sphere_positions = Multiplexer(input_sizes=[n_spheres, n_spheres, n_spheres], column_size=3)
+mux_comp_sphere_positions = Multiplexer(n_i=n_spheres_per_object, m=3)
 model.add_subsystem('mux_comp_sphere_positions', mux_comp_sphere_positions)
 for i in range(n_components):
     model.connect(f'components.comp_{i}.transformed_sphere_positions', f'mux_comp_sphere_positions.input_{i}')
 
 # Add a Multiplexer for component sphere radii
-mux_comp_sphere_radii = Multiplexer(input_sizes=[n_spheres, n_spheres, n_spheres], column_size=1)
+mux_comp_sphere_radii = Multiplexer(n_i=n_spheres_per_object, m=1)
 model.add_subsystem('mux_comp_sphere_radii', mux_comp_sphere_radii)
 for i in range(n_components):
     model.connect(f'components.comp_{i}.transformed_sphere_radii', f'mux_comp_sphere_radii.input_{i}')
 
 
-model.add_subsystem('bbv', BoundingBoxVolume(num_components=n_components))
+model.add_subsystem('bbv', BoundingBoxVolume(n_spheres_per_object=n_spheres_per_object))
 
 model.connect('mux_comp_sphere_positions.stacked_output', 'bbv.positions')
 model.connect('mux_comp_sphere_radii.stacked_output', 'bbv.radii')
 
 
 # Component-Component Collision Detection
-collision = PairwiseCollisionDetection()
+collision = PairwiseCollisionDetection(n_spheres=n_spheres, m_spheres=n_spheres)
 model.add_subsystem('collision1', collision)
 model.connect('components.comp_0.transformed_sphere_positions', 'collision1.positions_a')
 model.connect('components.comp_0.transformed_sphere_radii', 'collision1.radii_a')
 model.connect('components.comp_1.transformed_sphere_positions', 'collision1.positions_b')
 model.connect('components.comp_1.transformed_sphere_radii', 'collision1.radii_b')
 
-collision2 = PairwiseCollisionDetection()
+collision2 = PairwiseCollisionDetection(n_spheres=n_spheres, m_spheres=n_spheres)
 model.add_subsystem('collision2', collision2)
 model.connect('components.comp_0.transformed_sphere_positions', 'collision2.positions_a')
 model.connect('components.comp_0.transformed_sphere_radii', 'collision2.radii_a')
 model.connect('components.comp_2.transformed_sphere_positions', 'collision2.positions_b')
 model.connect('components.comp_2.transformed_sphere_radii', 'collision2.radii_b')
 
-collision3 = PairwiseCollisionDetection()
+collision3 = PairwiseCollisionDetection(n_spheres=n_spheres, m_spheres=n_spheres)
 model.add_subsystem('collision3', collision3)
 model.connect('components.comp_1.transformed_sphere_positions', 'collision3.positions_a')
 model.connect('components.comp_1.transformed_sphere_radii', 'collision3.radii_a')
 model.connect('components.comp_2.transformed_sphere_positions', 'collision3.positions_b')
 model.connect('components.comp_2.transformed_sphere_radii', 'collision3.radii_b')
 
-collision_aggregation1 = MaxAggregator()
+collision_aggregation1 = MaxAggregator(n=n_spheres, m=n_spheres)
 model.add_subsystem('collision_aggregation1', collision_aggregation1)
 model.connect('collision1.signed_distances', 'collision_aggregation1.input_vector')
 
-collision_aggregation2 = MaxAggregator()
+collision_aggregation2 = MaxAggregator(n=n_spheres, m=n_spheres)
 model.add_subsystem('collision_aggregation2', collision_aggregation2)
 model.connect('collision2.signed_distances', 'collision_aggregation2.input_vector')
 
-collision_aggregation3 = MaxAggregator()
+collision_aggregation3 = MaxAggregator(n=n_spheres, m=n_spheres)
 model.add_subsystem('collision_aggregation3', collision_aggregation3)
 model.connect('collision3.signed_distances', 'collision_aggregation3.input_vector')
 
-collision_multiplexer = Multiplexer(input_sizes=[1, 1, 1], column_size=1)
+collision_multiplexer = Multiplexer(n_i=[1, 1, 1], m=1)
 model.add_subsystem('collision_multiplexer', collision_multiplexer)
 model.connect('collision_aggregation1.aggregated_output', 'collision_multiplexer.input_0')
 model.connect('collision_aggregation2.aggregated_output', 'collision_multiplexer.input_1')

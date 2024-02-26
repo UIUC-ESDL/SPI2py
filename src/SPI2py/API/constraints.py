@@ -9,15 +9,22 @@ class CombinatorialCollisionDetection(Group):
 
 class PairwiseCollisionDetection(ExplicitComponent):
 
+    def initialize(self):
+        self.options.declare('n_spheres', types=int, desc='Number of spheres for input a')
+        self.options.declare('m_spheres', types=int, desc='Number of spheres for input b')
+
+
     def setup(self):
-        self.add_input('positions_a', shape_by_conn=True)
-        self.add_input('radii_a', shape_by_conn=True)
+        n = self.options['n_spheres']
+        m = self.options['m_spheres']
 
-        self.add_input('positions_b', shape_by_conn=True)
-        self.add_input('radii_b', shape_by_conn=True)
+        self.add_input('positions_a', shape=(n, 3))
+        self.add_input('radii_a', shape=(n, 1))
 
-        # FIXME Hard-coded
-        self.add_output('signed_distances', shape=(10, 10))
+        self.add_input('positions_b', shape=(m, 3))
+        self.add_input('radii_b', shape=(m, 1))
+
+        self.add_output('signed_distances', shape=(n, m))
 
     def setup_partials(self):
         self.declare_partials('signed_distances', 'positions_a')

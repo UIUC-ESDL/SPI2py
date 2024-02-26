@@ -7,13 +7,16 @@ from ..models.geometry.bounding_box_volume import bounding_box_bounds, bounding_
 class BoundingBoxVolume(ExplicitComponent):
 
     def initialize(self):
-        self.options.declare('num_components', types=int)
+        self.options.declare('n_spheres_per_object', types=list, desc='Number of spheres per object')
 
     def setup(self):
-        self.add_input('positions', shape_by_conn=True)
-        self.add_input('radii', shape_by_conn=True)
+        n_i = self.options['n_spheres_per_object']
+        n = sum(n_i)
 
-        self.add_output('bounding_box_volume', val=1)
+        self.add_input('positions', shape=(n, 3))
+        self.add_input('radii', shape=(n, 1))
+
+        self.add_output('bounding_box_volume', shape=(1,))
         self.add_output('bounding_box_bounds', shape=(6,))
 
     def setup_partials(self):
@@ -26,7 +29,7 @@ class BoundingBoxVolume(ExplicitComponent):
         positions = inputs['positions']
         radii = inputs['radii']
 
-        # Convert the inputs to JAX numpy arrays
+        # Convert the inputs to torch tensors
         positions = torch.tensor(positions, dtype=torch.float64)
         radii = torch.tensor(radii, dtype=torch.float64)
 
