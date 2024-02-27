@@ -19,13 +19,13 @@ num_spheres=10
 port_positions = [[-1.475, 0, 0], [1.475, 0, 0]]
 color='blue'
 
-#[components.3]
-#description = 'pump 2b'
-#spheres_filepath='components/pump.xyzr'
-#num_spheres=10
-#port_positions = [[0, 0.275, 0], [0, -0.275, 0]]
-#color='blue'
-#
+[components.3]
+description = 'pump 2b'
+spheres_filepath='components/pump.xyzr'
+num_spheres=10
+port_positions = [[0, 0.275, 0], [0, -0.275, 0]]
+color='blue'
+
 #[components.4]
 #description = 'particle filter 3a'
 #spheres_filepath='components/particle_filter.xyzr'
@@ -78,16 +78,16 @@ n_spheres_per_segment=25
 radius=0.05
 color='black'
 
-#[interconnects.1]
-#component_1=1
-#port_1=1
-#component_2=3
-#port_2=0
-#n_segments=3
-#n_spheres_per_segment=25
-#radius=0.05
-#color='black'
-#
+[interconnects.1]
+component_1=1
+port_1=1
+component_2=3
+port_2=0
+n_segments=2
+n_spheres_per_segment=25
+radius=0.05
+color='black'
+
 #[interconnects.2]
 #component_1=3
 #port_1=1

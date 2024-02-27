@@ -20,7 +20,6 @@ class System(Group):
         components = om.Group()
         interconnects = om.Group()
 
-
         # Create the components
         components_dict = input_dict['components']
         for i, key in enumerate(components_dict.keys()):
@@ -71,6 +70,8 @@ class System(Group):
         # Add the components and interconnects to the system
         self.add_subsystem('components', components)
         self.add_subsystem('interconnects', interconnects)
+
+        # Define
 
 
 class Component(ExplicitComponent):
