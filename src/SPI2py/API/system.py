@@ -8,6 +8,16 @@ from ..models.kinematics.linear_spline_transformations import translate_linear_s
 from ..models.kinematics.rigid_body_transformations import assemble_transformation_matrix, \
     apply_transformation_matrix
 
+class System(Group):
+
+    def initialize(self):
+        self.options.declare('input_dict', types=dict)
+
+    def setup(self):
+        input_dict = self.options['input_dict']
+        self.add_subsystem('components', Components(input_dict=input_dict))
+        self.add_subsystem('interconnects', Interconnects(input_dict=input_dict))
+
 class Components(Group):
     """
     A Group used to create Component Objects from an input file and add them to the system.
@@ -177,43 +187,72 @@ class Component(ExplicitComponent):
     #     return design_vars
 
 
+class Interconnects(Group):
+    """
+    A Group used to create Interconnect Objects from an input file and add them to the system.
+    """
+    def initialize(self):
+        self.options.declare('input_dict', types=dict)
+
+    def setup(self):
+
+        # Create the interconnects
+        interconnects_dict = self.options['input_dict']['interconnects']
+        for i, key in enumerate(interconnects_dict.keys()):
+            component_1 = interconnects_dict[key]['component_1']
+            port_1 = interconnects_dict[key]['port_1']
+            component_2 = interconnects_dict[key]['component_2']
+            port_2 = interconnects_dict[key]['port_2']
+            n_segments = interconnects_dict[key]['n_segments']
+            n_spheres_per_segment = interconnects_dict[key]['n_spheres_per_segment']
+            radius = interconnects_dict[key]['radius']
+            color = interconnects_dict[key]['color']
+
+            # TODO connect the ports...
+            interconnect = Interconnect(n_segments=n_segments,
+                                        n_spheres_per_segment=n_spheres_per_segment,
+                                        radius=radius,
+                                        color=color)
+
+            self.add_subsystem(f'int_{i}', interconnect)
+
+
 class Interconnect(ExplicitComponent):
 
     def initialize(self):
-        self.options.declare('num_segments', types=int)
-        self.options.declare('num_spheres_per_segment', types=int)
+        self.options.declare('n_segments', types=int)
+        self.options.declare('n_spheres_per_segment', types=int)
         self.options.declare('radius', types=float)
         self.options.declare('color', types=str)
 
     def setup(self):
 
         # Unpack the options
-        self.num_segments = self.options['num_segments']
-        self.num_spheres_per_segment = self.options['num_spheres_per_segment']
-        self.radius = self.options['radius']
-        self.color = self.options['color']
+        n_segments = self.options['n_segments']
+        n_spheres_per_segment = self.options['n_spheres_per_segment']
+        radius = self.options['radius']
 
         # Define the input shapes
-        shape_start_point = (1, 3)
-        shape_control_points = (self.num_segments - 1, 3)
-        shape_end_point = (1, 3)
+        shape_control_points = (n_segments - 1, 3)
+        shape_positions = (n_spheres_per_segment * n_segments, 3)
+        shape_radii = (n_spheres_per_segment * n_segments, 1)
+
+        # Define the input values
+        positions = np.zeros(shape_positions)
+        radii = radius * np.ones(shape_radii)
 
         # Define the inputs
-        self.add_input('start_point', shape=shape_start_point)
+        # self.add_input('start_point', shape_by_conn=True)
+        self.add_input('start_point', shape=(1, 3))
         self.add_input('control_points', shape=shape_control_points)
-        self.add_input('end_point', shape=shape_end_point)
-
-        # Calculate the initial intermediate positions
-        self.positions = torch.zeros((self.num_spheres_per_segment * self.num_segments, 3), dtype=torch.float64)
-        self.radii = self.radius * torch.ones((self.num_spheres_per_segment * self.num_segments, 1), dtype=torch.float64)
-
-        # Define the output shapes
-        shape_positions = (self.num_spheres_per_segment * self.num_segments, 3)
-        shape_radii = (self.num_spheres_per_segment * self.num_segments, 1)
+        # self.add_input('end_point', shape_by_conn=True)
+        self.add_input('end_point', shape=(1, 3))
+        self.add_input('positions', val=positions)
+        self.add_input('radii', val=radii)
 
         # Define the outputs
-        self.add_output('positions', shape=shape_positions)
-        self.add_output('radii', shape=shape_radii)
+        self.add_output('transformed_positions', shape=shape_positions)
+        self.add_output('transformed_radii', shape=shape_radii)
 
     # def setup_partials(self):
     #     pass
@@ -224,21 +263,28 @@ class Interconnect(ExplicitComponent):
         start_point = inputs['start_point']
         control_points = inputs['control_points']
         end_point = inputs['end_point']
+        positions = inputs['positions']
+        radii = inputs['radii']
+
+        # Unpack the options
+        n_spheres_per_segment = self.options['n_spheres_per_segment']
 
         # Convert the inputs to torch tensors
         start_point = torch.tensor(start_point, dtype=torch.float64)
         control_points = torch.tensor(control_points, dtype=torch.float64)
         end_point = torch.tensor(end_point, dtype=torch.float64)
+        positions = torch.tensor(positions, dtype=torch.float64)
+        radii = torch.tensor(radii, dtype=torch.float64)
 
         # Calculate the positions
-        translated_positions = translate_linear_spline(self.positions, start_point, control_points, end_point, self.num_spheres_per_segment)
+        translated_positions = translate_linear_spline(positions, start_point, control_points, end_point, n_spheres_per_segment)
 
         # Convert the outputs to numpy arrays
         translated_positions = translated_positions.detach().numpy()
 
         # Set the outputs
-        outputs['positions'] = translated_positions
-        outputs['radii'] = self.radii
+        outputs['transformed_positions'] = translated_positions
+        outputs['transformed_radii'] = radii
 
     # def compute_partials(self, inputs, partials):
     #     pass

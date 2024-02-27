@@ -4,7 +4,7 @@ Author:     Chad Peterson
 """
 import numpy as np
 import openmdao.api as om
-from SPI2py.API.system import Component, Components, Interconnect
+from SPI2py.API.system import Component, Components, Interconnect, Interconnects, System
 from SPI2py.API.objectives import BoundingBoxVolume
 from SPI2py.API.constraints import PairwiseCollisionDetection
 from SPI2py.API.utilities import Multiplexer, MaxAggregator
@@ -25,20 +25,21 @@ n_spheres = 10
 n_spheres_per_object = [n_spheres, n_spheres, n_spheres]
 
 # Initialize the components and interconnects
-model.add_subsystem('components', Components(input_dict=input_file))
-# model.add_subsystem('interconnects', om.Group())
+model.add_subsystem('system', System(input_dict=input_file))
+# model.add_subsystem('components', Components(input_dict=input_file))
+# model.add_subsystem('interconnects', Interconnects(input_dict=input_file))
 
 # Add a Multiplexer for component sphere positions
 mux_comp_sphere_positions = Multiplexer(n_i=n_spheres_per_object, m=3)
 model.add_subsystem('mux_comp_sphere_positions', mux_comp_sphere_positions)
 for i in range(n_components):
-    model.connect(f'components.comp_{i}.transformed_sphere_positions', f'mux_comp_sphere_positions.input_{i}')
+    model.connect(f'system.components.comp_{i}.transformed_sphere_positions', f'mux_comp_sphere_positions.input_{i}')
 
 # Add a Multiplexer for component sphere radii
 mux_comp_sphere_radii = Multiplexer(n_i=n_spheres_per_object, m=1)
 model.add_subsystem('mux_comp_sphere_radii', mux_comp_sphere_radii)
 for i in range(n_components):
-    model.connect(f'components.comp_{i}.transformed_sphere_radii', f'mux_comp_sphere_radii.input_{i}')
+    model.connect(f'system.components.comp_{i}.transformed_sphere_radii', f'mux_comp_sphere_radii.input_{i}')
 
 
 model.add_subsystem('bbv', BoundingBoxVolume(n_spheres_per_object=n_spheres_per_object))
@@ -50,24 +51,24 @@ model.connect('mux_comp_sphere_radii.stacked_output', 'bbv.radii')
 # Component-Component Collision Detection
 collision = PairwiseCollisionDetection(n_spheres=n_spheres, m_spheres=n_spheres)
 model.add_subsystem('collision1', collision)
-model.connect('components.comp_0.transformed_sphere_positions', 'collision1.positions_a')
-model.connect('components.comp_0.transformed_sphere_radii', 'collision1.radii_a')
-model.connect('components.comp_1.transformed_sphere_positions', 'collision1.positions_b')
-model.connect('components.comp_1.transformed_sphere_radii', 'collision1.radii_b')
+model.connect('system.components.comp_0.transformed_sphere_positions', 'collision1.positions_a')
+model.connect('system.components.comp_0.transformed_sphere_radii', 'collision1.radii_a')
+model.connect('system.components.comp_1.transformed_sphere_positions', 'collision1.positions_b')
+model.connect('system.components.comp_1.transformed_sphere_radii', 'collision1.radii_b')
 
 collision2 = PairwiseCollisionDetection(n_spheres=n_spheres, m_spheres=n_spheres)
 model.add_subsystem('collision2', collision2)
-model.connect('components.comp_0.transformed_sphere_positions', 'collision2.positions_a')
-model.connect('components.comp_0.transformed_sphere_radii', 'collision2.radii_a')
-model.connect('components.comp_2.transformed_sphere_positions', 'collision2.positions_b')
-model.connect('components.comp_2.transformed_sphere_radii', 'collision2.radii_b')
+model.connect('system.components.comp_0.transformed_sphere_positions', 'collision2.positions_a')
+model.connect('system.components.comp_0.transformed_sphere_radii', 'collision2.radii_a')
+model.connect('system.components.comp_2.transformed_sphere_positions', 'collision2.positions_b')
+model.connect('system.components.comp_2.transformed_sphere_radii', 'collision2.radii_b')
 
 collision3 = PairwiseCollisionDetection(n_spheres=n_spheres, m_spheres=n_spheres)
 model.add_subsystem('collision3', collision3)
-model.connect('components.comp_1.transformed_sphere_positions', 'collision3.positions_a')
-model.connect('components.comp_1.transformed_sphere_radii', 'collision3.radii_a')
-model.connect('components.comp_2.transformed_sphere_positions', 'collision3.positions_b')
-model.connect('components.comp_2.transformed_sphere_radii', 'collision3.radii_b')
+model.connect('system.components.comp_1.transformed_sphere_positions', 'collision3.positions_a')
+model.connect('system.components.comp_1.transformed_sphere_radii', 'collision3.radii_a')
+model.connect('system.components.comp_2.transformed_sphere_positions', 'collision3.positions_b')
+model.connect('system.components.comp_2.transformed_sphere_radii', 'collision3.radii_b')
 
 collision_aggregation1 = MaxAggregator(n=n_spheres, m=n_spheres)
 model.add_subsystem('collision_aggregation1', collision_aggregation1)
@@ -135,10 +136,10 @@ model.connect('collision_aggregation3.aggregated_output', 'collision_multiplexer
 #
 # # Define the variables, objective, and constraints
 #
-model.add_design_var('components.comp_0.translation', ref=10)
-model.add_design_var('components.comp_0.rotation', ref=2*3.14159)
-model.add_design_var('components.comp_1.translation', ref=10)
-model.add_design_var('components.comp_1.rotation', ref=2*3.14159)
+model.add_design_var('system.components.comp_0.translation', ref=10)
+model.add_design_var('system.components.comp_0.rotation', ref=2*3.14159)
+model.add_design_var('system.components.comp_1.translation', ref=10)
+model.add_design_var('system.components.comp_1.rotation', ref=2*3.14159)
 
 # # prob.model.add_design_var('components.pump_2a.translation', ref=10)
 # # prob.model.add_design_var('components.pump_2b.translation', ref=10)
@@ -167,8 +168,8 @@ prob.driver.options['optimizer'] = 'SLSQP'
 prob.setup()
 
 # Configure the system
-prob.set_val('components.comp_0.translation', [2, 7, 0])
-prob.set_val('components.comp_1.translation', [5.5, 7, 0])
+prob.set_val('system.components.comp_0.translation', [2, 7, 0])
+prob.set_val('system.components.comp_1.translation', [5.5, 7, 0])
 # # prob.set_val('components.comp_2.translation', [0.5, 6, 0])
 # # prob.set_val('components.comp_3.translation', [7.5, 6, 0])
 # # prob.set_val('components.comp_4.translation', [0.5, 4.5, 0])
@@ -195,7 +196,7 @@ prob.run_model()
 
 
 # Check the initial state
-# plot_problem(prob)
+plot_problem(prob)
 print('Initial Objective:', prob.get_val('bbv.bounding_box_volume'))
 print('Initial Collision:', prob.get_val('collision_multiplexer.stacked_output'))
 

@@ -10,10 +10,10 @@ def plot_problem(prob):
     components = []
     component_colors = []
 
-    for subsystem in prob.model.components._subsystems_myproc:
+    for subsystem in prob.model.system.components._subsystems_myproc:
 
-        positions = prob.get_val('components.' + subsystem.name + '.transformed_sphere_positions')
-        radii = prob.get_val('components.' + subsystem.name + '.transformed_sphere_radii')
+        positions = prob.get_val('system.components.' + subsystem.name + '.transformed_sphere_positions')
+        radii = prob.get_val('system.components.' + subsystem.name + '.transformed_sphere_radii')
         color = subsystem.options['color']
 
         spheres = []
@@ -27,22 +27,22 @@ def plot_problem(prob):
         components.append(merged)
         component_colors.append(color)
 
-    # interconnects = []
-    # interconnect_colors = []
-    # for subsystem in prob.model.interconnects._subsystems_myproc:
-    #
-    #     positions = prob.get_val('interconnects.' + subsystem.name + '.positions')
-    #     radii = prob.get_val('interconnects.' + subsystem.name + '.radii')
-    #     color = subsystem.options['color']
-    #
-    #     spheres = []
-    #     for position, radius in zip(positions, radii):
-    #         spheres.append(pv.Sphere(radius=radius, center=position, theta_resolution=30, phi_resolution=30))
-    #
-    #     merged = pv.MultiBlock(spheres).combine().extract_surface().clean()
-    #
-    #     interconnects.append(merged)
-    #     interconnect_colors.append(color)
+    interconnects = []
+    interconnect_colors = []
+    for subsystem in prob.model.system.interconnects._subsystems_myproc:
+
+        positions = prob.get_val('system.interconnects.' + subsystem.name + '.positions')
+        radii = prob.get_val('system.interconnects.' + subsystem.name + '.radii')
+        color = subsystem.options['color']
+
+        spheres = []
+        for position, radius in zip(positions, radii):
+            spheres.append(pv.Sphere(radius=radius, center=position, theta_resolution=30, phi_resolution=30))
+
+        merged = pv.MultiBlock(spheres).combine().extract_surface().clean()
+
+        interconnects.append(merged)
+        interconnect_colors.append(color)
 
     # Plot the bounding box
     bounds = prob.get_val('bbv.bounding_box_bounds')
@@ -56,8 +56,8 @@ def plot_problem(prob):
     for comp, color in zip(components, component_colors):
         p.add_mesh(comp, color=color)
 
-    # for inter, color in zip(interconnects, interconnect_colors):
-    #     p.add_mesh(inter, color=color)
+    for inter, color in zip(interconnects, interconnect_colors):
+        p.add_mesh(inter, color=color)
 
     # Plot the bounding box
     p.add_mesh(bounding_box, color=bounding_box_color, opacity=0.2)
