@@ -29,6 +29,8 @@ model.add_subsystem('system', System(input_dict=input_file))
 # model.add_subsystem('components', Components(input_dict=input_file))
 # model.add_subsystem('interconnects', Interconnects(input_dict=input_file))
 
+
+
 # Add a Multiplexer for component sphere positions
 mux_comp_sphere_positions = Multiplexer(n_i=n_spheres_per_object, m=3)
 model.add_subsystem('mux_comp_sphere_positions', mux_comp_sphere_positions)
@@ -89,27 +91,8 @@ model.connect('collision_aggregation2.aggregated_output', 'collision_multiplexer
 model.connect('collision_aggregation3.aggregated_output', 'collision_multiplexer.input_2')
 
 
-# Initialize interconnects
-
-# # Add interconnects to the system
-# # model.interconnects.add_subsystem('c1a_c1b', c1a_c1b)
-# # model.interconnects.add_subsystem('c1b_c2b', c1b_c2b)
-# # model.interconnects.add_subsystem('c2b_c3b', c2b_c3b)
-# # model.interconnects.add_subsystem('c3b_c4b', c3b_c4b)
-# # model.interconnects.add_subsystem('c4b_c5', c4b_c5)
-# # model.interconnects.add_subsystem('c5_c6', c5_c6)
-# # model.interconnects.add_subsystem('c6_c4a', c6_c4a)
-# # model.interconnects.add_subsystem('c4a_c3a', c4a_c3a)
-# # model.interconnects.add_subsystem('c3a_c2a', c3a_c2a)
-# # model.interconnects.add_subsystem('c2a_c1a', c2a_c1a)
 
 # Connect the components to the system
-
-
-# model.connect('components.comp_0.transformed_sphere_positions', 'system.comp_0_sphere_positions')
-# model.connect('components.comp_0.transformed_sphere_radii', 'system.comp_0_sphere_radii')
-# model.connect('components.comp_1.transformed_sphere_positions', 'system.comp_1_sphere_positions')
-# model.connect('components.comp_1.transformed_sphere_radii', 'system.comp_1_sphere_radii')
 
 
 # # Connect the interconnects to the system
@@ -179,7 +162,7 @@ prob.set_val('system.components.comp_1.translation', [5.5, 7, 0])
 # # prob.set_val('components.comp_8.translation', [6, 1, 0])
 # # prob.set_val('components.comp_9.translation', [2, 0, 0])
 
-# # prob.set_val('interconnects.c1a_c1b.control_points', [[3.75, 7, 0]])
+prob.set_val('system.interconnects.int_0.control_points', [[3.75, 7, 0]])
 # # prob.set_val('interconnects.c1b_c2b.control_points', [[7.5, 7, 0]])
 # # prob.set_val('interconnects.c2b_c3b.control_points', [[7.5, 5.47, 0]])
 # # prob.set_val('interconnects.c3b_c4b.control_points', [[7.5, 4.3175, 0]])

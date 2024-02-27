@@ -16,10 +16,10 @@ class System(Group):
 
     def setup(self):
         input_dict = self.options['input_dict']
-        # self.add_subsystem('components', Components(input_dict=input_dict))
-        # self.add_subsystem('interconnects', Interconnects(input_dict=input_dict))
-        self.add_subsystem('components', Group())
-        self.add_subsystem('interconnects', Group())
+
+        components = om.Group()
+        interconnects = om.Group()
+
 
         # Create the components
         components_dict = input_dict['components']
@@ -38,7 +38,7 @@ class System(Group):
                                   sphere_radii=sphere_radii,
                                   port_positions=port_positions)
 
-            self.components.add_subsystem(f'comp_{i}', component)
+            components.add_subsystem(f'comp_{i}', component)
 
 
         # Create the interconnects
@@ -58,12 +58,19 @@ class System(Group):
                                         radius=radius,
                                         color=color)
 
-            self.interconnects.add_subsystem(f'int_{i}', interconnect)
+            interconnects.add_subsystem(f'int_{i}', interconnect)
 
-            self.connect(f'components.comp_{component_1}.transformed_port_positions', f'interconnects.int_{i}.start_point',
+            # Connect the interconnects to the components
+            self.connect(f'components.comp_{component_1}.transformed_port_positions',
+                         f'interconnects.int_{i}.start_point',
                          src_indices=om.slicer[port_1, :])
-            self.connect(f'components.comp_{component_2}.transformed_port_positions', f'interconnects.int_{i}.end_point',
+            self.connect(f'components.comp_{component_2}.transformed_port_positions',
+                         f'interconnects.int_{i}.end_point',
                          src_indices=om.slicer[port_2, :])
+
+        # Add the components and interconnects to the system
+        self.add_subsystem('components', components)
+        self.add_subsystem('interconnects', interconnects)
 
 
 class Component(ExplicitComponent):
@@ -217,10 +224,8 @@ class Interconnect(ExplicitComponent):
         radii = radius * np.ones(shape_radii)
 
         # Define the inputs
-        # self.add_input('start_point', shape_by_conn=True)
         self.add_input('start_point', shape=(1, 3))
         self.add_input('control_points', shape=shape_control_points)
-        # self.add_input('end_point', shape_by_conn=True)
         self.add_input('end_point', shape=(1, 3))
         self.add_input('positions', val=positions)
         self.add_input('radii', val=radii)
