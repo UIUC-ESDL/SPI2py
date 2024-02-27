@@ -1,6 +1,7 @@
 import numpy as np
 import torch
 from torch.func import jacrev, jacfwd
+import openmdao.api as om
 from openmdao.api import ExplicitComponent, Group
 
 from ..models.geometry.finite_sphere_method import read_xyzr_file
@@ -15,20 +16,13 @@ class System(Group):
 
     def setup(self):
         input_dict = self.options['input_dict']
-        self.add_subsystem('components', Components(input_dict=input_dict))
-        self.add_subsystem('interconnects', Interconnects(input_dict=input_dict))
-
-class Components(Group):
-    """
-    A Group used to create Component Objects from an input file and add them to the system.
-    """
-    def initialize(self):
-        self.options.declare('input_dict', types=dict)
-
-    def setup(self):
+        # self.add_subsystem('components', Components(input_dict=input_dict))
+        # self.add_subsystem('interconnects', Interconnects(input_dict=input_dict))
+        self.add_subsystem('components', Group())
+        self.add_subsystem('interconnects', Group())
 
         # Create the components
-        components_dict = self.options['input_dict']['components']
+        components_dict = input_dict['components']
         for i, key in enumerate(components_dict.keys()):
             description = components_dict[key]['description']
             spheres_filepath = components_dict[key]['spheres_filepath']
@@ -44,7 +38,32 @@ class Components(Group):
                                   sphere_radii=sphere_radii,
                                   port_positions=port_positions)
 
-            self.add_subsystem(f'comp_{i}', component)
+            self.components.add_subsystem(f'comp_{i}', component)
+
+
+        # Create the interconnects
+        interconnects_dict = input_dict['interconnects']
+        for i, key in enumerate(interconnects_dict.keys()):
+            component_1 = interconnects_dict[key]['component_1']
+            port_1 = interconnects_dict[key]['port_1']
+            component_2 = interconnects_dict[key]['component_2']
+            port_2 = interconnects_dict[key]['port_2']
+            n_segments = interconnects_dict[key]['n_segments']
+            n_spheres_per_segment = interconnects_dict[key]['n_spheres_per_segment']
+            radius = interconnects_dict[key]['radius']
+            color = interconnects_dict[key]['color']
+
+            interconnect = Interconnect(n_segments=n_segments,
+                                        n_spheres_per_segment=n_spheres_per_segment,
+                                        radius=radius,
+                                        color=color)
+
+            self.interconnects.add_subsystem(f'int_{i}', interconnect)
+
+            self.connect(f'components.comp_{component_1}.transformed_port_positions', f'interconnects.int_{i}.start_point',
+                         src_indices=om.slicer[port_1, :])
+            self.connect(f'components.comp_{component_2}.transformed_port_positions', f'interconnects.int_{i}.end_point',
+                         src_indices=om.slicer[port_2, :])
 
 
 class Component(ExplicitComponent):
@@ -171,50 +190,6 @@ class Component(ExplicitComponent):
                                                             t).T
 
         return positions_transformed
-
-    # def get_design_variables(self):
-    #     # TODO Static (?)
-    #
-    #     # Configure the translation design variables
-    #     translation = {'translation': {'ref': 1, 'ref0': 0}}
-    #
-    #     # Configure the rotation design variables
-    #     rotation = {'rotation': {'ref': 2 * torch.pi, 'ref0': 0}}
-    #
-    #     # Combine the design variables
-    #     design_vars = {**translation, **rotation}
-    #
-    #     return design_vars
-
-
-class Interconnects(Group):
-    """
-    A Group used to create Interconnect Objects from an input file and add them to the system.
-    """
-    def initialize(self):
-        self.options.declare('input_dict', types=dict)
-
-    def setup(self):
-
-        # Create the interconnects
-        interconnects_dict = self.options['input_dict']['interconnects']
-        for i, key in enumerate(interconnects_dict.keys()):
-            component_1 = interconnects_dict[key]['component_1']
-            port_1 = interconnects_dict[key]['port_1']
-            component_2 = interconnects_dict[key]['component_2']
-            port_2 = interconnects_dict[key]['port_2']
-            n_segments = interconnects_dict[key]['n_segments']
-            n_spheres_per_segment = interconnects_dict[key]['n_spheres_per_segment']
-            radius = interconnects_dict[key]['radius']
-            color = interconnects_dict[key]['color']
-
-            # TODO connect the ports...
-            interconnect = Interconnect(n_segments=n_segments,
-                                        n_spheres_per_segment=n_spheres_per_segment,
-                                        radius=radius,
-                                        color=color)
-
-            self.add_subsystem(f'int_{i}', interconnect)
 
 
 class Interconnect(ExplicitComponent):

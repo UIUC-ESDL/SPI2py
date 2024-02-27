@@ -4,7 +4,7 @@ Author:     Chad Peterson
 """
 import numpy as np
 import openmdao.api as om
-from SPI2py.API.system import Component, Components, Interconnect, Interconnects, System
+from SPI2py.API.system import Component, Interconnect, System
 from SPI2py.API.objectives import BoundingBoxVolume
 from SPI2py.API.constraints import PairwiseCollisionDetection
 from SPI2py.API.utilities import Multiplexer, MaxAggregator
@@ -201,15 +201,15 @@ print('Initial Objective:', prob.get_val('bbv.bounding_box_volume'))
 print('Initial Collision:', prob.get_val('collision_multiplexer.stacked_output'))
 
 
-# Run the optimization
-prob.run_driver()
-
-
-# Check the final state
-plot_problem(prob)
-print('Final Objective:', prob.get_val('bbv.bounding_box_volume'))
-print('Final Collision:', prob.get_val('collision_multiplexer.stacked_output'))
-
-
-# Troubleshooting/Debugging
-# prob.check_partials(show_only_incorrect=True, compact_print=True,includes=['bbv'])
+# # Run the optimization
+# prob.run_driver()
+#
+#
+# # Check the final state
+# plot_problem(prob)
+# print('Final Objective:', prob.get_val('bbv.bounding_box_volume'))
+# print('Final Collision:', prob.get_val('collision_multiplexer.stacked_output'))
+#
+#
+# # Troubleshooting/Debugging
+# # prob.check_partials(show_only_incorrect=True, compact_print=True,includes=['bbv'])
