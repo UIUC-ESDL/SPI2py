@@ -31,8 +31,8 @@ def plot_problem(prob):
     interconnect_colors = []
     for subsystem in prob.model.system.interconnects._subsystems_myproc:
 
-        positions = prob.get_val('system.interconnects.' + subsystem.name + '.positions')
-        radii = prob.get_val('system.interconnects.' + subsystem.name + '.radii')
+        positions = prob.get_val('system.interconnects.' + subsystem.name + '.transformed_positions')
+        radii = prob.get_val('system.interconnects.' + subsystem.name + '.transformed_radii')
         color = subsystem.options['color']
 
         spheres = []

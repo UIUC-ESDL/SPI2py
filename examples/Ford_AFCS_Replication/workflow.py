@@ -23,11 +23,12 @@ model = prob.model
 n_components = 3
 n_spheres = 10
 n_spheres_per_object = [n_spheres, n_spheres, n_spheres]
+m_spheres = 50  # Interconnects
+
 
 # Initialize the components and interconnects
 model.add_subsystem('system', System(input_dict=input_file))
-# model.add_subsystem('components', Components(input_dict=input_file))
-# model.add_subsystem('interconnects', Interconnects(input_dict=input_file))
+
 
 
 
@@ -72,6 +73,13 @@ model.connect('system.components.comp_1.transformed_sphere_radii', 'collision3.r
 model.connect('system.components.comp_2.transformed_sphere_positions', 'collision3.positions_b')
 model.connect('system.components.comp_2.transformed_sphere_radii', 'collision3.radii_b')
 
+collision4 = PairwiseCollisionDetection(n_spheres=n_spheres, m_spheres=m_spheres)
+model.add_subsystem('collision4', collision4)
+model.connect('system.components.comp_0.transformed_sphere_positions', 'collision4.positions_a')
+model.connect('system.components.comp_0.transformed_sphere_radii', 'collision4.radii_a')
+model.connect('system.interconnects.int_0.transformed_positions', 'collision4.positions_b')
+model.connect('system.interconnects.int_0.transformed_radii', 'collision4.radii_b')
+
 collision_aggregation1 = MaxAggregator(n=n_spheres, m=n_spheres)
 model.add_subsystem('collision_aggregation1', collision_aggregation1)
 model.connect('collision1.signed_distances', 'collision_aggregation1.input_vector')
@@ -84,11 +92,16 @@ collision_aggregation3 = MaxAggregator(n=n_spheres, m=n_spheres)
 model.add_subsystem('collision_aggregation3', collision_aggregation3)
 model.connect('collision3.signed_distances', 'collision_aggregation3.input_vector')
 
-collision_multiplexer = Multiplexer(n_i=[1, 1, 1], m=1)
+collision_aggregation4 = MaxAggregator(n=n_spheres, m=m_spheres)
+model.add_subsystem('collision_aggregation4', collision_aggregation4)
+model.connect('collision4.signed_distances', 'collision_aggregation4.input_vector')
+
+collision_multiplexer = Multiplexer(n_i=[1, 1, 1, 1], m=1)
 model.add_subsystem('collision_multiplexer', collision_multiplexer)
 model.connect('collision_aggregation1.aggregated_output', 'collision_multiplexer.input_0')
 model.connect('collision_aggregation2.aggregated_output', 'collision_multiplexer.input_1')
 model.connect('collision_aggregation3.aggregated_output', 'collision_multiplexer.input_2')
+model.connect('collision_aggregation4.aggregated_output', 'collision_multiplexer.input_3')
 
 
 
@@ -116,13 +129,14 @@ model.connect('collision_aggregation3.aggregated_output', 'collision_multiplexer
 # # model.connect('components.pump_2a.port_positions', 'interconnects.c3a_c2a.end_point', src_indices=om.slicer[0, :])
 # # model.connect('components.pump_2a.port_positions', 'interconnects.c2a_c1a.start_point', src_indices=om.slicer[1, :])
 # # model.connect('components.radiator_and_ion_exchanger_1a.port_positions', 'interconnects.c2a_c1a.end_point', src_indices=om.slicer[0, :])
-#
-# # Define the variables, objective, and constraints
-#
+
+# Define the variables, objective, and constraints
+
 model.add_design_var('system.components.comp_0.translation', ref=10)
 model.add_design_var('system.components.comp_0.rotation', ref=2*3.14159)
 model.add_design_var('system.components.comp_1.translation', ref=10)
 model.add_design_var('system.components.comp_1.rotation', ref=2*3.14159)
+model.add_design_var('system.interconnects.int_0.control_points')
 
 # # prob.model.add_design_var('components.pump_2a.translation', ref=10)
 # # prob.model.add_design_var('components.pump_2b.translation', ref=10)

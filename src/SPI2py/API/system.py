@@ -84,9 +84,6 @@ class Component(ExplicitComponent):
 
     def setup(self):
 
-        self.description = self.options['description']
-        self.color = self.options['color']
-
         sphere_positions = self.options['sphere_positions']
         sphere_radii = self.options['sphere_radii']
         port_positions = self.options['port_positions']
