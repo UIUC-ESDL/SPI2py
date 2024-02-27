@@ -34,6 +34,7 @@ class Multiplexer(ExplicitComponent):
 
         # Get the options
         n_i = self.options['n_i']
+        m = self.options['m']  # FOR DEBUGGING
 
         # Get the input arrays
         input_arrays = ()
@@ -54,6 +55,8 @@ class Multiplexer(ExplicitComponent):
         # Set the output
         outputs['stacked_output'] = stacked_output
 
+        print(' ')
+
     def compute_partials(self, inputs, partials):
 
         # Get the options
@@ -69,8 +72,9 @@ class Multiplexer(ExplicitComponent):
         for input_array in input_arrays:
             input_tensors = input_tensors + (torch.tensor(input_array, dtype=torch.float64, requires_grad=True),)
 
-        # Calculate the partial derivatives
-        jac_stacked_output = jacfwd(self._multiplex, argnums=(0, 1, 2))(*input_tensors)
+        # Calculate the partial derivatives wrt all inputs
+        argnums = tuple(range(len(n_i)))
+        jac_stacked_output = jacfwd(self._multiplex, argnums=argnums)(*input_tensors)
 
         # Convert the partial derivatives to numpy arrays
         jac_stacked_output_np = []

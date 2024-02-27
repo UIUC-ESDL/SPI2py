@@ -232,8 +232,9 @@ class Interconnect(ExplicitComponent):
         self.add_output('transformed_positions', shape=shape_positions)
         self.add_output('transformed_radii', shape=shape_radii)
 
-    # def setup_partials(self):
-    #     pass
+    def setup_partials(self):
+        self.declare_partials('transformed_positions', ['start_point', 'control_points', 'end_point'])
+        self.declare_partials('transformed_radii', ['start_point', 'control_points', 'end_point'])
 
     def compute(self, inputs, outputs):
 
@@ -264,5 +265,37 @@ class Interconnect(ExplicitComponent):
         outputs['transformed_positions'] = translated_positions
         outputs['transformed_radii'] = radii
 
-    # def compute_partials(self, inputs, partials):
-    #     pass
+        print(' ')
+
+    def compute_partials(self, inputs, partials):
+
+        # Unpack the inputs
+        start_point = inputs['start_point']
+        control_points = inputs['control_points']
+        end_point = inputs['end_point']
+        positions = inputs['positions']
+        radii = inputs['radii']
+
+        # Unpack the options
+        n_spheres_per_segment = self.options['n_spheres_per_segment']
+
+        # Convert the inputs to torch tensors
+        start_point = torch.tensor(start_point, dtype=torch.float64)
+        control_points = torch.tensor(control_points, dtype=torch.float64)
+        end_point = torch.tensor(end_point, dtype=torch.float64)
+        positions = torch.tensor(positions, dtype=torch.float64)
+        radii = torch.tensor(radii, dtype=torch.float64)
+
+        # Calculate the partial derivatives
+        jac_translated_positions = jacfwd(translate_linear_spline, argnums=(1, 2, 3))
+        jac_translated_positions_val = jac_translated_positions(positions, start_point, control_points, end_point, n_spheres_per_segment)
+
+        # Slice the Jacobian
+        jac_translated_positions_start_point = jac_translated_positions_val[0].detach().numpy()
+        jac_translated_positions_control_points = jac_translated_positions_val[1].detach().numpy()
+        jac_translated_positions_end_point = jac_translated_positions_val[2].detach().numpy()
+
+        # Set the outputs
+        partials['transformed_positions', 'start_point'] = jac_translated_positions_start_point
+        partials['transformed_positions', 'control_points'] = jac_translated_positions_control_points
+        partials['transformed_positions', 'end_point'] = jac_translated_positions_end_point

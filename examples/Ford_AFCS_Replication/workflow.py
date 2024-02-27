@@ -27,57 +27,49 @@ m_interconnects = 1
 m_segments = 2
 m_spheres_per_segment = 25
 m_spheres = m_segments * m_spheres_per_segment
-m_spheres_per_object = [m_spheres]
+m_spheres_per_object = [m_spheres, m_spheres]
 
 
 
-# Initialize the components and interconnects
+# Initialize the groups
 model.add_subsystem('system', System(input_dict=input_file))
-
-
-
+model.add_subsystem('mux_comp_sphere_positions', Multiplexer(n_i=n_spheres_per_object, m=3))
+model.add_subsystem('mux_comp_sphere_radii', Multiplexer(n_i=n_spheres_per_object, m=1))
+model.add_subsystem('mux_int_sphere_positions', Multiplexer(n_i=m_spheres_per_object, m=3))
+model.add_subsystem('mux_int_sphere_radii', Multiplexer(n_i=m_spheres_per_object, m=1))
+model.add_subsystem('mux_all_sphere_positions', Multiplexer(n_i=[sum(n_spheres_per_object), sum(m_spheres_per_object)], m=3))
+model.add_subsystem('mux_all_sphere_radii', Multiplexer(n_i=[sum(n_spheres_per_object), sum(m_spheres_per_object)], m=1))
+model.add_subsystem('bbv', BoundingBoxVolume(n_spheres_per_object=n_spheres_per_object+m_spheres_per_object))
 
 # Add a Multiplexer for component sphere positions
-mux_comp_sphere_positions = Multiplexer(n_i=n_spheres_per_object, m=3)
-model.add_subsystem('mux_comp_sphere_positions', mux_comp_sphere_positions)
+
 for i in range(n_components):
     model.connect(f'system.components.comp_{i}.transformed_sphere_positions', f'mux_comp_sphere_positions.input_{i}')
 
 # Add a Multiplexer for component sphere radii
-mux_comp_sphere_radii = Multiplexer(n_i=n_spheres_per_object, m=1)
-model.add_subsystem('mux_comp_sphere_radii', mux_comp_sphere_radii)
 for i in range(n_components):
     model.connect(f'system.components.comp_{i}.transformed_sphere_radii', f'mux_comp_sphere_radii.input_{i}')
 
-# # Add a Multiplexer for interconnect sphere positions and radii
-# mux_int_sphere_positions = Multiplexer(n_i=m_spheres_per_object, m=3)
-# model.add_subsystem('mux_int_sphere_positions', mux_int_sphere_positions)
-# for i in range(m_interconnects):
-#     model.connect(f'system.interconnects.int_{i}.transformed_positions', f'mux_int_sphere_positions.input_{i}')
-#
-# mux_int_sphere_radii = Multiplexer(n_i=m_spheres_per_object, m=1)
-# model.add_subsystem('mux_int_sphere_radii', mux_int_sphere_radii)
-# for i in range(m_interconnects):
-#     model.connect(f'system.interconnects.int_{i}.transformed_radii', f'mux_int_sphere_radii.input_{i}')
-#
-# # Mux components with interconnects
-# mux_all_sphere_positions = Multiplexer(n_i=[sum(n_spheres_per_object), sum(m_spheres_per_object)], m=3)
-# model.add_subsystem('mux_all_sphere_positions', mux_all_sphere_positions)
-# model.connect('mux_comp_sphere_positions.stacked_output', 'mux_all_sphere_positions.input_0')
-# model.connect('mux_int_sphere_positions.stacked_output', 'mux_all_sphere_positions.input_1')
-#
-# mux_all_sphere_radii = Multiplexer(n_i=[sum(n_spheres_per_object), sum(m_spheres_per_object)], m=1)
-# model.add_subsystem('mux_all_sphere_radii', mux_all_sphere_radii)
-# model.connect('mux_comp_sphere_radii.stacked_output', 'mux_all_sphere_radii.input_0')
-# model.connect('mux_int_sphere_radii.stacked_output', 'mux_all_sphere_radii.input_1')
+# Add a Multiplexer for interconnect sphere positions and radii
 
-# model.add_subsystem('bbv', BoundingBoxVolume(n_spheres_per_object=n_spheres_per_object+m_spheres_per_object))
-model.add_subsystem('bbv', BoundingBoxVolume(n_spheres_per_object=n_spheres_per_object))
+for i in range(m_interconnects):
+    model.connect(f'system.interconnects.int_{i}.transformed_positions', f'mux_int_sphere_positions.input_{i}')
 
-model.connect('mux_comp_sphere_positions.stacked_output', 'bbv.positions')
-model.connect('mux_comp_sphere_radii.stacked_output', 'bbv.radii')
-# model.connect('mux_all_sphere_positions.stacked_output', 'bbv.positions')
-# model.connect('mux_all_sphere_radii.stacked_output', 'bbv.radii')
+
+for i in range(m_interconnects):
+    model.connect(f'system.interconnects.int_{i}.transformed_radii', f'mux_int_sphere_radii.input_{i}')
+
+# Mux components with interconnects
+
+model.connect('mux_comp_sphere_positions.stacked_output', 'mux_all_sphere_positions.input_0')
+model.connect('mux_int_sphere_positions.stacked_output', 'mux_all_sphere_positions.input_1')
+
+
+model.connect('mux_comp_sphere_radii.stacked_output', 'mux_all_sphere_radii.input_0')
+model.connect('mux_int_sphere_radii.stacked_output', 'mux_all_sphere_radii.input_1')
+
+model.connect('mux_all_sphere_positions.stacked_output', 'bbv.positions')
+model.connect('mux_all_sphere_radii.stacked_output', 'bbv.radii')
 
 
 # Component-Component Collision Detection
