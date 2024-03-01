@@ -219,3 +219,4 @@ class BlockCartesianProduct(ExplicitComponent):
 
 
 # TODO IMPLEMENT BLOCK PAIRWISE
+
