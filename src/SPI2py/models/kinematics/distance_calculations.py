@@ -82,3 +82,13 @@ def signed_distances_spheres_spheres(centers_a: torch.tensor,
     signed_distances = delta_radii - delta_positions
 
     return signed_distances
+
+def percentage_overlap(centers_a, radii_a, centers_b, radii_b):
+
+    distances_between_points = distances_points_points(centers_a, centers_b)
+
+    sum_of_radii = sum_radii(radii_a, radii_b)
+
+    overlaps = torch.ones_like(distances_between_points) - torch.min(distances_between_points / sum_of_radii, torch.ones_like(distances_between_points))
+
+    return overlaps

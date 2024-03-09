@@ -109,6 +109,10 @@ class Component(ExplicitComponent):
         self.add_output('transformed_sphere_radii', val=sphere_radii)
         self.add_output('transformed_port_positions', val=port_positions)
 
+        # Define the design variables
+        self.add_design_var('translation', ref=10)
+        self.add_design_var('rotation', ref=2*3.14159)
+
     def setup_partials(self):
         self.declare_partials('transformed_sphere_positions', ['translation', 'rotation'])
         self.declare_partials('transformed_port_positions', ['translation', 'rotation'])
@@ -231,6 +235,9 @@ class Interconnect(ExplicitComponent):
         # Define the outputs
         self.add_output('transformed_positions', shape=shape_positions)
         self.add_output('transformed_radii', shape=shape_radii)
+
+        # Define the design variables
+        self.add_design_var('control_points')
 
     def setup_partials(self):
         self.declare_partials('transformed_positions', ['start_point', 'control_points', 'end_point'])
