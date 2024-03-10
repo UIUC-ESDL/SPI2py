@@ -61,29 +61,33 @@ interconnect_interconnect_pairs = list(combinations(range(m_interconnects), 2))
 component_interconnect_pairs = list(product(range(n_components), range(m_interconnects)))
 
 # Loop through the pairs and add the collision detection components
-for i, pair in enumerate(component_component_pairs):
+i=0
+for pair in component_component_pairs:
     collision = PairwiseCollisionDetection(n_spheres=n_spheres, m_spheres=n_spheres)
     model.add_subsystem(f'collision_{i}', collision)
     model.connect(f'system.components.comp_{pair[0]}.transformed_sphere_positions', f'collision_{i}.positions_a')
     model.connect(f'system.components.comp_{pair[0]}.transformed_sphere_radii', f'collision_{i}.radii_a')
     model.connect(f'system.components.comp_{pair[1]}.transformed_sphere_positions', f'collision_{i}.positions_b')
     model.connect(f'system.components.comp_{pair[1]}.transformed_sphere_radii', f'collision_{i}.radii_b')
+    i += 1
 
-for i, pair in enumerate(interconnect_interconnect_pairs):
+for pair in interconnect_interconnect_pairs:
     collision = PairwiseCollisionDetection(n_spheres=m_spheres, m_spheres=m_spheres)
     model.add_subsystem(f'collision_{i}', collision)
     model.connect(f'system.interconnects.int_{pair[0]}.transformed_positions', f'collision_{i}.positions_a')
     model.connect(f'system.interconnects.int_{pair[0]}.transformed_radii', f'collision_{i}.radii_a')
     model.connect(f'system.interconnects.int_{pair[1]}.transformed_positions', f'collision_{i}.positions_b')
     model.connect(f'system.interconnects.int_{pair[1]}.transformed_radii', f'collision_{i}.radii_b')
+    i += 1
 
-for i, pair in enumerate(component_interconnect_pairs):
+for pair in component_interconnect_pairs:
     collision = PairwiseCollisionDetection(n_spheres=n_spheres, m_spheres=m_spheres)
     model.add_subsystem(f'collision_{i}', collision)
     model.connect(f'system.components.comp_{pair[0]}.transformed_sphere_positions', f'collision_{i}.positions_a')
     model.connect(f'system.components.comp_{pair[0]}.transformed_sphere_radii', f'collision_{i}.radii_a')
     model.connect(f'system.interconnects.int_{pair[1]}.transformed_positions', f'collision_{i}.positions_b')
     model.connect(f'system.interconnects.int_{pair[1]}.transformed_radii', f'collision_{i}.radii_b')
+    i += 1
 
 # Aggregate each collision detection output
 for i in range(len(component_component_pairs)):
@@ -154,18 +158,18 @@ prob.run_model()
 # Check the initial state
 plot_problem(prob)
 print('Initial Objective:', prob.get_val('bbv.bounding_box_volume'))
-# print('Initial Collision:', prob.get_val('collision_multiplexer.stacked_output'))
+print('Initial Collision:', prob.get_val('collision_multiplexer.stacked_output'))
 
 
-# Run the optimization
-prob.run_driver()
-
-
-# Check the final state
-plot_problem(prob)
-print('Final Objective:', prob.get_val('bbv.bounding_box_volume'))
-print('Final Collision:', prob.get_val('collision_multiplexer.stacked_output'))
-
-
-# Troubleshooting/Debugging
-# prob.check_partials(show_only_incorrect=True, compact_print=True,includes=['bbv'])
+# # Run the optimization
+# prob.run_driver()
+#
+#
+# # Check the final state
+# plot_problem(prob)
+# print('Final Objective:', prob.get_val('bbv.bounding_box_volume'))
+# print('Final Collision:', prob.get_val('collision_multiplexer.stacked_output'))
+#
+#
+# # Troubleshooting/Debugging
+# # prob.check_partials(show_only_incorrect=True, compact_print=True,includes=['bbv'])

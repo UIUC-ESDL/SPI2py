@@ -2,70 +2,70 @@
 description = 'radiator and ion exchanger 1a'
 spheres_filepath='components/radiator_and_ion_exchanger.xyzr'
 num_spheres=10
-port_positions = [[-1.475, 0, 0], [1.475, 0, 0]]
+port_positions = [[-1.5, 0, 0], [1.5, 0, 0]]
 color='purple'
 
 [components.1]
 description = 'radiator and ion exchanger 1b'
 spheres_filepath='components/radiator_and_ion_exchanger.xyzr'
 num_spheres=10
-port_positions = [[-1.475, 0, 0], [1.475, 0, 0]]
+port_positions = [[-1.5, 0, 0], [1.5, 0, 0]]
 color='purple'
 
 [components.2]
 description = 'pump 2a'
 spheres_filepath='components/pump.xyzr'
 num_spheres=10
-port_positions = [[-1.475, 0, 0], [1.475, 0, 0]]
+port_positions = [[0, -0.35, 0], [0, 0.35, 0]]
 color='blue'
 
 [components.3]
 description = 'pump 2b'
 spheres_filepath='components/pump.xyzr'
 num_spheres=10
-port_positions = [[0, 0.275, 0], [0, -0.275, 0]]
+port_positions = [[0, 0.3, 0], [0, -0.3, 0]]
 color='blue'
 
 [components.4]
 description = 'particle filter 3a'
 spheres_filepath='components/particle_filter.xyzr'
 num_spheres=10
-port_positions = [[0, 0.215, 0], [0, -0.215, 0]]
+port_positions = [[0, 0.25, 0], [0, -0.25, 0]]
 color='yellow'
 
 [components.5]
 description = 'particle filter 3b'
 spheres_filepath='components/particle_filter.xyzr'
 num_spheres=10
-port_positions = [[0, 0.215, 0], [0, -0.215, 0]]
+port_positions = [[0, 0.25, 0], [0, -0.25, 0]]
 color='yellow'
 
 [components.6]
 description = 'fuel cell stack 4a'
 spheres_filepath='components/fuel_cell_stack.xyzr'
 num_spheres=10
-port_positions = [[0, 0.85, 0], [0, -0.85, 0]]
+port_positions = [[0, 1, 0], [0, -1, 0]]
 color='green'
 
 [components.7]
 description = 'fuel cell stack 4b'
 spheres_filepath='components/fuel_cell_stack.xyzr'
 num_spheres=10
-port_positions = [[0, 0.85, 0], [0, -0.85, 0]]
+port_positions = [[0, 1, 0], [0, -1, 0]]
 color='green'
 
 [components.8]
 description = 'WEG heater and pump 5'
 spheres_filepath='components/WEG_heater_and_pump.xyzr'
 num_spheres=10
-port_positions = [[0, 0.9665, 0], [-0.8775, 0, 0]]
+port_positions = [[0, 1, 0], [-1, 0, 0]]
 color='gray'
 
 [components.9]
 description = 'heater core 6'
 spheres_filepath='components/heater_core.xyzr'
 num_spheres=10
-port_positions = [[0, -0.7225, 0], [0, 0.7225, 0]]
+port_positions = [[0.75, 0, 0], [-0.75, 0, 0]]
 color='red'
 
 [interconnects.0]
@@ -132,7 +132,7 @@ color='black'
 component_1=9
 port_1=1
 component_2=6
-port_2=0
+port_2=1
 n_segments=2
 n_spheres_per_segment=25
 radius=0.05
@@ -140,9 +140,9 @@ color='black'
 
 [interconnects.7]
 component_1=6
-port_1=1
+port_1=0
 component_2=4
-port_2=0
+port_2=1
 n_segments=2
 n_spheres_per_segment=25
 radius=0.05
@@ -150,7 +150,7 @@ color='black'
 
 [interconnects.8]
 component_1=4
-port_1=1
+port_1=0
 component_2=2
 port_2=0
 n_segments=2

@@ -7,6 +7,53 @@ import numpy as np
 import pyvista as pv
 import trimesh
 
+def generate_point_cloud(directory, input_filename, output_filename, meshgrid_increment=25, plot=True):
+    # Create the pyvista and trimesh objects. Both are required.
+    mesh_trimesh = trimesh.exchange.load.load(directory + input_filename)
+
+    # Define variable bounds based on the object's bounding box
+    x_min = mesh_trimesh.vertices[:, 0].min()
+    x_max = mesh_trimesh.vertices[:, 0].max()
+    y_min = mesh_trimesh.vertices[:, 1].min()
+    y_max = mesh_trimesh.vertices[:, 1].max()
+    z_min = mesh_trimesh.vertices[:, 2].min()
+    z_max = mesh_trimesh.vertices[:, 2].max()
+
+    # USER INPUT: The number of increments for each dimension of the meshgrid.
+    nx = meshgrid_increment
+    ny = meshgrid_increment
+    nz = meshgrid_increment
+
+    # Create a 3d meshgrid
+    x = np.linspace(x_min, x_max, nx)
+    y = np.linspace(y_min, y_max, ny)
+    z = np.linspace(z_min, z_max, nz)
+    xx, yy, zz = np.meshgrid(x, y, z)
+
+    # All points inside and outside the object
+    points_a = np.vstack((xx.flatten(), yy.flatten(), zz.flatten())).T
+
+    # All points inside the object
+    signed_distances = trimesh.proximity.signed_distance(mesh_trimesh, points_a)
+    points_filtered = points_a[signed_distances > 0]
+
+    if plot:
+        # Plot object with PyVista
+        plotter = pv.Plotter()
+
+        # Plot the filtered points
+        plotter.add_points(points_filtered, color='red', point_size=5)
+
+        # plotter.view_isometric()
+        plotter.view_xz()
+        plotter.background_color = 'white'
+        plotter.show()
+
+
+    # OUTPUT
+
+    # Write the spheres to a text file
+    np.savetxt(directory+output_filename, points_filtered, delimiter=' ')
 
 def mdbd(directory, input_filename, output_filename, num_spheres=1000, min_radius=0.0001, meshgrid_increment=25, plot=True, color='green'):
 
