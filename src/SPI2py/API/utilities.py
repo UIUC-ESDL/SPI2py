@@ -55,8 +55,6 @@ class Multiplexer(ExplicitComponent):
         # Set the output
         outputs['stacked_output'] = stacked_output
 
-        print(' ')
-
     def compute_partials(self, inputs, partials):
 
         # Get the options
@@ -166,57 +164,57 @@ class MinAggregator(Aggregator):
         return aggregated_output
 
 
-class BlockCartesianProduct(ExplicitComponent):
-    """
-    Calculates the Cartesian product of a series of input arrays.
-
-    In other words, if we have n objects and each object is represented by m_i spheres, then in order to calculate
-    every collision we must (1) identify every possible collision pair and (2) calculate the resulting Euclidean distance
-    matrix of each pair. This component is responsible for the first step. Specifically, instead of calculating the
-    Cartesian product on a sphere-by-sphere basis, we calculate the Cartesian product of the arrays (blocks).
-    """
-
-    def initialize(self):
-        self.options.declare('input_sizes', types=list, desc='List of sizes (n) for each input array')
-
-    def setup(self):
-        input_sizes = self.options['input_sizes']
-        total_rows = sum(input_sizes)
-
-        # Define inputs and output
-        for i, size in enumerate(input_sizes):
-            self.add_input(f'input_{i}', shape=(size, 3))
-
-        self.add_output('cartesian_product', shape=(total_rows, 3))
-
-    def setup_partials(self):
-        self.declare_partials('*', '*')
-
-    def compute(self, inputs, outputs):
-
-            # Get the options
-            input_sizes = self.options['input_sizes']
-
-            # Get the input arrays
-            input_arrays = ()
-            for i in range(len(input_sizes)):
-                input_arrays = input_arrays + (inputs[f'input_{i}'],)
-
-            # Convert the input arrays to torch tensors
-            input_tensors = ()
-            for input_array in input_arrays:
-                input_tensors = input_tensors + (torch.tensor(input_array, dtype=torch.float64),)
-
-            # Calculate the Cartesian product
-            cartesian_product = self._block_cartesian_product(*input_tensors)
-
-            # Convert the stacked output to a numpy array
-            cartesian_product = cartesian_product.detach().numpy()
-
-            # Set the output
-            outputs['cartesian_product'] = cartesian_product
-
-
-
-# TODO IMPLEMENT BLOCK PAIRWISE
+# class BlockCartesianProduct(ExplicitComponent):
+#     """
+#     Calculates the Cartesian product of a series of input arrays.
+#
+#     In other words, if we have n objects and each object is represented by m_i spheres, then in order to calculate
+#     every collision we must (1) identify every possible collision pair and (2) calculate the resulting Euclidean distance
+#     matrix of each pair. This component is responsible for the first step. Specifically, instead of calculating the
+#     Cartesian product on a sphere-by-sphere basis, we calculate the Cartesian product of the arrays (blocks).
+#     """
+#
+#     def initialize(self):
+#         self.options.declare('input_sizes', types=list, desc='List of sizes (n) for each input array')
+#
+#     def setup(self):
+#         input_sizes = self.options['input_sizes']
+#         total_rows = sum(input_sizes)
+#
+#         # Define inputs and output
+#         for i, size in enumerate(input_sizes):
+#             self.add_input(f'input_{i}', shape=(size, 3))
+#
+#         self.add_output('cartesian_product', shape=(total_rows, 3))
+#
+#     def setup_partials(self):
+#         self.declare_partials('*', '*')
+#
+#     def compute(self, inputs, outputs):
+#
+#             # Get the options
+#             input_sizes = self.options['input_sizes']
+#
+#             # Get the input arrays
+#             input_arrays = ()
+#             for i in range(len(input_sizes)):
+#                 input_arrays = input_arrays + (inputs[f'input_{i}'],)
+#
+#             # Convert the input arrays to torch tensors
+#             input_tensors = ()
+#             for input_array in input_arrays:
+#                 input_tensors = input_tensors + (torch.tensor(input_array, dtype=torch.float64),)
+#
+#             # Calculate the Cartesian product
+#             cartesian_product = self._block_cartesian_product(*input_tensors)
+#
+#             # Convert the stacked output to a numpy array
+#             cartesian_product = cartesian_product.detach().numpy()
+#
+#             # Set the output
+#             outputs['cartesian_product'] = cartesian_product
+#
+#
+#
+# # TODO IMPLEMENT BLOCK PAIRWISE
 
