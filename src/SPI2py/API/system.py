@@ -17,61 +17,72 @@ class System(Group):
     def setup(self):
         input_dict = self.options['input_dict']
 
-        components = om.Group()
-        interconnects = om.Group()
-
-        # Create the components
         components_dict = input_dict['components']
-        for i, key in enumerate(components_dict.keys()):
-            description = components_dict[key]['description']
-            spheres_filepath = components_dict[key]['spheres_filepath']
-            num_spheres = components_dict[key]['num_spheres']
-            port_positions = components_dict[key]['port_positions']
-            color = components_dict[key]['color']
+        interconnects_dict = input_dict['interconnects']
 
-            sphere_positions, sphere_radii = read_xyzr_file(spheres_filepath, num_spheres=num_spheres)
+        # Check if the components dictionary is empty
+        if len(components_dict) > 0:
 
-            component = Component(description=description,
-                                  color=color,
-                                  sphere_positions=sphere_positions,
-                                  sphere_radii=sphere_radii,
-                                  port_positions=port_positions)
+            components = om.Group()
 
-            components.add_subsystem(f'comp_{i}', component)
+            # Create the components
+            components_dict = input_dict['components']
+            for i, key in enumerate(components_dict.keys()):
+                description = components_dict[key]['description']
+                spheres_filepath = components_dict[key]['spheres_filepath']
+                num_spheres = components_dict[key]['num_spheres']
+                port_positions = components_dict[key]['port_positions']
+                color = components_dict[key]['color']
+
+                sphere_positions, sphere_radii = read_xyzr_file(spheres_filepath, num_spheres=num_spheres)
+
+                component = Component(description=description,
+                                      color=color,
+                                      sphere_positions=sphere_positions,
+                                      sphere_radii=sphere_radii,
+                                      port_positions=port_positions)
+
+                components.add_subsystem(f'comp_{i}', component)
+
+            self.add_subsystem('components', components)
 
 
         # Create the interconnects
-        interconnects_dict = input_dict['interconnects']
-        for i, key in enumerate(interconnects_dict.keys()):
-            component_1 = interconnects_dict[key]['component_1']
-            port_1 = interconnects_dict[key]['port_1']
-            component_2 = interconnects_dict[key]['component_2']
-            port_2 = interconnects_dict[key]['port_2']
-            n_segments = interconnects_dict[key]['n_segments']
-            n_spheres_per_segment = interconnects_dict[key]['n_spheres_per_segment']
-            radius = interconnects_dict[key]['radius']
-            color = interconnects_dict[key]['color']
 
-            interconnect = Interconnect(n_segments=n_segments,
-                                        n_spheres_per_segment=n_spheres_per_segment,
-                                        radius=radius,
-                                        color=color)
 
-            interconnects.add_subsystem(f'int_{i}', interconnect)
 
-            # Connect the interconnects to the components
-            self.connect(f'components.comp_{component_1}.transformed_port_positions',
-                         f'interconnects.int_{i}.start_point',
-                         src_indices=om.slicer[port_1, :])
-            self.connect(f'components.comp_{component_2}.transformed_port_positions',
-                         f'interconnects.int_{i}.end_point',
-                         src_indices=om.slicer[port_2, :])
+        # Check if the interconnects dictionary is empty
+        if len(interconnects_dict) > 0:
 
-        # Add the components and interconnects to the system
-        self.add_subsystem('components', components)
-        self.add_subsystem('interconnects', interconnects)
+            interconnects = om.Group()
 
-        # Define
+
+            for i, key in enumerate(interconnects_dict.keys()):
+                component_1 = interconnects_dict[key]['component_1']
+                port_1 = interconnects_dict[key]['port_1']
+                component_2 = interconnects_dict[key]['component_2']
+                port_2 = interconnects_dict[key]['port_2']
+                n_segments = interconnects_dict[key]['n_segments']
+                n_spheres_per_segment = interconnects_dict[key]['n_spheres_per_segment']
+                radius = interconnects_dict[key]['radius']
+                color = interconnects_dict[key]['color']
+
+                interconnect = Interconnect(n_segments=n_segments,
+                                            n_spheres_per_segment=n_spheres_per_segment,
+                                            radius=radius,
+                                            color=color)
+
+                interconnects.add_subsystem(f'int_{i}', interconnect)
+
+                # Connect the interconnects to the components
+                self.connect(f'components.comp_{component_1}.transformed_port_positions',
+                             f'interconnects.int_{i}.start_point',
+                             src_indices=om.slicer[port_1, :])
+                self.connect(f'components.comp_{component_2}.transformed_port_positions',
+                             f'interconnects.int_{i}.end_point',
+                             src_indices=om.slicer[port_2, :])
+
+            self.add_subsystem('interconnects', interconnects)
 
 
 class Component(ExplicitComponent):
