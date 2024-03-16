@@ -34,7 +34,7 @@ m_spheres_per_object = [m_spheres for _ in range(m_interconnects)]
 
 # Initialize the groups
 model.add_subsystem('system', System(input_dict=input_file, upper=7, lower=0))
-model.add_subsystem('projections', Projections(n_comp_projections=n_components, n_int_projections=0,min_xyz=-3, max_xyz=10, n_el_xyz=18,rho_min=0.0))
+model.add_subsystem('projections', Projections(n_comp_projections=n_components, n_int_projections=0,min_xyz=-3, max_xyz=10, n_el_xyz=18))
 model.add_subsystem('volume_fraction_constraint', VolumeFractionConstraint(n_projections=n_components, min_xyz=-3, max_xyz=10, n_el_xyz=18))
 
 model.add_subsystem('mux_all_sphere_positions', Multiplexer(n_i=n_spheres_per_object, m=3))

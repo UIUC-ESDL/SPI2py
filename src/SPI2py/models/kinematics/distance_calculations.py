@@ -3,6 +3,7 @@
 Provides functions to calculate the distance between classes in various ways.
 """
 
+import jax.numpy as np
 import torch
 
 
@@ -92,3 +93,39 @@ def percentage_overlap(centers_a, radii_a, centers_b, radii_b):
     overlaps = torch.ones_like(distances_between_points) - torch.min(distances_between_points / sum_of_radii, torch.ones_like(distances_between_points))
 
     return overlaps
+
+
+def distances_points_points_np(a: np.ndarray,
+                            b: np.ndarray) -> np.ndarray:
+
+    # # Reshape the arrays for broadcasting
+    aa = a.reshape(-1, 1, 3)
+    bb = b.reshape(1, -1, 3)
+    cc = aa-bb
+
+    c = np.linalg.norm(cc, axis=2)
+
+    return c
+
+def sum_radii_np(a, b):
+
+    aa = a.reshape(-1, 1)
+    bb = b.reshape(1, -1)
+
+    c = aa + bb
+
+    return c
+
+
+
+def signed_distances_spheres_spheres_np(centers_a: np.ndarray,
+                                     radii_a:   np.ndarray,
+                                     centers_b: np.ndarray,
+                                     radii_b:   np.ndarray) -> np.ndarray:
+
+    delta_positions = distances_points_points_np(centers_a, centers_b)
+    delta_radii     = sum_radii_np(radii_a, radii_b)
+
+    signed_distances = delta_radii - delta_positions
+
+    return signed_distances

@@ -3,6 +3,7 @@ from jax import jacfwd, jacrev
 from jax.scipy.stats import gaussian_kde
 from openmdao.api import ExplicitComponent, Group
 from ..models.physics.continuum.geometric_projection import projection_volume
+from ..models.kinematics.distance_calculations import signed_distances_spheres_spheres_np
 
 
 class Projections(Group):
@@ -12,7 +13,7 @@ class Projections(Group):
         self.options.declare('min_xyz', types=(int, float), desc='Minimum value of the x-, y-, and z-axis')
         self.options.declare('max_xyz', types=(int, float), desc='Maximum value of the x-, y-, and z-axis')
         self.options.declare('n_el_xyz', types=int, desc='Number of elements along the x-, y-, and z-axis')
-        self.options.declare('rho_min', types=float, desc='Minimum value of the density', default=3e-3)
+        self.options.declare('rho_min', types=float, desc='Minimum value of the density', default=1e-3)
 
     def setup(self):
 
@@ -125,25 +126,23 @@ class Projection(ExplicitComponent):
         """
 
         grid_x, grid_y, grid_z = element_center_positions
+        sampling_radius = abs(grid_x[0][0][0] - grid_x[0][1][0])/2
         grid_coords = np.vstack([grid_x.ravel(), grid_y.ravel(), grid_z.ravel()])
 
-        # Would something this simple work?
-        # # Calculate the distances from each point to each element center
-        # distances = np.linalg.norm(points[:, None, :] - element_center_positions[None, :, :], axis=-1)
+        # Calculate the distances from each point to each element center
+        distances = np.linalg.norm(points[:, None, :] - element_center_positions[None, :, :], axis=-1)
         # # Calculate the pseudo-densities
         # pseudo_densities = np.min(distances, axis=0)
         # # Calculate the minimum pseudo-densities
         # pseudo_densities = np.maximum(pseudo_densities, min_pseudo_densities)
 
         # Perform KDE
-        kernel = gaussian_kde(points.T, bw_method='scott')
-        density_values = kernel(grid_coords).reshape(grid_x.shape)
-
-        pseudo_densities = density_values + min_pseudo_densities
-
+        # kernel = gaussian_kde(points.T, bw_method='scott')
+        # density_values = kernel(grid_coords).reshape(grid_x.shape)
+        # pseudo_densities = density_values + min_pseudo_densities
         # Normalize the pseudo-densities
-        min_density = np.min(pseudo_densities)
-        max_density = np.max(pseudo_densities)
-        pseudo_densities = (pseudo_densities - min_density) / (max_density - min_density)
+        # min_density = np.min(pseudo_densities)
+        # max_density = np.max(pseudo_densities)
+        # pseudo_densities = (pseudo_densities - min_density) / (max_density - min_density)
 
         return pseudo_densities
