@@ -105,11 +105,9 @@ class VolumeFractionConstraint(ExplicitComponent):
         self.options.declare('min_xyz', types=(int, float), desc='Minimum value of the x-, y-, and z-axis')
         self.options.declare('max_xyz', types=(int, float), desc='Maximum value of the x-, y-, and z-axis')
         self.options.declare('n_el_xyz', types=int, desc='Number of elements along the x-, y-, and z-axis')
-        self.a = 1  # FIXME
 
     def setup(self):
         n = self.options['n_projections']
-
 
         for i in range(n):
             self.add_input(f'element_pseudo_densities_{i}', shape_by_conn=True)
@@ -137,17 +135,14 @@ class VolumeFractionConstraint(ExplicitComponent):
         for i in range(n):
             element_pseudo_densities.append(inputs[f'element_pseudo_densities_{i}'])
 
-
-
-
         volume_fraction_constraint = self._volume_fraction_constraint(element_pseudo_densities, element_length)
 
 
         # Write the outputs
         outputs['volume_fraction_constraint'] = volume_fraction_constraint
 
-    # def compute_partials(self, inputs, partials):
-    #     pass
+    def compute_partials(self, inputs, partials):
+        pass
 
     @staticmethod
     def _volume_fraction_constraint(element_pseudo_densities, element_length):

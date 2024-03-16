@@ -79,7 +79,7 @@ class Projection(ExplicitComponent):
         self.add_output('element_pseudo_densities', val=element_min_pseudo_densities)
 
     def setup_partials(self):
-        self.declare_partials('*', '*')
+        self.declare_partials('element_pseudo_densities', 'points')
 
     def compute(self, inputs, outputs):
 
@@ -98,26 +98,23 @@ class Projection(ExplicitComponent):
 
         outputs['element_pseudo_densities'] = element_pseudo_densities
 
+    def compute_partials(self, inputs, partials):
 
-    # def compute_partials(self, inputs, partials):
+        # Get the inputs
+        points = inputs['points']
+        element_min_pseudo_densities = inputs['element_min_pseudo_densities']
+        element_center_positions = inputs['element_center_positions']
 
-        # # Get the input arrays
-        # input_vector = inputs['input_vector']
-        #
-        # # Convert the input to a JAX numpy array
-        # input_vector = np.array(input_vector)
-        #
-        # # Calculate the partial derivatives
-        # jac_aggregated_output = jacrev(self._compute_aggregation)(input_vector)
-        #
-        # # Convert the partial derivatives to numpy arrays
-        # jac_aggregated_output_np = jac_aggregated_output.detach().numpy()
-        #
-        # # Set the partial derivatives
-        # partials['aggregated_output', 'input_vector'] = jac_aggregated_output_np
+        # Convert the input to a JAX numpy array
+        points = np.array(points)
+        element_min_pseudo_densities = np.array(element_min_pseudo_densities)
+        element_center_positions = np.array(element_center_positions)
 
-        # grad_kernel = jacfwd(lambda x: gaussian_kde(x, bw_method='scott'))
-        # grad_kernel_val = grad_kernel(points.T)
+        # Calculate the Jacobian of the kernel
+        grad_kernel = jacfwd(self._project, argnums=0)
+        grad_kernel_val = grad_kernel(points.T, element_center_positions, element_min_pseudo_densities)
+
+        partials['element_pseudo_densities', 'points'] = grad_kernel_val[0].T # TODO Check all the transposing... (?)
 
     @staticmethod
     def _project(points, element_center_positions, min_pseudo_densities):
@@ -135,7 +132,6 @@ class Projection(ExplicitComponent):
         # pseudo_densities = np.min(distances, axis=0)
         # # Calculate the minimum pseudo-densities
         # pseudo_densities = np.maximum(pseudo_densities, min_pseudo_densities)
-
 
         # Perform KDE
         kernel = gaussian_kde(points.T, bw_method='scott')
