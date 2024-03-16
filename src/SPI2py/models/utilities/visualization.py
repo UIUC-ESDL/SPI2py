@@ -76,15 +76,17 @@ def plot_problem(prob):
 
 
     # Check if the problem contains a projection
-    if 'projection' in prob.model._subsystems_allprocs:
-        # Assuming 'prob' is your problem instance with necessary data
-        nxyz = prob.model.projection.options['n_el_xyz']
+    if 'projections' in prob.model._subsystems_allprocs:
+
+        # Get the options
+        n_comp_projections = prob.model.projections.options['n_comp_projections']
+        n_int_projections = prob.model.projections.options['n_int_projections']
+        nxyz = prob.model.projections.options['n_el_xyz']
         nx, ny, nz = nxyz, nxyz, nxyz
+        min_xyz = prob.model.projections.options['min_xyz']
+        max_xyz = prob.model.projections.options['max_xyz']
 
-        min_xyz = prob.model.projection.options['min_xyz']
-        max_xyz = prob.model.projection.options['max_xyz']
 
-        # Calculate the uniform spacing based on the min and max coordinates and the number of elements
         spacing = (max_xyz - min_xyz) / nxyz
 
         # Create an empty uniform grid
@@ -101,10 +103,44 @@ def plot_problem(prob):
 
         p.add_mesh(grid, color='lightgrey', show_edges=True, opacity=0.5)
 
+        # Plot component projections
+        for i in range(n_comp_projections):
+            # Get the density values
+            density_values = prob.get_val(f'projections.projection_comp_{i}.element_pseudo_densities').flatten(order='F')
+
+            # Create the grid
+            x = np.linspace(min_xyz, max_xyz, nx + 1)
+            y = np.linspace(min_xyz, max_xyz, ny + 1)
+            z = np.linspace(min_xyz, max_xyz, nz + 1)
+            x_grid, y_grid, z_grid = np.meshgrid(x, y, z)
+            grid = pv.StructuredGrid(x_grid, y_grid, z_grid)
+            grid["density"] = density_values
+
+            # Plot the density values
+            p.add_volume(grid, scalars="density", cmap="viridis", opacity="linear")
+
+        # Plot interconnect projections
+        for i in range(n_int_projections):
+            # Get the density values
+            density_values = prob.get_val(f'projections.projection_int_{i}.element_pseudo_densities').flatten(order='F')
+
+            # Create the grid
+            x = np.linspace(min_xyz, max_xyz, nx + 1)
+            y = np.linspace(min_xyz, max_xyz, ny + 1)
+            z = np.linspace(min_xyz, max_xyz, nz + 1)
+            x_grid, y_grid, z_grid = np.meshgrid(x, y, z)
+            grid = pv.StructuredGrid(x_grid, y_grid, z_grid)
+            grid["density"] = density_values
+
+            # Plot the density values
+            p.add_volume(grid, scalars="density", cmap="viridis", opacity="linear")
+
 
     p.view_isometric()
     # p.view_xy()
     p.show_axes()
     p.show_bounds(color='black')
     p.background_color = 'white'
+
+
     p.show()
