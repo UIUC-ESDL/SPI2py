@@ -81,6 +81,7 @@ def plot_problem(prob):
         # Get the options
         n_comp_projections = prob.model.projections.options['n_comp_projections']
         n_int_projections = prob.model.projections.options['n_int_projections']
+        n_projections = n_comp_projections + n_int_projections
         nxyz = prob.model.projections.options['n_el_xyz']
         nx, ny, nz = nxyz, nxyz, nxyz
         min_xyz = prob.model.projections.options['min_xyz']
@@ -103,10 +104,10 @@ def plot_problem(prob):
 
         p.add_mesh(grid, color='lightgrey', show_edges=True, opacity=0.5)
 
-        # Plot component projections
-        for i in range(n_comp_projections):
+        # Plot projections
+        for i in range(n_projections):
             # Get the density values
-            density_values = prob.get_val(f'projections.projection_comp_{i}.element_pseudo_densities').flatten(order='F')
+            density_values = prob.get_val(f'projections.projection_{i}.element_pseudo_densities').flatten(order='F')
 
             # Create the grid
             x = np.linspace(min_xyz, max_xyz, nx + 1)
@@ -119,21 +120,6 @@ def plot_problem(prob):
             # Plot the density values
             p.add_volume(grid, scalars="density", cmap="viridis", opacity="linear")
 
-        # Plot interconnect projections
-        for i in range(n_int_projections):
-            # Get the density values
-            density_values = prob.get_val(f'projections.projection_int_{i}.element_pseudo_densities').flatten(order='F')
-
-            # Create the grid
-            x = np.linspace(min_xyz, max_xyz, nx + 1)
-            y = np.linspace(min_xyz, max_xyz, ny + 1)
-            z = np.linspace(min_xyz, max_xyz, nz + 1)
-            x_grid, y_grid, z_grid = np.meshgrid(x, y, z)
-            grid = pv.StructuredGrid(x_grid, y_grid, z_grid)
-            grid["density"] = density_values
-
-            # Plot the density values
-            p.add_volume(grid, scalars="density", cmap="viridis", opacity="linear")
 
 
     p.view_isometric()

@@ -24,16 +24,21 @@ class Projections(Group):
         n_el_xyz = self.options['n_el_xyz']
         rho_min = self.options['rho_min']
 
+        # Projection counter
+        i=0
+
         # TODO Can I automatically connect this???
         # Add the projection components
-        for i in range(n_comp_projections):
-            self.add_subsystem('projection_comp_' + str(i), Projection(min_xyz=min_xyz, max_xyz=max_xyz, n_el_xyz=n_el_xyz, rho_min=rho_min))
-            # self.connect(f'system.components.comp_{i}.transformed_sphere_positions', 'projection_' + str(i) + '.points')
+        for j in range(n_comp_projections):
+            self.add_subsystem('projection_' + str(i), Projection(min_xyz=min_xyz, max_xyz=max_xyz, n_el_xyz=n_el_xyz, rho_min=rho_min))
+            # self.connect(f'system.components.comp_{j}.transformed_sphere_positions', 'projection_' + str(i) + '.points')
+            i += 1
 
         # Add the interconnect projection components
-        for i in range(n_int_projections):
-            self.add_subsystem('projection_int_' + str(i), Projection(min_xyz=min_xyz, max_xyz=max_xyz, n_el_xyz=n_el_xyz, rho_min=rho_min))
-            # self.connect(f'system.interconnects.int_{i}.transformed_sphere_positions', 'projection_int_' + str(i) + '.points')
+        for j in range(n_int_projections):
+            self.add_subsystem('projection_' + str(i), Projection(min_xyz=min_xyz, max_xyz=max_xyz, n_el_xyz=n_el_xyz, rho_min=rho_min))
+            # self.connect(f'system.interconnects.int_{j}.transformed_sphere_positions', 'projection_int_' + str(i) + '.points')
+            i += 1
 
 
 class Projection(ExplicitComponent):
@@ -45,11 +50,9 @@ class Projection(ExplicitComponent):
         self.options.declare('min_xyz', types=(int, float), desc='Minimum value of the x-, y-, and z-axis')
         self.options.declare('max_xyz', types=(int, float), desc='Maximum value of the x-, y-, and z-axis')
         self.options.declare('n_el_xyz', types=int, desc='Number of elements along the x-, y-, and z-axis')
-        self.options.declare('rho_min', types=float, desc='Minimum value of the density', default=3e-3)
+        self.options.declare('rho_min', types=(int, float), desc='Minimum value of the density', default=3e-3)
 
     def setup(self):
-
-        # TODO Implement sparse arrays?
 
         # Get the options
         min_xyz = self.options['min_xyz']
@@ -66,18 +69,14 @@ class Projection(ExplicitComponent):
         x_center_positions = np.linspace(min_xyz + element_half_length, max_xyz - element_half_length, n_el_xyz)
         y_center_positions = np.linspace(min_xyz + element_half_length, max_xyz - element_half_length, n_el_xyz)
         z_center_positions = np.linspace(min_xyz + element_half_length, max_xyz - element_half_length, n_el_xyz)
-        element_center_positions = np.meshgrid(x_center_positions, y_center_positions, z_center_positions)  # TODO Removed , indexing='ij'
+        element_center_positions = np.meshgrid(x_center_positions, y_center_positions, z_center_positions)
 
         # Define inputs and output
         # TODO Combine center positions and densities into a single input
-        # self.add_input('points', shape_by_conn=True)
-        self.add_input('points', shape=(10, 3))
+        self.add_input('points', shape_by_conn=True)
         self.add_input('element_min_pseudo_densities', val=element_min_pseudo_densities)
         self.add_input('element_center_positions', val=element_center_positions)
         self.add_output('element_pseudo_densities', val=element_min_pseudo_densities)
-        self.add_output('volume', val=1)
-
-        # TODO Add output volume
 
     def setup_partials(self):
         self.declare_partials('*', '*')
@@ -89,7 +88,6 @@ class Projection(ExplicitComponent):
         element_min_pseudo_densities = inputs['element_min_pseudo_densities']
         element_center_positions = inputs['element_center_positions']
 
-
         # Convert the input to a JAX numpy array
         points = np.array(points)
         element_min_pseudo_densities = np.array(element_min_pseudo_densities)
@@ -100,14 +98,6 @@ class Projection(ExplicitComponent):
 
         outputs['element_pseudo_densities'] = element_pseudo_densities
 
-        # Calculate the volume
-        max_xyz = self.options['max_xyz']
-        min_xyz = self.options['min_xyz']
-        n_el_xyz = self.options['n_el_xyz']
-        element_length = (max_xyz - min_xyz) / n_el_xyz
-        volume = projection_volume(element_pseudo_densities, element_length)
-
-        outputs['volume'] = volume
 
     # def compute_partials(self, inputs, partials):
 
@@ -125,6 +115,9 @@ class Projection(ExplicitComponent):
         #
         # # Set the partial derivatives
         # partials['aggregated_output', 'input_vector'] = jac_aggregated_output_np
+
+        # grad_kernel = jacfwd(lambda x: gaussian_kde(x, bw_method='scott'))
+        # grad_kernel_val = grad_kernel(points.T)
 
     @staticmethod
     def _project(points, element_center_positions, min_pseudo_densities):
@@ -144,9 +137,6 @@ class Projection(ExplicitComponent):
         # pseudo_densities = np.maximum(pseudo_densities, min_pseudo_densities)
 
 
-
-
-
         # Perform KDE
         kernel = gaussian_kde(points.T, bw_method='scott')
         density_values = kernel(grid_coords).reshape(grid_x.shape)
@@ -157,12 +147,5 @@ class Projection(ExplicitComponent):
         min_density = np.min(pseudo_densities)
         max_density = np.max(pseudo_densities)
         pseudo_densities = (pseudo_densities - min_density) / (max_density - min_density)
-
-        # Pass the pseudo-densities through a sigmoid function
-        pseudo_densities = 1 / (1 + np.exp(-pseudo_densities))
-
-        grad_kernel = jacfwd(lambda x: gaussian_kde(x, bw_method='scott'))
-        grad_kernel_val = grad_kernel(points.T)
-
 
         return pseudo_densities

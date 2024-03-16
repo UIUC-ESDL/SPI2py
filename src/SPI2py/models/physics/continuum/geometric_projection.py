@@ -1,6 +1,14 @@
 def projection_volume(densities, spacing):
     """Calculate the volume of a projection"""
-    return densities.sum() * spacing ** 3
+
+    # Ensure that no element densities exceed 1
+    # TODO Evaluate smooth clipping, etc.
+    densities = densities.clip(0, 1)
+
+    # Calculate the volume
+    volume = densities.sum() * spacing ** 3
+
+    return volume
 
 
 
