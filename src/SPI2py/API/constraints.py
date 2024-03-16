@@ -173,6 +173,6 @@ class VolumeFractionConstraint(ExplicitComponent):
         combined_volume = combined_pseudo_densities.sum() * element_length ** 3
 
         # Calculate the volume fraction constraint (negative-null form) TODO Add tolerance? No, in OpenMDAO
-        volume_fraction_constraint = combined_volume / individual_volumes  - 1
+        volume_fraction_constraint = individual_volumes / combined_volume  - 1
 
         return volume_fraction_constraint
