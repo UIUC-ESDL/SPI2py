@@ -44,6 +44,8 @@ class Projections(Group):
 class Projection(ExplicitComponent):
     """
     Calculates the pseudo-density of a set of points in a 3D grid
+
+    TODO Deal with objects outside of mesh!!!
     """
 
     def initialize(self):
@@ -112,9 +114,9 @@ class Projection(ExplicitComponent):
 
         # Calculate the Jacobian of the kernel
         grad_kernel = jacfwd(self._project, argnums=0)
-        grad_kernel_val = grad_kernel(points.T, element_center_positions, element_min_pseudo_densities)
+        grad_kernel_val = grad_kernel(points, element_center_positions, element_min_pseudo_densities)
 
-        partials['element_pseudo_densities', 'points'] = grad_kernel_val[0].T # TODO Check all the transposing... (?)
+        partials['element_pseudo_densities', 'points'] = grad_kernel_val # TODO Check all the transposing... (?)
 
     @staticmethod
     def _project(points, element_center_positions, min_pseudo_densities):

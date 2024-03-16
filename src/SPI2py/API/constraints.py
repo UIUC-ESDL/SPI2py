@@ -164,10 +164,12 @@ class VolumeFractionConstraint(ExplicitComponent):
         # TODO Evaluate smooth clipping, etc.
         combined_pseudo_densities = combined_pseudo_densities.clip(0, 1)
 
+        # TODO Would normalizing the combined do anything continuously differentiable?
+
         # Calculate the volume
         combined_volume = combined_pseudo_densities.sum() * element_length ** 3
 
-        # Calculate the volume fraction constraint (negative-null form) TODO Add tolerance? No, in OpenMDAO
+        # Calculate the volume fraction constraint (negative-null form)
         volume_fraction_constraint = individual_volumes / combined_volume  - 1
 
         return volume_fraction_constraint

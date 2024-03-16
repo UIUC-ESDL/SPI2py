@@ -13,9 +13,13 @@ class System(Group):
 
     def initialize(self):
         self.options.declare('input_dict', types=dict)
+        self.options.declare('upper', types=(int, float), desc='Upper bound for the translation design variables')
+        self.options.declare('lower', types=(int, float), desc='Lower bound for the translation design variables')
 
     def setup(self):
         input_dict = self.options['input_dict']
+        upper = self.options['upper']
+        lower = self.options['lower']
 
         components_dict = input_dict['components']
         interconnects_dict = input_dict['interconnects']
@@ -40,7 +44,9 @@ class System(Group):
                                       color=color,
                                       sphere_positions=sphere_positions,
                                       sphere_radii=sphere_radii,
-                                      port_positions=port_positions)
+                                      port_positions=port_positions,
+                                      upper=upper,
+                                      lower=lower)
 
                 components.add_subsystem(f'comp_{i}', component)
 
@@ -93,12 +99,16 @@ class Component(ExplicitComponent):
         self.options.declare('sphere_positions', types=list)
         self.options.declare('sphere_radii', types=list)
         self.options.declare('port_positions', types=list)
+        self.options.declare('upper', types=(int, float), desc='Upper bound for the translation design variables')
+        self.options.declare('lower', types=(int, float), desc='Lower bound for the translation design variables')
 
     def setup(self):
 
         sphere_positions = self.options['sphere_positions']
         sphere_radii = self.options['sphere_radii']
         port_positions = self.options['port_positions']
+        upper = self.options['upper']
+        lower = self.options['lower']
 
         # Convert the lists to numpy arrays
         sphere_positions = np.array(sphere_positions).reshape(-1, 3)
@@ -121,7 +131,8 @@ class Component(ExplicitComponent):
         self.add_output('transformed_port_positions', val=port_positions)
 
         # Define the design variables
-        self.add_design_var('translation', ref=10)
+        # TODO Remove upper/lower
+        self.add_design_var('translation', ref=10, lower=lower, upper=upper)
         self.add_design_var('rotation', ref=2*3.14159)
 
     def setup_partials(self):
