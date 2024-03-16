@@ -41,8 +41,10 @@ model.add_subsystem('mux_all_sphere_positions', Multiplexer(n_i=n_spheres_per_ob
 model.add_subsystem('mux_all_sphere_radii', Multiplexer(n_i=n_spheres_per_object, m=1))
 model.add_subsystem('bbv', BoundingBoxVolume(n_spheres_per_object=n_spheres_per_object+m_spheres_per_object))
 
-model.connect('system.components.comp_0.transformed_sphere_positions', 'projections.projection_0.points')
-model.connect('system.components.comp_1.transformed_sphere_positions', 'projections.projection_1.points')
+model.connect('system.components.comp_0.transformed_sphere_positions', 'projections.projection_0.sphere_positions')
+model.connect('system.components.comp_0.transformed_sphere_radii', 'projections.projection_0.sphere_radii')
+model.connect('system.components.comp_1.transformed_sphere_positions', 'projections.projection_1.sphere_positions')
+model.connect('system.components.comp_1.transformed_sphere_radii', 'projections.projection_1.sphere_radii')
 model.connect('projections.projection_0.element_pseudo_densities', 'volume_fraction_constraint.element_pseudo_densities_0')
 model.connect('projections.projection_1.element_pseudo_densities', 'volume_fraction_constraint.element_pseudo_densities_1')
 
@@ -62,10 +64,10 @@ prob.model.add_constraint('volume_fraction_constraint.volume_fraction_constraint
 
 
 
-prob.driver = om.ScipyOptimizeDriver()
-prob.driver.options['maxiter'] = 5
-prob.driver.options['optimizer'] = 'SLSQP'
-# prob.driver.options['tol'] = 1e-12
+# prob.driver = om.ScipyOptimizeDriver()
+# prob.driver.options['maxiter'] = 5
+# prob.driver.options['optimizer'] = 'SLSQP'
+# # prob.driver.options['tol'] = 1e-12
 
 
 # Set the initial state
@@ -78,12 +80,12 @@ prob.setup()
 prob.set_val('system.components.comp_0.translation', [5, 5, 0])
 prob.set_val('system.components.comp_0.rotation', [0, 0, 0])
 
-# prob.set_val('system.components.comp_1.translation', [5.5, 7, 0])
-# prob.set_val('system.components.comp_1.rotation', [0, 0, 0])
-
-# Collision
-prob.set_val('system.components.comp_1.translation', [5.5, 5, 0])
+prob.set_val('system.components.comp_1.translation', [5.5, 7, 0])
 prob.set_val('system.components.comp_1.rotation', [0, 0, 0])
+
+# # Collision
+# prob.set_val('system.components.comp_1.translation', [5.5, 5, 0])
+# prob.set_val('system.components.comp_1.rotation', [0, 0, 0])
 
 
 
@@ -93,18 +95,18 @@ prob.run_model()
 
 
 # Check the initial state
-# plot_problem(prob)
-
-# Run the optimization
-prob.run_driver()
-
-
-# Check the final state
 plot_problem(prob)
 
-
-print('Constraint violation:', prob.get_val('volume_fraction_constraint.volume_fraction_constraint'))
-
-# Print positions
-print(prob.get_val('system.components.comp_0.translation'))
-print(prob.get_val('system.components.comp_1.translation'))
+# # Run the optimization
+# prob.run_driver()
+#
+#
+# # Check the final state
+# plot_problem(prob)
+#
+#
+# print('Constraint violation:', prob.get_val('volume_fraction_constraint.volume_fraction_constraint'))
+#
+# # Print positions
+# print(prob.get_val('system.components.comp_0.translation'))
+# print(prob.get_val('system.components.comp_1.translation'))
