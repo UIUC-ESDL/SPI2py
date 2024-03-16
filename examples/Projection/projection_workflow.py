@@ -20,8 +20,9 @@ model = prob.model
 
 # Initialize the groups
 model.add_subsystem('system', System(input_dict=input_file))
-model.add_subsystem('projections', Projections(n_comp_projections=1,n_int_projections=0,min_xyz=-3, max_xyz=10, n_el_xyz=25))
+model.add_subsystem('projections', Projections(n_comp_projections=2,n_int_projections=0,min_xyz=-3, max_xyz=10, n_el_xyz=25))
 model.connect('system.components.comp_0.transformed_sphere_positions', 'projections.projection_comp_0.points')
+model.connect('system.components.comp_1.transformed_sphere_positions', 'projections.projection_comp_1.points')
 
 # Set the initial state
 prob.setup()
@@ -32,6 +33,9 @@ prob.setup()
 
 prob.set_val('system.components.comp_0.translation', [5, 5, 0])
 prob.set_val('system.components.comp_0.rotation', [0, 0, 0])
+
+prob.set_val('system.components.comp_1.translation', [5.5, 7, 0])
+prob.set_val('system.components.comp_1.rotation', [0, 0, 0])
 
 
 
@@ -45,5 +49,4 @@ plot_problem(prob)
 
 densities = prob.get_val('projections.projection_comp_0.element_pseudo_densities')
 
-total_density = densities.sum()
 

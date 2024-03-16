@@ -1,3 +1,10 @@
+def projection_volume(densities, spacing):
+    """Calculate the volume of a projection"""
+    return densities.sum() * spacing ** 3
+
+
+
+
 # import math
 #
 # def circle_overlap_area(r1, r2, d):

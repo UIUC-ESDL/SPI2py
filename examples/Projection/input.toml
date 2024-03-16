@@ -7,13 +7,13 @@ num_spheres=10
 port_positions = [[-1.5, 0, 0], [1.5, 0, 0]]
 color='purple'
 
-#[components.1]
-#description = 'radiator and ion exchanger 1b'
-#spheres_filepath='components/radiator_and_ion_exchanger.xyzr'
-#num_spheres=10
-#port_positions = [[-1.5, 0, 0], [1.5, 0, 0]]
-#color='purple'
-#
+[components.1]
+description = 'radiator and ion exchanger 1b'
+spheres_filepath='components/radiator_and_ion_exchanger.xyzr'
+num_spheres=10
+port_positions = [[-1.5, 0, 0], [1.5, 0, 0]]
+color='purple'
+
 #[components.2]
 #description = 'pump 2a'
 #spheres_filepath='components/pump.xyzr'

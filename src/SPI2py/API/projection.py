@@ -2,6 +2,7 @@ import jax.numpy as np
 from jax import jacfwd, jacrev
 from jax.scipy.stats import gaussian_kde
 from openmdao.api import ExplicitComponent, Group
+from ..models.physics.continuum.geometric_projection import projection_volume
 
 
 class Projections(Group):
@@ -74,6 +75,7 @@ class Projection(ExplicitComponent):
         self.add_input('element_min_pseudo_densities', val=element_min_pseudo_densities)
         self.add_input('element_center_positions', val=element_center_positions)
         self.add_output('element_pseudo_densities', val=element_min_pseudo_densities)
+        self.add_output('volume', val=1)
 
         # TODO Add output volume
 
@@ -87,6 +89,7 @@ class Projection(ExplicitComponent):
         element_min_pseudo_densities = inputs['element_min_pseudo_densities']
         element_center_positions = inputs['element_center_positions']
 
+
         # Convert the input to a JAX numpy array
         points = np.array(points)
         element_min_pseudo_densities = np.array(element_min_pseudo_densities)
@@ -97,7 +100,14 @@ class Projection(ExplicitComponent):
 
         outputs['element_pseudo_densities'] = element_pseudo_densities
 
-        # outputs['element_pseudo_densities'] = 1
+        # Calculate the volume
+        max_xyz = self.options['max_xyz']
+        min_xyz = self.options['min_xyz']
+        n_el_xyz = self.options['n_el_xyz']
+        element_length = (max_xyz - min_xyz) / n_el_xyz
+        volume = projection_volume(element_pseudo_densities, element_length)
+
+        outputs['volume'] = volume
 
     # def compute_partials(self, inputs, partials):
 

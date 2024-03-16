@@ -92,3 +92,8 @@ class PairwiseCollisionDetection(ExplicitComponent):
     def _compute_signed_distances(positions_a, radii_a, positions_b, radii_b):
         signed_distances = signed_distances_spheres_spheres(positions_a, radii_a, positions_b, radii_b)
         return signed_distances
+
+class VolumeConstraint(ExplicitComponent):
+    def initialize(self):
+        self.options.declare('n_projections', types=int, desc='Number of projections')
+        self.options.declare('relative_volume_tolerance', types=float, desc='Relative volume tolerance')
