@@ -4,7 +4,7 @@ from torch.func import jacrev, jacfwd
 import openmdao.api as om
 from openmdao.api import ExplicitComponent, Group
 
-from ..models.geometry.finite_sphere_method import read_xyzr_file
+from ..models.geometry.finite_sphere_method import read_xyz_file
 from ..models.kinematics.linear_spline_transformations import translate_linear_spline
 from ..models.kinematics.rigid_body_transformations import assemble_transformation_matrix, \
     apply_transformation_matrix
@@ -33,18 +33,18 @@ class System(Group):
             components_dict = input_dict['components']
             for i, key in enumerate(components_dict.keys()):
                 description = components_dict[key]['description']
-                spheres_filepath = components_dict[key]['spheres_filepath']
-                num_spheres = components_dict[key]['num_spheres']
-                port_positions = components_dict[key]['port_positions']
+                point_cloud_filepath = components_dict[key]['point_cloud_filepath']
+                n_points = components_dict[key]['n_points']
+                ports = components_dict[key]['ports']
                 color = components_dict[key]['color']
 
-                sphere_positions, sphere_radii = read_xyzr_file(spheres_filepath, num_spheres=num_spheres)
+                # sphere_positions, sphere_radii = read_xyzr_file(spheres_filepath, num_spheres=num_spheres)
+                points = read_xyz_file(point_cloud_filepath, n_points)
 
                 component = Component(description=description,
                                       color=color,
-                                      sphere_positions=sphere_positions,
-                                      sphere_radii=sphere_radii,
-                                      port_positions=port_positions,
+                                      points=points,
+                                      ports=ports,
                                       upper=upper,
                                       lower=lower)
 
@@ -81,10 +81,10 @@ class System(Group):
                 interconnects.add_subsystem(f'int_{i}', interconnect)
 
                 # Connect the interconnects to the components
-                self.connect(f'components.comp_{component_1}.transformed_port_positions',
+                self.connect(f'components.comp_{component_1}.transformed_ports',
                              f'interconnects.int_{i}.start_point',
                              src_indices=om.slicer[port_1, :])
-                self.connect(f'components.comp_{component_2}.transformed_port_positions',
+                self.connect(f'components.comp_{component_2}.transformed_ports',
                              f'interconnects.int_{i}.end_point',
                              src_indices=om.slicer[port_2, :])
 
@@ -96,39 +96,34 @@ class Component(ExplicitComponent):
     def initialize(self):
         self.options.declare('description', types=str)
         self.options.declare('color', types=str)
-        self.options.declare('sphere_positions', types=list)
-        self.options.declare('sphere_radii', types=list)
-        self.options.declare('port_positions', types=list)
+        self.options.declare('points', types=list)
+        self.options.declare('ports', types=list)
         self.options.declare('upper', types=(int, float), desc='Upper bound for the translation design variables')
         self.options.declare('lower', types=(int, float), desc='Lower bound for the translation design variables')
 
     def setup(self):
 
-        sphere_positions = self.options['sphere_positions']
-        sphere_radii = self.options['sphere_radii']
-        port_positions = self.options['port_positions']
+        points = self.options['points']
+        ports = self.options['ports']
         upper = self.options['upper']
         lower = self.options['lower']
 
         # Convert the lists to numpy arrays
-        sphere_positions = np.array(sphere_positions).reshape(-1, 3)
-        sphere_radii = np.array(sphere_radii).reshape(-1, 1)
-        port_positions = np.array(port_positions).reshape(-1, 3)
+        points = np.array(points).reshape(-1, 3)
+        ports = np.array(ports).reshape(-1, 3)
 
         default_translation = np.array([[0.0, 0.0, 0.0]])
         default_rotation = np.array([[0.0, 0.0, 0.0]])
 
         # Define the input shapes
-        self.add_input('sphere_positions', val=sphere_positions)
-        self.add_input('sphere_radii', val=sphere_radii)
-        self.add_input('port_positions', val=port_positions)
+        self.add_input('points', val=points)
+        self.add_input('ports', val=ports)
         self.add_input('translation', val=default_translation)
         self.add_input('rotation', val=default_rotation)
 
         # Define the outputs
-        self.add_output('transformed_sphere_positions', val=sphere_positions)
-        self.add_output('transformed_sphere_radii', val=sphere_radii)
-        self.add_output('transformed_port_positions', val=port_positions)
+        self.add_output('transformed_points', val=points)
+        self.add_output('transformed_ports', val=ports)
 
         # Define the design variables
         # TODO Remove upper/lower
@@ -136,77 +131,74 @@ class Component(ExplicitComponent):
         self.add_design_var('rotation', ref=2*3.14159)
 
     def setup_partials(self):
-        self.declare_partials('transformed_sphere_positions', ['translation', 'rotation'])
-        self.declare_partials('transformed_port_positions', ['translation', 'rotation'])
+        self.declare_partials('transformed_points', ['translation', 'rotation'])
+        self.declare_partials('transformed_ports', ['translation', 'rotation'])
 
     def compute(self, inputs, outputs):
 
         # Get the input variables
-        sphere_positions = inputs['sphere_positions']
-        sphere_radii = inputs['sphere_radii']
-        port_positions = inputs['port_positions']
+        points = inputs['points']
+        ports = inputs['ports']
         translation = inputs['translation']
         rotation = inputs['rotation']
 
         # Convert the input variables to torch tensors
-        sphere_positions = torch.tensor(sphere_positions, dtype=torch.float64)
-        sphere_radii = torch.tensor(sphere_radii, dtype=torch.float64)
-        port_positions = torch.tensor(port_positions, dtype=torch.float64)
+        points = torch.tensor(points, dtype=torch.float64)
+        ports = torch.tensor(ports, dtype=torch.float64)
         translation = torch.tensor(translation, dtype=torch.float64)
         rotation = torch.tensor(rotation, dtype=torch.float64)
 
         # Calculate the transformed sphere positions and port positions
-        sphere_positions_transformed = self.compute_transformation(sphere_positions, translation, rotation)
-        port_positions_transformed = self.compute_transformation(port_positions, translation, rotation)
+        points_transformed = self.compute_transformation(points, translation, rotation)
+        ports_transformed = self.compute_transformation(ports, translation, rotation)
 
         # Convert to numpy
-        sphere_positions_transformed = sphere_positions_transformed.detach().numpy()
-        port_positions_transformed = port_positions_transformed.detach().numpy()
+        points_transformed = points_transformed.detach().numpy()
+        ports_transformed = ports_transformed.detach().numpy()
 
         # Set the outputs
-        outputs['transformed_sphere_positions'] = sphere_positions_transformed
-        outputs['transformed_sphere_radii'] = sphere_radii
-        outputs['transformed_port_positions'] = port_positions_transformed
+        outputs['transformed_points'] = points_transformed
+        outputs['transformed_ports'] = ports_transformed
 
     def compute_partials(self, inputs, partials):
 
         # Get the input variables
-        sphere_positions = inputs['sphere_positions']
-        port_positions = inputs['port_positions']
+        points = inputs['points']
+        ports = inputs['ports']
         translation = inputs['translation']
         rotation = inputs['rotation']
 
         # Convert the input variables to torch tensors
-        sphere_positions = torch.tensor(sphere_positions, dtype=torch.float64, requires_grad=False)
-        port_positions = torch.tensor(port_positions, dtype=torch.float64, requires_grad=False)
-        translation = torch.tensor(translation, dtype=torch.float64, requires_grad=True)
-        rotation = torch.tensor(rotation, dtype=torch.float64, requires_grad=True)
+        points = torch.tensor(points, dtype=torch.float64)
+        ports = torch.tensor(ports, dtype=torch.float64)
+        translation = torch.tensor(translation, dtype=torch.float64)
+        rotation = torch.tensor(rotation, dtype=torch.float64)
 
         # Define the Jacobian matrices using PyTorch Autograd
-        jac_sphere_positions = jacfwd(self.compute_transformation, argnums=(1, 2))
-        jac_port_positions = jacfwd(self.compute_transformation, argnums=(1, 2))
+        jac_points = jacfwd(self.compute_transformation, argnums=(1, 2))
+        jac_ports = jacfwd(self.compute_transformation, argnums=(1, 2))
 
         # Evaluate the Jacobian matrices
-        jac_sphere_positions_val = jac_sphere_positions(sphere_positions, translation, rotation)
-        jac_port_positions_val = jac_port_positions(port_positions, translation, rotation)
+        jac_points_val = jac_points(points, translation, rotation)
+        jac_ports_val = jac_ports(ports, translation, rotation)
 
         # Slice the Jacobian matrices
-        grad_sphere_positions_translation = jac_sphere_positions_val[0]
-        grad_sphere_positions_rotation = jac_sphere_positions_val[1]
-        grad_port_positions_translation = jac_port_positions_val[0]
-        grad_port_positions_rotation = jac_port_positions_val[1]
+        grad_points_translation = jac_points_val[0]
+        grad_points_rotation = jac_points_val[1]
+        grad_ports_translation = jac_ports_val[0]
+        grad_ports_rotation = jac_ports_val[1]
 
         # Convert to numpy
-        grad_sphere_positions_translation = grad_sphere_positions_translation.detach().numpy()
-        grad_sphere_positions_rotation = grad_sphere_positions_rotation.detach().numpy()
-        grad_port_positions_translation = grad_port_positions_translation.detach().numpy()
-        grad_port_positions_rotation = grad_port_positions_rotation.detach().numpy()
+        grad_points_translation = grad_points_translation.detach().numpy()
+        grad_points_rotation = grad_points_rotation.detach().numpy()
+        grad_ports_translation = grad_ports_translation.detach().numpy()
+        grad_ports_rotation = grad_ports_rotation.detach().numpy()
 
         # Set the outputs
-        partials['transformed_sphere_positions', 'translation'] = grad_sphere_positions_translation
-        partials['transformed_sphere_positions', 'rotation'] = grad_sphere_positions_rotation
-        partials['transformed_port_positions', 'translation'] = grad_port_positions_translation
-        partials['transformed_port_positions', 'rotation'] = grad_port_positions_rotation
+        partials['transformed_points', 'translation'] = grad_points_translation
+        partials['transformed_points', 'rotation'] = grad_points_rotation
+        partials['transformed_ports', 'translation'] = grad_ports_translation
+        partials['transformed_ports', 'rotation'] = grad_ports_rotation
 
     @staticmethod
     def compute_transformation(positions, translation, rotation):

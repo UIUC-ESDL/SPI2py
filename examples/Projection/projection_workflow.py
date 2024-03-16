@@ -22,14 +22,11 @@ prob = om.Problem()
 model = prob.model
 
 # Parameters
-n_components = 2
-n_spheres = 10
-n_spheres_per_object = [n_spheres for _ in range(n_components)]
-m_interconnects = 0
-m_segments = 0
-m_spheres_per_segment = 25
-m_spheres = m_segments * m_spheres_per_segment
-m_spheres_per_object = [m_spheres for _ in range(m_interconnects)]
+n_components = 1
+n_points = 10
+n_points_per_object = [n_points for _ in range(n_components)]
+
+
 
 
 # Initialize the groups
@@ -37,26 +34,21 @@ model.add_subsystem('system', System(input_dict=input_file, upper=7, lower=0))
 model.add_subsystem('projections', Projections(n_comp_projections=n_components, n_int_projections=0,min_xyz=-3, max_xyz=10, n_el_xyz=18))
 model.add_subsystem('volume_fraction_constraint', VolumeFractionConstraint(n_projections=n_components, min_xyz=-3, max_xyz=10, n_el_xyz=18))
 
-model.add_subsystem('mux_all_sphere_positions', Multiplexer(n_i=n_spheres_per_object, m=3))
-model.add_subsystem('mux_all_sphere_radii', Multiplexer(n_i=n_spheres_per_object, m=1))
-model.add_subsystem('bbv', BoundingBoxVolume(n_spheres_per_object=n_spheres_per_object+m_spheres_per_object))
+model.add_subsystem('mux_all_points', Multiplexer(n_i=n_points_per_object, m=3))
+model.add_subsystem('bbv', BoundingBoxVolume(n_points_per_object=n_points_per_object))
 
-model.connect('system.components.comp_0.transformed_sphere_positions', 'projections.projection_0.sphere_positions')
-model.connect('system.components.comp_0.transformed_sphere_radii', 'projections.projection_0.sphere_radii')
-model.connect('system.components.comp_1.transformed_sphere_positions', 'projections.projection_1.sphere_positions')
-model.connect('system.components.comp_1.transformed_sphere_radii', 'projections.projection_1.sphere_radii')
+model.connect('system.components.comp_0.transformed_points', 'projections.projection_0.points')
+# model.connect('system.components.comp_1.transformed_points', 'projections.projection_1.points')
 model.connect('projections.projection_0.element_pseudo_densities', 'volume_fraction_constraint.element_pseudo_densities_0')
-model.connect('projections.projection_1.element_pseudo_densities', 'volume_fraction_constraint.element_pseudo_densities_1')
+# model.connect('projections.projection_1.element_pseudo_densities', 'volume_fraction_constraint.element_pseudo_densities_1')
 
 # Add a Multiplexer for component sphere positions
 i = 0
 for j in range(n_components):
-    model.connect(f'system.components.comp_{j}.transformed_sphere_positions', f'mux_all_sphere_positions.input_{i}')
-    model.connect(f'system.components.comp_{j}.transformed_sphere_radii', f'mux_all_sphere_radii.input_{i}')
+    model.connect(f'system.components.comp_{j}.transformed_points', f'mux_all_points.input_{i}')
     i += 1
 
-model.connect('mux_all_sphere_positions.stacked_output', 'bbv.positions')
-model.connect('mux_all_sphere_radii.stacked_output', 'bbv.radii')
+model.connect('mux_all_points.stacked_output', 'bbv.points')
 
 # Define the objective and constraints
 prob.model.add_objective('bbv.bounding_box_volume', ref=1, ref0=0)
@@ -80,8 +72,8 @@ prob.setup()
 prob.set_val('system.components.comp_0.translation', [5, 5, 0])
 prob.set_val('system.components.comp_0.rotation', [0, 0, 0])
 
-prob.set_val('system.components.comp_1.translation', [5.5, 7, 0])
-prob.set_val('system.components.comp_1.rotation', [0, 0, 0])
+# prob.set_val('system.components.comp_1.translation', [5.5, 7, 0])
+# prob.set_val('system.components.comp_1.rotation', [0, 0, 0])
 
 # # Collision
 # prob.set_val('system.components.comp_1.translation', [5.5, 5, 0])

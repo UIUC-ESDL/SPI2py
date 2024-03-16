@@ -74,23 +74,15 @@ class Projection(ExplicitComponent):
         z_center_positions = np.linspace(min_xyz + element_half_length, max_xyz - element_half_length, n_el_xyz)
         element_center_positions = np.meshgrid(x_center_positions, y_center_positions, z_center_positions)
 
-        # sampling_spheres_positions = np.array([element_center_positions[0].ravel(), element_center_positions[1].ravel(), element_center_positions[2].ravel()]).T
-        # sampling_sphere_radii = element_half_length * np.ones(len(sampling_spheres_positions))
-        # sampling_sphere_min_pseudo_densities = rho_min * np.ones(len(sampling_spheres_positions))
-
         # Define inputs and output
         # TODO Combine center positions and densities into a single input
-        self.add_input('sphere_positions', shape_by_conn=True)
-        self.add_input('sphere_radii', shape_by_conn=True)
+        self.add_input('points', shape_by_conn=True)
         self.add_input('element_min_pseudo_densities', val=element_min_pseudo_densities)
         self.add_input('element_center_positions', val=element_center_positions)
-        # self.add_input('sampling_spheres_positions', val=sampling_spheres_positions)
-        # self.add_input('sampling_sphere_radii', val=sampling_sphere_radii)
-        # self.add_input('sampling_sphere_min_pseudo_densities', val=sampling_sphere_min_pseudo_densities)
         self.add_output('element_pseudo_densities', val=element_min_pseudo_densities)
 
     def setup_partials(self):
-        self.declare_partials('element_pseudo_densities', 'sphere_positions')
+        self.declare_partials('element_pseudo_densities', 'points')
 
     def compute(self, inputs, outputs):
 
@@ -101,23 +93,19 @@ class Projection(ExplicitComponent):
         element_length = (max_xyz - min_xyz) / n_el_xyz
 
         # Get the inputs
-        sphere_positions = inputs['sphere_positions']
-        sphere_radii = inputs['sphere_radii']
+        points = inputs['points']
         element_min_pseudo_densities = inputs['element_min_pseudo_densities']
         element_center_positions = inputs['element_center_positions']
 
-
         # Convert the input to a JAX numpy array
-        sphere_positions = np.array(sphere_positions)
-        sphere_radii = np.array(sphere_radii)
+        points = np.array(points)
         element_min_pseudo_densities = np.array(element_min_pseudo_densities)
         element_center_positions = np.array(element_center_positions)
 
         # Project
-        sampling_sphere_densities = self._project(sphere_positions, sphere_radii,
-                                                  element_center_positions, element_min_pseudo_densities)
+        element_pseudo_densities = self._project(points, element_center_positions, element_min_pseudo_densities)
 
-        outputs['sampling_sphere_densities'] = sampling_sphere_densities
+        outputs['element_pseudo_densities'] = element_pseudo_densities
 
     # def compute_partials(self, inputs, partials):
     #
@@ -155,24 +143,24 @@ class Projection(ExplicitComponent):
         return
 
     @staticmethod
-    def _project(sphere_positions, sphere_radii, element_center_positions, element_min_pseudo_densities):
+    def _project(points, element_center_positions, element_min_pseudo_densities):
         """
         Projects the points to the mesh and calculates the pseudo-densities
         """
 
-        # Calculate how much the bounding box of each sphere overlaps with each element
-        sphere_bounding_boxes = np.array([sphere_positions - sphere_radii, sphere_positions + sphere_radii]).T
+        grid_x, grid_y, grid_z = element_center_positions
+        grid_coords = np.vstack([grid_x.ravel(), grid_y.ravel(), grid_z.ravel()])
 
-
-
+        # TODO Clip to min pseudo-density instead of passing matrix?
 
         # Perform KDE
-        # kernel = gaussian_kde(points.T, bw_method='scott')
-        # density_values = kernel(grid_coords).reshape(grid_x.shape)
-        # pseudo_densities = density_values + min_pseudo_densities
+        kernel = gaussian_kde(points.T, bw_method='scott')
+        density_values = kernel(grid_coords).reshape(grid_x.shape)
+        pseudo_densities = density_values + element_min_pseudo_densities
+
         # Normalize the pseudo-densities
-        # min_density = np.min(pseudo_densities)
-        # max_density = np.max(pseudo_densities)
-        # pseudo_densities = (pseudo_densities - min_density) / (max_density - min_density)
+        min_density = np.min(pseudo_densities)
+        max_density = np.max(pseudo_densities)
+        pseudo_densities = (pseudo_densities - min_density) / (max_density - min_density)
 
         return pseudo_densities

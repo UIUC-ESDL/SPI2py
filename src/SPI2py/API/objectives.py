@@ -1,40 +1,36 @@
 import torch
 from torch.func import jacrev
 from openmdao.api import ExplicitComponent
-from ..models.geometry.bounding_box_volume import bounding_box_bounds, bounding_box_volume
+from ..models.geometry.bounding_box_volume import bounding_box_bounds_points, bounding_box_volume
 
 
 class BoundingBoxVolume(ExplicitComponent):
 
     def initialize(self):
-        self.options.declare('n_spheres_per_object', types=list, desc='Number of spheres per object')
+        self.options.declare('n_points_per_object', types=list, desc='Number of points per object')
 
     def setup(self):
-        n_i = self.options['n_spheres_per_object']
+        n_i = self.options['n_points_per_object']
         n = sum(n_i)
 
-        self.add_input('positions', shape=(n, 3))
-        self.add_input('radii', shape=(n, 1))
+        self.add_input('points', shape=(n, 3))
 
         self.add_output('bounding_box_volume', shape=(1,))
         self.add_output('bounding_box_bounds', shape=(6,))
 
     def setup_partials(self):
-        self.declare_partials('bounding_box_volume', 'positions')
-        self.declare_partials('bounding_box_volume', 'radii')
+        self.declare_partials('bounding_box_volume', 'points')
 
     def compute(self, inputs, outputs):
 
         # Get the input variables
-        positions = inputs['positions']
-        radii = inputs['radii']
+        positions = inputs['points']
 
         # Convert the inputs to torch tensors
         positions = torch.tensor(positions, dtype=torch.float64)
-        radii = torch.tensor(radii, dtype=torch.float64)
 
         # Calculate the bounding box volume
-        bb_volume, bb_bounds = self._bounding_box_volume(positions, radii)
+        bb_volume, bb_bounds = self._bounding_box_volume(positions)
 
         # Set the outputs
         outputs['bounding_box_bounds'] = bb_bounds
@@ -43,35 +39,31 @@ class BoundingBoxVolume(ExplicitComponent):
     def compute_partials(self, inputs, partials):
 
         # Get the input variables
-        sphere_positions = inputs['positions']
-        sphere_radii = inputs['radii']
+        positions = inputs['points']
 
         # Convert the inputs to torch tensors
-        sphere_positions = torch.tensor(sphere_positions, dtype=torch.float64, requires_grad=True)
-        sphere_radii = torch.tensor(sphere_radii, dtype=torch.float64, requires_grad=True)
+        positions = torch.tensor(positions, dtype=torch.float64, requires_grad=True)
 
         # Define the Jacobian matrices using PyTorch Autograd
-        jac_bbv = jacrev(self._bounding_box_volume_no_bounds, argnums=(0, 1))
+        jac_bbv = jacrev(self._bounding_box_volume_no_bounds, argnums=(0))
 
         # Evaluate the Jacobian matrices
-        jac_bbv_val = jac_bbv(sphere_positions, sphere_radii)
+        jac_bbv_val = jac_bbv(positions)
 
         # Convert the outputs to numpy arrays
-        jac_bbv_positions = jac_bbv_val[0].detach().numpy()
-        jac_bbv_radii = jac_bbv_val[1].detach().numpy()
+        jac_bbv_positions = jac_bbv_val.detach().numpy()
 
         # Set the outputs
-        partials['bounding_box_volume', 'positions'] = jac_bbv_positions
-        partials['bounding_box_volume', 'radii'] = jac_bbv_radii
+        partials['bounding_box_volume', 'points'] = jac_bbv_positions
 
     @staticmethod
-    def _bounding_box_volume(positions, radii):
-        bb_bounds = bounding_box_bounds(positions, radii)
+    def _bounding_box_volume(positions):
+        bb_bounds = bounding_box_bounds_points(positions)
         bb_volume = bounding_box_volume(bb_bounds)
         return bb_volume, bb_bounds
 
     @staticmethod
-    def _bounding_box_volume_no_bounds(positions, radii):
-        bb_bounds = bounding_box_bounds(positions, radii)
+    def _bounding_box_volume_no_bounds(positions):
+        bb_bounds = bounding_box_bounds_points(positions)
         bb_volume = bounding_box_volume(bb_bounds)
         return bb_volume
