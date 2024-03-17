@@ -14,7 +14,6 @@ class BoundingBoxVolume(ExplicitComponent):
         n = sum(n_i)
 
         self.add_input('points', shape=(n, 3))
-
         self.add_output('bounding_box_volume', shape=(1,))
         self.add_output('bounding_box_bounds', shape=(6,))
 
