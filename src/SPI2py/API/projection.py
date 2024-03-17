@@ -107,7 +107,6 @@ class Projection(ExplicitComponent):
         # Get the inputs
         element_length = inputs['mesh_element_length']
         points = inputs['points']
-        element_min_pseudo_densities = inputs['element_min_pseudo_densities']
         element_center_positions = inputs['element_center_positions']
 
         # Convert the input to a JAX numpy array

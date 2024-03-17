@@ -35,13 +35,13 @@ class System(Group):
             for i, key in enumerate(components_dict.keys()):
                 description = components_dict[key]['description']
                 point_cloud_filepath = components_dict[key]['point_cloud_filepath']
-                point_cloud_resolution = components_dict[key]['point_cloud_resolution']
+                n_points = components_dict[key]['n_points']
                 ports = components_dict[key]['ports']
                 color = components_dict[key]['color']
 
                 # sphere_positions, sphere_radii = read_xyzr_file(spheres_filepath, num_spheres=num_spheres)
                 # points = read_xyz_file(point_cloud_filepath, n_points)
-                points, n_points_per_1x1x1_cube = generate_point_cloud(point_cloud_filepath, point_cloud_resolution=point_cloud_resolution, plot=True)
+                points, n_points_per_1x1x1_cube = generate_point_cloud(point_cloud_filepath, n_points=n_points, plot=False)
 
                 component = Component(description=description,
                                       color=color,
@@ -100,7 +100,7 @@ class Component(ExplicitComponent):
         self.options.declare('description', types=str)
         self.options.declare('color', types=str)
         self.options.declare('points', types=list)
-        self.options.declare('n_points_per_1x1x1_cube', types=int)
+        self.options.declare('n_points_per_1x1x1_cube', types=float)
         self.options.declare('ports', types=list)
         self.options.declare('upper', types=(int, float), desc='Upper bound for the translation design variables')
         self.options.declare('lower', types=(int, float), desc='Lower bound for the translation design variables')

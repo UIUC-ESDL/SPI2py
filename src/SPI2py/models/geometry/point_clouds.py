@@ -35,12 +35,7 @@ def read_xyz_file(filepath, n_points=100):
     return positions
 
 
-def generate_point_cloud(filepath, point_cloud_resolution=0.1, plot=False):
-
-    axis_increments = int(1 / point_cloud_resolution)
-
-    if axis_increments > 30:
-        raise ValueError('Warning: Large values for axis increments may result in a large number of points.')
+def generate_point_cloud(filepath, n_points, max_points=10000, plot=False):
 
     # Create the pyvista and trimesh objects. Both are required.
     mesh_trimesh = trimesh.exchange.load.load(filepath)
@@ -53,10 +48,20 @@ def generate_point_cloud(filepath, point_cloud_resolution=0.1, plot=False):
     z_min = mesh_trimesh.vertices[:, 2].min()
     z_max = mesh_trimesh.vertices[:, 2].max()
 
+    # Determine the relative scale of each axis
+    len_x = x_max - x_min
+    len_y = y_max - y_min
+    len_z = z_max - z_min
+
+    r = ((len_x*len_y*len_z) / max_points)**(1/3)
+    nx = int(len_x / r)
+    ny = int(len_y / r)
+    nz = int(len_z / r)
+
     # USER INPUT: The number of increments for each dimension of the meshgrid.
-    nx = axis_increments
-    ny = axis_increments
-    nz = axis_increments
+    # nx = axis_increments
+    # ny = axis_increments
+    # nz = axis_increments
 
     # Create a 3d meshgrid
     x = np.linspace(x_min, x_max, nx)
@@ -77,6 +82,11 @@ def generate_point_cloud(filepath, point_cloud_resolution=0.1, plot=False):
     scaled_length = 1
     scale_factor = scaled_length / unscaled_length
     n_points_per_1x1x1_cube = n_points_per_nxnynz_cube * scale_factor**3
+
+    # Randomly select n_points from the file
+    points_filtered_indices = range(len(points_filtered))
+    points_filtered_indices_chosen = np.random.choice(points_filtered_indices, n_points)
+    points_filtered = points_filtered[points_filtered_indices_chosen]
 
     if plot:
         # Plot object with PyVista
