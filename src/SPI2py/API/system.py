@@ -4,7 +4,8 @@ from torch.func import jacrev, jacfwd
 import openmdao.api as om
 from openmdao.api import ExplicitComponent, Group
 
-from ..models.geometry.finite_sphere_method import read_xyz_file
+from ..models.geometry.point_clouds import generate_point_cloud
+from ..models.geometry.point_clouds import read_xyz_file
 from ..models.kinematics.linear_spline_transformations import translate_linear_spline
 from ..models.kinematics.rigid_body_transformations import assemble_transformation_matrix, \
     apply_transformation_matrix
@@ -34,16 +35,18 @@ class System(Group):
             for i, key in enumerate(components_dict.keys()):
                 description = components_dict[key]['description']
                 point_cloud_filepath = components_dict[key]['point_cloud_filepath']
-                n_points = components_dict[key]['n_points']
+                point_cloud_resolution = components_dict[key]['point_cloud_resolution']
                 ports = components_dict[key]['ports']
                 color = components_dict[key]['color']
 
                 # sphere_positions, sphere_radii = read_xyzr_file(spheres_filepath, num_spheres=num_spheres)
-                points = read_xyz_file(point_cloud_filepath, n_points)
+                # points = read_xyz_file(point_cloud_filepath, n_points)
+                points, n_points_per_1x1x1_cube = generate_point_cloud(point_cloud_filepath, point_cloud_resolution=point_cloud_resolution, plot=True)
 
                 component = Component(description=description,
                                       color=color,
                                       points=points,
+                                      n_points_per_1x1x1_cube=n_points_per_1x1x1_cube,
                                       ports=ports,
                                       upper=upper,
                                       lower=lower)
@@ -97,6 +100,7 @@ class Component(ExplicitComponent):
         self.options.declare('description', types=str)
         self.options.declare('color', types=str)
         self.options.declare('points', types=list)
+        self.options.declare('n_points_per_1x1x1_cube', types=int)
         self.options.declare('ports', types=list)
         self.options.declare('upper', types=(int, float), desc='Upper bound for the translation design variables')
         self.options.declare('lower', types=(int, float), desc='Lower bound for the translation design variables')
@@ -104,6 +108,7 @@ class Component(ExplicitComponent):
     def setup(self):
 
         points = self.options['points']
+        n_points_per_1x1x1_cube = self.options['n_points_per_1x1x1_cube']
         ports = self.options['ports']
         upper = self.options['upper']
         lower = self.options['lower']
@@ -123,6 +128,7 @@ class Component(ExplicitComponent):
 
         # Define the outputs
         self.add_output('transformed_points', val=points)
+        self.add_output('reference_density', val=n_points_per_1x1x1_cube, desc='The number of points in 1x1x1 cube with density 1')
         self.add_output('transformed_ports', val=ports)
 
         # Define the design variables
@@ -151,6 +157,10 @@ class Component(ExplicitComponent):
         # Calculate the transformed sphere positions and port positions
         points_transformed = self.compute_transformation(points, translation, rotation)
         ports_transformed = self.compute_transformation(ports, translation, rotation)
+
+        # Calculate the reference density
+        # TODO Implement
+
 
         # Convert to numpy
         points_transformed = points_transformed.detach().numpy()

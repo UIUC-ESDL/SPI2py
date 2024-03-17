@@ -16,20 +16,22 @@ class Mesh(IndepVarComp):
         max_xyz = self.options['max_xyz']
         n_el_xyz = self.options['n_el_xyz']
 
-        # Define the grid
+        # Define the properties of an element
         mesh_element_length = (max_xyz - min_xyz) / n_el_xyz
         mesh_element_half_length = mesh_element_length / 2
+
+        # Define the properties of the mesh
         x_center_positions = np.linspace(min_xyz + mesh_element_half_length, max_xyz - mesh_element_half_length, n_el_xyz)
         y_center_positions = np.linspace(min_xyz + mesh_element_half_length, max_xyz - mesh_element_half_length, n_el_xyz)
         z_center_positions = np.linspace(min_xyz + mesh_element_half_length, max_xyz - mesh_element_half_length, n_el_xyz)
         mesh_element_center_positions = np.meshgrid(x_center_positions, y_center_positions, z_center_positions)
 
+        # Declare the outputs
         self.add_output('min_xyz', val=min_xyz)
         self.add_output('max_xyz', val=max_xyz)
         self.add_output('n_el_xyz', val=n_el_xyz)
         self.add_output('mesh_element_length', val=mesh_element_length)
         self.add_output('mesh_element_center_positions', val=mesh_element_center_positions)
-
 
 
 class Projections(Group):
@@ -160,12 +162,12 @@ class Projection(ExplicitComponent):
         density_values = kernel(grid_coords).reshape(grid_x.shape)
         pseudo_densities = density_values + rho_min
 
-        # Normalize the pseudo-densities
-        min_density = np.min(pseudo_densities)
-        max_density = np.max(pseudo_densities)
-        pseudo_densities = (pseudo_densities - min_density) / (max_density - min_density)
+        # # Normalize the pseudo-densities
+        # min_density = np.min(pseudo_densities)
+        # max_density = np.max(pseudo_densities)
+        # pseudo_densities = (pseudo_densities - min_density) / (max_density - min_density)
 
         # Clip the minimum pseudo-densities to rho_min (to avoid numerical issues associated w/ zero densities)
-        pseudo_densities = np.clip(pseudo_densities, rho_min, 1)
+        # pseudo_densities = np.clip(pseudo_densities, rho_min, 1)
 
         return pseudo_densities

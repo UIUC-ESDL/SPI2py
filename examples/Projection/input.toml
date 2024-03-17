@@ -2,15 +2,15 @@
 
 [components.0]
 description = 'radiator and ion exchanger 1a'
-point_cloud_filepath='components/point_clouds/radiator_and_ion_exchanger.xyz'
-n_points=100
+point_cloud_filepath='components/CAD_Files/radiator_and_ion_exchanger.stl'
+point_cloud_resolution=0.15
 ports = [[-1.5, 0, 0], [1.5, 0, 0]]
 color='purple'
 
 [components.1]
 description = 'radiator and ion exchanger 1b'
-point_cloud_filepath='components/point_clouds/radiator_and_ion_exchanger.xyz'
-n_points=100
+point_cloud_filepath='components/CAD_Files/radiator_and_ion_exchanger.stl'
+point_cloud_resolution=0.15
 ports = [[-1.5, 0, 0], [1.5, 0, 0]]
 color='purple'
 

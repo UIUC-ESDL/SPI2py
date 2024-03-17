@@ -4,7 +4,7 @@ TODO Add functionality to rotate geometric primitives
 """
 
 import numpy as np
-import torch
+
 
 class GeometricRepresentation:
     """
@@ -49,39 +49,6 @@ def read_xyzr_file(filepath, num_spheres=100):
         radii.append(float(r))
 
     return positions, radii
-
-def read_xyz_file(filepath, n_points=100):
-    """
-    Reads a point cloud .xyz file and returns the points.
-
-    TODO Remove num spheres
-
-    :param filepath:
-    :param n_points:
-    :return: positions
-    """
-
-    with open(filepath, 'r') as f:
-        lines = f.readlines()
-
-    if n_points is not None and n_points > len(lines):
-        raise ValueError('n_points must be less than the number of points in the file')
-
-    # Set the random seed
-    np.random.seed(0)
-
-    # Randomly select n_points from the file
-    lines = np.random.choice(lines, n_points)
-
-    positions = []
-
-    for line in lines:
-        x, y, z = line.split()
-
-        positions.append([float(x), float(y), float(z)])
-
-    return positions
-
 
 
 def generate_rectangular_prism(origin, dimension):
