@@ -75,10 +75,10 @@ def plot_problem(prob):
         n_comp_projections = prob.model.projections.options['n_comp_projections']
         n_int_projections = prob.model.projections.options['n_int_projections']
         n_projections = n_comp_projections + n_int_projections
-        nxyz = prob.model.projections.options['n_el_xyz']
+        nxyz = prob.model.mesh.options['n_el_xyz']
         nx, ny, nz = nxyz, nxyz, nxyz
-        min_xyz = prob.model.projections.options['min_xyz']
-        max_xyz = prob.model.projections.options['max_xyz']
+        min_xyz = prob.model.mesh.options['min_xyz']
+        max_xyz = prob.model.mesh.options['max_xyz']
 
 
         spacing = (max_xyz - min_xyz) / nxyz
@@ -100,7 +100,7 @@ def plot_problem(prob):
         # Plot projections
         for i in range(n_projections):
             # Get the density values
-            density_values = prob.get_val(f'projections.projection_{i}.element_pseudo_densities').flatten(order='F')
+            density_values = prob.get_val(f'projections.projection_{i}.mesh_element_pseudo_densities').flatten(order='F')
             # print("Density values range:", density_values.min(), density_values.max())
             # Create the grid
             x = np.linspace(min_xyz, max_xyz, nx + 1)
