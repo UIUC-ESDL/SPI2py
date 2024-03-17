@@ -67,11 +67,13 @@ def read_xyz_file(filepath, n_points=100):
     if n_points is not None and n_points > len(lines):
         raise ValueError('n_points must be less than the number of points in the file')
 
-    # Truncate the number of spheres as specified
-    lines = lines[0:n_points]
+    # Set the random seed
+    np.random.seed(0)
+
+    # Randomly select n_points from the file
+    lines = np.random.choice(lines, n_points)
 
     positions = []
-    radii = []
 
     for line in lines:
         x, y, z = line.split()

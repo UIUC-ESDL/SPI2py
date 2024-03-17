@@ -22,8 +22,8 @@ prob = om.Problem()
 model = prob.model
 
 # Parameters
-n_components = 1
-n_points = 10
+n_components = 2
+n_points = 200
 n_points_per_object = [n_points for _ in range(n_components)]
 
 
@@ -38,9 +38,9 @@ model.add_subsystem('mux_all_points', Multiplexer(n_i=n_points_per_object, m=3))
 model.add_subsystem('bbv', BoundingBoxVolume(n_points_per_object=n_points_per_object))
 
 model.connect('system.components.comp_0.transformed_points', 'projections.projection_0.points')
-# model.connect('system.components.comp_1.transformed_points', 'projections.projection_1.points')
+model.connect('system.components.comp_1.transformed_points', 'projections.projection_1.points')
 model.connect('projections.projection_0.element_pseudo_densities', 'volume_fraction_constraint.element_pseudo_densities_0')
-# model.connect('projections.projection_1.element_pseudo_densities', 'volume_fraction_constraint.element_pseudo_densities_1')
+model.connect('projections.projection_1.element_pseudo_densities', 'volume_fraction_constraint.element_pseudo_densities_1')
 
 # Add a Multiplexer for component sphere positions
 i = 0
@@ -72,8 +72,8 @@ prob.setup()
 prob.set_val('system.components.comp_0.translation', [5, 5, 0])
 prob.set_val('system.components.comp_0.rotation', [0, 0, 0])
 
-# prob.set_val('system.components.comp_1.translation', [5.5, 7, 0])
-# prob.set_val('system.components.comp_1.rotation', [0, 0, 0])
+prob.set_val('system.components.comp_1.translation', [5.5, 7, 0])
+prob.set_val('system.components.comp_1.rotation', [0, 0, 0])
 
 # # Collision
 # prob.set_val('system.components.comp_1.translation', [5.5, 5, 0])
@@ -96,9 +96,9 @@ plot_problem(prob)
 # # Check the final state
 # plot_problem(prob)
 #
-#
-# print('Constraint violation:', prob.get_val('volume_fraction_constraint.volume_fraction_constraint'))
-#
+
+print('Constraint violation:', prob.get_val('volume_fraction_constraint.volume_fraction_constraint'))
+
 # # Print positions
 # print(prob.get_val('system.components.comp_0.translation'))
 # print(prob.get_val('system.components.comp_1.translation'))

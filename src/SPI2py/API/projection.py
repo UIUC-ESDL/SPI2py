@@ -126,23 +126,6 @@ class Projection(ExplicitComponent):
     #     partials['element_pseudo_densities', 'points'] = grad_kernel_val # TODO Check all the transposing... (?)
 
     @staticmethod
-    def calculate_density(min1, max1, min2, max2):
-        """
-        Calculate the overlap volume between two cubes.
-        """
-        overlap_x = max(0, min(max1[0], max2[0]) - max(min1[0], min2[0]))
-        overlap_y = max(0, min(max1[1], max2[1]) - max(min1[1], min2[1]))
-        overlap_z = max(0, min(max1[2], max2[2]) - max(min1[2], min2[2]))
-
-        cell_volume = (max1[0] - min1[0]) * (max1[1] - min1[1]) * (max1[2] - min1[2])
-
-        overlap_volume = overlap_x * overlap_y * overlap_z
-
-        density = overlap_volume / cell_volume
-
-        return
-
-    @staticmethod
     def _project(points, element_center_positions, element_min_pseudo_densities):
         """
         Projects the points to the mesh and calculates the pseudo-densities
