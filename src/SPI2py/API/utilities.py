@@ -1,3 +1,4 @@
+import numpy as np
 import torch
 from openmdao.core.explicitcomponent import ExplicitComponent
 from torch.func import jacrev, jacfwd
@@ -218,3 +219,13 @@ class MinAggregator(Aggregator):
 #
 # # TODO IMPLEMENT BLOCK PAIRWISE
 
+
+def estimate_partial_derivative_memory(n_points, nx, ny, nz):
+    pd_size = n_points*3*nx*ny*nz
+    pd = np.ones((pd_size, 1), dtype=np.float64)
+
+    print(f"Jacobian size: {pd_size}")
+
+    memory_usage_bytes = pd.nbytes
+    memory_usage_mb = memory_usage_bytes / (1024 ** 2)
+    print(f"Memory usage: {memory_usage_mb:.2f} MB")

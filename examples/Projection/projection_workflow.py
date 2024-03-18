@@ -12,7 +12,7 @@ from SPI2py.API.constraints import VolumeFractionConstraint
 from SPI2py.models.utilities.visualization import plot_problem
 from SPI2py.models.utilities.inputs import read_input_file
 from SPI2py.API.objectives import BoundingBoxVolume
-from SPI2py.API.utilities import Multiplexer
+from SPI2py.API.utilities import Multiplexer, estimate_partial_derivative_memory
 
 # Set the random seed for reproducibility
 np.random.seed(0)
@@ -127,3 +127,8 @@ print('Component 2 volume:', prob.get_val('projections.projection_1.volume'))
 # # # Print positions
 # print(prob.get_val('system.components.comp_0.translation'))
 # print(prob.get_val('system.components.comp_1.translation'))
+
+
+
+
+
