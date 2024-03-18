@@ -229,3 +229,26 @@ def estimate_partial_derivative_memory(n_points, nx, ny, nz):
     memory_usage_bytes = pd.nbytes
     memory_usage_mb = memory_usage_bytes / (1024 ** 2)
     print(f"Memory usage: {memory_usage_mb:.2f} MB")
+
+def estimate_projection_error(prob, variable, volume, default_set_val, steps, step_size):
+
+    volumes = []
+
+    prob.set_val(variable, default_set_val)
+    prob.run_model()
+    volumes.append(float(prob.get_val(volume)))
+
+    for i in range(steps):
+        default_set_val[0] += step_size
+        default_set_val[1] += step_size
+        default_set_val[2] += step_size
+        prob.set_val(variable, default_set_val)
+        prob.run_model()
+        volumes.append(float(prob.get_val(volume)))
+
+
+    volumes = np.array(volumes)
+    max_relative_error = round(100 * np.max(np.abs(volumes - volumes[0]) / volumes[0]), 2)
+
+    print('Volumes:', volumes)
+    print(f'Max error: {max_relative_error} %')

@@ -12,7 +12,7 @@ from SPI2py.API.constraints import VolumeFractionConstraint
 from SPI2py.models.utilities.visualization import plot_problem
 from SPI2py.models.utilities.inputs import read_input_file
 from SPI2py.API.objectives import BoundingBoxVolume
-from SPI2py.API.utilities import Multiplexer, estimate_partial_derivative_memory
+from SPI2py.API.utilities import Multiplexer, estimate_partial_derivative_memory, estimate_projection_error
 
 # Set the random seed for reproducibility
 np.random.seed(0)
@@ -26,11 +26,11 @@ model = prob.model
 
 # Mesh Parameters
 bounds = (0, 10, 0, 10, 0, 3)
-n_elements_per_unit_length = 4.0
+n_elements_per_unit_length = 4.5
 
 # System Parameters
 n_components = 2
-n_points = 250
+n_points = 350
 n_points_per_object = [n_points for _ in range(n_components)]
 
 
@@ -98,19 +98,44 @@ prob.set_val('system.components.comp_1.rotation', [0, 0, 0])
 # prob.set_val('system.components.comp_1.translation', [5.5, 5, 0])
 # prob.set_val('system.components.comp_1.rotation', [0, 0, 0])
 
-
-
-
-
 prob.run_model()
 
+
+estimate_projection_error(prob,
+                          'system.components.comp_0.translation',
+                          'projections.projection_0.volume',
+                          [5, 5, 1.5],
+                          5, 0.15)
+
+
+# volumes = []
+# volumes.append(float(prob.get_val('projections.projection_0.volume')))
+#
+# # Perturb component 1
+# prob.set_val('system.components.comp_0.translation', [5, 5.13, 1.5])
+# prob.run_model()
+# volumes.append(float(prob.get_val('projections.projection_0.volume')))
+#
+# prob.set_val('system.components.comp_0.translation', [5, 6.27, 1.5])
+# prob.run_model()
+# volumes.append(float(prob.get_val('projections.projection_0.volume')))
+#
+# prob.set_val('system.components.comp_0.translation', [5, 6.78, 1.5])
+# prob.run_model()
+# volumes.append(float(prob.get_val('projections.projection_0.volume')))
+#
+# volumes = np.array(volumes)
+# max_relative_error = round(100*np.max(np.abs(volumes - volumes[0]) / volumes[0]),2)
+#
+# print('Volumes:', volumes)
+# print(f'Max error: {max_relative_error} %')
 
 # Check the initial state
 plot_problem(prob)
 
-print('Number of elements:', prob.get_val('mesh.mesh_shape').size)
-print('Component 1 volume:', prob.get_val('projections.projection_0.volume'))
-print('Component 2 volume:', prob.get_val('projections.projection_1.volume'))
+# print('Number of elements:', prob.get_val('mesh.mesh_shape').size)
+# print('Component 1 volume:', prob.get_val('projections.projection_0.volume'))
+# print('Component 2 volume:', prob.get_val('projections.projection_1.volume'))
 
 # Run the optimization
 # prob.run_driver()

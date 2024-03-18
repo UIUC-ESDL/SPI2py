@@ -30,7 +30,7 @@ def plot_problem(prob):
             component_colors.append(color)
 
         for comp, color in zip(components, component_colors):
-            p.add_mesh(comp, color=color, point_size=10, render_points_as_spheres=True)
+            p.add_mesh(comp, color=color, point_size=10, render_points_as_spheres=True, lighting=False)
 
     # Check if the problem contains interconnects
     if 'interconnects' in prob.model.system._subsystems_allprocs:
@@ -53,7 +53,7 @@ def plot_problem(prob):
             interconnect_colors.append(color)
 
         for inter, color in zip(interconnects, interconnect_colors):
-            p.add_mesh(inter, color=color)
+            p.add_mesh(inter, color=color, lighting=False)
 
     # Check if the problem contains a bounding box
     if 'bbv' in prob.model._outputs:
@@ -95,7 +95,7 @@ def plot_problem(prob):
         # Set the origin of the grid to the minimum XYZ coordinates
         grid.origin = (x_min, y_min, z_min)
 
-        p.add_mesh(grid, color='lightgrey', show_edges=True, opacity=0.5)
+        p.add_mesh(grid, color='lightgrey', show_edges=True, opacity=0.15, lighting=False)
 
         # Plot projections
         for i in range(n_projections):
