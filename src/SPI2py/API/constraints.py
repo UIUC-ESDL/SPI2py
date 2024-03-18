@@ -133,13 +133,38 @@ class VolumeFractionConstraint(ExplicitComponent):
 
         volume_fraction_constraint = self._volume_fraction_constraint(element_pseudo_densities, element_length)
 
-
         # Write the outputs
         outputs['volume_fraction_constraint'] = volume_fraction_constraint
 
-    # TODO Implement!!
-    # def compute_partials(self, inputs, partials):
-    #     pass
+    def compute_partials(self, inputs, partials):
+
+        # Get the options
+        n = self.options['n_projections']
+
+        # Calculate the volume
+        element_length = inputs['element_length']
+
+        # Extract the inputs and convert to a numpy array
+        element_pseudo_densities = ()
+        for i in range(n):
+            element_pseudo_densities = element_pseudo_densities + (inputs[f'element_pseudo_densities_{i}'],)
+
+        element_pseudo_densities_tensors = ()
+        for i in range(n):
+            element_pseudo_densities_tensors = element_pseudo_densities_tensors + (torch.tensor(element_pseudo_densities[i], dtype=torch.float64, requires_grad=True),)
+
+        # Calculate the partial derivatives wrt all inputs
+        argnums = tuple(range(len(n)))
+        jac_volume_fraction_constraint = jacfwd(self._volume_fraction_constraint, argnums=argnums)(*element_pseudo_densities_tensors, element_length)
+
+        # Convert the partial derivatives to numpy arrays
+        jac_volume_fraction_constraint_np = []
+        for jac in jac_volume_fraction_constraint:
+            jac_volume_fraction_constraint_np.append(jac.detach().numpy())
+
+        # Set the partial derivatives
+        for i in range(len(n)):
+            partials['stacked_output', f'input_{i}'] = jac_volume_fraction_constraint_np[i]
 
     @staticmethod
     def _volume_fraction_constraint(element_pseudo_densities, element_length):

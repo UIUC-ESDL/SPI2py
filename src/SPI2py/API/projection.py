@@ -114,6 +114,7 @@ class Projection(ExplicitComponent):
         self.declare_partials('mesh_element_pseudo_densities', 'sphere_positions')
 
     def compute(self, inputs, outputs):
+
         # Get the options
         rho_min = self.options['rho_min']
 
@@ -141,27 +142,30 @@ class Projection(ExplicitComponent):
         outputs['mesh_element_pseudo_densities'] = element_pseudo_densities
         outputs['volume'] = volume
 
-    # def compute_partials(self, inputs, partials):
-    #
-    #     # Get the options
-    #     rho_min = self.options['rho_min']
-    #
-    #     # Get the inputs
-    #     points = inputs['points']
-    #     element_length = inputs['mesh_element_length']
-    #     element_min_pseudo_densities = inputs['element_min_pseudo_densities']
-    #     element_center_positions = inputs['element_center_positions']
-    #
-    #     # Convert the input to a JAX numpy array
-    #     points = np.array(points)
-    #     element_min_pseudo_densities = np.array(element_min_pseudo_densities)
-    #     element_center_positions = np.array(element_center_positions)
-    #
-    #     # Calculate the Jacobian of the kernel
-    #     grad_kernel = jacfwd(self._project, argnums=0)
-    #     grad_kernel_val = grad_kernel(points, element_center_positions, element_min_pseudo_densities)
-    #
-    #     partials['mesh_element_pseudo_densities', 'points'] = grad_kernel_val # TODO Check all the transposing... (?)
+    def compute_partials(self, inputs, partials):
+
+        # Get the options
+        rho_min = self.options['rho_min']
+
+        # Get the Mesh inputs
+        mesh_element_length = inputs['mesh_element_length']
+        mesh_element_center_positions = inputs['mesh_element_center_positions']
+
+        # Get the Object inputs
+        sphere_positions = inputs['sphere_positions']
+        sphere_radii = inputs['sphere_radii']
+
+        # Convert the input to a JAX numpy array
+        mesh_element_center_positions = np.array(mesh_element_center_positions)
+        sphere_positions = np.array(sphere_positions)
+        sphere_radii = np.array(sphere_radii)
+
+        # Calculate the Jacobian of the kernel
+        grad_sphere_positions = jacfwd(self._project, argnums=0)
+        grad_sphere_positions_val = grad_sphere_positions(sphere_positions, sphere_radii, mesh_element_length,
+                                                 mesh_element_center_positions, rho_min)
+
+        partials['mesh_element_pseudo_densities', 'sphere_positions'] = grad_sphere_positions_val
 
     @staticmethod
     def _project(sphere_positions, sphere_radii, mesh_element_length, mesh_element_center_positions, rho_min):
@@ -173,20 +177,17 @@ class Projection(ExplicitComponent):
 
         # Reshape the mesh_centers to (nx*ny*nz, 3)
         mesh_centers = mesh_element_center_positions.transpose(1, 2, 3, 0).reshape(-1, 3)
-
-        # mesh_radii = np.ones((mesh_centers.shape[0], 1)) * mesh_element_length / 2
-        mesh_radii = np.zeros((mesh_centers.shape[0], 1))
+        mesh_radii = np.ones((mesh_centers.shape[0], 1)) * mesh_element_length / 2
 
         # Initialize influence map
         influence_map = np.zeros(mesh_radii.shape)
 
         # Spread of the influence, potentially adjust based on application
-        # TODO Experiment with value
-        sigma = 0.2  # 1.0
+        sigma = 0.2125  # 0.25
 
         for i in range(len(sphere_positions)):
+
             # Calculate adjusted distances from sphere center to each cell center
-            # distances = np.linalg.norm(mesh_centers - sphere['center'], axis=-1) - sphere['radius']
             distances = -signed_distances_spheres_spheres_np(sphere_positions[i, np.newaxis],
                                                              sphere_radii[i, np.newaxis], mesh_centers, mesh_radii)
 
@@ -208,14 +209,9 @@ class Projection(ExplicitComponent):
         pseudo_densities = pseudo_densities.transpose(3, 0, 1, 2)
 
         # Normalize the pseudo-densities
-        # pseudo_densities = (1 - rho_min) / (1 + np.exp(-1 * (pseudo_densities - 0.5))) + rho_min
-
         max_pd = np.max(pseudo_densities)
         min_pd = np.min(pseudo_densities)
 
         pseudo_densities = (pseudo_densities - min_pd) / (max_pd - min_pd)
-
-        max_pd = np.max(pseudo_densities)
-        min_pd = np.min(pseudo_densities)
 
         return pseudo_densities
