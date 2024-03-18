@@ -25,10 +25,8 @@ prob = om.Problem()
 model = prob.model
 
 # Mesh Parameters
-n_el_x = 50
-n_el_y = 50
-n_el_z = 10
-element_length = 0.25
+bounds = (0, 10, 0, 10, 0, 5)
+n_elements_per_unit_length = 2
 
 # System Parameters
 n_components = 2
@@ -38,7 +36,7 @@ n_points_per_object = [n_points for _ in range(n_components)]
 
 # Initialize the groups
 model.add_subsystem('system', System(input_dict=input_file, upper=7, lower=0))
-model.add_subsystem('mesh', Mesh(element_length=element_length, n_el_x=n_el_x, n_el_y=n_el_y, n_el_z=n_el_z))
+model.add_subsystem('mesh', Mesh(bounds=bounds, n_elements_per_unit_length=n_elements_per_unit_length))
 model.add_subsystem('projections', Projections(n_comp_projections=n_components, n_int_projections=0))
 model.add_subsystem('volume_fraction_constraint', VolumeFractionConstraint(n_projections=n_components))
 
@@ -110,7 +108,7 @@ prob.run_model()
 # Check the initial state
 plot_problem(prob)
 
-print('Number of elements:', n_el_x*n_el_y*n_el_z)
+print('Number of elements:', prob.get_val('mesh.mesh_shape').size)
 print('Component 1 volume:', prob.get_val('projections.projection_0.volume'))
 print('Component 2 volume:', prob.get_val('projections.projection_1.volume'))
 

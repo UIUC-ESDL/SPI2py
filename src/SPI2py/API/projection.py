@@ -8,18 +8,30 @@ from ..models.kinematics.distance_calculations import signed_distances_spheres_s
 class Mesh(IndepVarComp):
     def initialize(self):
 
-        self.options.declare('element_length', types=float, desc='Length of a cubic element')
-        self.options.declare('n_el_x', types=int, desc='Number of elements along the x axis')
-        self.options.declare('n_el_y', types=int, desc='Number of elements along the y axis')
-        self.options.declare('n_el_z', types=int, desc='Number of elements along the z axis')
+        self.options.declare('bounds', types=tuple, desc='Bounds of the mesh')
+        self.options.declare('n_elements_per_unit_length', types=int, desc='Number of elements per unit length')
 
     def setup(self):
 
         # Get the options
-        element_length = self.options['element_length']
-        n_el_x = self.options['n_el_x']
-        n_el_y = self.options['n_el_y']
-        n_el_z = self.options['n_el_z']
+        # element_length = self.options['element_length']
+        # n_el_x = self.options['n_el_x']
+        # n_el_y = self.options['n_el_y']
+        # n_el_z = self.options['n_el_z']
+        bounds = self.options['bounds']
+        n_elements_per_unit_length = self.options['n_elements_per_unit_length']
+
+        x_min, x_max, y_min, y_max, z_min, z_max = bounds
+
+        x_len = x_max - x_min
+        y_len = y_max - y_min
+        z_len = z_max - z_min
+
+        n_el_x = int(n_elements_per_unit_length * x_len)
+        n_el_y = int(n_elements_per_unit_length * y_len)
+        n_el_z = int(n_elements_per_unit_length * z_len)
+
+        element_length = 1 / n_elements_per_unit_length
 
         # Define the properties of an element
         element_half_length = element_length / 2
@@ -36,6 +48,9 @@ class Mesh(IndepVarComp):
         self.add_output('mesh_element_length', val=element_length)
         self.add_output('mesh_element_center_positions', val=mesh_element_center_positions)
         self.add_output('mesh_shape', val=mesh_shape)
+        self.add_output('n_el_x', val=n_el_x)
+        self.add_output('n_el_y', val=n_el_y)
+        self.add_output('n_el_z', val=n_el_z)
 
 
 class Projections(Group):

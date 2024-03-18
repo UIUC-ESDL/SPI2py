@@ -76,10 +76,12 @@ def plot_problem(prob):
         n_int_projections = prob.model.projections.options['n_int_projections']
         n_projections = n_comp_projections + n_int_projections
 
-        nx = prob.model.mesh.options['n_el_x']
-        ny = prob.model.mesh.options['n_el_y']
-        nz = prob.model.mesh.options['n_el_z']
-        spacing = prob.model.mesh.options['element_length']
+        bounds = prob.model.mesh.options['bounds']
+        x_min, x_max, y_min, y_max, z_min, z_max = bounds
+        nx = int(prob.get_val('mesh.n_el_x'))
+        ny = int(prob.get_val('mesh.n_el_y'))
+        nz = int(prob.get_val('mesh.n_el_z'))
+        spacing = float(prob.get_val('mesh.mesh_element_length'))
 
         # Create an empty uniform grid
         grid = pv.UniformGrid()
@@ -91,7 +93,7 @@ def plot_problem(prob):
         grid.spacing = (spacing, spacing, spacing)
 
         # Set the origin of the grid to the minimum XYZ coordinates
-        grid.origin = (0, 0, 0)
+        grid.origin = (x_min, y_min, z_min)
 
         p.add_mesh(grid, color='lightgrey', show_edges=True, opacity=0.5)
 
@@ -101,9 +103,10 @@ def plot_problem(prob):
             density_values = prob.get_val(f'projections.projection_{i}.mesh_element_pseudo_densities').flatten(order='F')
             # print("Density values range:", density_values.min(), density_values.max())
             # Create the grid
-            x = np.linspace(0, nx*spacing, nx + 1)
-            y = np.linspace(0, ny*spacing, ny + 1)
-            z = np.linspace(0, nz*spacing, nz + 1)
+
+            x = np.linspace(x_min, x_max, nx + 1)
+            y = np.linspace(y_min, y_max, ny + 1)
+            z = np.linspace(z_min, z_max, nz + 1)
             x_grid, y_grid, z_grid = np.meshgrid(x, y, z)
             grid = pv.StructuredGrid(x_grid, y_grid, z_grid)
             grid["density"] = density_values
