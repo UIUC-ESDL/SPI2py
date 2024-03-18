@@ -25,8 +25,8 @@ prob = om.Problem()
 model = prob.model
 
 # Mesh Parameters
-bounds = (0, 10, 0, 10, 0, 5)
-n_elements_per_unit_length = 2
+bounds = (0, 10, 0, 10, 0, 3)
+n_elements_per_unit_length = 4.0
 
 # System Parameters
 n_components = 2
@@ -88,10 +88,10 @@ prob.setup()
 # Configure the system
 # prob.set_val('system.components.comp_0.translation', [2, 7, 0])
 
-prob.set_val('system.components.comp_0.translation', [5, 5, 3])
+prob.set_val('system.components.comp_0.translation', [5, 5, 1.5])
 prob.set_val('system.components.comp_0.rotation', [0, 0, 0])
 
-prob.set_val('system.components.comp_1.translation', [5.5, 7, 3])
+prob.set_val('system.components.comp_1.translation', [5.5, 7, 1.5])
 prob.set_val('system.components.comp_1.rotation', [0, 0, 0])
 
 # # Collision

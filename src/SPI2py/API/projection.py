@@ -9,7 +9,7 @@ class Mesh(IndepVarComp):
     def initialize(self):
 
         self.options.declare('bounds', types=tuple, desc='Bounds of the mesh')
-        self.options.declare('n_elements_per_unit_length', types=int, desc='Number of elements per unit length')
+        self.options.declare('n_elements_per_unit_length', types=float, desc='Number of elements per unit length')
 
     def setup(self):
 
