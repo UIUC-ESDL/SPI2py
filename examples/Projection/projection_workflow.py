@@ -24,8 +24,11 @@ input_file = read_input_file('input.toml')
 prob = om.Problem()
 model = prob.model
 
-# Mesh parameters
-n_el_axis = 25
+# Mesh Parameters
+n_el_x = 50
+n_el_y = 50
+n_el_z = 10
+element_length = 0.25
 
 # System Parameters
 n_components = 2
@@ -35,9 +38,9 @@ n_points_per_object = [n_points for _ in range(n_components)]
 
 # Initialize the groups
 model.add_subsystem('system', System(input_dict=input_file, upper=7, lower=0))
-model.add_subsystem('mesh', Mesh(min_xyz=0, max_xyz=10, n_el_xyz=n_el_axis))
+model.add_subsystem('mesh', Mesh(element_length=element_length, n_el_x=n_el_x, n_el_y=n_el_y, n_el_z=n_el_z))
 model.add_subsystem('projections', Projections(n_comp_projections=n_components, n_int_projections=0))
-model.add_subsystem('volume_fraction_constraint', VolumeFractionConstraint(n_projections=n_components, min_xyz=-3, max_xyz=10, n_el_xyz=n_el_axis))
+model.add_subsystem('volume_fraction_constraint', VolumeFractionConstraint(n_projections=n_components))
 
 model.add_subsystem('mux_all_points', Multiplexer(n_i=n_points_per_object, m=3))
 model.add_subsystem('bbv', BoundingBoxVolume(n_points_per_object=n_points_per_object))
@@ -47,6 +50,11 @@ model.connect('mesh.mesh_element_center_positions', 'projections.projection_0.me
 model.connect('mesh.mesh_element_center_positions', 'projections.projection_1.mesh_element_center_positions')
 model.connect('mesh.mesh_element_length', 'projections.projection_0.mesh_element_length')
 model.connect('mesh.mesh_element_length', 'projections.projection_1.mesh_element_length')
+model.connect('mesh.mesh_shape', 'projections.projection_0.mesh_shape')
+model.connect('mesh.mesh_shape', 'projections.projection_1.mesh_shape')
+
+model.connect('mesh.mesh_element_length', 'volume_fraction_constraint.element_length')
+
 
 model.connect('system.components.comp_0.transformed_points', 'projections.projection_0.points')
 model.connect('system.components.comp_1.transformed_points', 'projections.projection_1.points')
@@ -82,10 +90,10 @@ prob.setup()
 # Configure the system
 # prob.set_val('system.components.comp_0.translation', [2, 7, 0])
 
-prob.set_val('system.components.comp_0.translation', [5, 5, 0])
+prob.set_val('system.components.comp_0.translation', [5, 5, 3])
 prob.set_val('system.components.comp_0.rotation', [0, 0, 0])
 
-prob.set_val('system.components.comp_1.translation', [5.5, 7, 0])
+prob.set_val('system.components.comp_1.translation', [5.5, 7, 3])
 prob.set_val('system.components.comp_1.rotation', [0, 0, 0])
 
 # # Collision
@@ -102,7 +110,7 @@ prob.run_model()
 # Check the initial state
 plot_problem(prob)
 
-print('Number of elements:', n_el_axis**3)
+print('Number of elements:', n_el_x*n_el_y*n_el_z)
 print('Component 1 volume:', prob.get_val('projections.projection_0.volume'))
 print('Component 2 volume:', prob.get_val('projections.projection_1.volume'))
 

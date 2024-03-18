@@ -7,28 +7,35 @@ from ..models.kinematics.distance_calculations import signed_distances_spheres_s
 
 class Mesh(IndepVarComp):
     def initialize(self):
-        self.options.declare('min_xyz', types=(int, float), desc='Minimum value of the x-, y-, and z-axis')
-        self.options.declare('max_xyz', types=(int, float), desc='Maximum value of the x-, y-, and z-axis')
-        self.options.declare('n_el_xyz', types=int, desc='Number of elements along the x-, y-, and z-axis')
+
+        self.options.declare('element_length', types=float, desc='Length of a cubic element')
+        self.options.declare('n_el_x', types=int, desc='Number of elements along the x axis')
+        self.options.declare('n_el_y', types=int, desc='Number of elements along the y axis')
+        self.options.declare('n_el_z', types=int, desc='Number of elements along the z axis')
 
     def setup(self):
-        min_xyz = self.options['min_xyz']
-        max_xyz = self.options['max_xyz']
-        n_el_xyz = self.options['n_el_xyz']
+
+        # Get the options
+        element_length = self.options['element_length']
+        n_el_x = self.options['n_el_x']
+        n_el_y = self.options['n_el_y']
+        n_el_z = self.options['n_el_z']
 
         # Define the properties of an element
-        mesh_element_length = (max_xyz - min_xyz) / n_el_xyz
-        mesh_element_half_length = mesh_element_length / 2
+        element_half_length = element_length / 2
 
         # Define the properties of the mesh
-        x_center_positions = np.linspace(min_xyz + mesh_element_half_length, max_xyz - mesh_element_half_length, n_el_xyz)
-        y_center_positions = np.linspace(min_xyz + mesh_element_half_length, max_xyz - mesh_element_half_length, n_el_xyz)
-        z_center_positions = np.linspace(min_xyz + mesh_element_half_length, max_xyz - mesh_element_half_length, n_el_xyz)
+        x_center_positions = np.linspace(0 + element_half_length, element_length * n_el_x - element_half_length, n_el_x)
+        y_center_positions = np.linspace(0 + element_half_length, element_length * n_el_y - element_half_length, n_el_y)
+        z_center_positions = np.linspace(0 + element_half_length, element_length * n_el_z - element_half_length, n_el_z)
         mesh_element_center_positions = np.meshgrid(x_center_positions, y_center_positions, z_center_positions)
 
+        mesh_shape = np.zeros((n_el_x, n_el_y, n_el_z))
+
         # Declare the outputs
-        self.add_output('mesh_element_length', val=mesh_element_length)
+        self.add_output('mesh_element_length', val=element_length)
         self.add_output('mesh_element_center_positions', val=mesh_element_center_positions)
+        self.add_output('mesh_shape', val=mesh_shape)
 
 
 class Projections(Group):
@@ -75,6 +82,7 @@ class Projection(ExplicitComponent):
 
         # Mesh Inputs
         self.add_input('mesh_element_length', val=0)
+        self.add_input('mesh_shape', shape_by_conn=True)
         self.add_input('mesh_element_center_positions', shape_by_conn=True)
 
         # Object Inputs
@@ -83,7 +91,7 @@ class Projection(ExplicitComponent):
 
         # Outputs
         # TODO Fix
-        self.add_output('mesh_element_pseudo_densities', shape=(25, 25, 25))
+        self.add_output('mesh_element_pseudo_densities', copy_shape='mesh_shape')
         self.add_output('volume', val=0.0)
 
     def setup_partials(self):

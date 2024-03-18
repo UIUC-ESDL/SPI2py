@@ -102,13 +102,12 @@ class VolumeFractionConstraint(ExplicitComponent):
     def initialize(self):
         self.options.declare('n_projections', types=int, desc='Number of projections')
         self.options.declare('relative_volume_tolerance', types=float, desc='Relative volume tolerance')
-        self.options.declare('min_xyz', types=(int, float), desc='Minimum value of the x-, y-, and z-axis')
-        self.options.declare('max_xyz', types=(int, float), desc='Maximum value of the x-, y-, and z-axis')
-        self.options.declare('n_el_xyz', types=int, desc='Number of elements along the x-, y-, and z-axis')
 
     def setup(self):
-        n = self.options['n_projections']
 
+        self.add_input('element_length', val=0)
+
+        n = self.options['n_projections']
         for i in range(n):
             self.add_input(f'element_pseudo_densities_{i}', shape_by_conn=True)
 
@@ -125,10 +124,7 @@ class VolumeFractionConstraint(ExplicitComponent):
         n = self.options['n_projections']
 
         # Calculate the volume
-        max_xyz = self.options['max_xyz']
-        min_xyz = self.options['min_xyz']
-        n_el_xyz = self.options['n_el_xyz']
-        element_length = (max_xyz - min_xyz) / n_el_xyz
+        element_length = inputs['element_length']
 
         # Extract the inputs and convert to a numpy array
         element_pseudo_densities = []
@@ -141,8 +137,9 @@ class VolumeFractionConstraint(ExplicitComponent):
         # Write the outputs
         outputs['volume_fraction_constraint'] = volume_fraction_constraint
 
-    def compute_partials(self, inputs, partials):
-        pass
+    # TODO Implement!!
+    # def compute_partials(self, inputs, partials):
+    #     pass
 
     @staticmethod
     def _volume_fraction_constraint(element_pseudo_densities, element_length):
