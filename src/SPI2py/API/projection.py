@@ -1,9 +1,11 @@
 import jax.numpy as np
-from jax import jacfwd, jacrev
-from jax.scipy.stats import gaussian_kde
+# from jax import jacfwd, jacrev
+# from jax.scipy.stats import gaussian_kde
+import torch
+from torch.func import jacfwd
 from openmdao.api import ExplicitComponent, Group, IndepVarComp
 from ..models.physics.continuum.geometric_projection import projection_volume
-from ..models.kinematics.distance_calculations import signed_distances_spheres_spheres_np
+from ..models.kinematics.distance_calculations import signed_distances_spheres_spheres, distances_points_points
 
 class Mesh(IndepVarComp):
     def initialize(self):
@@ -125,15 +127,22 @@ class Projection(ExplicitComponent):
         sphere_radii = inputs['sphere_radii']
 
         # Convert the input to a JAX numpy array
-        mesh_element_center_positions = np.array(mesh_element_center_positions)
-        sphere_positions = np.array(sphere_positions)
-        sphere_radii = np.array(sphere_radii)
+        # mesh_element_center_positions = np.array(mesh_element_center_positions)
+        # sphere_positions = np.array(sphere_positions)
+        # sphere_radii = np.array(sphere_radii)
+
+        mesh_element_center_positions = torch.tensor(mesh_element_center_positions, dtype=torch.float64)
+        sphere_positions = torch.tensor(sphere_positions, dtype=torch.float64)
+        sphere_radii = torch.tensor(sphere_radii, dtype=torch.float64)
 
         # Project
         element_pseudo_densities = self._project(sphere_positions, sphere_radii, mesh_element_length, mesh_element_center_positions, rho_min)
 
         # Calculate the volume
-        volume = np.sum(element_pseudo_densities) * mesh_element_length ** 3
+        volume = torch.sum(element_pseudo_densities) * mesh_element_length ** 3
+
+        element_pseudo_densities = element_pseudo_densities.detach().numpy()
+        volume = volume.detach().numpy()
 
         # Write the outputs
         outputs['mesh_element_pseudo_densities'] = element_pseudo_densities
@@ -170,51 +179,78 @@ class Projection(ExplicitComponent):
         _, nx, ny, nz = mesh_element_center_positions.shape
 
         # Reshape the mesh_centers to (nx*ny*nz, 3)
-        mesh_centers = mesh_element_center_positions.transpose(1, 2, 3, 0).reshape(-1, 3)
+        # mesh_centers = mesh_element_center_positions.transpose(1, 2, 3, 0).reshape(-1, 3)
+        mesh_centers = mesh_element_center_positions.permute(1,2,3,0).view(-1, 3)
 
-        # mesh_radii = np.ones((mesh_centers.shape[0], 1)) * mesh_element_length / 2
-        mesh_radii = np.zeros((mesh_centers.shape[0], 1))
+        mesh_radii = torch.ones((mesh_centers.shape[0], 1)) * mesh_element_length / 2
+        # mesh_radii = np.zeros((mesh_centers.shape[0], 1))
 
         # Initialize influence map
-        influence_map = np.zeros(mesh_radii.shape)
+        pseudo_densities = torch.zeros(mesh_radii.shape)
 
         # Spread of the influence, potentially adjust based on application
         # TODO Experiment with value
-        sigma = 0.2  # 1.0
+        # sigma = 0.2  # 1.0
 
+        def sphere_overlap(R, r, d):
+            min_volume = torch.zeros_like(r)
+            max_volume_1 = (4/3) * torch.pi * (R*torch.ones_like(r))**3
+            max_volume_2 = (4/3) * torch.pi * r**3
+            minimax_volume = torch.minimum(max_volume_1, max_volume_2)
+
+            term_1 = (R+r-d)**2
+            term_2 = (d**2 + 2*d*r - 3*r**2 + 2*d*R + 6*r*R - 3*R**2)
+            overlap_vol = (torch.pi * term_1 * term_2) / (12*d)
+
+            overlap_vol = torch.clip(overlap_vol, min=min_volume, max=minimax_volume)
+            return overlap_vol
 
         for i in range(len(sphere_positions)):
 
-            # Calculate adjusted distances from sphere center to each cell center
-            # distances = np.linalg.norm(mesh_centers - sphere['center'], axis=-1) - sphere['radius']
-            distances = -signed_distances_spheres_spheres_np(sphere_positions[i, np.newaxis], sphere_radii[i, np.newaxis], mesh_centers, mesh_radii)
+            # # Calculate adjusted distances from sphere center to each cell center
+            # # distances = np.linalg.norm(mesh_centers - sphere['center'], axis=-1) - sphere['radius']
+            # distances = -signed_distances_spheres_spheres_np(sphere_positions[i, np.newaxis], sphere_radii[i, np.newaxis], mesh_centers, mesh_radii)
+            #
+            # # Ensure non-negative distances for the influence calculation
+            # distances = np.maximum(distances, 0)
+            #
+            # # Apply Gaussian kernel, adjusting influence based on adjusted distance
+            # influence = np.exp(-distances ** 2 / (2 * sigma ** 2))
+            #
+            # # Sum the influences of this sphere onto the mesh cells
+            # influence_map += influence.T
+            signed_distances = -signed_distances_spheres_spheres(sphere_positions[i].unsqueeze(0),
+                                                             sphere_radii[i].unsqueeze(0), mesh_centers, mesh_radii)
 
-            # Ensure non-negative distances for the influence calculation
-            distances = np.maximum(distances, 0)
+            distances = distances_points_points(sphere_positions[i].unsqueeze(0), mesh_centers)
 
-            # Apply Gaussian kernel, adjusting influence based on adjusted distance
-            influence = np.exp(-distances ** 2 / (2 * sigma ** 2))
+            # Only evaluate overlapping sphere pairs
+            condition = signed_distances < 0
+            overlapping_indices = torch.where(condition)[1]
 
-            # Sum the influences of this sphere onto the mesh cells
-            influence_map += influence.T
+            # Calculate the overlap volume
+            overlap_volume = sphere_overlap(sphere_radii[i], mesh_radii[overlapping_indices], distances.T[overlapping_indices])
 
-        pseudo_densities = influence_map
+            max_ov = torch.max(overlap_volume)
+            min_ov = torch.min(overlap_volume)
+            # Add the overlap volume to the influence map
+            # pseudo_densities.at[overlapping_indices]=pseudo_densities.at[overlapping_indices].set(new_densities)
+            pseudo_densities[overlapping_indices] += overlap_volume
+
 
         # Reshape back to (nx, ny, nz, 1)
         pseudo_densities = pseudo_densities.reshape(nx, ny, nz, 1)
 
         # Transpose to get (3, nx, ny, nz)
-        pseudo_densities = pseudo_densities.transpose(3, 0, 1, 2)
+        # pseudo_densities = pseudo_densities.transpose(3, 0, 1, 2)
+        pseudo_densities = pseudo_densities.permute(3, 0, 1, 2)
 
-        # Normalize the pseudo-densities
-        # pseudo_densities = (1 - rho_min) / (1 + np.exp(-1 * (pseudo_densities - 0.5))) + rho_min
-
-        max_pd = np.max(pseudo_densities)
-        min_pd = np.min(pseudo_densities)
+        max_pd = torch.max(pseudo_densities)
+        min_pd = torch.min(pseudo_densities)
 
         pseudo_densities = (pseudo_densities - min_pd) / (max_pd - min_pd)
 
-        max_pd = np.max(pseudo_densities)
-        min_pd = np.min(pseudo_densities)
+        max_pd = torch.max(pseudo_densities)
+        min_pd = torch.min(pseudo_densities)
 
         return pseudo_densities
