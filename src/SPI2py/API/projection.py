@@ -101,16 +101,15 @@ class Projection(ExplicitComponent):
         self.add_input('mesh_element_center_positions', shape_by_conn=True)
 
         # Object Inputs
-        self.add_input('points', shape_by_conn=True)
-        self.add_input('reference_density', 0.0, desc='Number of points per a 1x1x1 cube')
+        self.add_input('sphere_positions', shape_by_conn=True)
+        self.add_input('sphere_radii', shape_by_conn=True)
 
         # Outputs
-        # TODO Fix
         self.add_output('mesh_element_pseudo_densities', copy_shape='mesh_shape')
         self.add_output('volume', val=0.0)
 
     def setup_partials(self):
-        self.declare_partials('mesh_element_pseudo_densities', 'points')
+        self.declare_partials('mesh_element_pseudo_densities', 'sphere_positions')
 
     def compute(self, inputs, outputs):
 
@@ -122,15 +121,16 @@ class Projection(ExplicitComponent):
         mesh_element_center_positions = inputs['mesh_element_center_positions']
 
         # Get the Object inputs
-        points = inputs['points']
-        reference_density = inputs['reference_density']
+        sphere_positions = inputs['sphere_positions']
+        sphere_radii = inputs['sphere_radii']
 
         # Convert the input to a JAX numpy array
-        points = np.array(points)
         mesh_element_center_positions = np.array(mesh_element_center_positions)
+        sphere_positions = np.array(sphere_positions)
+        sphere_radii = np.array(sphere_radii)
 
         # Project
-        element_pseudo_densities = self._project(points, mesh_element_length, mesh_element_center_positions, rho_min, reference_density)
+        element_pseudo_densities = self._project(sphere_positions, sphere_radii, mesh_element_length, mesh_element_center_positions, rho_min)
 
         # Calculate the volume
         volume = np.sum(element_pseudo_densities) * mesh_element_length ** 3
@@ -162,33 +162,58 @@ class Projection(ExplicitComponent):
     #     partials['mesh_element_pseudo_densities', 'points'] = grad_kernel_val # TODO Check all the transposing... (?)
 
     @staticmethod
-    def _project(points, mesh_element_length, mesh_element_center_positions, rho_min, reference_density):
+    def _project(sphere_positions, sphere_radii, mesh_element_length, mesh_element_center_positions, rho_min):
         """
         Projects the points to the mesh and calculates the pseudo-densities
         """
 
-        grid_x, grid_y, grid_z = mesh_element_center_positions
-        grid_coords = np.vstack([grid_x.ravel(), grid_y.ravel(), grid_z.ravel()])
+        _, nx, ny, nz = mesh_element_center_positions.shape
 
-        element_volume = mesh_element_length ** 3
+        # Reshape the mesh_centers to (nx*ny*nz, 3)
+        mesh_centers = mesh_element_center_positions.transpose(1, 2, 3, 0).reshape(-1, 3)
 
-        # # Scale the relative density to the mesh
-        # relative_density_volume = 1
-        # scale_factor = element_volume / relative_density_volume
-        # points_per_mesh_element = scale_factor * reference_density
+        # mesh_radii = np.ones((mesh_centers.shape[0], 1)) * mesh_element_length / 2
+        mesh_radii = np.zeros((mesh_centers.shape[0], 1))
 
-        # Perform KDE
-        kernel = gaussian_kde(points.T, bw_method='scott')
-        density_values = kernel(grid_coords).reshape(grid_x.shape)
-        points_per_cell = density_values * element_volume * len(points)
+        # Initialize influence map
+        influence_map = np.zeros(mesh_radii.shape)
 
-        pseudo_densities = density_values + rho_min
+        # Spread of the influence, potentially adjust based on application
+        sigma = 1.0
+
+
+        for i in range(len(sphere_positions)):
+
+            # Calculate adjusted distances from sphere center to each cell center
+            # distances = np.linalg.norm(mesh_centers - sphere['center'], axis=-1) - sphere['radius']
+            distances = -signed_distances_spheres_spheres_np(sphere_positions[i, np.newaxis], sphere_radii[i, np.newaxis], mesh_centers, mesh_radii)
+
+            # Ensure non-negative distances for the influence calculation
+            distances = np.maximum(distances, 0)
+
+            # Apply Gaussian kernel, adjusting influence based on adjusted distance
+            influence = np.exp(-distances ** 2 / (2 * sigma ** 2))
+
+            # Sum the influences of this sphere onto the mesh cells
+            influence_map += influence.T
+
+        pseudo_densities = influence_map
+
+        # Reshape back to (nx, ny, nz, 1)
+        pseudo_densities = pseudo_densities.reshape(nx, ny, nz, 1)
+
+        # Transpose to get (3, nx, ny, nz)
+        pseudo_densities = pseudo_densities.transpose(3, 0, 1, 2)
+
         # Normalize the pseudo-densities
-        min_density = np.min(pseudo_densities)
-        max_density = np.max(pseudo_densities)
-        pseudo_densities = (pseudo_densities - min_density) / (max_density - min_density)
+        # pseudo_densities = (1 - rho_min) / (1 + np.exp(-1 * (pseudo_densities - 0.5))) + rho_min
 
-        # Clip the minimum pseudo-densities to rho_min (to avoid numerical issues associated w/ zero densities)
-        pseudo_densities = np.clip(pseudo_densities, rho_min, 1)
+        max_pd = np.max(pseudo_densities)
+        min_pd = np.min(pseudo_densities)
+
+        pseudo_densities = (pseudo_densities - min_pd) / (max_pd - min_pd)
+
+        max_pd = np.max(pseudo_densities)
+        min_pd = np.min(pseudo_densities)
 
         return pseudo_densities

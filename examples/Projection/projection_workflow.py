@@ -36,27 +36,30 @@ n_points_per_object = [n_points for _ in range(n_components)]
 
 # Initialize the groups
 model.add_subsystem('system', System(input_dict=input_file, upper=7, lower=0))
-# model.add_subsystem('mesh', Mesh(bounds=bounds, n_elements_per_unit_length=n_elements_per_unit_length))
-# model.add_subsystem('projections', Projections(n_comp_projections=n_components, n_int_projections=0))
+model.add_subsystem('mesh', Mesh(bounds=bounds, n_elements_per_unit_length=n_elements_per_unit_length))
+model.add_subsystem('projections', Projections(n_comp_projections=n_components, n_int_projections=0))
 # model.add_subsystem('volume_fraction_constraint', VolumeFractionConstraint(n_projections=n_components))
 
 model.add_subsystem('mux_all_sphere_positions', Multiplexer(n_i=n_points_per_object, m=3))
 model.add_subsystem('mux_all_sphere_radii', Multiplexer(n_i=n_points_per_object, m=1))
 model.add_subsystem('bbv', BoundingBoxVolume(n_points_per_object=n_points_per_object))
 
-# # TODO Promote?
-# model.connect('mesh.mesh_element_center_positions', 'projections.projection_0.mesh_element_center_positions')
-# model.connect('mesh.mesh_element_center_positions', 'projections.projection_1.mesh_element_center_positions')
-# model.connect('mesh.mesh_element_length', 'projections.projection_0.mesh_element_length')
-# model.connect('mesh.mesh_element_length', 'projections.projection_1.mesh_element_length')
-# model.connect('mesh.mesh_shape', 'projections.projection_0.mesh_shape')
-# model.connect('mesh.mesh_shape', 'projections.projection_1.mesh_shape')
-#
+# TODO Promote?
+model.connect('mesh.mesh_element_center_positions', 'projections.projection_0.mesh_element_center_positions')
+model.connect('mesh.mesh_element_center_positions', 'projections.projection_1.mesh_element_center_positions')
+model.connect('mesh.mesh_element_length', 'projections.projection_0.mesh_element_length')
+model.connect('mesh.mesh_element_length', 'projections.projection_1.mesh_element_length')
+model.connect('mesh.mesh_shape', 'projections.projection_0.mesh_shape')
+model.connect('mesh.mesh_shape', 'projections.projection_1.mesh_shape')
+
 # model.connect('mesh.mesh_element_length', 'volume_fraction_constraint.element_length')
-#
-#
-# model.connect('system.components.comp_0.transformed_sphere_positions', 'projections.projection_0.sphere_positions')
-# model.connect('system.components.comp_1.transformed_sphere_positions', 'projections.projection_1.sphere_positions')
+
+
+model.connect('system.components.comp_0.transformed_sphere_positions', 'projections.projection_0.sphere_positions')
+model.connect('system.components.comp_1.transformed_sphere_positions', 'projections.projection_1.sphere_positions')
+model.connect('system.components.comp_0.transformed_sphere_radii', 'projections.projection_0.sphere_radii')
+model.connect('system.components.comp_1.transformed_sphere_radii', 'projections.projection_1.sphere_radii')
+
 # model.connect('projections.projection_0.mesh_element_pseudo_densities', 'volume_fraction_constraint.element_pseudo_densities_0')
 # model.connect('projections.projection_1.mesh_element_pseudo_densities', 'volume_fraction_constraint.element_pseudo_densities_1')
 
