@@ -13,24 +13,47 @@ def plot_problem(prob):
     # Plot the objects
     p = pv.Plotter(window_size=[1000, 1000])
 
-    # Check if the problem contains components
-    if 'components' in prob.model.system._subsystems_allprocs:
+    # # Check if the problem contains components
+    # if 'components' in prob.model.system._subsystems_allprocs:
+    #
+    #     components = []
+    #     component_colors = []
+    #
+    #     for subsystem in prob.model.system.components._subsystems_myproc:
+    #         positions = prob.get_val('system.components.' + subsystem.name + '.transformed_points')
+    #         color = subsystem.options['color']
+    #
+    #         # Create a point cloud using the positions
+    #         point_cloud = pv.PolyData(positions)
+    #
+    #         components.append(point_cloud)
+    #         component_colors.append(color)
+    #
+    #     for comp, color in zip(components, component_colors):
+    #         p.add_mesh(comp, color=color, point_size=10, render_points_as_spheres=True, lighting=False)
 
-        components = []
-        component_colors = []
+    components = []
+    component_colors = []
 
-        for subsystem in prob.model.system.components._subsystems_myproc:
-            positions = prob.get_val('system.components.' + subsystem.name + '.transformed_points')
-            color = subsystem.options['color']
+    for subsystem in prob.model.system.components._subsystems_myproc:
 
-            # Create a point cloud using the positions
-            point_cloud = pv.PolyData(positions)
+        positions = prob.get_val('system.components.' + subsystem.name + '.transformed_sphere_positions')
+        radii = prob.get_val('system.components.' + subsystem.name + '.transformed_sphere_radii')
+        color = subsystem.options['color']
 
-            components.append(point_cloud)
-            component_colors.append(color)
+        spheres = []
+        for position, radius in zip(positions, radii):
+            spheres.append(pv.Sphere(radius=radius, center=position, theta_resolution=30, phi_resolution=30))
 
-        for comp, color in zip(components, component_colors):
-            p.add_mesh(comp, color=color, point_size=10, render_points_as_spheres=True, lighting=False)
+        merged = pv.MultiBlock(spheres).combine().extract_surface().clean()
+        # merged_clipped = merged.clip(normal='z')
+        # merged_slice = merged.slice(normal=[0, 0, 1])
+
+        components.append(merged)
+        component_colors.append(color)
+
+    for comp, color in zip(components, component_colors):
+        p.add_mesh(comp, color=color)
 
     # Check if the problem contains interconnects
     if 'interconnects' in prob.model.system._subsystems_allprocs:

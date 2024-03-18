@@ -11,7 +11,7 @@ def bounding_box_bounds_points(positions):
 
     return bounds
 
-def bounding_box_bounds_spheres(positions, radii):
+def bounding_box_bounds(positions, radii):
     """
     Calculate the bounding box that contains all spheres.
 
