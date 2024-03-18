@@ -104,12 +104,12 @@ prob.set_val('system.components.comp_1.rotation', [0, 0, 0])
 prob.run_model()
 
 
-# estimate_projection_error(prob,
-#                           'system.components.comp_0.sphere_radii',
-#                           'system.components.comp_0.translation',
-#                           'projections.projection_0.volume',
-#                           [5, 5, 1.5],
-#                           5, 0.15)
+estimate_projection_error(prob,
+                          'system.components.comp_0.sphere_radii',
+                          'system.components.comp_0.translation',
+                          'projections.projection_0.volume',
+                          [5, 5, 1.5],
+                          5, 0.15)
 
 
 # Check the initial state

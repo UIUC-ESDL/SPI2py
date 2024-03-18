@@ -193,16 +193,16 @@ class Projection(ExplicitComponent):
         # sigma = 0.2  # 1.0
 
         def sphere_overlap(R, r, d):
-            min_volume = torch.zeros_like(r)
-            max_volume_1 = (4/3) * torch.pi * (R*torch.ones_like(r))**3
-            max_volume_2 = (4/3) * torch.pi * r**3
-            minimax_volume = torch.minimum(max_volume_1, max_volume_2)
+            # min_volume = torch.zeros_like(r)
+            # max_volume_1 = (4/3) * torch.pi * (R*torch.ones_like(r))**3
+            # max_volume_2 = (4/3) * torch.pi * r**3
+            # minimax_volume = torch.minimum(max_volume_1, max_volume_2)
 
             term_1 = (R+r-d)**2
             term_2 = (d**2 + 2*d*r - 3*r**2 + 2*d*R + 6*r*R - 3*R**2)
             overlap_vol = (torch.pi * term_1 * term_2) / (12*d)
 
-            overlap_vol = torch.clip(overlap_vol, min=min_volume, max=minimax_volume)
+            # overlap_vol = torch.clip(overlap_vol, min=min_volume, max=minimax_volume)
             return overlap_vol
 
         for i in range(len(sphere_positions)):
