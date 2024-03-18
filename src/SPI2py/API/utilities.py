@@ -230,7 +230,11 @@ def estimate_partial_derivative_memory(n_points, nx, ny, nz):
     memory_usage_mb = memory_usage_bytes / (1024 ** 2)
     print(f"Memory usage: {memory_usage_mb:.2f} MB")
 
-def estimate_projection_error(prob, variable, volume, default_set_val, steps, step_size):
+def estimate_projection_error(prob, radii, variable, volume, default_set_val, steps, step_size):
+
+    sphere_radii = prob.get_val(radii)
+    sphere_volume = 4/3 * np.pi * sphere_radii**3
+    true_volume = float(np.sum(sphere_volume))
 
     volumes = []
 
@@ -248,7 +252,9 @@ def estimate_projection_error(prob, variable, volume, default_set_val, steps, st
 
 
     volumes = np.array(volumes)
-    max_relative_error = round(100 * np.max(np.abs(volumes - volumes[0]) / volumes[0]), 2)
+    max_relative_error = round(100 * np.max(np.abs(volumes - volumes[0]) /volumes[0]), 2)
+    max_true_error = round(100 * np.max(np.abs(volumes - true_volume) / true_volume), 2)
 
     print('Volumes:', volumes)
-    print(f'Max error: {max_relative_error} %')
+    print(f'Max error wrt mesh: {max_relative_error} %')
+    print(f'Max error wrt mdbd volume: {max_true_error} %')

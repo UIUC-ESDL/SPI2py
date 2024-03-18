@@ -179,7 +179,8 @@ class Projection(ExplicitComponent):
         influence_map = np.zeros(mesh_radii.shape)
 
         # Spread of the influence, potentially adjust based on application
-        sigma = 1.0
+        # TODO Experiment with value
+        sigma = 0.2  # 1.0
 
 
         for i in range(len(sphere_positions)):
