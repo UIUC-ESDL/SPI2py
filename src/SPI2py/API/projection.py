@@ -38,8 +38,8 @@ class Mesh(IndepVarComp):
 
         # Define the mesh center points
         x_center_positions = torch.linspace(x_min + element_half_length, element_length * n_el_x - element_half_length, n_el_x)
-        y_center_positions = torch.linspace(x_min + element_half_length, element_length * n_el_y - element_half_length, n_el_y)
-        z_center_positions = torch.linspace(x_min + element_half_length, element_length * n_el_z - element_half_length, n_el_z)
+        y_center_positions = torch.linspace(y_min + element_half_length, element_length * n_el_y - element_half_length, n_el_y)
+        z_center_positions = torch.linspace(z_min + element_half_length, element_length * n_el_z - element_half_length, n_el_z)
         x_centers, y_centers, z_centers = torch.meshgrid(x_center_positions, y_center_positions, z_center_positions, indexing='ij')
 
         # Declare the outputs
@@ -139,7 +139,8 @@ class Projection(ExplicitComponent):
         sphere_radii = torch.tensor(sphere_radii, dtype=torch.float64)
 
         # Project
-        element_pseudo_densities = self._project(sphere_positions, sphere_radii, element_length,
+        element_pseudo_densities = self._project(sphere_positions, sphere_radii,
+                                                 element_length,
                                                  x_centers, y_centers, z_centers, rho_min)
 
         # Calculate the volume
@@ -199,7 +200,20 @@ class Projection(ExplicitComponent):
         pseudo_densities = torch.zeros(mesh_radii.shape)
 
         # Spread of the influence, potentially adjust based on application
-        sigma = 0.05  #0.255  # 0.2125
+        sigma = 0.025  #0.255  # 0.2125
+
+        # def sphere_overlap(R, r, d):
+        #     # min_volume = torch.zeros_like(r)
+        #     # max_volume_1 = (4/3) * torch.pi * (R*torch.ones_like(r))**3
+        #     # max_volume_2 = (4/3) * torch.pi * r**3
+        #     # minimax_volume = torch.minimum(max_volume_1, max_volume_2)
+        #
+        #     term_1 = (R+r-d)**2
+        #     term_2 = (d**2 + 2*d*r - 3*r**2 + 2*d*R + 6*r*R - 3*R**2)
+        #     overlap_vol = (torch.pi * term_1 * term_2) / (12*d)
+        #
+        #     # overlap_vol = torch.clip(overlap_vol, min=min_volume, max=minimax_volume)
+        #     return overlap_vol
 
         for i in range(len(sphere_positions)):
 
@@ -215,6 +229,22 @@ class Projection(ExplicitComponent):
 
             # Sum the influences of this sphere onto the mesh cells
             pseudo_densities += sphere_pseudo_densities.T
+
+            # Calculate the distances between the sphere and the mesh centers
+            # signed_distances = -signed_distances_spheres_spheres(sphere_positions[i].unsqueeze(1),
+            #                                                      sphere_radii[i].unsqueeze(1), mesh_centers, mesh_radii)
+            #
+            # distances = distances_points_points(sphere_positions[i].unsqueeze(1), mesh_centers)
+            #
+            # # Only evaluate overlapping sphere pairs
+            # condition = signed_distances < 0
+            # overlapping_indices = torch.where(condition)[1]
+            #
+            # # Calculate the overlap volume
+            # overlap_volume = sphere_overlap(sphere_radii[i], mesh_radii[overlapping_indices], distances.T[overlapping_indices])
+            #
+            # # Add the overlap volume to the influence map
+            # pseudo_densities[overlapping_indices] += overlap_volume
 
 
 

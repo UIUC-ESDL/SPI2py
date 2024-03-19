@@ -5,6 +5,8 @@ Author:     Chad Peterson
 
 import numpy as np
 import openmdao.api as om
+import torch
+
 from SPI2py.API.system import System
 from SPI2py.API.utilities import Multiplexer, MaxAggregator
 from SPI2py.API.projection import Projection, Projections, Mesh
@@ -17,6 +19,9 @@ from SPI2py.API.utilities import Multiplexer, estimate_partial_derivative_memory
 # Set the random seed for reproducibility
 np.random.seed(0)
 
+# Set the default data type
+torch.set_default_dtype(torch.float64)
+
 # Read the input file
 input_file = read_input_file('input.toml')
 
@@ -26,7 +31,8 @@ model = prob.model
 
 # Mesh Parameters
 # bounds = (3, 11, 3, 11, 0, 3)
-bounds = (0, 8, 0, 8, 0, 3) # TODO FIX nonzero bounds
+bounds = (0, 8, 1, 8, 0, 3)
+# bounds = (0, 8, 0, 8, 0, 3) # TODO FIX nonzero bounds
 n_elements_per_unit_length = 4.0  # 6.0
 
 # System Parameters
@@ -106,12 +112,12 @@ prob.set_val('system.components.comp_1.rotation', [0, 0, 0])
 prob.run_model()
 
 
-# estimate_projection_error(prob,
-#                           'system.components.comp_0.sphere_radii',
-#                           'system.components.comp_0.translation',
-#                           'projections.projection_0.volume',
-#                           [5, 5, 1.5],
-#                           5, 0.15)
+estimate_projection_error(prob,
+                          'system.components.comp_0.sphere_radii',
+                          'system.components.comp_0.translation',
+                          'projections.projection_0.volume',
+                          [5, 5, 1.5],
+                          5, 0.15)
 
 
 # Check the initial state
