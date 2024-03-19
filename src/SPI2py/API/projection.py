@@ -233,17 +233,40 @@ class Projection(ExplicitComponent):
             # Calculate the distances between the sphere and the mesh centers
             # signed_distances = -signed_distances_spheres_spheres(sphere_positions[i].unsqueeze(1),
             #                                                      sphere_radii[i].unsqueeze(1), mesh_centers, mesh_radii)
+
+            # distances = distances_points_points(sphere_positions[i].unsqueeze(1), mesh_centers).view(-1, 1)
             #
-            # distances = distances_points_points(sphere_positions[i].unsqueeze(1), mesh_centers)
+            # condition_no_overlap = distances > (sphere_radii[i].unsqueeze(1) + mesh_radii)
+            # condition_full_overlap = distances <= abs(sphere_radii[i].unsqueeze(1) - mesh_radii)
+            # condition_partial_overlap = ~condition_no_overlap & ~condition_full_overlap
             #
-            # # Only evaluate overlapping sphere pairs
-            # condition = signed_distances < 0
+            # indices_no_overlap = torch.where(condition_no_overlap)[1]
+            # indices_full_overlap = torch.where(condition_full_overlap)[1]
+            # indices_partial_overlap = torch.where(condition_partial_overlap)[1]
+            #
+            # pseudo_densities[indices_no_overlap] += 0
+            #
+            # v_sphere = (4/3) * torch.pi * (sphere_radii[i].unsqueeze(1))**3
+            # v_mesh = (4/3) * torch.pi * mesh_radii[0]**3
+            # v_min = torch.min(v_sphere, v_mesh)
+            #
+            # pseudo_densities[indices_full_overlap] += 1 #v_min
+            #
+            # # Calculate the overlap volume
+            # # Heuristic: linearize the overlap volume between 0 and v_min
+            # relative_overlap = distances[indices_partial_overlap] / (sphere_radii[i].unsqueeze(1) + mesh_radii[0])
+            # # overlap_volume = v_min * relative_overlap
+            # pseudo_densities[indices_partial_overlap] += relative_overlap
+
+
+
+
             # overlapping_indices = torch.where(condition)[1]
             #
             # # Calculate the overlap volume
             # overlap_volume = sphere_overlap(sphere_radii[i], mesh_radii[overlapping_indices], distances.T[overlapping_indices])
-            #
-            # # Add the overlap volume to the influence map
+
+            # Add the overlap volume to the influence map
             # pseudo_densities[overlapping_indices] += overlap_volume
 
 
