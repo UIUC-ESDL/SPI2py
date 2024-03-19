@@ -182,6 +182,9 @@ class Projection(ExplicitComponent):
         grad_sphere_positions_val = grad_sphere_positions(sphere_positions, sphere_radii, element_length,
                                                  x_centers, y_centers, z_centers, rho_min)
 
+        # Convert the outputs to numpy arrays
+        grad_sphere_positions_val = grad_sphere_positions_val.detach().numpy()
+
         partials['element_pseudo_densities', 'sphere_positions'] = grad_sphere_positions_val
 
     @staticmethod
@@ -216,11 +219,12 @@ class Projection(ExplicitComponent):
             pseudo_densities[indices_full_overlap] += 1 #v_min
 
             # Calculate the overlap volume
-            # Heuristic: linearize the overlap volume between 0 and v_min
-            relative_overlap = distances[indices_partial_overlap] / (sphere_radii[i].unsqueeze(1) + mesh_radii[0])
-            # overlap_volume = v_min * relative_overlap
-            pseudo_densities[indices_partial_overlap] += relative_overlap
+            # Heuristic: Assume linear relationship between overlap volume and overlap distance
+            # relative_overlap = distances[indices_partial_overlap] / (sphere_radii[i].unsqueeze(1) + mesh_radii[0])
+            # Heuristic: Assume cubic relationship between overlap volume and overlap distance
+            relative_overlap = (distances[indices_partial_overlap] / (sphere_radii[i].unsqueeze(1) + mesh_radii[0]))**3
 
+            pseudo_densities[indices_partial_overlap] += relative_overlap
 
         # Reshape back to (nx, ny, nz, 1)
         pseudo_densities = pseudo_densities.reshape(nx, ny, nz, 1)

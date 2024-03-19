@@ -68,6 +68,6 @@ class BoundingBoxVolume(ExplicitComponent):
 
     @staticmethod
     def _bounding_box_volume_no_bounds(positions, radii):
-        bb_bounds = bounding_box_bounds_points(positions, radii)
+        bb_bounds = bounding_box_bounds(positions, radii)
         bb_volume = bounding_box_volume(bb_bounds)
         return bb_volume

@@ -32,7 +32,7 @@ model = prob.model
 # Mesh Parameters
 # bounds = (3, 11, 3, 11, 0, 3)
 # bounds = (0, 8, 1, 8, 0, 3)
-bounds = (0, 8, 0, 8, 0, 3) # TODO FIX nonzero bounds
+bounds = (0, 8, 0, 10, 0, 3) # TODO FIX nonzero bounds
 n_elements_per_unit_length = 4.0  # 6.0
 
 # System Parameters
@@ -84,12 +84,12 @@ model.connect('mux_all_sphere_radii.stacked_output', 'bbv.sphere_radii')
 
 # Define the objective and constraints
 prob.model.add_objective('bbv.bounding_box_volume', ref=1, ref0=0)
-prob.model.add_constraint('volume_fraction_constraint.volume_fraction_constraint', upper=0.2)
+prob.model.add_constraint('volume_fraction_constraint.volume_fraction_constraint', upper=0.01)
 
 
 
 prob.driver = om.ScipyOptimizeDriver()
-prob.driver.options['maxiter'] = 1
+prob.driver.options['maxiter'] = 10
 prob.driver.options['optimizer'] = 'SLSQP'
 # prob.driver.options['tol'] = 1e-12
 
@@ -112,30 +112,30 @@ prob.set_val('system.components.comp_1.rotation', [0, 0, 0])
 prob.run_model()
 
 
-estimate_projection_error(prob,
-                          'system.components.comp_0.sphere_radii',
-                          'system.components.comp_0.translation',
-                          'projections.projection_0.volume',
-                          [5, 5, 1.5],
-                          5, 0.15)
+# estimate_projection_error(prob,
+#                           'system.components.comp_0.sphere_radii',
+#                           'system.components.comp_0.translation',
+#                           'projections.projection_0.volume',
+#                           [5, 5, 1.5],
+#                           5, 0.15)
 
 
 # Check the initial state
-plot_problem(prob)
+# plot_problem(prob)
 
 # print('Number of elements:', prob.get_val('mesh.mesh_shape').size)
 
-# # Run the optimization
-# prob.run_driver()
-#
-#
-# # Check the final state
-# plot_problem(prob)
-#
-#
-# # print('Constraint violation:', prob.get_val('volume_fraction_constraint.volume_fraction_constraint'))
-# #
-# # # Print positions
+# Run the optimization
+prob.run_driver()
+
+
+# Check the final state
+plot_problem(prob)
+
+
+print('Constraint violation:', prob.get_val('volume_fraction_constraint.volume_fraction_constraint'))
+
+# # Print positions
 # # print(prob.get_val('system.components.comp_0.translation'))
 # # print(prob.get_val('system.components.comp_1.translation'))
 

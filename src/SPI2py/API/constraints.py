@@ -1,5 +1,3 @@
-import jax.numpy as np
-
 import torch
 from torch.func import jacfwd
 from openmdao.api import ExplicitComponent, Group
@@ -125,13 +123,18 @@ class VolumeFractionConstraint(ExplicitComponent):
 
         # Calculate the volume
         element_length = inputs['element_length']
+        element_length = torch.tensor(element_length, dtype=torch.float64)
 
         # Extract the inputs and convert to a numpy array
         element_pseudo_densities = []
         for i in range(n):
             element_pseudo_densities.append(inputs[f'element_pseudo_densities_{i}'])
 
-        volume_fraction_constraint = self._volume_fraction_constraint(element_pseudo_densities, element_length)
+        element_pseudo_densities_tensors = ()
+        for i in range(n):
+            element_pseudo_densities_tensors = element_pseudo_densities_tensors + (torch.tensor(element_pseudo_densities[i], dtype=torch.float64),)
+
+        volume_fraction_constraint = self._volume_fraction_constraint(element_length, *element_pseudo_densities_tensors)
 
         # Write the outputs
         outputs['volume_fraction_constraint'] = volume_fraction_constraint
@@ -143,6 +146,7 @@ class VolumeFractionConstraint(ExplicitComponent):
 
         # Calculate the volume
         element_length = inputs['element_length']
+        element_length = torch.tensor(element_length, dtype=torch.float64, requires_grad=True)
 
         # Extract the inputs and convert to a numpy array
         element_pseudo_densities = ()
@@ -154,8 +158,8 @@ class VolumeFractionConstraint(ExplicitComponent):
             element_pseudo_densities_tensors = element_pseudo_densities_tensors + (torch.tensor(element_pseudo_densities[i], dtype=torch.float64, requires_grad=True),)
 
         # Calculate the partial derivatives wrt all inputs
-        argnums = tuple(range(len(n)))
-        jac_volume_fraction_constraint = jacfwd(self._volume_fraction_constraint, argnums=argnums)(*element_pseudo_densities_tensors, element_length)
+        argnums = tuple(range(n))
+        jac_volume_fraction_constraint = jacfwd(self._volume_fraction_constraint, argnums=argnums)(element_length, *element_pseudo_densities_tensors)
 
         # Convert the partial derivatives to numpy arrays
         jac_volume_fraction_constraint_np = []
@@ -163,11 +167,13 @@ class VolumeFractionConstraint(ExplicitComponent):
             jac_volume_fraction_constraint_np.append(jac.detach().numpy())
 
         # Set the partial derivatives
-        for i in range(len(n)):
-            partials['stacked_output', f'input_{i}'] = jac_volume_fraction_constraint_np[i]
+        for i in range(n):
+            partials['volume_fraction_constraint', f'element_pseudo_densities_{i}'] = jac_volume_fraction_constraint_np[i]
 
     @staticmethod
-    def _volume_fraction_constraint(element_pseudo_densities, element_length):
+    def _volume_fraction_constraint(element_length, *args):
+
+        element_pseudo_densities = args
 
         # Calculate the sum of the individual volumes
         individual_volumes = 0
@@ -178,20 +184,18 @@ class VolumeFractionConstraint(ExplicitComponent):
         # Calculate the sum of the combined volumes
 
         # Add all the element pseudo-densities together
-        combined_pseudo_densities = np.zeros_like(element_pseudo_densities[0])
+        combined_pseudo_densities = torch.zeros_like(element_pseudo_densities[0])
         for i in range(len(element_pseudo_densities)):
             combined_pseudo_densities += element_pseudo_densities[i]
 
         # Ensure that no element densities exceed 1
-        # TODO Evaluate smooth clipping, etc.
         combined_pseudo_densities = combined_pseudo_densities.clip(0, 1)
-
-        # TODO Would normalizing the combined do anything continuously differentiable?
 
         # Calculate the volume
         combined_volume = combined_pseudo_densities.sum() * element_length ** 3
-
         # Calculate the volume fraction constraint (negative-null form)
         volume_fraction_constraint = individual_volumes / combined_volume  - 1
+
+        # volume_fraction_constraint = individual_volumes / combined_pseudo_densities.sum() - 1
 
         return volume_fraction_constraint
