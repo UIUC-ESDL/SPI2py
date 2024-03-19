@@ -25,8 +25,9 @@ prob = om.Problem()
 model = prob.model
 
 # Mesh Parameters
-bounds = (0, 10, 0, 10, 0, 3)
-n_elements_per_unit_length = 6.0
+# bounds = (3, 11, 3, 11, 0, 3)
+bounds = (0, 8, 0, 8, 0, 3) # TODO FIX nonzero bounds
+n_elements_per_unit_length = 4.0  # 6.0
 
 # System Parameters
 n_components = 2
@@ -45,14 +46,17 @@ model.add_subsystem('mux_all_sphere_radii', Multiplexer(n_i=n_points_per_object,
 model.add_subsystem('bbv', BoundingBoxVolume(n_points_per_object=n_points_per_object))
 
 # TODO Promote?
-model.connect('mesh.mesh_element_center_positions', 'projections.projection_0.mesh_element_center_positions')
-model.connect('mesh.mesh_element_center_positions', 'projections.projection_1.mesh_element_center_positions')
-model.connect('mesh.mesh_element_length', 'projections.projection_0.mesh_element_length')
-model.connect('mesh.mesh_element_length', 'projections.projection_1.mesh_element_length')
-model.connect('mesh.mesh_shape', 'projections.projection_0.mesh_shape')
-model.connect('mesh.mesh_shape', 'projections.projection_1.mesh_shape')
+model.connect('mesh.element_length', 'projections.projection_0.element_length')
+model.connect('mesh.element_length', 'projections.projection_1.element_length')
+model.connect('mesh.x_centers', 'projections.projection_0.x_centers')
+model.connect('mesh.y_centers', 'projections.projection_0.y_centers')
+model.connect('mesh.z_centers', 'projections.projection_0.z_centers')
+model.connect('mesh.x_centers', 'projections.projection_1.x_centers')
+model.connect('mesh.y_centers', 'projections.projection_1.y_centers')
+model.connect('mesh.z_centers', 'projections.projection_1.z_centers')
 
-model.connect('mesh.mesh_element_length', 'volume_fraction_constraint.element_length')
+
+model.connect('mesh.element_length', 'volume_fraction_constraint.element_length')
 
 
 model.connect('system.components.comp_0.transformed_sphere_positions', 'projections.projection_0.sphere_positions')
@@ -60,8 +64,8 @@ model.connect('system.components.comp_1.transformed_sphere_positions', 'projecti
 model.connect('system.components.comp_0.transformed_sphere_radii', 'projections.projection_0.sphere_radii')
 model.connect('system.components.comp_1.transformed_sphere_radii', 'projections.projection_1.sphere_radii')
 
-model.connect('projections.projection_0.mesh_element_pseudo_densities', 'volume_fraction_constraint.element_pseudo_densities_0')
-model.connect('projections.projection_1.mesh_element_pseudo_densities', 'volume_fraction_constraint.element_pseudo_densities_1')
+model.connect('projections.projection_0.element_pseudo_densities', 'volume_fraction_constraint.element_pseudo_densities_0')
+model.connect('projections.projection_1.element_pseudo_densities', 'volume_fraction_constraint.element_pseudo_densities_1')
 
 # Add a Multiplexer for component sphere positions
 
@@ -79,7 +83,7 @@ prob.model.add_constraint('volume_fraction_constraint.volume_fraction_constraint
 
 
 prob.driver = om.ScipyOptimizeDriver()
-prob.driver.options['maxiter'] = 50
+prob.driver.options['maxiter'] = 1
 prob.driver.options['optimizer'] = 'SLSQP'
 # prob.driver.options['tol'] = 1e-12
 
@@ -102,32 +106,32 @@ prob.set_val('system.components.comp_1.rotation', [0, 0, 0])
 prob.run_model()
 
 
-estimate_projection_error(prob,
-                          'system.components.comp_0.sphere_radii',
-                          'system.components.comp_0.translation',
-                          'projections.projection_0.volume',
-                          [5, 5, 1.5],
-                          5, 0.15)
+# estimate_projection_error(prob,
+#                           'system.components.comp_0.sphere_radii',
+#                           'system.components.comp_0.translation',
+#                           'projections.projection_0.volume',
+#                           [5, 5, 1.5],
+#                           5, 0.15)
 
 
 # Check the initial state
-# plot_problem(prob)
+plot_problem(prob)
 
-print('Number of elements:', prob.get_val('mesh.mesh_shape').size)
+# print('Number of elements:', prob.get_val('mesh.mesh_shape').size)
 
-# Run the optimization
+# # Run the optimization
 # prob.run_driver()
 #
 #
 # # Check the final state
 # plot_problem(prob)
-
-
-print('Constraint violation:', prob.get_val('volume_fraction_constraint.volume_fraction_constraint'))
-
-# Print positions
-print(prob.get_val('system.components.comp_0.translation'))
-print(prob.get_val('system.components.comp_1.translation'))
+#
+#
+# # print('Constraint violation:', prob.get_val('volume_fraction_constraint.volume_fraction_constraint'))
+# #
+# # # Print positions
+# # print(prob.get_val('system.components.comp_0.translation'))
+# # print(prob.get_val('system.components.comp_1.translation'))
 
 
 

@@ -6,11 +6,14 @@ from SPI2py.models.geometry.maximal_disjoint_ball_decomposition import mdbd
 
 # a = pack_spheres('part_models/', 'engine_1.stl', 'engine_1.txt')
 
-num_spheres = 250
-min_radius = 0.005
+num_spheres = 1000
+min_radius = 0.001
+
+mdbd('components/CAD_Files/', 'RefrigerationCycle.stl', 'RefrigerationCycle.xyzr', num_spheres=num_spheres, min_radius=0.001, meshgrid_increment=30)
+
 
 # mdbd('part_models/', 'engine_2.stl', 'engine_1.xyzr', num_spheres=num_spheres, min_radius=0.01, meshgrid_increment=50)
-mdbd('part_models/', 'corner.stl', 'corner.xyzr', num_spheres=num_spheres, min_radius=0.01, meshgrid_increment=30)
+# mdbd('part_models/', 'corner.stl', 'corner.xyzr', num_spheres=num_spheres, min_radius=0.01, meshgrid_increment=30)
 
 # mdbd_rectangular_prism([2.850, 0.830, 0.830], 'part_models/', 'radiator_and_ion_exchanger.stl', 'radiator_and_ion_exchanger.xyzr', num_spheres=num_spheres, plot=True)
 #

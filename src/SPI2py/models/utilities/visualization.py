@@ -53,7 +53,7 @@ def plot_problem(prob):
         component_colors.append(color)
 
     for comp, color in zip(components, component_colors):
-        p.add_mesh(comp, color=color)
+        p.add_mesh(comp, color=color, opacity=0.5)
 
     # Check if the problem contains interconnects
     if 'interconnects' in prob.model.system._subsystems_allprocs:
@@ -104,7 +104,7 @@ def plot_problem(prob):
         nx = int(prob.get_val('mesh.n_el_x'))
         ny = int(prob.get_val('mesh.n_el_y'))
         nz = int(prob.get_val('mesh.n_el_z'))
-        spacing = float(prob.get_val('mesh.mesh_element_length'))
+        spacing = float(prob.get_val('mesh.element_length'))
 
         # Create an empty uniform grid
         grid = pv.UniformGrid()
@@ -123,14 +123,13 @@ def plot_problem(prob):
         # Plot projections
         for i in range(n_projections):
             # Get the density values
-            density_values = prob.get_val(f'projections.projection_{i}.mesh_element_pseudo_densities').flatten(order='F')
+            density_values = prob.get_val(f'projections.projection_{i}.element_pseudo_densities').flatten(order='F')
             # print("Density values range:", density_values.min(), density_values.max())
             # Create the grid
 
-            x = np.linspace(x_min, x_max, nx + 1)
-            y = np.linspace(y_min, y_max, ny + 1)
-            z = np.linspace(z_min, z_max, nz + 1)
-            x_grid, y_grid, z_grid = np.meshgrid(x, y, z)
+            x_grid = prob.get_val('mesh.x_grid')
+            y_grid = prob.get_val('mesh.y_grid')
+            z_grid = prob.get_val('mesh.z_grid')
             grid = pv.StructuredGrid(x_grid, y_grid, z_grid)
             grid["density"] = density_values
 
