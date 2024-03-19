@@ -199,87 +199,33 @@ class Projection(ExplicitComponent):
         # Initialize influence map
         pseudo_densities = torch.zeros(mesh_radii.shape)
 
-        # Spread of the influence, potentially adjust based on application
-        sigma = 0.025  #0.255  # 0.2125
-
-        # def sphere_overlap(R, r, d):
-        #     # min_volume = torch.zeros_like(r)
-        #     # max_volume_1 = (4/3) * torch.pi * (R*torch.ones_like(r))**3
-        #     # max_volume_2 = (4/3) * torch.pi * r**3
-        #     # minimax_volume = torch.minimum(max_volume_1, max_volume_2)
-        #
-        #     term_1 = (R+r-d)**2
-        #     term_2 = (d**2 + 2*d*r - 3*r**2 + 2*d*R + 6*r*R - 3*R**2)
-        #     overlap_vol = (torch.pi * term_1 * term_2) / (12*d)
-        #
-        #     # overlap_vol = torch.clip(overlap_vol, min=min_volume, max=minimax_volume)
-        #     return overlap_vol
-
         for i in range(len(sphere_positions)):
 
-            # Calculate adjusted distances from sphere center to each cell center
-            distances = -signed_distances_spheres_spheres(sphere_positions[i].unsqueeze(1),
-                                                             sphere_radii[i].unsqueeze(1), mesh_centers, mesh_radii)
+            distances = distances_points_points(sphere_positions[i].unsqueeze(1), mesh_centers).view(-1, 1)
 
-            # Ensure non-negative distances for the influence calculation
-            distances = torch.maximum(distances, torch.zeros_like(distances))
+            condition_no_overlap = distances > (sphere_radii[i].unsqueeze(1) + mesh_radii[0])
+            condition_full_overlap = distances <= abs(sphere_radii[i].unsqueeze(1) - mesh_radii[0])
+            condition_partial_overlap = ~condition_no_overlap & ~condition_full_overlap
 
-            # Apply Gaussian kernel, adjusting influence based on adjusted distance
-            sphere_pseudo_densities = torch.exp(-distances ** 2 / (2 * sigma ** 2))
+            indices_no_overlap = torch.where(condition_no_overlap)[0]
+            indices_full_overlap = torch.where(condition_full_overlap)[0]
+            indices_partial_overlap = torch.where(condition_partial_overlap)[0]
 
-            # Sum the influences of this sphere onto the mesh cells
-            pseudo_densities += sphere_pseudo_densities.T
+            pseudo_densities[indices_no_overlap] += 0
 
-            # Calculate the distances between the sphere and the mesh centers
-            # signed_distances = -signed_distances_spheres_spheres(sphere_positions[i].unsqueeze(1),
-            #                                                      sphere_radii[i].unsqueeze(1), mesh_centers, mesh_radii)
+            pseudo_densities[indices_full_overlap] += 1 #v_min
 
-            # distances = distances_points_points(sphere_positions[i].unsqueeze(1), mesh_centers).view(-1, 1)
-            #
-            # condition_no_overlap = distances > (sphere_radii[i].unsqueeze(1) + mesh_radii)
-            # condition_full_overlap = distances <= abs(sphere_radii[i].unsqueeze(1) - mesh_radii)
-            # condition_partial_overlap = ~condition_no_overlap & ~condition_full_overlap
-            #
-            # indices_no_overlap = torch.where(condition_no_overlap)[1]
-            # indices_full_overlap = torch.where(condition_full_overlap)[1]
-            # indices_partial_overlap = torch.where(condition_partial_overlap)[1]
-            #
-            # pseudo_densities[indices_no_overlap] += 0
-            #
-            # v_sphere = (4/3) * torch.pi * (sphere_radii[i].unsqueeze(1))**3
-            # v_mesh = (4/3) * torch.pi * mesh_radii[0]**3
-            # v_min = torch.min(v_sphere, v_mesh)
-            #
-            # pseudo_densities[indices_full_overlap] += 1 #v_min
-            #
-            # # Calculate the overlap volume
-            # # Heuristic: linearize the overlap volume between 0 and v_min
-            # relative_overlap = distances[indices_partial_overlap] / (sphere_radii[i].unsqueeze(1) + mesh_radii[0])
-            # # overlap_volume = v_min * relative_overlap
-            # pseudo_densities[indices_partial_overlap] += relative_overlap
-
-
-
-
-            # overlapping_indices = torch.where(condition)[1]
-            #
-            # # Calculate the overlap volume
-            # overlap_volume = sphere_overlap(sphere_radii[i], mesh_radii[overlapping_indices], distances.T[overlapping_indices])
-
-            # Add the overlap volume to the influence map
-            # pseudo_densities[overlapping_indices] += overlap_volume
-
+            # Calculate the overlap volume
+            # Heuristic: linearize the overlap volume between 0 and v_min
+            relative_overlap = distances[indices_partial_overlap] / (sphere_radii[i].unsqueeze(1) + mesh_radii[0])
+            # overlap_volume = v_min * relative_overlap
+            pseudo_densities[indices_partial_overlap] += relative_overlap
 
 
         # Reshape back to (nx, ny, nz, 1)
         pseudo_densities = pseudo_densities.reshape(nx, ny, nz, 1)
 
-        # # Transpose to get (3, nx, ny, nz)
-        # pseudo_densities = pseudo_densities.permute(3, 0, 1, 2)
-
-        # Normalize the pseudo-densities
-        # max_pd = torch.max(pseudo_densities)
-        # min_pd = torch.min(pseudo_densities)
-        # pseudo_densities = (pseudo_densities - min_pd) / (max_pd - min_pd)
+        # Clip the pseudo-densities
+        pseudo_densities = torch.clip(pseudo_densities, min=rho_min, max=1)
 
         return pseudo_densities
