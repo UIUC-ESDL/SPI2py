@@ -136,8 +136,8 @@ class Component(ExplicitComponent):
 
         # Define the design variables
         # TODO Remove upper/lower
-        self.add_design_var('translation', ref=10, lower=lower, upper=upper)
-        self.add_design_var('rotation', ref=2*3.14159)
+        # self.add_design_var('translation', ref=10, lower=lower, upper=upper)
+        # self.add_design_var('rotation', ref=2*3.14159)
 
     def setup_partials(self):
         self.declare_partials('transformed_sphere_positions', ['translation', 'rotation'])

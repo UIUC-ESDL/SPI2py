@@ -86,6 +86,8 @@ model.connect('mux_all_sphere_radii.stacked_output', 'bbv.sphere_radii')
 prob.model.add_objective('bbv.bounding_box_volume', ref=1, ref0=0)
 prob.model.add_constraint('volume_fraction_constraint.volume_fraction_constraint', upper=0.01)
 
+prob.model.add_design_var('system.components.comp_0.translation', ref=10, lower=0, upper=10)
+# prob.model.add_design_var('rotation', ref=2*3.14159)
 
 
 prob.driver = om.ScipyOptimizeDriver()

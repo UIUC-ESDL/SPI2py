@@ -1,10 +1,9 @@
 import torch
 from torch.func import jacfwd
 from openmdao.api import ExplicitComponent, Group
-from itertools import combinations, product
 
 from SPI2py.models.kinematics.distance_calculations import signed_distances_spheres_spheres
-from SPI2py.models.physics.continuum.geometric_projection import projection_volume
+
 
 class CombinatorialCollisionDetection(Group):
     pass

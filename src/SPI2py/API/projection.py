@@ -1,20 +1,24 @@
 import torch
 from torch.func import jacfwd
 from openmdao.api import ExplicitComponent, Group, IndepVarComp
-from ..models.physics.continuum.geometric_projection import projection_volume
-from ..models.kinematics.distance_calculations import signed_distances_spheres_spheres, distances_points_points
+from ..models.kinematics.distance_calculations import distances_points_points
+from ..models.geometry.finite_sphere_method import read_xyzr_file
 
 class Mesh(IndepVarComp):
     def initialize(self):
 
         self.options.declare('bounds', types=tuple, desc='Bounds of the mesh')
         self.options.declare('n_elements_per_unit_length', types=float, desc='Number of elements per unit length')
+        self.options.declare('mdbd_unit_cube_filepath', types=str)
+        self.options.declare('mdbd_unit_cube_min_radius', types=float)
 
     def setup(self):
 
         # Get the options
         bounds = self.options['bounds']
         n_elements_per_unit_length = self.options['n_elements_per_unit_length']
+        mdbd_unit_cube_filepath = self.options['mdbd_unit_cube_filepath']
+        mdbd_unit_cube_min_radius = self.options['mdbd_unit_cube_min_radius']
 
         # Determine the number of elements in each direction
         x_min, x_max, y_min, y_max, z_min, z_max = bounds
@@ -41,6 +45,19 @@ class Mesh(IndepVarComp):
         y_center_positions = torch.linspace(y_min + element_half_length, element_length * n_el_y - element_half_length, n_el_y)
         z_center_positions = torch.linspace(z_min + element_half_length, element_length * n_el_z - element_half_length, n_el_z)
         x_centers, y_centers, z_centers = torch.meshgrid(x_center_positions, y_center_positions, z_center_positions, indexing='ij')
+
+        # Read the unit cube
+        mdbd_unit_cube_sphere_positions, mdbd_unit_cube_sphere_radii = read_xyzr_file(mdbd_unit_cube_filepath)
+        mdbd_unit_cube_sphere_positions = torch.tensor(mdbd_unit_cube_sphere_positions, dtype=torch.float64)
+        mdbd_unit_cube_sphere_radii = torch.tensor(mdbd_unit_cube_sphere_radii, dtype=torch.float64)
+
+        # Truncate the number of spheres based on the minimum radius
+        mdbd_unit_cube_sphere_positions = mdbd_unit_cube_sphere_positions[mdbd_unit_cube_sphere_radii > mdbd_unit_cube_min_radius]
+        mdbd_unit_cube_sphere_radii = mdbd_unit_cube_sphere_radii[mdbd_unit_cube_sphere_radii > mdbd_unit_cube_min_radius]
+
+        # TODO for each center...
+
+
 
         # Declare the outputs
         self.add_output('element_length', val=element_length)
@@ -198,6 +215,11 @@ class Projection(ExplicitComponent):
         # Reshape the mesh_centers to (nx*ny*nz, 3)
         mesh_centers = torch.stack((x_centers, y_centers, z_centers), dim=3).reshape(-1, 3)
         mesh_radii = element_length/2 * torch.ones((mesh_centers.shape[0], 1))
+
+
+
+        expanded_mesh_centers = 1
+        expanded_mesh_radii = 1
 
         # Initialize influence map
         pseudo_densities = torch.zeros(mesh_radii.shape)

@@ -48,11 +48,12 @@ def mdbd(directory, input_filename, output_filename, num_spheres=1000, min_radiu
     sphere_points = np.empty((0, 3))
     sphere_radii = np.empty((0, 1))
 
+    min_distance = distances_filtered_sorted[0]
     # Package spheres
-    for i in range(num_spheres):
+    # for i in range(num_spheres):
+    while min_distance > min_radius:
 
         # Find the point furthest from the surface and existing spheres
-        # min_distances = []
         min_distance = distances_filtered_sorted[0]
         min_distance_point = points_filtered_sorted[0]
 
@@ -72,6 +73,9 @@ def mdbd(directory, input_filename, output_filename, num_spheres=1000, min_radiu
             np.linalg.norm(points_filtered_sorted - min_distance_point, axis=1) > min_distance]
         points_filtered_sorted = points_filtered_sorted[np.linalg.norm(points_filtered_sorted - min_distance_point, axis=1) > min_distance]
 
+        if len(sphere_points) >= num_spheres:
+            print('Max number of spheres reached')
+            break
 
     if plot:
         # Plot object with PyVista
@@ -121,14 +125,3 @@ def mdbd(directory, input_filename, output_filename, num_spheres=1000, min_radiu
 
     # Write the spheres to a text file
     np.savetxt(directory+output_filename, spheres, delimiter=' ')
-    
-
-def mdbd_rectangular_prism(dims, directory, input_filename, output_filename, num_spheres=1000, meshgrid_increment=25, plot=True):
-
-    l, w, h = dims
-
-    box = pv.Cube(x_length=l, y_length=w, z_length=h)
-
-    box.save(directory+input_filename)
-
-    mdbd(directory, input_filename, output_filename, num_spheres=num_spheres, meshgrid_increment=meshgrid_increment, plot=plot)

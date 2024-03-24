@@ -1,3 +1,12 @@
+def mdbd_cube(center, length, n_recursions=0):
+    positions = []
+    radii = []
+
+    # Define the initial cube
+    positions.append(center)
+    radii.append(length / 2)
+
+
 # From Mohammad's code
 # rho_min = 1e-3;
 # rho_d = torch.zeros((constants['num_models'], nelx * nely * nelz)).to(device)
