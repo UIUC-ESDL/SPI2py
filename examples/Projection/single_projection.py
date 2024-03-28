@@ -43,9 +43,12 @@ n_points_per_object = [n_points for _ in range(n_components)]
 
 # Initialize the groups
 model.add_subsystem('system', System(input_dict=input_file, upper=7, lower=0))
-model.add_subsystem('mesh', Mesh(bounds=bounds, n_elements_per_unit_length=n_elements_per_unit_length,
-                                 mdbd_unit_cube_filepath='mdbd_unit_cube.xyzr', mdbd_unit_cube_min_radius=0.4)) # mdbd_unit_cube_min_radius=0.1
-model.add_subsystem('projections', Projections(n_comp_projections=n_components, n_int_projections=0))
+model.add_subsystem('mesh', Mesh(bounds=bounds,
+                                 n_elements_per_unit_length=n_elements_per_unit_length,
+                                 mdbd_unit_cube_filepath='mdbd_unit_cube.xyzr',
+                                 mdbd_unit_cube_min_radius=0.2)) # mdbd_unit_cube_min_radius=0.1
+model.add_subsystem('projections', Projections(n_comp_projections=n_components,
+                                               n_int_projections=0))
 
 # TODO Promote?
 model.connect('mesh.element_length', 'projections.projection_0.element_length')
@@ -68,7 +71,8 @@ prob.setup()
 # Configure the system
 prob.set_val('system.components.comp_0.translation', [2, 2.5, 1.5])
 prob.set_val('system.components.comp_0.rotation', [0, 0, 0])
-prob.set_val('projections.projection_0.highlight_element_index', [1, 2, 1])
+# prob.set_val('projections.projection_0.highlight_element_index', [1, 2, 1])
+prob.set_val('projections.projection_0.highlight_element_index', [1, 1, 0])
 
 
 prob.run_model()
@@ -88,6 +92,7 @@ pseudo_densities = prob.get_val('projections.projection_0.element_pseudo_densiti
 
 print("Checking element: ", element_index)
 print("Pseudo-Density: ", pseudo_densities[element_index[0], element_index[1], element_index[2]])
+print("Max Pseudo-Density: ", pseudo_densities.max())
 
 # Check the initial state
 plot_problem(prob)

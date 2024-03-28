@@ -146,9 +146,12 @@ def plot_problem(prob):
         #     for comp, color in zip(components, component_colors):
         #         p.add_mesh(comp, color=color, point_size=10, render_points_as_spheres=True, lighting=False)
 
+
+
         # Plot projections
         for i in range(n_projections):
             # Get the density values
+            # object_color = prob.get_val(f'system
             density_values = prob.get_val(f'projections.projection_{i}.element_pseudo_densities').flatten(order='F')
             # print("Density values range:", density_values.min(), density_values.max())
             # Create the grid
@@ -161,8 +164,30 @@ def plot_problem(prob):
 
             # Plot the density values
             # p.add_volume(grid, scalars="density", cmap="viridis", opacity="linear")
-            p.add_volume(grid, scalars="density", cmap="viridis", scalar_bar_args={'title': "Density"},
-                         opacity="linear", clim=[0, 1])
+            # p.add_volume(grid, scalars="density", cmap="viridis", scalar_bar_args={'title': "Density"},
+            #              opacity="linear", clim=[0, 1])
+            # p.add_volume(grid,
+            #              scalars="density",
+            #              cmap="coolwarm",
+            #              clim=[0, 1])
+
+            pseudo_densities = prob.get_val(f'projections.projection_{i}.element_pseudo_densities')
+            # Loop over each element in the mesh
+            for n_i in range(nx):
+                for n_j in range(ny):
+                    for n_k in range(nz):
+                        # Calculate the center of the current box
+                        center = [x_min + n_i * spacing + spacing / 2,
+                                  y_min + n_j * spacing + spacing / 2,
+                                  z_min + n_k * spacing + spacing / 2]
+
+                        # Create the box
+                        box = pv.Box(bounds=(center[0] - spacing / 2, center[0] + spacing / 2,
+                                             center[1] - spacing / 2, center[1] + spacing / 2,
+                                             center[2] - spacing / 2, center[2] + spacing / 2))
+
+                        # Add the box to the plotter with the corresponding opacity
+                        p.add_mesh(box, color='blue', opacity=pseudo_densities[n_i, n_j, n_k])
 
             # Highlight the "Highlight" Element
             ix, iy, iz = prob.get_val(f'projections.projection_{i}.highlight_element_index')

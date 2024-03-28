@@ -96,7 +96,7 @@ class Projections(Group):
     def initialize(self):
         self.options.declare('n_comp_projections', types=int, desc='Number of component projections')
         self.options.declare('n_int_projections', types=int, desc='Number of interconnect projections')
-        self.options.declare('rho_min', types=float, desc='Minimum value of the density', default=1e-3)
+        self.options.declare('rho_min', types=float, desc='Minimum value of the density', default=1e-5)
 
     def setup(self):
 
@@ -268,20 +268,20 @@ class Projection(ExplicitComponent):
                     expanded_sphere_radii = expanded_sphere_radii.flatten().view(-1, 1)
                     expanded_element_radii = expanded_element_radii.flatten().view(-1, 1)
 
-                    if i==1 and j==2 and k==1:
+                    if i==1 and j==1 and k==0:
                         pass
 
                     overlap_volume = overlap_volume_spheres_spheres(expanded_sphere_radii, expanded_element_radii, distances)
                     pseudo_density = overlap_volume / element_volume
 
-                    if i==1 and j==2 and k==1:
+                    if i==1 and j==1 and k==0:
                         pass
 
 
                     # pseudo_density = torch.clip(pseudo_density, min=rho_min, max=1)
                     pseudo_densities[i, j, k] += pseudo_density
 
-                    if i==1 and j==2 and k==1:
+                    if i==1 and j==1 and k==0:
                         pass
 
         # # Reshape the mesh_centers to (nx*ny*nz, 3)
