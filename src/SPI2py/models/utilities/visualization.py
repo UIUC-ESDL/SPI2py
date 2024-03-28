@@ -164,6 +164,23 @@ def plot_problem(prob):
             p.add_volume(grid, scalars="density", cmap="viridis", scalar_bar_args={'title': "Density"},
                          opacity="linear", clim=[0, 1])
 
+            # Highlight the "Highlight" Element
+            ix, iy, iz = prob.get_val(f'projections.projection_{i}.highlight_element_index')
+
+            # Calculate the center coordinates of the highlighted element
+            center_x = x_min + ix * spacing + spacing / 2.0
+            center_y = y_min + iy * spacing + spacing / 2.0
+            center_z = z_min + iz * spacing + spacing / 2.0
+            center = [center_x, center_y, center_z]
+
+            # Option 1: Plot a sphere as a highlight marker
+            highlight_marker = pv.Box(bounds=[center_x - spacing / 2.0, center_x + spacing / 2.0,
+                                               center_y - spacing / 2.0, center_y + spacing / 2.0,
+                                               center_z - spacing / 2.0, center_z + spacing / 2.0])
+            p.add_mesh(highlight_marker, color='orange', opacity=0.2)
+
+
+
 
 
     p.view_isometric()

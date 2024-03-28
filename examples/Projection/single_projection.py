@@ -68,6 +68,7 @@ prob.setup()
 # Configure the system
 prob.set_val('system.components.comp_0.translation', [2, 2, 1.5])
 prob.set_val('system.components.comp_0.rotation', [0, 0, 0])
+prob.set_val('projections.projection_0.highlight_element_index', [1, 2, 1])
 
 
 prob.run_model()
@@ -80,11 +81,20 @@ prob.run_model()
 #                           [5, 5, 1.5],
 #                           5, 0.15)
 
+# Debugging
+ix, iy, iz = prob.get_val('projections.projection_0.highlight_element_index')
+element_index = [int(ix), int(iy), int(iz)]
+pseudo_densities = prob.get_val('projections.projection_0.element_pseudo_densities')
+
+print("Checking element: ", element_index)
+print("Pseudo-Density: ", pseudo_densities[element_index[0], element_index[1], element_index[2]])
 
 # Check the initial state
 plot_problem(prob)
 
 print('Done')
+
+
 
 # print('Number of elements:', prob.get_val('mesh.mesh_shape').size)
 
