@@ -120,6 +120,32 @@ def plot_problem(prob):
 
         p.add_mesh(grid, color='lightgrey', show_edges=True, opacity=0.15, lighting=False)
 
+        # Plot the mdmd unit cube all spheres
+        all_points = prob.get_val('mesh.all_points')
+        all_points = np.array(all_points).reshape(-1,3)
+        all_radii = prob.get_val('mesh.all_radii')
+        all_radii = np.array(all_radii).reshape(-1,1)
+        #
+        # spheres = []
+        # for position, radius in zip(all_points, all_radii):
+        #     spheres.append(pv.Sphere(radius=radius, center=position, theta_resolution=30, phi_resolution=30))
+        #
+        # merged = pv.MultiBlock(spheres).combine().extract_surface().clean()
+        #
+        # p.add_mesh(merged, color='black', opacity=0.1)
+
+
+        p.add_points(all_points, color='black', point_size=0.1)
+
+        # Create a point cloud using the positions
+        #         point_cloud = pv.PolyData(positions)
+        #
+        #         components.append(point_cloud)
+        #         component_colors.append(color)
+        #
+        #     for comp, color in zip(components, component_colors):
+        #         p.add_mesh(comp, color=color, point_size=10, render_points_as_spheres=True, lighting=False)
+
         # Plot projections
         for i in range(n_projections):
             # Get the density values

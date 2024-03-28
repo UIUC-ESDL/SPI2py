@@ -33,7 +33,7 @@ model = prob.model
 # bounds = (3, 11, 3, 11, 0, 3)
 # bounds = (0, 8, 1, 8, 0, 3)
 bounds = (0, 8, 0, 10, 0, 3) # TODO FIX nonzero bounds
-n_elements_per_unit_length = 3.0  # 6.0
+n_elements_per_unit_length = 1.0  # 6.0
 
 # System Parameters
 n_components = 2
@@ -43,7 +43,8 @@ n_points_per_object = [n_points for _ in range(n_components)]
 
 # Initialize the groups
 model.add_subsystem('system', System(input_dict=input_file, upper=7, lower=0))
-model.add_subsystem('mesh', Mesh(bounds=bounds, n_elements_per_unit_length=n_elements_per_unit_length))
+model.add_subsystem('mesh', Mesh(bounds=bounds, n_elements_per_unit_length=n_elements_per_unit_length,
+                                 mdbd_unit_cube_filepath='mdbd_unit_cube.xyzr', mdbd_unit_cube_min_radius=0.1))
 model.add_subsystem('projections', Projections(n_comp_projections=n_components, n_int_projections=0))
 model.add_subsystem('volume_fraction_constraint', VolumeFractionConstraint(n_projections=n_components))
 
@@ -63,6 +64,10 @@ model.connect('mesh.z_centers', 'projections.projection_1.z_centers')
 
 
 model.connect('mesh.element_length', 'volume_fraction_constraint.element_length')
+model.connect('mesh.all_points', 'projections.projection_0.all_points')
+model.connect('mesh.all_points', 'projections.projection_1.all_points')
+model.connect('mesh.all_radii', 'projections.projection_0.all_radii')
+model.connect('mesh.all_radii', 'projections.projection_1.all_radii')
 
 
 model.connect('system.components.comp_0.transformed_sphere_positions', 'projections.projection_0.sphere_positions')
@@ -114,16 +119,18 @@ prob.set_val('system.components.comp_1.rotation', [0, 0, 0])
 prob.run_model()
 
 
-estimate_projection_error(prob,
-                          'system.components.comp_0.sphere_radii',
-                          'system.components.comp_0.translation',
-                          'projections.projection_0.volume',
-                          [5, 5, 1.5],
-                          5, 0.15)
+# estimate_projection_error(prob,
+#                           'system.components.comp_0.sphere_radii',
+#                           'system.components.comp_0.translation',
+#                           'projections.projection_0.volume',
+#                           [5, 5, 1.5],
+#                           5, 0.15)
 
 
 # Check the initial state
 plot_problem(prob)
+
+print('Done')
 
 # print('Number of elements:', prob.get_val('mesh.mesh_shape').size)
 

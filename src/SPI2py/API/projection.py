@@ -1,7 +1,10 @@
 import torch
+import numpy as np
+import os
 from torch.func import jacfwd
 from openmdao.api import ExplicitComponent, Group, IndepVarComp
 from ..models.kinematics.distance_calculations import distances_points_points
+from ..models.kinematics.encapsulation import overlap_volume_sphere_sphere
 from ..models.geometry.finite_sphere_method import read_xyzr_file
 
 class Mesh(IndepVarComp):
@@ -47,15 +50,50 @@ class Mesh(IndepVarComp):
         x_centers, y_centers, z_centers = torch.meshgrid(x_center_positions, y_center_positions, z_center_positions, indexing='ij')
 
         # Read the unit cube
+        SPI2py_path = os.path.dirname(os.path.dirname(__file__))
+        mdbd_unit_cube_filepath = os.path.join('models\\projection', mdbd_unit_cube_filepath)
+        mdbd_unit_cube_filepath = os.path.join(SPI2py_path, mdbd_unit_cube_filepath)
         mdbd_unit_cube_sphere_positions, mdbd_unit_cube_sphere_radii = read_xyzr_file(mdbd_unit_cube_filepath)
         mdbd_unit_cube_sphere_positions = torch.tensor(mdbd_unit_cube_sphere_positions, dtype=torch.float64)
-        mdbd_unit_cube_sphere_radii = torch.tensor(mdbd_unit_cube_sphere_radii, dtype=torch.float64)
+        mdbd_unit_cube_sphere_radii = torch.tensor(mdbd_unit_cube_sphere_radii, dtype=torch.float64).view(-1, 1)
 
         # Truncate the number of spheres based on the minimum radius
-        mdbd_unit_cube_sphere_positions = mdbd_unit_cube_sphere_positions[mdbd_unit_cube_sphere_radii > mdbd_unit_cube_min_radius]
-        mdbd_unit_cube_sphere_radii = mdbd_unit_cube_sphere_radii[mdbd_unit_cube_sphere_radii > mdbd_unit_cube_min_radius]
+        mdbd_unit_cube_sphere_positions = mdbd_unit_cube_sphere_positions[mdbd_unit_cube_sphere_radii.flatten() > mdbd_unit_cube_min_radius]
+        mdbd_unit_cube_sphere_radii = mdbd_unit_cube_sphere_radii[mdbd_unit_cube_sphere_radii.flatten() > mdbd_unit_cube_min_radius]
 
-        # TODO for each center...
+        # Scale the sphere positions
+        mdbd_unit_cube_sphere_positions = mdbd_unit_cube_sphere_positions * element_length
+        mdbd_unit_cube_sphere_radii = mdbd_unit_cube_sphere_radii * element_length
+
+        # Apply the MDBD kernel to the sphere positions
+        # TODO Vectorize
+        # all_points = []
+        # all_radii = []
+        # for i in range(x_centers.shape[0]):
+        #     for j in range(x_centers.shape[1]):
+        #         for k in range(x_centers.shape[2]):
+        #             cell_center = np.array([x_centers[i, j, k], y_centers[i, j, k], z_centers[i, j, k]])
+        #             # Translate relative points to this cell's center
+        #             points_abs = mdbd_unit_cube_sphere_positions + cell_center
+        #             all_points.append(points_abs)
+        #             all_radii.append(mdbd_unit_cube_sphere_radii)
+        # all_points =  np.concatenate(all_points)
+        # all_radii = np.concatenate(all_radii)
+
+        all_points = torch.zeros((x_centers.shape[0], x_centers.shape[1], x_centers.shape[2], mdbd_unit_cube_sphere_positions.shape[0], 3))
+        all_radii = torch.zeros((x_centers.shape[0], x_centers.shape[1], x_centers.shape[2], mdbd_unit_cube_sphere_positions.shape[0], 1))
+        for i in range(x_centers.shape[0]):
+            for j in range(x_centers.shape[1]):
+                for k in range(x_centers.shape[2]):
+                    cell_center = torch.tensor([[x_centers[i, j, k], y_centers[i, j, k], z_centers[i, j, k]]])
+                    # Translate relative points to this cell's center
+                    points_abs = mdbd_unit_cube_sphere_positions + cell_center
+                    all_points[i, j, k] = points_abs
+                    all_radii[i, j, k] = mdbd_unit_cube_sphere_radii
+                    # all_points.append(points_abs)
+                    # all_radii.append(mdbd_unit_cube_sphere_radii)
+        # all_points = np.concatenate(all_points)
+        # all_radii = np.concatenate(all_radii)
 
 
 
@@ -70,6 +108,8 @@ class Mesh(IndepVarComp):
         self.add_output('n_el_x', val=n_el_x)
         self.add_output('n_el_y', val=n_el_y)
         self.add_output('n_el_z', val=n_el_z)
+        self.add_output('all_points', val=all_points)
+        self.add_output('all_radii', val=all_radii)
 
 
 class Projections(Group):
@@ -119,6 +159,8 @@ class Projection(ExplicitComponent):
         self.add_input('x_centers', shape_by_conn=True)
         self.add_input('y_centers', shape_by_conn=True)
         self.add_input('z_centers', shape_by_conn=True)
+        self.add_input('all_points', shape_by_conn=True)
+        self.add_input('all_radii', shape_by_conn=True)
 
         # Object Inputs
         self.add_input('sphere_positions', shape_by_conn=True)
@@ -141,6 +183,8 @@ class Projection(ExplicitComponent):
         x_centers = inputs['x_centers']
         y_centers = inputs['y_centers']
         z_centers = inputs['z_centers']
+        all_points = inputs['all_points']
+        all_radii = inputs['all_radii']
 
         # Get the Object inputs
         sphere_positions = inputs['sphere_positions']
@@ -151,6 +195,8 @@ class Projection(ExplicitComponent):
         x_centers = torch.tensor(x_centers, dtype=torch.float64)
         y_centers = torch.tensor(y_centers, dtype=torch.float64)
         z_centers = torch.tensor(z_centers, dtype=torch.float64)
+        all_points = torch.tensor(all_points, dtype=torch.float64)
+        all_radii = torch.tensor(all_radii, dtype=torch.float64)
 
         sphere_positions = torch.tensor(sphere_positions, dtype=torch.float64)
         sphere_radii = torch.tensor(sphere_radii, dtype=torch.float64)
@@ -158,7 +204,7 @@ class Projection(ExplicitComponent):
         # Project
         element_pseudo_densities = self._project(sphere_positions, sphere_radii,
                                                  element_length,
-                                                 x_centers, y_centers, z_centers, rho_min)
+                                                 x_centers, y_centers, z_centers, all_points, all_radii, rho_min)
 
         # Calculate the volume
         volume = torch.sum(element_pseudo_densities) * element_length ** 3
@@ -180,6 +226,8 @@ class Projection(ExplicitComponent):
         x_centers = inputs['x_centers']
         y_centers = inputs['y_centers']
         z_centers = inputs['z_centers']
+        all_points = inputs['all_points']
+        all_radii = inputs['all_radii']
 
         # Get the Object inputs
         sphere_positions = inputs['sphere_positions']
@@ -190,6 +238,8 @@ class Projection(ExplicitComponent):
         x_centers = torch.tensor(x_centers, dtype=torch.float64, requires_grad=False)
         y_centers = torch.tensor(y_centers, dtype=torch.float64, requires_grad=False)
         z_centers = torch.tensor(z_centers, dtype=torch.float64, requires_grad=False)
+        all_points = torch.tensor(all_points, dtype=torch.float64, requires_grad=False)
+        all_radii = torch.tensor(all_radii, dtype=torch.float64, requires_grad=False)
 
         sphere_positions = torch.tensor(sphere_positions, dtype=torch.float64, requires_grad=True)
         sphere_radii = torch.tensor(sphere_radii, dtype=torch.float64, requires_grad=False)
@@ -197,7 +247,7 @@ class Projection(ExplicitComponent):
         # Calculate the Jacobian of the kernel
         grad_sphere_positions = jacfwd(self._project, argnums=0)
         grad_sphere_positions_val = grad_sphere_positions(sphere_positions, sphere_radii, element_length,
-                                                 x_centers, y_centers, z_centers, rho_min)
+                                                 x_centers, y_centers, z_centers, all_points, all_radii, rho_min)
 
         # Convert the outputs to numpy arrays
         grad_sphere_positions_val = grad_sphere_positions_val.detach().numpy()
@@ -205,7 +255,7 @@ class Projection(ExplicitComponent):
         partials['element_pseudo_densities', 'sphere_positions'] = grad_sphere_positions_val
 
     @staticmethod
-    def _project(sphere_positions, sphere_radii, element_length, x_centers, y_centers, z_centers, rho_min):
+    def _project(sphere_positions, sphere_radii, element_length, x_centers, y_centers, z_centers, all_points, all_radii, rho_min):
         """
         Projects the points to the mesh and calculates the pseudo-densities
         """
@@ -215,11 +265,6 @@ class Projection(ExplicitComponent):
         # Reshape the mesh_centers to (nx*ny*nz, 3)
         mesh_centers = torch.stack((x_centers, y_centers, z_centers), dim=3).reshape(-1, 3)
         mesh_radii = element_length/2 * torch.ones((mesh_centers.shape[0], 1))
-
-
-
-        expanded_mesh_centers = 1
-        expanded_mesh_radii = 1
 
         # Initialize influence map
         pseudo_densities = torch.zeros(mesh_radii.shape)
@@ -236,14 +281,13 @@ class Projection(ExplicitComponent):
             indices_full_overlap = torch.where(condition_full_overlap)[0]
             indices_partial_overlap = torch.where(condition_partial_overlap)[0]
 
+            # No overlap
             pseudo_densities[indices_no_overlap] += 0
 
-            pseudo_densities[indices_full_overlap] += 1 #v_min
+            # Full overlap
+            pseudo_densities[indices_full_overlap] += 1
 
-            # Calculate the overlap volume
-            # Heuristic: Assume linear relationship between overlap volume and overlap distance
-            # relative_overlap = distances[indices_partial_overlap] / (sphere_radii[i].unsqueeze(1) + mesh_radii[0])
-            # Heuristic: Assume cubic relationship between overlap volume and overlap distance
+            # Partial overlap
             relative_overlap = (distances[indices_partial_overlap] / (sphere_radii[i].unsqueeze(1) + mesh_radii[0]))**3
 
             pseudo_densities[indices_partial_overlap] += relative_overlap
