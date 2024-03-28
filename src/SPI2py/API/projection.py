@@ -268,14 +268,21 @@ class Projection(ExplicitComponent):
                     expanded_sphere_radii = expanded_sphere_radii.flatten().view(-1, 1)
                     expanded_element_radii = expanded_element_radii.flatten().view(-1, 1)
 
+                    if i==1 and j==2 and k==1:
+                        pass
+
                     overlap_volume = overlap_volume_spheres_spheres(expanded_sphere_radii, expanded_element_radii, distances)
                     pseudo_density = overlap_volume / element_volume
 
-                    if pseudo_density > 0.05:
-                        continue
+                    if i==1 and j==2 and k==1:
+                        pass
+
 
                     # pseudo_density = torch.clip(pseudo_density, min=rho_min, max=1)
                     pseudo_densities[i, j, k] += pseudo_density
+
+                    if i==1 and j==2 and k==1:
+                        pass
 
         # # Reshape the mesh_centers to (nx*ny*nz, 3)
         # mesh_centers = torch.stack((x_centers, y_centers, z_centers), dim=3).reshape(-1, 3)
