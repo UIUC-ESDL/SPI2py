@@ -15,7 +15,7 @@ def overlap_volume_sphere_sphere(r_1, r_2, d):
 
     # Analytic solution for the volume of the intersection of two spheres does not apply when d > r_1 + r_2
     elif d >= r_1 + r_2:
-        overlap_volume = torch.tensor(0.0)
+        overlap_volume = torch.tensor([0.0])
 
     # Otherwise, calculate the volume of the intersection
     else:
@@ -33,7 +33,7 @@ def overlap_volume_sphere_sphere(r_1, r_2, d):
 
 def overlap_volume_spheres_spheres(R_1, R_2, D):
 
-    overlap_volume = torch.tensor(0.0)
+    overlap_volume = torch.tensor([0.0])
 
     for r_1, r_2, d in zip(R_1, R_2, D):
         overlap_volume += overlap_volume_sphere_sphere(r_1, r_2, d)

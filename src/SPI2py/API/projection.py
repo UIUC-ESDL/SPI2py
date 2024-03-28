@@ -243,7 +243,9 @@ class Projection(ExplicitComponent):
         nx, ny, nz = x_centers.shape
         n_points = sphere_positions.shape[0]
 
-        element_volume = element_length ** 3
+        expected_element_volume = element_length ** 3
+        element_volume = torch.sum((4/3) * torch.pi * all_radii[0, 0, 0] ** 3)
+        # assert element_volume <= expected_element_volume
 
         # Initialize the pseudo-densities
         pseudo_densities = torch.zeros((nx, ny, nz, 1))
@@ -255,10 +257,22 @@ class Projection(ExplicitComponent):
                     element_points = all_points[i, j, k]
                     element_radii = all_radii[i, j, k]
                     distances = distances_points_points(sphere_positions, element_points)
-                    overlap_volume = overlap_volume_spheres_spheres(sphere_radii.flatten(), element_radii.flatten(), distances.flatten())
-                    pseudo_density = overlap_volume / element_volume
-                    pseudo_densities[i, j, k] += pseudo_density
 
+                    expanded_sphere_radii = sphere_radii.expand_as(distances)
+                    expanded_element_radii = element_radii.T.expand_as(distances)
+
+                    distances = distances.flatten().view(-1, 1)
+                    expanded_sphere_radii = expanded_sphere_radii.flatten().view(-1, 1)
+                    expanded_element_radii = expanded_element_radii.flatten().view(-1, 1)
+
+                    overlap_volume = overlap_volume_spheres_spheres(expanded_sphere_radii, expanded_element_radii, distances)
+                    pseudo_density = overlap_volume / element_volume
+
+                    if pseudo_density > 0.05:
+                        continue
+
+                    # pseudo_density = torch.clip(pseudo_density, min=rho_min, max=1)
+                    pseudo_densities[i, j, k] += pseudo_density
 
         # # Reshape the mesh_centers to (nx*ny*nz, 3)
         # mesh_centers = torch.stack((x_centers, y_centers, z_centers), dim=3).reshape(-1, 3)
