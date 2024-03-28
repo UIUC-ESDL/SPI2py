@@ -33,7 +33,7 @@ model = prob.model
 # bounds = (3, 11, 3, 11, 0, 3)
 # bounds = (0, 8, 1, 8, 0, 3)
 bounds = (0, 8, 0, 10, 0, 3) # TODO FIX nonzero bounds
-n_elements_per_unit_length = 1.0  # 6.0
+n_elements_per_unit_length = 1.0  # 1.0  # 6.0
 
 # System Parameters
 n_components = 2

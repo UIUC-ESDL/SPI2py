@@ -13,6 +13,10 @@ def overlap_volume_sphere_sphere(r_1, r_2, d):
     if d == 0:
         overlap_volume = smaller_volume
 
+    # Analytic solution for the volume of the intersection of two spheres does not apply when d > r_1 + r_2
+    elif d >= r_1 + r_2:
+        overlap_volume = torch.tensor(0.0)
+
     # Otherwise, calculate the volume of the intersection
     else:
         numerator = torch.pi * (r_1 + r_2 - d) ** 2 * (
@@ -26,6 +30,17 @@ def overlap_volume_sphere_sphere(r_1, r_2, d):
     # assert overlap_volume != torch.nan
 
     return overlap_volume
+
+def overlap_volume_spheres_spheres(R_1, R_2, D):
+
+    overlap_volume = torch.tensor(0.0)
+
+    for r_1, r_2, d in zip(R_1, R_2, D):
+        overlap_volume += overlap_volume_sphere_sphere(r_1, r_2, d)
+
+    return overlap_volume
+
+# def overlap_volume_sphere_set_of_spheres(r_1, R_2, D):
 
 
 class TestOverlapVolume(unittest.TestCase):
@@ -41,6 +56,14 @@ class TestOverlapVolume(unittest.TestCase):
         r_1 = torch.tensor([5.0])
         r_2 = torch.tensor([5.0])
         d = torch.tensor([10.0])
+        expected = torch.tensor([0.0])
+        result = overlap_volume_sphere_sphere(r_1, r_2, d)
+        self.assertTrue(torch.allclose(result, expected), "No overlap test failed")
+
+    def test_no_overlap_2(self):
+        r_1 = torch.tensor([5.0])
+        r_2 = torch.tensor([5.0])
+        d = torch.tensor([12.0])
         expected = torch.tensor([0.0])
         result = overlap_volume_sphere_sphere(r_1, r_2, d)
         self.assertTrue(torch.allclose(result, expected), "No overlap test failed")
@@ -69,5 +92,7 @@ if __name__ == '__main__':
 
     # Set the default data type
     torch.set_default_dtype(torch.float64)
+
+    # TODO Add test for d > r_1 + r_2
 
     unittest.main()
