@@ -46,7 +46,7 @@ model.add_subsystem('system', System(input_dict=input_file, upper=7, lower=0))
 model.add_subsystem('mesh', Mesh(bounds=bounds,
                                  n_elements_per_unit_length=n_elements_per_unit_length,
                                  mdbd_unit_cube_filepath='mdbd_unit_cube.xyzr',
-                                 mdbd_unit_cube_min_radius=0.2)) # mdbd_unit_cube_min_radius=0.1
+                                 mdbd_unit_cube_min_radius=0.01)) # mdbd_unit_cube_min_radius=0.1
 model.add_subsystem('projections', Projections(n_comp_projections=n_components,
                                                n_int_projections=0))
 
@@ -58,6 +58,7 @@ model.connect('mesh.z_centers', 'projections.projection_0.z_centers')
 
 model.connect('mesh.all_points', 'projections.projection_0.all_points')
 model.connect('mesh.all_radii', 'projections.projection_0.all_radii')
+
 
 
 model.connect('system.components.comp_0.transformed_sphere_positions', 'projections.projection_0.sphere_positions')
@@ -73,6 +74,7 @@ prob.set_val('system.components.comp_0.translation', [2, 2.5, 1.5])
 prob.set_val('system.components.comp_0.rotation', [0, 0, 0])
 # prob.set_val('projections.projection_0.highlight_element_index', [1, 2, 1])
 prob.set_val('projections.projection_0.highlight_element_index', [1, 1, 0])
+
 
 
 prob.run_model()
@@ -96,6 +98,16 @@ print("Max Pseudo-Density: ", pseudo_densities.max())
 
 # Check the initial state
 plot_problem(prob)
+
+
+
+estimate_projection_error(prob,
+                          'system.components.comp_0.sphere_radii',
+                          'system.components.comp_0.translation',
+                          'projections.projection_0.volume',
+                          [2, 2.5, 1.5],
+                          10, 0.02)
+
 
 print('Done')
 

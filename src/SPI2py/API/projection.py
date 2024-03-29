@@ -131,6 +131,7 @@ class Projection(ExplicitComponent):
 
     def initialize(self):
         self.options.declare('rho_min', types=(int, float), desc='Minimum value of the density', default=3e-3)
+        self.options.declare('color', types=str, desc='Color of the projection', default='blue')
 
     def setup(self):
 
