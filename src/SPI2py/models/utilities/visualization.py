@@ -135,7 +135,7 @@ def plot_problem(prob):
         # p.add_mesh(merged, color='black', opacity=0.1)
 
 
-        p.add_points(all_points, color='black', point_size=0.1)
+        # p.add_points(all_points, color='black', point_size=0.1)
 
         # Create a point cloud using the positions
         #         point_cloud = pv.PolyData(positions)

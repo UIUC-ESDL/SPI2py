@@ -46,7 +46,7 @@ model.add_subsystem('system', System(input_dict=input_file, upper=7, lower=0))
 model.add_subsystem('mesh', Mesh(bounds=bounds,
                                  n_elements_per_unit_length=n_elements_per_unit_length,
                                  mdbd_unit_cube_filepath='mdbd_unit_cube.xyzr',
-                                 mdbd_unit_cube_min_radius=0.01)) # mdbd_unit_cube_min_radius=0.1
+                                 mdbd_unit_cube_min_radius=0.04))  # mdbd_unit_cube_min_radius=0.1
 model.add_subsystem('projections', Projections(n_comp_projections=n_components,
                                                n_int_projections=0))
 
@@ -73,19 +73,14 @@ prob.setup()
 prob.set_val('system.components.comp_0.translation', [2, 2.5, 1.5])
 prob.set_val('system.components.comp_0.rotation', [0, 0, 0])
 # prob.set_val('projections.projection_0.highlight_element_index', [1, 2, 1])
-prob.set_val('projections.projection_0.highlight_element_index', [1, 1, 0])
+prob.set_val('projections.projection_0.highlight_element_index', [3, 4, 2])
 
 
 
 prob.run_model()
 
 
-# estimate_projection_error(prob,
-#                           'system.components.comp_0.sphere_radii',
-#                           'system.components.comp_0.translation',
-#                           'projections.projection_0.volume',
-#                           [5, 5, 1.5],
-#                           5, 0.15)
+
 
 # Debugging
 ix, iy, iz = prob.get_val('projections.projection_0.highlight_element_index')
@@ -101,12 +96,12 @@ plot_problem(prob)
 
 
 
-estimate_projection_error(prob,
-                          'system.components.comp_0.sphere_radii',
-                          'system.components.comp_0.translation',
-                          'projections.projection_0.volume',
-                          [2, 2.5, 1.5],
-                          10, 0.02)
+# estimate_projection_error(prob,
+#                           'system.components.comp_0.sphere_radii',
+#                           'system.components.comp_0.translation',
+#                           'projections.projection_0.volume',
+#                           [2, 2.5, 1.5],
+#                           10, 0.02)
 
 
 print('Done')

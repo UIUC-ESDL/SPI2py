@@ -4,7 +4,7 @@ import os
 from torch.func import jacfwd
 from openmdao.api import ExplicitComponent, Group, IndepVarComp
 from ..models.kinematics.distance_calculations import distances_points_points
-from ..models.kinematics.encapsulation import overlap_volume_spheres_spheres
+from ..models.kinematics.encapsulation import overlap_volume_spheres_spheres, overlap_volume_sphere_sphere
 from ..models.geometry.finite_sphere_method import read_xyzr_file
 
 class Mesh(IndepVarComp):
@@ -242,6 +242,13 @@ class Projection(ExplicitComponent):
     def _project(sphere_positions, sphere_radii, element_length, x_centers, y_centers, z_centers, all_points, all_radii, rho_min):
         """
         Projects the points to the mesh and calculates the pseudo-densities
+
+        mesh_positions: (nx, ny, nz, n_mesh_points, 1, 3) tensor
+        mesh_radii: (nx, ny, nz, n_mesh_points, 1) tensor
+        object_positions_expanded: (1, 1, 1, 1, n_object_points, 3) tensor
+        object_radii_expanded: (1, 1, 1, 1, n_object_points) tensor
+
+        pseudo_densities: (nx, ny, nz, 1) tensor
         """
 
         nx, ny, nz = x_centers.shape
@@ -252,38 +259,59 @@ class Projection(ExplicitComponent):
         # assert element_volume <= expected_element_volume
 
         # Initialize the pseudo-densities
-        pseudo_densities = torch.zeros((nx, ny, nz, 1))
+        # pseudo_densities = torch.zeros((nx, ny, nz, 1))
 
-        # Calculate the element pseudo-densities
-        for i in range(nx):
-            for j in range(ny):
-                for k in range(nz):
-                    element_points = all_points[i, j, k]
-                    element_radii = all_radii[i, j, k]
-                    distances = distances_points_points(sphere_positions, element_points)
+        mesh_positions = all_points
+        mesh_radii = all_radii
+        object_positions = sphere_positions
+        object_radii = sphere_radii
+        object_radii_expanded = object_radii.transpose(0, 1).unsqueeze(0).unsqueeze(0).unsqueeze(0)
 
-                    expanded_sphere_radii = sphere_radii.expand_as(distances)
-                    expanded_element_radii = element_radii.T.expand_as(distances)
+        distances = torch.norm(mesh_positions[..., None, :] - object_positions[None, None, None, None, :, :], dim=-1)
 
-                    distances = distances.flatten().view(-1, 1)
-                    expanded_sphere_radii = expanded_sphere_radii.flatten().view(-1, 1)
-                    expanded_element_radii = expanded_element_radii.flatten().view(-1, 1)
+        volume_overlaps = overlap_volume_sphere_sphere(object_radii_expanded, mesh_radii, distances)
 
-                    if i==1 and j==1 and k==0:
-                        pass
+        pseudo_densities = torch.sum(volume_overlaps, dim=(3, 4), keepdim=True).squeeze(3)
 
-                    overlap_volume = overlap_volume_spheres_spheres(expanded_sphere_radii, expanded_element_radii, distances)
-                    pseudo_density = overlap_volume / element_volume
-
-                    if i==1 and j==1 and k==0:
-                        pass
+        print('Next')
 
 
-                    # pseudo_density = torch.clip(pseudo_density, min=rho_min, max=1)
-                    pseudo_densities[i, j, k] += pseudo_density
 
-                    if i==1 and j==1 and k==0:
-                        pass
+        # # Calculate the element pseudo-densities
+        # for i in range(nx):
+        #     for j in range(ny):
+        #         for k in range(nz):
+        #
+        #             # TODO Ensure overlapping object spheres don't affect calc...
+        #             # Density doesn't check out when changing mesh size...
+        #
+        #             element_points = all_points[i, j, k]
+        #             element_radii = all_radii[i, j, k]
+        #             distances = distances_points_points(sphere_positions, element_points)
+        #
+        #             radii_cartesian_product = torch.cartesian_prod(sphere_radii, element_radii.T)
+        #
+        #             expanded_sphere_radii = sphere_radii.expand_as(distances)
+        #             expanded_sphere_radii_2 = sphere_radii.T.expand_as(distances)
+        #             expanded_element_radii = element_radii.T.expand_as(distances)
+        #
+        #             if i==3 and j==4 and k==2:
+        #                 print("")
+        #
+        #             distances = distances.flatten().view(-1, 1)
+        #             expanded_sphere_radii = expanded_sphere_radii.flatten().view(-1, 1)
+        #             expanded_element_radii = expanded_element_radii.flatten().view(-1, 1)
+        #
+        #             overlap_volume = overlap_volume_spheres_spheres(expanded_sphere_radii, expanded_element_radii, distances)
+        #             pseudo_density = overlap_volume / element_volume
+        #
+        #             if i==3 and j==4 and k==2:
+        #                 print("")
+        #
+        #             # pseudo_density = torch.clip(pseudo_density, min=rho_min, max=1)
+        #             pseudo_densities[i, j, k] += pseudo_density
+
+
 
         # # Reshape the mesh_centers to (nx*ny*nz, 3)
         # mesh_centers = torch.stack((x_centers, y_centers, z_centers), dim=3).reshape(-1, 3)
