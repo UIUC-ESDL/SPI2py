@@ -125,17 +125,17 @@ def plot_problem(prob):
         all_points = np.array(all_points).reshape(-1,3)
         all_radii = prob.get_val('mesh.all_radii')
         all_radii = np.array(all_radii).reshape(-1,1)
-        #
+
         # spheres = []
         # for position, radius in zip(all_points, all_radii):
-        #     spheres.append(pv.Sphere(radius=radius, center=position, theta_resolution=30, phi_resolution=30))
+        #     spheres.append(pv.Sphere(radius=radius, center=position, theta_resolution=10, phi_resolution=10))
         #
         # merged = pv.MultiBlock(spheres).combine().extract_surface().clean()
         #
-        # p.add_mesh(merged, color='black', opacity=0.1)
+        # p.add_mesh(merged, color='blue', opacity=0.05)
 
 
-        # p.add_points(all_points, color='black', point_size=0.1)
+        p.add_points(all_points, color='black', point_size=0.1)
 
         # Create a point cloud using the positions
         #         point_cloud = pv.PolyData(positions)

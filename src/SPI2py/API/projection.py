@@ -53,7 +53,8 @@ class Mesh(IndepVarComp):
         SPI2py_path = os.path.dirname(os.path.dirname(__file__))
         mdbd_unit_cube_filepath = os.path.join('models\\projection', mdbd_unit_cube_filepath)
         mdbd_unit_cube_filepath = os.path.join(SPI2py_path, mdbd_unit_cube_filepath)
-        mdbd_unit_cube_sphere_positions, mdbd_unit_cube_sphere_radii = read_xyzr_file(mdbd_unit_cube_filepath)
+        # TODO Remove num spheres...
+        mdbd_unit_cube_sphere_positions, mdbd_unit_cube_sphere_radii = read_xyzr_file(mdbd_unit_cube_filepath, num_spheres=9)
         mdbd_unit_cube_sphere_positions = torch.tensor(mdbd_unit_cube_sphere_positions, dtype=torch.float64)
         mdbd_unit_cube_sphere_radii = torch.tensor(mdbd_unit_cube_sphere_radii, dtype=torch.float64).view(-1, 1)
 
@@ -256,6 +257,9 @@ class Projection(ExplicitComponent):
 
         expected_element_volume = element_length ** 3
         element_volume = torch.sum((4/3) * torch.pi * all_radii[0, 0, 0] ** 3)
+
+        element_volumes = (4/3) * torch.pi * all_radii ** 3
+
         # assert element_volume <= expected_element_volume
 
         # Initialize the pseudo-densities
@@ -271,7 +275,9 @@ class Projection(ExplicitComponent):
 
         volume_overlaps = overlap_volume_sphere_sphere(object_radii_expanded, mesh_radii, distances)
 
-        pseudo_densities = torch.sum(volume_overlaps, dim=(3, 4), keepdim=True).squeeze(3)
+        volume_fractions = volume_overlaps / element_volumes
+
+        pseudo_densities = torch.sum(volume_fractions, dim=(3, 4), keepdim=True).squeeze(3)
 
         print('Next')
 
