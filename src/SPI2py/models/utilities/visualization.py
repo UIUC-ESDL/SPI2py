@@ -3,40 +3,18 @@ import pyvista as pv
 
 # TODO MOVE TO API
 
-def plot_problem(prob):
+def plot_problem(prob, plot_grid=True, plot_grid_points=True, plot_bounding_box=True):
     """
     Plot the model at a given state.
     """
 
-    # Create the plot objects
+    # Create the plotter
+    plotter = pv.Plotter(window_size=[1000, 1000])
 
-    # Plot the objects
-    p = pv.Plotter(window_size=[1000, 1000])
-
-    # # Check if the problem contains components
-    # if 'components' in prob.model.system._subsystems_allprocs:
-    #
-    #     components = []
-    #     component_colors = []
-    #
-    #     for subsystem in prob.model.system.components._subsystems_myproc:
-    #         positions = prob.get_val('system.components.' + subsystem.name + '.transformed_points')
-    #         color = subsystem.options['color']
-    #
-    #         # Create a point cloud using the positions
-    #         point_cloud = pv.PolyData(positions)
-    #
-    #         components.append(point_cloud)
-    #         component_colors.append(color)
-    #
-    #     for comp, color in zip(components, component_colors):
-    #         p.add_mesh(comp, color=color, point_size=10, render_points_as_spheres=True, lighting=False)
-
+    # Plot the components
     components = []
     component_colors = []
-
     for subsystem in prob.model.system.components._subsystems_myproc:
-
         positions = prob.get_val('system.components.' + subsystem.name + '.transformed_sphere_positions')
         radii = prob.get_val('system.components.' + subsystem.name + '.transformed_sphere_radii')
         color = subsystem.options['color']
@@ -46,16 +24,14 @@ def plot_problem(prob):
             spheres.append(pv.Sphere(radius=radius, center=position, theta_resolution=30, phi_resolution=30))
 
         merged = pv.MultiBlock(spheres).combine().extract_surface().clean()
-        # merged_clipped = merged.clip(normal='z')
-        # merged_slice = merged.slice(normal=[0, 0, 1])
 
         components.append(merged)
         component_colors.append(color)
 
     for comp, color in zip(components, component_colors):
-        p.add_mesh(comp, color=color, opacity=0.5)
+        plotter.add_mesh(comp, color=color, opacity=0.5)
 
-    # Check if the problem contains interconnects
+    # Plot the interconnects
     if 'interconnects' in prob.model.system._subsystems_allprocs:
 
         interconnects = []
@@ -76,22 +52,16 @@ def plot_problem(prob):
             interconnect_colors.append(color)
 
         for inter, color in zip(interconnects, interconnect_colors):
-            p.add_mesh(inter, color=color, lighting=False)
+            plotter.add_mesh(inter, color=color, lighting=False)
 
-    # Check if the problem contains a bounding box
-    if 'bbv' in prob.model._outputs:
 
-        # Plot the bounding box
+    if plot_bounding_box:
         bounds = prob.get_val('bbv.bounding_box_bounds')
         bounding_box = pv.Box(bounds=bounds)
         bounding_box_color = 'black'
-
-        # Plot the bounding box
-        p.add_mesh(bounding_box, color=bounding_box_color, opacity=0.2)
+        plotter.add_mesh(bounding_box, color=bounding_box_color, opacity=0.2)
 
 
-
-    # Check if the problem contains a projection
     if 'projections' in prob.model._subsystems_allprocs:
 
         # Get the options
@@ -118,23 +88,22 @@ def plot_problem(prob):
         # Set the origin of the grid to the minimum XYZ coordinates
         grid.origin = (x_min, y_min, z_min)
 
-        p.add_mesh(grid, color='lightgrey', show_edges=True, opacity=0.15, lighting=False)
+        plotter.add_mesh(grid, color='lightgrey', show_edges=True, opacity=0.15, lighting=False)
 
-        # Plot the mdmd unit cube all spheres
-        all_points = prob.get_val('mesh.all_points')
-        all_points = np.array(all_points).reshape(-1,3)
-        all_radii = prob.get_val('mesh.all_radii')
-        all_radii = np.array(all_radii).reshape(-1,1)
-
-        # spheres = []
-        # for position, radius in zip(all_points, all_radii):
-        #     spheres.append(pv.Sphere(radius=radius, center=position, theta_resolution=10, phi_resolution=10))
-        #
-        # merged = pv.MultiBlock(spheres).combine().extract_surface().clean()
-        #
-        # p.add_mesh(merged, color='blue', opacity=0.025)
-
-        p.add_points(all_points, color='black', point_size=0.1)
+        if plot_grid_points:
+            # Plot the mdmd unit cube all spheres
+            all_points = prob.get_val('mesh.all_points')
+            all_points = np.array(all_points).reshape(-1,3)
+            all_radii = prob.get_val('mesh.all_radii')
+            # all_radii = np.array(all_radii).reshape(-1,1)
+            # spheres = []
+            # for position, radius in zip(all_points, all_radii):
+            #     spheres.append(pv.Sphere(radius=radius, center=position, theta_resolution=10, phi_resolution=10))
+            #
+            # merged = pv.MultiBlock(spheres).combine().extract_surface().clean()
+            #
+            # p.add_mesh(merged, color='blue', opacity=0.025)
+            plotter.add_points(all_points, color='black', point_size=0.1)
 
 
         # Plot projections
@@ -157,22 +126,23 @@ def plot_problem(prob):
             y_centers = prob.get_val(f'mesh.y_centers')
             z_centers = prob.get_val(f'mesh.z_centers')
 
+            # Plot the projected pseudo-densities of each element (speed up by skipping near-zero densities)
+            pseudo_densities = prob.get_val(f'projections.projection_{i}.element_pseudo_densities')
+            density_threshold = 0.15
+            above_threshold_indices = np.argwhere(pseudo_densities > density_threshold)
+            for idx in above_threshold_indices:
+                n_i, n_j, n_k = idx
 
-            # pseudo_densities = prob.get_val(f'projections.projection_{i}.element_pseudo_densities')
-            # # Loop over each element in the mesh
-            # for n_i in range(nx):
-            #     for n_j in range(ny):
-            #         for n_k in range(nz):
-            #             # Calculate the center of the current box
-            #             center = [x_centers[n_i, n_j, n_k], y_centers[n_i, n_j, n_k], z_centers[n_i, n_j, n_k]]
-            #
-            #             # Create the box
-            #             box = pv.Cube(center=center, x_length=spacing, y_length=spacing, z_length=spacing)
-            #
-            #             # Add the box to the plotter with the corresponding opacity
-            #             opacity = pseudo_densities[n_i, n_j, n_k]-0.25
-            #             p.add_mesh(box, color=color, opacity=opacity)
-            # opacity_transfer_function = [0.0, 0.0, 0.7, 0.0, 1.0, 1.0]
+                # Calculate the center of the current box
+                center = [x_centers[n_i, n_j, n_k], y_centers[n_i, n_j, n_k], z_centers[n_i, n_j, n_k]]
+
+                # Create the box
+                box = pv.Cube(center=center, x_length=spacing, y_length=spacing, z_length=spacing)
+
+                # Add the box to the plotter with the corresponding opacity
+                opacity = pseudo_densities[n_i, n_j, n_k]
+                plotter.add_mesh(box, color=color, opacity=opacity)
+
 
             # Define the opacity transfer function
             # n_points = 127
@@ -198,14 +168,15 @@ def plot_problem(prob):
 
             # color = "blue"
             # p.add_volume(grid, cmap='coolwarm', clim=[0, 1], opacity=0.5)
-            p.add_volume(grid, scalars="density", opacity="sigmoid", cmap='coolwarm', clim=[0, 1])
+            # https://matplotlib.org/stable/users/explain/colors/colormaps.html
+            # p.add_volume(grid, scalars="density", opacity="sigmoid", cmap='Purples', clim=[0, 1])
 
 
-    p.view_isometric()
+    plotter.view_isometric()
     # p.view_xy()
-    p.show_axes()
-    p.show_bounds(color='black')
+    plotter.show_axes()
+    plotter.show_bounds(color='black')
     # p.background_color = 'white'
 
 
-    p.show()
+    plotter.show()

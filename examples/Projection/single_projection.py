@@ -41,11 +41,11 @@ model = prob.model
 # Mesh Parameters
 # bounds = (3, 11, 3, 11, 0, 3)
 # bounds = (0, 8, 1, 8, 0, 3)
-bounds = (0, 5, 0, 5, 0, 3)
+bounds = (0, 10, 0, 10, 0, 3)
 n_elements_per_unit_length = 2.0  # 1.0  # 6.0
 
 # System Parameters
-n_components = 1
+n_components = 2
 n_points = 100
 n_points_per_object = [n_points for _ in range(n_components)]
 
@@ -61,17 +61,30 @@ model.add_subsystem('projections', Projections(n_comp_projections=n_components,
 
 # TODO Promote?
 model.connect('mesh.element_length', 'projections.projection_0.element_length')
+model.connect('mesh.element_length', 'projections.projection_1.element_length')
+
+
 model.connect('mesh.x_centers', 'projections.projection_0.x_centers')
 model.connect('mesh.y_centers', 'projections.projection_0.y_centers')
 model.connect('mesh.z_centers', 'projections.projection_0.z_centers')
 
+model.connect('mesh.x_centers', 'projections.projection_1.x_centers')
+model.connect('mesh.y_centers', 'projections.projection_1.y_centers')
+model.connect('mesh.z_centers', 'projections.projection_1.z_centers')
+
 model.connect('mesh.all_points', 'projections.projection_0.all_points')
 model.connect('mesh.all_radii', 'projections.projection_0.all_radii')
+
+model.connect('mesh.all_points', 'projections.projection_1.all_points')
+model.connect('mesh.all_radii', 'projections.projection_1.all_radii')
 
 
 
 model.connect('system.components.comp_0.transformed_sphere_positions', 'projections.projection_0.sphere_positions')
 model.connect('system.components.comp_0.transformed_sphere_radii', 'projections.projection_0.sphere_radii')
+
+model.connect('system.components.comp_1.transformed_sphere_positions', 'projections.projection_1.sphere_positions')
+model.connect('system.components.comp_1.transformed_sphere_radii', 'projections.projection_1.sphere_radii')
 
 
 # Set the initial state
@@ -82,6 +95,8 @@ prob.setup()
 prob.set_val('system.components.comp_0.translation', [2, 2.5, 1.5])
 prob.set_val('system.components.comp_0.rotation', [0, 0, 0.3])
 
+prob.set_val('system.components.comp_1.translation', [1, 3.5, 1])
+prob.set_val('system.components.comp_1.rotation', [0, 0, 0])
 
 
 
@@ -99,7 +114,7 @@ print("Pseudo-Density: ", pseudo_densities[element_index[0], element_index[1], e
 print("Max Pseudo-Density: ", pseudo_densities.max())
 
 # Check the initial state
-plot_problem(prob)
+plot_problem(prob, plot_bounding_box=False)
 
 
 

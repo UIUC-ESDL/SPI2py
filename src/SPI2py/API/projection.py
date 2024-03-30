@@ -81,6 +81,7 @@ class Mesh(IndepVarComp):
         self.add_output('x_centers', val=x_centers)
         self.add_output('y_centers', val=y_centers)
         self.add_output('z_centers', val=z_centers)
+        self.add_output('centers', val=meshgrid_centers)
         self.add_output('x_grid', val=x_grid)
         self.add_output('y_grid', val=y_grid)
         self.add_output('z_grid', val=z_grid)
