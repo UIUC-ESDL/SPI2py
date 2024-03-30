@@ -120,6 +120,8 @@ def mdbd(directory, input_filename, output_filename, num_spheres=1000, min_radiu
     xx, yy, zz = np.meshgrid(x, y, z, indexing='ij')
     all_points = np.vstack([xx.ravel(), yy.ravel(), zz.ravel()]).T
 
+    step_size = x[1] - x[0]
+
     # Calculate signed distances for all points
     signed_distances = trimesh.proximity.signed_distance(mesh_trimesh, all_points)
 
@@ -147,8 +149,8 @@ def mdbd(directory, input_filename, output_filename, num_spheres=1000, min_radiu
 
         # Update distances considering the newly added sphere
         point_distances_to_new_sphere = np.linalg.norm(points_filtered_sorted - sphere_center, axis=1)
-        r_tol = 0.1135  # Fudging factor
-        within_new_sphere = point_distances_to_new_sphere < sphere_radius + r_tol*sphere_radius
+        # within_new_sphere = point_distances_to_new_sphere < sphere_radius + (distances_filtered_sorted-2*step_size)
+        within_new_sphere = point_distances_to_new_sphere < sphere_radius + distances_filtered_sorted #+ step_size/2  # Step size is a fudge factor
         points_filtered_sorted = points_filtered_sorted[~within_new_sphere]
         distances_filtered_sorted = distances_filtered_sorted[~within_new_sphere]
 

@@ -19,8 +19,8 @@ mdbd_unit_cube.save('mdbd_unit_cube.stl')
 mdbd('', 'mdbd_unit_cube.stl','mdbd_unit_cube.xyzr',
      num_spheres=3000,
      min_radius=0.0001,
-     meshgrid_increment=50,
-     plot=False)
+     meshgrid_increment=100,
+     plot=True)
 
 positions, radii = read_xyzr_file('mdbd_unit_cube.xyzr', num_spheres=1000)
 
