@@ -134,90 +134,46 @@ def plot_problem(prob):
         #
         # p.add_mesh(merged, color='blue', opacity=0.025)
 
-
         p.add_points(all_points, color='black', point_size=0.1)
-
-        # Create a point cloud using the positions
-        #         point_cloud = pv.PolyData(positions)
-        #
-        #         components.append(point_cloud)
-        #         component_colors.append(color)
-        #
-        #     for comp, color in zip(components, component_colors):
-        #         p.add_mesh(comp, color=color, point_size=10, render_points_as_spheres=True, lighting=False)
-
 
 
         # Plot projections
         for i in range(n_projections):
 
-            # Get the necessary inputs
-
-
             # Get the object color
             color = prob.model.projections._subsystems_myproc[i].options['color']
 
-            # Get the density values
+            # Get the pseudo-densities
             density_values = prob.get_val(f'projections.projection_{i}.element_pseudo_densities').flatten(order='F')
-            # print("Density values range:", density_values.min(), density_values.max())
-            # Create the grid
 
+            # Get the grid coordinates
             x_grid = prob.get_val('mesh.x_grid')
             y_grid = prob.get_val('mesh.y_grid')
             z_grid = prob.get_val('mesh.z_grid')
             grid = pv.StructuredGrid(x_grid, y_grid, z_grid)
             grid["density"] = density_values
 
+            p.add_volume(grid, scalars="density", cmap="coolwarm", scalar_bar_args={'title': "Density"},
+                         opacity="sigmoid", clim=[0, 1])
+
             x_centers = prob.get_val(f'mesh.x_centers')
             y_centers = prob.get_val(f'mesh.y_centers')
             z_centers = prob.get_val(f'mesh.z_centers')
 
-            pseudo_densities = prob.get_val(f'projections.projection_{i}.element_pseudo_densities')
-            # Loop over each element in the mesh
-            for n_i in range(nx):
-                for n_j in range(ny):
-                    for n_k in range(nz):
-                        # Calculate the center of the current box
-                        center = [x_centers[n_i, n_j, n_k], y_centers[n_i, n_j, n_k], z_centers[n_i, n_j, n_k]]
-
-                        # Create the box
-                        box = pv.Cube(center=center, x_length=spacing, y_length=spacing, z_length=spacing)
-
-                        # Add the box to the plotter with the corresponding opacity
-                        p.add_mesh(box, color=color, opacity=pseudo_densities[n_i, n_j, n_k])
-
-            # Highlight the "Highlight" Element
-            ix, iy, iz = prob.get_val(f'projections.projection_{i}.highlight_element_index')
-
-
-            x_center = x_centers[int(ix), int(iy), int(iz)]
-            y_center = y_centers[int(ix), int(iy), int(iz)]
-            z_center = z_centers[int(ix), int(iy), int(iz)]
-
-            # Calculate the center coordinates of the highlighted element
-
-
-            # # Option 1: Plot a sphere as a highlight marker
-            # highlight_marker = pv.Cube(center=(x_center, y_center, z_center), x_length=spacing, y_length=spacing, z_length=spacing)
-            # p.add_mesh(highlight_marker, color='orange', opacity=0.2)
+            # pseudo_densities = prob.get_val(f'projections.projection_{i}.element_pseudo_densities')
+            # # Loop over each element in the mesh
+            # for n_i in range(nx):
+            #     for n_j in range(ny):
+            #         for n_k in range(nz):
+            #             # Calculate the center of the current box
+            #             center = [x_centers[n_i, n_j, n_k], y_centers[n_i, n_j, n_k], z_centers[n_i, n_j, n_k]]
             #
+            #             # Create the box
+            #             box = pv.Cube(center=center, x_length=spacing, y_length=spacing, z_length=spacing)
             #
-            # mesh_points = prob.get_val('mesh.all_points')
-            # mesh_radii = prob.get_val('mesh.all_radii')
-            #
-            # element_points = mesh_points[int(ix), int(iy), int(iz)]
-            # element_radii = mesh_radii[int(ix), int(iy), int(iz)]
-            #
-            # element_spheres = []
-            # for point, radius in zip(element_points, element_radii):
-            #     element_spheres.append(pv.Sphere(radius=radius, center=point, theta_resolution=30, phi_resolution=30))
-            #
-            # element_spheres = pv.MultiBlock(element_spheres).combine().extract_surface().clean()
-            # p.add_mesh(element_spheres, color='red', opacity=0.5)
-
-
-
-
+            #             # Add the box to the plotter with the corresponding opacity
+            #             opacity = pseudo_densities[n_i, n_j, n_k]
+            #             p.add_mesh(box, color=color, opacity=opacity)
 
 
     p.view_isometric()

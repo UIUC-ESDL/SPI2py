@@ -42,11 +42,11 @@ model = prob.model
 # bounds = (3, 11, 3, 11, 0, 3)
 # bounds = (0, 8, 1, 8, 0, 3)
 bounds = (0, 5, 0, 5, 0, 3) # TODO FIX nonzero bounds
-n_elements_per_unit_length = 1.5  # 1.0  # 6.0
+n_elements_per_unit_length = 2.0  # 1.0  # 6.0
 
 # System Parameters
 n_components = 1
-n_points = 4
+n_points = 100
 n_points_per_object = [n_points for _ in range(n_components)]
 
 
@@ -81,8 +81,7 @@ prob.setup()
 # Configure the system
 prob.set_val('system.components.comp_0.translation', [2, 2.5, 1.5])
 prob.set_val('system.components.comp_0.rotation', [0, 0, 0])
-prob.set_val('projections.projection_0.highlight_element_index', [1, 2, 1])
-# prob.set_val('projections.projection_0.highlight_element_index', [3, 4, 2])
+
 
 
 
@@ -92,8 +91,7 @@ prob.run_model()
 
 
 # Debugging
-ix, iy, iz = prob.get_val('projections.projection_0.highlight_element_index')
-element_index = [int(ix), int(iy), int(iz)]
+element_index = [1,2,1]
 pseudo_densities = prob.get_val('projections.projection_0.element_pseudo_densities')
 
 print("Checking element: ", element_index)
@@ -105,12 +103,12 @@ plot_problem(prob)
 
 
 
-estimate_projection_error(prob,
-                          'system.components.comp_0.sphere_radii',
-                          'system.components.comp_0.translation',
-                          'projections.projection_0.volume',
-                          [2, 2.5, 1.5],
-                          10, 0.02)
+# estimate_projection_error(prob,
+#                           'system.components.comp_0.sphere_radii',
+#                           'system.components.comp_0.translation',
+#                           'projections.projection_0.volume',
+#                           [2, 2.5, 1.5],
+#                           10, 0.02)
 
 
 print('Done')

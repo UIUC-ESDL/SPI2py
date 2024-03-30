@@ -134,9 +134,6 @@ class Projection(ExplicitComponent):
 
     def setup(self):
 
-        # Debugging Inputs
-        self.add_input('highlight_element_index', val=(0, 0, 0))
-
         # Mesh Inputs
         self.add_input('element_length', val=0)
         self.add_input('x_centers', shape_by_conn=True)
