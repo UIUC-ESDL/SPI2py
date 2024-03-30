@@ -41,7 +41,7 @@ model = prob.model
 # Mesh Parameters
 # bounds = (3, 11, 3, 11, 0, 3)
 # bounds = (0, 8, 1, 8, 0, 3)
-bounds = (0, 5, 0, 5, 0, 3) # TODO FIX nonzero bounds
+bounds = (0, 5, 0, 5, 0, 3)
 n_elements_per_unit_length = 2.0  # 1.0  # 6.0
 
 # System Parameters
@@ -80,7 +80,7 @@ prob.setup()
 
 # Configure the system
 prob.set_val('system.components.comp_0.translation', [2, 2.5, 1.5])
-prob.set_val('system.components.comp_0.rotation', [0, 0, 0])
+prob.set_val('system.components.comp_0.rotation', [0, 0, 0.3])
 
 
 

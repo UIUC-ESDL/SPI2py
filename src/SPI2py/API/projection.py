@@ -56,7 +56,7 @@ class Mesh(IndepVarComp):
 
 
         # TODO Remove num spheres...
-        kernel_positions, kernel_radii = read_xyzr_file(mdbd_unit_cube_filepath, num_spheres=1)
+        kernel_positions, kernel_radii = read_xyzr_file(mdbd_unit_cube_filepath, num_spheres=10)
 
         kernel_positions = torch.tensor(kernel_positions, dtype=torch.float64)
         kernel_radii = torch.tensor(kernel_radii, dtype=torch.float64).view(-1, 1)

@@ -153,12 +153,10 @@ def plot_problem(prob):
             grid = pv.StructuredGrid(x_grid, y_grid, z_grid)
             grid["density"] = density_values
 
-            p.add_volume(grid, scalars="density", cmap="coolwarm", scalar_bar_args={'title': "Density"},
-                         opacity="sigmoid", clim=[0, 1])
-
             x_centers = prob.get_val(f'mesh.x_centers')
             y_centers = prob.get_val(f'mesh.y_centers')
             z_centers = prob.get_val(f'mesh.z_centers')
+
 
             # pseudo_densities = prob.get_val(f'projections.projection_{i}.element_pseudo_densities')
             # # Loop over each element in the mesh
@@ -172,8 +170,35 @@ def plot_problem(prob):
             #             box = pv.Cube(center=center, x_length=spacing, y_length=spacing, z_length=spacing)
             #
             #             # Add the box to the plotter with the corresponding opacity
-            #             opacity = pseudo_densities[n_i, n_j, n_k]
+            #             opacity = pseudo_densities[n_i, n_j, n_k]-0.25
             #             p.add_mesh(box, color=color, opacity=opacity)
+            # opacity_transfer_function = [0.0, 0.0, 0.7, 0.0, 1.0, 1.0]
+
+            # Define the opacity transfer function
+            # n_points = 127
+            # opacity_transfer_function = np.zeros((n_points, 2))
+            #
+            # # Scalar values from 0 to 1
+            # opacity_transfer_function[:, 0] = np.linspace(0, 1, n_points)  # Scalar values from 0 to 1
+            #
+            # # Opacity values from 0 to 1
+            # opacity_transfer_function[:, 1] = np.linspace(0, 1, n_points)**2
+
+            # opacity = np.linspace(0, 1, 256).tolist()
+            # tf = pv.opacity_transfer_function(opacity, 256).astype(float) / 255.0
+
+            # # Opacity remains at 0 from scalar 0 to 0.5
+            # opacity_transfer_function[:int(n_points/2), 1] = 0
+            #
+            # # Opacity increases from 0 to 0.5 from scalar 0.5 to 1.0
+            # opacity_transfer_function[int(n_points/2):, 1] = np.linspace(0, 0.5, int(n_points/2))
+
+            # tf = np.linspace(0, 255, 256, dtype=np.uint8)
+
+
+            # color = "blue"
+            # p.add_volume(grid, cmap='coolwarm', clim=[0, 1], opacity=0.5)
+            p.add_volume(grid, scalars="density", opacity="sigmoid", cmap='coolwarm', clim=[0, 1])
 
 
     p.view_isometric()
