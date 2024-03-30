@@ -42,7 +42,7 @@ model = prob.model
 # bounds = (3, 11, 3, 11, 0, 3)
 # bounds = (0, 8, 1, 8, 0, 3)
 bounds = (0, 5, 0, 5, 0, 3) # TODO FIX nonzero bounds
-n_elements_per_unit_length = 1.0  # 1.0  # 6.0
+n_elements_per_unit_length = 1.5  # 1.0  # 6.0
 
 # System Parameters
 n_components = 1
@@ -105,12 +105,12 @@ plot_problem(prob)
 
 
 
-# estimate_projection_error(prob,
-#                           'system.components.comp_0.sphere_radii',
-#                           'system.components.comp_0.translation',
-#                           'projections.projection_0.volume',
-#                           [2, 2.5, 1.5],
-#                           10, 0.02)
+estimate_projection_error(prob,
+                          'system.components.comp_0.sphere_radii',
+                          'system.components.comp_0.translation',
+                          'projections.projection_0.volume',
+                          [2, 2.5, 1.5],
+                          10, 0.02)
 
 
 print('Done')
