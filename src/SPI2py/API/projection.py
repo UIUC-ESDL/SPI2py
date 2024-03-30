@@ -76,8 +76,6 @@ class Mesh(IndepVarComp):
         all_radii = torch.zeros((n_el_x, n_el_y, n_el_z, 1, 1)) + kernel_radii
 
 
-
-
         # Declare the outputs
         self.add_output('element_length', val=element_length)
         self.add_output('x_centers', val=x_centers)
