@@ -151,6 +151,9 @@ def plot_problem(prob):
         # Plot projections
         for i in range(n_projections):
 
+            # Get the necessary inputs
+
+
             # Get the object color
             color = prob.model.projections._subsystems_myproc[i].options['color']
 
@@ -187,6 +190,7 @@ def plot_problem(prob):
 
             # Highlight the "Highlight" Element
             ix, iy, iz = prob.get_val(f'projections.projection_{i}.highlight_element_index')
+
             x_centers = prob.get_val(f'mesh.x_centers')
             y_centers = prob.get_val(f'mesh.y_centers')
             z_centers = prob.get_val(f'mesh.z_centers')
@@ -200,21 +204,20 @@ def plot_problem(prob):
             # Option 1: Plot a sphere as a highlight marker
             highlight_marker = pv.Cube(center=(x_center, y_center, z_center), x_length=spacing, y_length=spacing, z_length=spacing)
             p.add_mesh(highlight_marker, color='orange', opacity=0.2)
-            sphere_2 = pv.Sphere(center=(x_center, y_center, z_center), radius=spacing/2)
-            p.add_mesh(sphere_2, color='red', opacity=0.5)
+
 
             mesh_points = prob.get_val('mesh.all_points')
             mesh_radii = prob.get_val('mesh.all_radii')
 
-            element_points = mesh_points[int(ix), int(iy), int(iz)].flatten()
-            element_radii = mesh_radii[int(ix), int(iy), int(iz)].flatten()
+            element_points = mesh_points[int(ix), int(iy), int(iz)]
+            element_radii = mesh_radii[int(ix), int(iy), int(iz)]
 
             element_spheres = []
             for point, radius in zip(element_points, element_radii):
                 element_spheres.append(pv.Sphere(radius=radius, center=point, theta_resolution=30, phi_resolution=30))
 
             element_spheres = pv.MultiBlock(element_spheres).combine().extract_surface().clean()
-            p.add_mesh(element_spheres, color='orange', opacity=0.5)
+            p.add_mesh(element_spheres, color='red', opacity=0.5)
 
 
 

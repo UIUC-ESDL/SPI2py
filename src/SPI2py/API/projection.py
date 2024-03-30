@@ -49,41 +49,34 @@ class Mesh(IndepVarComp):
         z_center_positions = torch.linspace(z_min + element_half_length, element_length * n_el_z - element_half_length, n_el_z)
         x_centers, y_centers, z_centers = torch.meshgrid(x_center_positions, y_center_positions, z_center_positions, indexing='ij')
 
-        # Read the unit cube
+        # Read the unit cube MDBD kernel
         SPI2py_path = os.path.dirname(os.path.dirname(__file__))
         mdbd_unit_cube_filepath = os.path.join('models\\projection', mdbd_unit_cube_filepath)
         mdbd_unit_cube_filepath = os.path.join(SPI2py_path, mdbd_unit_cube_filepath)
+
+
         # TODO Remove num spheres...
-        mdbd_unit_cube_sphere_positions, mdbd_unit_cube_sphere_radii = read_xyzr_file(mdbd_unit_cube_filepath, num_spheres=1)
-        mdbd_unit_cube_sphere_positions = torch.tensor(mdbd_unit_cube_sphere_positions, dtype=torch.float64)
-        mdbd_unit_cube_sphere_radii = torch.tensor(mdbd_unit_cube_sphere_radii, dtype=torch.float64).view(-1, 1)
+        kernel_positions, kernel_radii = read_xyzr_file(mdbd_unit_cube_filepath, num_spheres=1)
+
+        kernel_positions = torch.tensor(kernel_positions, dtype=torch.float64)
+        kernel_radii = torch.tensor(kernel_radii, dtype=torch.float64).view(-1, 1)
 
         # Truncate the number of spheres based on the minimum radius
-        mdbd_unit_cube_sphere_positions = mdbd_unit_cube_sphere_positions[mdbd_unit_cube_sphere_radii.flatten() > mdbd_unit_cube_min_radius]
-        mdbd_unit_cube_sphere_radii = mdbd_unit_cube_sphere_radii[mdbd_unit_cube_sphere_radii.flatten() > mdbd_unit_cube_min_radius]
+        kernel_positions = kernel_positions[kernel_radii.flatten() > mdbd_unit_cube_min_radius]
+        kernel_radii = kernel_radii[kernel_radii.flatten() > mdbd_unit_cube_min_radius]
 
         # Scale the sphere positions
-        mdbd_unit_cube_sphere_positions = mdbd_unit_cube_sphere_positions * element_length
-        mdbd_unit_cube_sphere_radii = mdbd_unit_cube_sphere_radii * element_length
+        kernel_positions = kernel_positions * element_length
+        kernel_radii = kernel_radii * element_length
 
         meshgrid_centers = torch.stack((x_centers, y_centers, z_centers), dim=-1)
         meshgrid_centers_expanded = meshgrid_centers.unsqueeze(3)
 
-        all_points = meshgrid_centers_expanded + mdbd_unit_cube_sphere_positions
-        all_radii = torch.zeros((n_el_x, n_el_y, n_el_z, 1, 1)) + mdbd_unit_cube_sphere_radii
+        all_points = meshgrid_centers_expanded + kernel_positions
+        all_radii = torch.zeros((n_el_x, n_el_y, n_el_z, 1, 1)) + kernel_radii
 
 
-        # # Apply the MDBD kernel to the sphere positions
-        # all_points = torch.zeros((x_centers.shape[0], x_centers.shape[1], x_centers.shape[2], mdbd_unit_cube_sphere_positions.shape[0], 3))
-        # all_radii = torch.zeros((x_centers.shape[0], x_centers.shape[1], x_centers.shape[2], mdbd_unit_cube_sphere_positions.shape[0], 1))
-        # for i in range(x_centers.shape[0]):
-        #     for j in range(x_centers.shape[1]):
-        #         for k in range(x_centers.shape[2]):
-        #             cell_center = torch.tensor([[x_centers[i, j, k], y_centers[i, j, k], z_centers[i, j, k]]])
-        #             # Translate relative points to this cell's center
-        #             points_abs = mdbd_unit_cube_sphere_positions + cell_center
-        #             all_points[i, j, k] = points_abs
-        #             all_radii[i, j, k] = mdbd_unit_cube_sphere_radii
+
 
         # Declare the outputs
         self.add_output('element_length', val=element_length)
