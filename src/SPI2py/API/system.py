@@ -1,8 +1,5 @@
-import numpy as np
 import jax.numpy as jnp
-from jax import jacfwd as jax_jacfwd
-import torch
-from torch.func import jacrev, jacfwd
+from jax import jacfwd
 
 import openmdao.api as om
 from openmdao.api import ExplicitComponent, Group
@@ -118,12 +115,12 @@ class Component(ExplicitComponent):
         lower = self.options['lower']
 
         # Convert the lists to numpy arrays
-        sphere_positions = np.array(sphere_positions).reshape(-1, 3)
-        sphere_radii = np.array(sphere_radii).reshape(-1, 1)
-        ports = np.array(ports).reshape(-1, 3)
+        sphere_positions = jnp.array(sphere_positions).reshape(-1, 3)
+        sphere_radii = jnp.array(sphere_radii).reshape(-1, 1)
+        ports = jnp.array(ports).reshape(-1, 3)
 
-        default_translation = np.array([[0.0, 0.0, 0.0]])
-        default_rotation = np.array([[0.0, 0.0, 0.0]])
+        default_translation = jnp.array([[0.0, 0.0, 0.0]])
+        default_rotation = jnp.array([[0.0, 0.0, 0.0]])
 
         # Define the input shapes
         self.add_input('sphere_positions', val=sphere_positions)
@@ -155,12 +152,7 @@ class Component(ExplicitComponent):
         translation = inputs['translation']
         rotation = inputs['rotation']
 
-        # Convert the input variables to torch tensors
-        # sphere_positions = torch.tensor(sphere_positions, dtype=torch.float64)
-        # sphere_radii = torch.tensor(sphere_radii, dtype=torch.float64)
-        # ports = torch.tensor(ports, dtype=torch.float64)
-        # translation = torch.tensor(translation, dtype=torch.float64)
-        # rotation = torch.tensor(rotation, dtype=torch.float64)
+        # Convert the input variables to Jax arrays
         sphere_positions = jnp.array(sphere_positions)
         sphere_radii = jnp.array(sphere_radii)
         ports = jnp.array(ports)
@@ -170,10 +162,6 @@ class Component(ExplicitComponent):
         # Calculate the transformed sphere positions and port positions
         sphere_positions_transformed = self.compute_transformation(sphere_positions, translation, rotation)
         ports_transformed = self.compute_transformation(ports, translation, rotation)
-
-        # Convert to numpy
-        # sphere_positions_transformed = sphere_positions_transformed.detach().numpy()
-        # ports_transformed = ports_transformed.detach().numpy()
 
         # Set the outputs
         outputs['transformed_sphere_positions'] = sphere_positions_transformed
@@ -189,12 +177,12 @@ class Component(ExplicitComponent):
         translation = inputs['translation']
         rotation = inputs['rotation']
 
-        # Convert the input variables to torch tensors
-        sphere_positions = torch.tensor(sphere_positions, dtype=torch.float64, requires_grad=True)
-        sphere_radii = torch.tensor(sphere_radii, dtype=torch.float64)
-        ports = torch.tensor(ports, dtype=torch.float64, requires_grad=True)
-        translation = torch.tensor(translation, dtype=torch.float64)
-        rotation = torch.tensor(rotation, dtype=torch.float64)
+        # Convert the input variables to Jax arrays
+        sphere_positions = jnp.array(sphere_positions)
+        sphere_radii = jnp.array(sphere_radii)
+        ports = jnp.array(ports)
+        translation = jnp.array(translation)
+        rotation = jnp.array(rotation)
 
         # Define the Jacobian matrices using PyTorch Autograd
         jac_sphere_positions = jacfwd(self.compute_transformation, argnums=(1, 2))
@@ -209,12 +197,6 @@ class Component(ExplicitComponent):
         grad_sphere_positions_rotation = jac_sphere_positions_val[1]
         grad_ports_translation = jac_ports_val[0]
         grad_ports_rotation = jac_ports_val[1]
-
-        # Convert to numpy
-        grad_sphere_positions_translation = grad_sphere_positions_translation.detach().numpy()
-        grad_sphere_positions_rotation = grad_sphere_positions_rotation.detach().numpy()
-        grad_ports_translation = grad_ports_translation.detach().numpy()
-        grad_ports_rotation = grad_ports_rotation.detach().numpy()
 
         # Set the outputs
         partials['transformed_sphere_positions', 'translation'] = grad_sphere_positions_translation
@@ -258,8 +240,8 @@ class Interconnect(ExplicitComponent):
         shape_radii = (n_spheres_per_segment * n_segments, 1)
 
         # Define the input values
-        positions = np.zeros(shape_positions)
-        radii = radius * np.ones(shape_radii)
+        positions = jnp.zeros(shape_positions)
+        radii = radius * jnp.ones(shape_radii)
 
         # Define the inputs
         self.add_input('start_point', shape=(1, 3))
@@ -291,12 +273,12 @@ class Interconnect(ExplicitComponent):
         # Unpack the options
         n_spheres_per_segment = self.options['n_spheres_per_segment']
 
-        # Convert the inputs to torch tensors
-        start_point = torch.tensor(start_point, dtype=torch.float64)
-        control_points = torch.tensor(control_points, dtype=torch.float64)
-        end_point = torch.tensor(end_point, dtype=torch.float64)
-        positions = torch.tensor(positions, dtype=torch.float64)
-        radii = torch.tensor(radii, dtype=torch.float64)
+        # Convert the inputs to Jax arrays
+        start_point = jnp.array(start_point)
+        control_points = jnp.array(control_points)
+        end_point = jnp.array(end_point)
+        positions = jnp.array(positions)
+        radii = jnp.array(radii)
 
         # Calculate the positions
         translated_positions = translate_linear_spline(positions, start_point, control_points, end_point, n_spheres_per_segment)
@@ -322,12 +304,12 @@ class Interconnect(ExplicitComponent):
         # Unpack the options
         n_spheres_per_segment = self.options['n_spheres_per_segment']
 
-        # Convert the inputs to torch tensors
-        start_point = torch.tensor(start_point, dtype=torch.float64)
-        control_points = torch.tensor(control_points, dtype=torch.float64)
-        end_point = torch.tensor(end_point, dtype=torch.float64)
-        positions = torch.tensor(positions, dtype=torch.float64)
-        radii = torch.tensor(radii, dtype=torch.float64)
+        # Convert the inputs to Jax arrays
+        start_point = jnp.array(start_point)
+        control_points = jnp.array(control_points)
+        end_point = jnp.array(end_point)
+        positions = jnp.array(positions)
+        radii = jnp.array(radii)
 
         # Calculate the partial derivatives
         jac_translated_positions = jacfwd(translate_linear_spline, argnums=(1, 2, 3))
