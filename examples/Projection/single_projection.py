@@ -64,19 +64,14 @@ model.connect('mesh.element_length', 'projections.projection_0.element_length')
 model.connect('mesh.element_length', 'projections.projection_1.element_length')
 
 
-model.connect('mesh.x_centers', 'projections.projection_0.x_centers')
-model.connect('mesh.y_centers', 'projections.projection_0.y_centers')
-model.connect('mesh.z_centers', 'projections.projection_0.z_centers')
+model.connect('mesh.centers', 'projections.projection_0.centers')
+model.connect('mesh.centers', 'projections.projection_1.centers')
 
-model.connect('mesh.x_centers', 'projections.projection_1.x_centers')
-model.connect('mesh.y_centers', 'projections.projection_1.y_centers')
-model.connect('mesh.z_centers', 'projections.projection_1.z_centers')
+model.connect('mesh.sample_points', 'projections.projection_0.sample_points')
+model.connect('mesh.sample_radii', 'projections.projection_0.sample_radii')
 
-model.connect('mesh.all_points', 'projections.projection_0.all_points')
-model.connect('mesh.all_radii', 'projections.projection_0.all_radii')
-
-model.connect('mesh.all_points', 'projections.projection_1.all_points')
-model.connect('mesh.all_radii', 'projections.projection_1.all_radii')
+model.connect('mesh.sample_points', 'projections.projection_1.sample_points')
+model.connect('mesh.sample_radii', 'projections.projection_1.sample_radii')
 
 
 
@@ -107,7 +102,7 @@ prob.run_model()
 
 # Debugging
 element_index = [1,2,1]
-pseudo_densities = prob.get_val('projections.projection_0.element_pseudo_densities')
+pseudo_densities = prob.get_val('projections.projection_0.pseudo_densities')
 
 print("Checking element: ", element_index)
 print("Pseudo-Density: ", pseudo_densities[element_index[0], element_index[1], element_index[2]])

@@ -92,9 +92,9 @@ def plot_problem(prob, plot_grid=True, plot_grid_points=True, plot_bounding_box=
 
         if plot_grid_points:
             # Plot the mdmd unit cube all spheres
-            all_points = prob.get_val('mesh.all_points')
+            all_points = prob.get_val('mesh.sample_points')
             all_points = np.array(all_points).reshape(-1,3)
-            all_radii = prob.get_val('mesh.all_radii')
+            all_radii = prob.get_val('mesh.sample_radii')
             # all_radii = np.array(all_radii).reshape(-1,1)
             # spheres = []
             # for position, radius in zip(all_points, all_radii):
@@ -113,28 +113,33 @@ def plot_problem(prob, plot_grid=True, plot_grid_points=True, plot_bounding_box=
             color = prob.model.projections._subsystems_myproc[i].options['color']
 
             # Get the pseudo-densities
-            density_values = prob.get_val(f'projections.projection_{i}.element_pseudo_densities').flatten(order='F')
+            density_values = prob.get_val(f'projections.projection_{i}.pseudo_densities').flatten(order='F')
 
             # Get the grid coordinates
-            x_grid = prob.get_val('mesh.x_grid')
-            y_grid = prob.get_val('mesh.y_grid')
-            z_grid = prob.get_val('mesh.z_grid')
+
+            # x_grid = prob.get_val('mesh.x_grid')
+            # y_grid = prob.get_val('mesh.y_grid')
+            # z_grid = prob.get_val('mesh.z_grid')
+            # grid = pv.StructuredGrid(x_grid, y_grid, z_grid)
+            mesh_grid = prob.get_val('mesh.grid')
+            x_grid = mesh_grid[:,:,:,0]
+            y_grid = mesh_grid[:,:,:,1]
+            z_grid = mesh_grid[:,:,:,2]
+
             grid = pv.StructuredGrid(x_grid, y_grid, z_grid)
             grid["density"] = density_values
 
-            x_centers = prob.get_val(f'mesh.x_centers')
-            y_centers = prob.get_val(f'mesh.y_centers')
-            z_centers = prob.get_val(f'mesh.z_centers')
+            centers = prob.get_val(f'mesh.centers')
 
             # Plot the projected pseudo-densities of each element (speed up by skipping near-zero densities)
-            pseudo_densities = prob.get_val(f'projections.projection_{i}.element_pseudo_densities')
+            pseudo_densities = prob.get_val(f'projections.projection_{i}.pseudo_densities')
             density_threshold = 0.15
             above_threshold_indices = np.argwhere(pseudo_densities > density_threshold)
             for idx in above_threshold_indices:
                 n_i, n_j, n_k = idx
 
                 # Calculate the center of the current box
-                center = [x_centers[n_i, n_j, n_k], y_centers[n_i, n_j, n_k], z_centers[n_i, n_j, n_k]]
+                center = centers[n_i, n_j, n_k]
 
                 # Create the box
                 box = pv.Cube(center=center, x_length=spacing, y_length=spacing, z_length=spacing)
