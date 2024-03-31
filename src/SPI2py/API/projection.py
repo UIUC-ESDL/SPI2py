@@ -1,8 +1,6 @@
 import os
-import torch
-from torch.func import jacfwd
 import jax.numpy as jnp
-# from jax import jacfwd
+from jax import jacfwd
 from openmdao.api import ExplicitComponent, Group, IndepVarComp
 from SPI2py.models.projection.encapsulation import overlap_volume_sphere_sphere
 from ..models.geometry.spherical_decomposition import read_xyzr_file
@@ -167,14 +165,15 @@ class Projection(ExplicitComponent):
         sphere_positions = inputs['sphere_positions']
         sphere_radii = inputs['sphere_radii']
 
-        # Convert the input to a tensor
-        element_length = torch.tensor(element_length, dtype=torch.float64)
-        centers = torch.tensor(centers, dtype=torch.float64)
-        sample_points = torch.tensor(sample_points, dtype=torch.float64)
-        sample_radii = torch.tensor(sample_radii, dtype=torch.float64)
+        # Convert the input to Jax arrays
+        element_length = jnp.array(element_length)
+        centers = jnp.array(centers)
+        sample_points = jnp.array(sample_points)
+        sample_radii = jnp.array(sample_radii)
 
-        sphere_positions = torch.tensor(sphere_positions, dtype=torch.float64)
-        sphere_radii = torch.tensor(sphere_radii, dtype=torch.float64)
+
+        sphere_positions = jnp.array(sphere_positions)
+        sphere_radii = jnp.array(sphere_radii)
 
         # Project
         pseudo_densities = self._project(sphere_positions, sphere_radii,
@@ -182,10 +181,10 @@ class Projection(ExplicitComponent):
                                                  centers, sample_points, sample_radii, rho_min)
 
         # Calculate the volume
-        volume = torch.sum(pseudo_densities) * element_length ** 3
+        volume = jnp.sum(pseudo_densities) * element_length ** 3
 
-        pseudo_densities = pseudo_densities.detach().numpy()
-        volume = volume.detach().numpy()
+        # pseudo_densities = pseudo_densities.detach().numpy()
+        # volume = volume.detach().numpy()
 
         # Write the outputs
         outputs['pseudo_densities'] = pseudo_densities
@@ -206,22 +205,20 @@ class Projection(ExplicitComponent):
         sphere_positions = inputs['sphere_positions']
         sphere_radii = inputs['sphere_radii']
 
-        # Convert the input to a tensor
-        element_length = torch.tensor(element_length, dtype=torch.float64, requires_grad=False)
-        centers = torch.tensor(centers, dtype=torch.float64, requires_grad=False)
-        sample_points = torch.tensor(sample_points, dtype=torch.float64, requires_grad=False)
-        sample_radii = torch.tensor(sample_radii, dtype=torch.float64, requires_grad=False)
+        # Convert the input to Jax arrays
+        element_length = jnp.array(element_length)
+        centers = jnp.array(centers)
+        sample_points = jnp.array(sample_points)
+        sample_radii = jnp.array(sample_radii)
 
-        sphere_positions = torch.tensor(sphere_positions, dtype=torch.float64, requires_grad=True)
-        sphere_radii = torch.tensor(sphere_radii, dtype=torch.float64, requires_grad=False)
+        sphere_positions = jnp.array(sphere_positions)
+        sphere_radii = jnp.array(sphere_radii)
 
         # Calculate the Jacobian of the kernel
         grad_sphere_positions = jacfwd(self._project, argnums=0)
         grad_sphere_positions_val = grad_sphere_positions(sphere_positions, sphere_radii, element_length,
                                                  centers,sample_points, sample_radii, rho_min)
 
-        # Convert the outputs to numpy arrays
-        grad_sphere_positions_val = grad_sphere_positions_val.detach().numpy()
 
         partials['pseudo_densities', 'sphere_positions'] = grad_sphere_positions_val
 
@@ -240,19 +237,22 @@ class Projection(ExplicitComponent):
 
         nx, ny, nz, _ = centers.shape
 
-        element_volumes = (4/3) * torch.pi * sample_radii ** 3
+        element_volumes = (4/3) * jnp.pi * sample_radii ** 3
 
         object_positions = sphere_positions
         object_radii = sphere_radii
-        object_radii_expanded = object_radii.transpose(0, 1).unsqueeze(0).unsqueeze(0).unsqueeze(0)
+        object_radii_transposed = object_radii.T
+        object_radii_expanded = object_radii_transposed[None, None, None, ...]
 
 
-        distances = torch.norm(sample_points[..., None, :] - object_positions[None, None, None, None, :, :], dim=-1)
+
+        # Assuming sample_points, object_positions, object_radii_expanded, sample_radii, and element_volumes are JAX arrays
+        distances = jnp.linalg.norm(sample_points[..., None, :] - object_positions[None, None, None, None, :, :], axis=-1)
         volume_overlaps = overlap_volume_sphere_sphere(object_radii_expanded, sample_radii, distances)
         volume_fractions = volume_overlaps / element_volumes
-        pseudo_densities = torch.sum(volume_fractions, dim=(3, 4), keepdim=True).squeeze(3)
+        pseudo_densities = jnp.sum(volume_fractions, axis=(3, 4), keepdims=True).squeeze(3)
 
         # Clip the pseudo-densities
-        pseudo_densities = torch.clip(pseudo_densities, min=rho_min, max=1)
+        pseudo_densities = jnp.clip(pseudo_densities, a_min=rho_min, a_max=1)
 
         return pseudo_densities
