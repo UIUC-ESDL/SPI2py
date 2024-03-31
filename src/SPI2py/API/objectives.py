@@ -1,7 +1,7 @@
 import torch
 from torch.func import jacrev
 from openmdao.api import ExplicitComponent
-from ..models.geometry.bounding_box_volume import bounding_box_bounds_points, bounding_box_volume, bounding_box_bounds
+from ..models.geometry.bounding_volume import bounding_box_bounds_points, bounding_box_volume, bounding_box_bounds
 
 
 class BoundingBoxVolume(ExplicitComponent):

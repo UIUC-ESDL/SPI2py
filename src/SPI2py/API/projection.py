@@ -3,7 +3,7 @@ import os
 from torch.func import jacfwd
 from openmdao.api import ExplicitComponent, Group, IndepVarComp
 from SPI2py.models.projection.encapsulation import overlap_volume_sphere_sphere
-from ..models.geometry.maximal_disjoint_ball_decomposition import read_xyzr_file
+from ..models.geometry.spherical_decomposition import read_xyzr_file
 
 
 class Mesh(IndepVarComp):
