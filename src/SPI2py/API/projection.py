@@ -1,6 +1,8 @@
-import torch
 import os
+import torch
 from torch.func import jacfwd
+import jax.numpy as jnp
+# from jax import jacfwd
 from openmdao.api import ExplicitComponent, Group, IndepVarComp
 from SPI2py.models.projection.encapsulation import overlap_volume_sphere_sphere
 from ..models.geometry.spherical_decomposition import read_xyzr_file
@@ -37,17 +39,17 @@ class Mesh(IndepVarComp):
         element_half_length = element_length / 2
 
         # Define the mesh grid positions
-        x_grid_positions = torch.linspace(x_min, x_max, n_el_x + 1)
-        y_grid_positions = torch.linspace(y_min, y_max, n_el_y + 1)
-        z_grid_positions = torch.linspace(z_min, z_max, n_el_z + 1)
-        x_grid, y_grid, z_grid = torch.meshgrid(x_grid_positions, y_grid_positions, z_grid_positions, indexing='ij')
-        grid = torch.stack((x_grid, y_grid, z_grid), dim=-1)
+        x_grid_positions = jnp.linspace(x_min, x_max, n_el_x + 1)
+        y_grid_positions = jnp.linspace(y_min, y_max, n_el_y + 1)
+        z_grid_positions = jnp.linspace(z_min, z_max, n_el_z + 1)
+        x_grid, y_grid, z_grid = jnp.meshgrid(x_grid_positions, y_grid_positions, z_grid_positions, indexing='ij')
+        grid = jnp.stack((x_grid, y_grid, z_grid), axis=-1)
 
         # Define the mesh center points
-        x_center_positions = torch.linspace(x_min + element_half_length, element_length * n_el_x - element_half_length, n_el_x)
-        y_center_positions = torch.linspace(y_min + element_half_length, element_length * n_el_y - element_half_length, n_el_y)
-        z_center_positions = torch.linspace(z_min + element_half_length, element_length * n_el_z - element_half_length, n_el_z)
-        x_centers, y_centers, z_centers = torch.meshgrid(x_center_positions, y_center_positions, z_center_positions, indexing='ij')
+        x_center_positions = jnp.linspace(x_min + element_half_length, element_length * n_el_x - element_half_length, n_el_x)
+        y_center_positions = jnp.linspace(y_min + element_half_length, element_length * n_el_y - element_half_length, n_el_y)
+        z_center_positions = jnp.linspace(z_min + element_half_length, element_length * n_el_z - element_half_length, n_el_z)
+        x_centers, y_centers, z_centers = jnp.meshgrid(x_center_positions, y_center_positions, z_center_positions, indexing='ij')
 
         # Read the unit cube MDBD kernel
         SPI2py_path = os.path.dirname(os.path.dirname(__file__))
@@ -58,8 +60,10 @@ class Mesh(IndepVarComp):
         # TODO Remove num spheres...
         kernel_positions, kernel_radii = read_xyzr_file(mdbd_unit_cube_filepath, num_spheres=10)
 
-        kernel_positions = torch.tensor(kernel_positions, dtype=torch.float64)
-        kernel_radii = torch.tensor(kernel_radii, dtype=torch.float64).view(-1, 1)
+        # kernel_positions = torch.tensor(kernel_positions, dtype=torch.float64)
+        # kernel_radii = torch.tensor(kernel_radii, dtype=torch.float64).view(-1, 1)
+        kernel_positions = jnp.array(kernel_positions)
+        kernel_radii = jnp.array(kernel_radii).reshape(-1, 1)
 
         # Truncate the number of spheres based on the minimum radius
         kernel_positions = kernel_positions[kernel_radii.flatten() > mdbd_unit_cube_min_radius]
@@ -69,11 +73,12 @@ class Mesh(IndepVarComp):
         kernel_positions = kernel_positions * element_length
         kernel_radii = kernel_radii * element_length
 
-        meshgrid_centers = torch.stack((x_centers, y_centers, z_centers), dim=-1)
-        meshgrid_centers_expanded = meshgrid_centers.unsqueeze(3)
+        meshgrid_centers = jnp.stack((x_centers, y_centers, z_centers), axis=-1)
+        meshgrid_centers_expanded = jnp.expand_dims(meshgrid_centers, axis=3)
+
 
         all_points = meshgrid_centers_expanded + kernel_positions
-        all_radii = torch.zeros((n_el_x, n_el_y, n_el_z, 1, 1)) + kernel_radii
+        all_radii = jnp.zeros((n_el_x, n_el_y, n_el_z, 1, 1)) + kernel_radii
 
 
         # Declare the outputs
