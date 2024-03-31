@@ -142,17 +142,7 @@ class Projection(ExplicitComponent):
         self.add_input('sphere_radii', shape_by_conn=True)
 
         # Outputs
-        # TODO Fix copy shape, should be :,:,:,1... not 3(was copy x_centers)
-        # self.add_output('pseudo_densities', shape=(20,20,6))
-
-        # def compute_shape(shapes):
-        #     shape = shapes['centers'][:,:,:].shape
-        #     return [20, 20, 6]
-        # self.add_output('pseudo_densities', compute_shape=compute_shape)
-        # self.add_output('pseudo_densities', compute_shape=lambda shapes: shapes['centers'][:,:,:,0].shape)
         self.add_output('pseudo_densities', compute_shape=lambda shapes: (shapes['centers'][0],shapes['centers'][1],shapes['centers'][2]))
-
-
         self.add_output('volume', val=0.0)
 
     def setup_partials(self):
@@ -245,30 +235,17 @@ class Projection(ExplicitComponent):
         """
 
         nx, ny, nz, _ = centers.shape
-        n_points = sphere_positions.shape[0]
-
-        expected_element_volume = element_length ** 3
-        element_volume = torch.sum((4/3) * torch.pi * sample_radii[0, 0, 0] ** 3)
 
         element_volumes = (4/3) * torch.pi * sample_radii ** 3
 
-        # assert element_volume <= expected_element_volume
-
-        # Initialize the pseudo-densities
-        # pseudo_densities = torch.zeros((nx, ny, nz, 1))
-
-        mesh_positions = sample_points
-        mesh_radii = sample_radii
         object_positions = sphere_positions
         object_radii = sphere_radii
         object_radii_expanded = object_radii.transpose(0, 1).unsqueeze(0).unsqueeze(0).unsqueeze(0)
 
-        distances = torch.norm(mesh_positions[..., None, :] - object_positions[None, None, None, None, :, :], dim=-1)
 
-        volume_overlaps = overlap_volume_sphere_sphere(object_radii_expanded, mesh_radii, distances)
-
+        distances = torch.norm(sample_points[..., None, :] - object_positions[None, None, None, None, :, :], dim=-1)
+        volume_overlaps = overlap_volume_sphere_sphere(object_radii_expanded, sample_radii, distances)
         volume_fractions = volume_overlaps / element_volumes
-
         pseudo_densities = torch.sum(volume_fractions, dim=(3, 4), keepdim=True).squeeze(3)
 
         # Clip the pseudo-densities
