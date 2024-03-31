@@ -6,6 +6,7 @@ Author:     Chad Peterson
 import numpy as np
 import openmdao.api as om
 import torch
+from time import time_ns
 
 from SPI2py.API.system import System
 from SPI2py.API.utilities import Multiplexer, MaxAggregator
@@ -41,12 +42,12 @@ model = prob.model
 # Mesh Parameters
 # bounds = (3, 11, 3, 11, 0, 3)
 # bounds = (0, 8, 1, 8, 0, 3)
-bounds = (0, 5, 0, 6, 0, 3)
-n_elements_per_unit_length = 1.0  # 1.0  # 6.0
+bounds = (0, 7, 0, 7, 0, 3)
+n_elements_per_unit_length = 3.0  # 1.0  # 6.0
 
 # System Parameters
 n_components = 2
-n_points = 100
+n_points = 25
 n_points_per_object = [n_points for _ in range(n_components)]
 
 
@@ -100,7 +101,7 @@ model.connect('mux_all_sphere_radii.stacked_output', 'bbv.sphere_radii')
 
 # Define the objective and constraints
 prob.model.add_objective('bbv.bounding_box_volume', ref=1, ref0=0)
-prob.model.add_constraint('volume_fraction_constraint.volume_fraction_constraint', upper=0.01)
+prob.model.add_constraint('volume_fraction_constraint.volume_fraction_constraint', lower=0, upper=0.01)
 
 prob.model.add_design_var('system.components.comp_0.translation', ref=10, lower=0, upper=10)
 # prob.model.add_design_var('rotation', ref=2*3.14159)
@@ -115,7 +116,7 @@ prob.set_val('system.components.comp_0.translation', [2, 2.5, 1.5])
 prob.set_val('system.components.comp_0.rotation', [0, 0, 0.3])
 
 prob.set_val('system.components.comp_1.translation', [2, 4.5, 1.5])
-prob.set_val('system.components.comp_1.rotation', [0, 0, 0])
+prob.set_val('system.components.comp_1.rotation', [0.1, 0.1, 0])
 
 prob.driver = om.ScipyOptimizeDriver()
 prob.driver.options['maxiter'] = 5
@@ -126,8 +127,13 @@ prob.run_model()
 
 print("Constraint Value: ", prob.get_val('volume_fraction_constraint.volume_fraction_constraint'))
 
+t1 = time_ns()
+
 # Run the optimization
 # prob.run_driver()
+
+t2 = time_ns()
+print('Runtime: ', (t2 - t1) / 1e9, 's')
 
 
 # Debugging
@@ -140,7 +146,7 @@ print("Max Pseudo-Density: ", pseudo_densities.max())
 print("Constraint Value: ", prob.get_val('volume_fraction_constraint.volume_fraction_constraint'))
 
 # Check the initial state
-plot_problem(prob, plot_bounding_box=True)
+plot_problem(prob, plot_bounding_box=True, plot_grid_points=False)
 
 
 

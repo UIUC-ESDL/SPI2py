@@ -140,7 +140,7 @@ def plot_problem(prob, plot_grid=True, plot_grid_points=True, plot_bounding_box=
                 box = pv.Cube(center=center, x_length=spacing, y_length=spacing, z_length=spacing)
 
                 # Add the box to the plotter with the corresponding opacity
-                opacity = pseudo_densities[n_i, n_j, n_k]/2  # /2 is to make the boxes more transparent
+                opacity = pseudo_densities[n_i, n_j, n_k]/6  # /2 is to make the boxes more transparent
                 plotter.add_mesh(box, color=color, opacity=opacity)
 
 

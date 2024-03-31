@@ -4,8 +4,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import pyvista as pv
-from SPI2py.models.geometry.maximal_disjoint_ball_decomposition import mdbd
-from SPI2py.models.geometry.finite_sphere_method import read_xyzr_file
+from SPI2py.models.geometry.maximal_disjoint_ball_decomposition import mdbd, read_xyzr_file
 
 # filenames = os.listdir(path='Thingi10k_models/')
 

@@ -192,9 +192,8 @@ class VolumeFractionConstraint(ExplicitComponent):
 
         # Calculate the volume
         combined_volume = combined_pseudo_densities.sum() * element_length ** 3
+
         # Calculate the volume fraction constraint (negative-null form)
         volume_fraction_constraint = individual_volumes / combined_volume  - 1
-
-        # volume_fraction_constraint = individual_volumes / combined_pseudo_densities.sum() - 1
 
         return volume_fraction_constraint

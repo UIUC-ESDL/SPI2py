@@ -1,11 +1,10 @@
 import torch
-import numpy as np
 import os
 from torch.func import jacfwd
 from openmdao.api import ExplicitComponent, Group, IndepVarComp
-from ..models.kinematics.distance_calculations import distances_points_points
-from ..models.kinematics.encapsulation import overlap_volume_spheres_spheres, overlap_volume_sphere_sphere
-from ..models.geometry.finite_sphere_method import read_xyzr_file
+from SPI2py.models.projection.encapsulation import overlap_volume_sphere_sphere
+from ..models.geometry.maximal_disjoint_ball_decomposition import read_xyzr_file
+
 
 class Mesh(IndepVarComp):
     def initialize(self):

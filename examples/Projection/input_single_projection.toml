@@ -3,14 +3,14 @@
 [components.0]
 description = 'radiator and ion exchanger 1a'
 filepath='components/mdbds/radiator_and_ion_exchanger.xyzr'
-n_spheres=100
+n_spheres=25
 ports = [[-1.5, 0, 0], [1.5, 0, 0]]
 color='purple'
 
 [components.1]
 description = 'radiator and ion exchanger 1b'
 filepath='components/mdbds/radiator_and_ion_exchanger.xyzr'
-n_spheres=100
+n_spheres=25
 ports = [[-1.5, 0, 0], [1.5, 0, 0]]
 color='purple'
 

@@ -4,8 +4,7 @@ from torch.func import jacrev, jacfwd
 import openmdao.api as om
 from openmdao.api import ExplicitComponent, Group
 
-from ..models.geometry.point_clouds import generate_point_cloud
-from ..models.geometry.finite_sphere_method import read_xyzr_file
+from ..models.geometry.maximal_disjoint_ball_decomposition import read_xyzr_file
 from ..models.kinematics.linear_spline_transformations import translate_linear_spline
 from ..models.kinematics.rigid_body_transformations import assemble_transformation_matrix, \
     apply_transformation_matrix
