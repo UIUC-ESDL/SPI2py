@@ -1,6 +1,9 @@
 import numpy as np
+import jax.numpy as jnp
+from jax import jacfwd as jax_jacfwd
 import torch
 from torch.func import jacrev, jacfwd
+
 import openmdao.api as om
 from openmdao.api import ExplicitComponent, Group
 
@@ -66,6 +69,7 @@ class System(Group):
 
 
             for i, key in enumerate(interconnects_dict.keys()):
+
                 component_1 = interconnects_dict[key]['component_1']
                 port_1 = interconnects_dict[key]['port_1']
                 component_2 = interconnects_dict[key]['component_2']
@@ -152,23 +156,24 @@ class Component(ExplicitComponent):
         rotation = inputs['rotation']
 
         # Convert the input variables to torch tensors
-        sphere_positions = torch.tensor(sphere_positions, dtype=torch.float64)
-        sphere_radii = torch.tensor(sphere_radii, dtype=torch.float64)
-        ports = torch.tensor(ports, dtype=torch.float64)
-        translation = torch.tensor(translation, dtype=torch.float64)
-        rotation = torch.tensor(rotation, dtype=torch.float64)
+        # sphere_positions = torch.tensor(sphere_positions, dtype=torch.float64)
+        # sphere_radii = torch.tensor(sphere_radii, dtype=torch.float64)
+        # ports = torch.tensor(ports, dtype=torch.float64)
+        # translation = torch.tensor(translation, dtype=torch.float64)
+        # rotation = torch.tensor(rotation, dtype=torch.float64)
+        sphere_positions = jnp.array(sphere_positions)
+        sphere_radii = jnp.array(sphere_radii)
+        ports = jnp.array(ports)
+        translation = jnp.array(translation)
+        rotation = jnp.array(rotation)
 
         # Calculate the transformed sphere positions and port positions
         sphere_positions_transformed = self.compute_transformation(sphere_positions, translation, rotation)
         ports_transformed = self.compute_transformation(ports, translation, rotation)
 
-        # Calculate the reference density
-        # TODO Implement
-
-
         # Convert to numpy
-        sphere_positions_transformed = sphere_positions_transformed.detach().numpy()
-        ports_transformed = ports_transformed.detach().numpy()
+        # sphere_positions_transformed = sphere_positions_transformed.detach().numpy()
+        # ports_transformed = ports_transformed.detach().numpy()
 
         # Set the outputs
         outputs['transformed_sphere_positions'] = sphere_positions_transformed

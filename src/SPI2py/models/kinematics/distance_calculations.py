@@ -6,7 +6,7 @@ Provides functions to calculate the distance between classes in various ways.
 import jax.numpy as np
 import torch
 
-
+# TODO DELETE PYTORCH IMPLEMENTATION
 def distances_points_points(a: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
     """
     Calculates the pairwise distance between two sets of 3D points.
