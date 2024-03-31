@@ -16,15 +16,8 @@ from SPI2py.models.utilities.visualization import plot_problem
 from SPI2py.models.utilities.inputs import read_input_file
 from SPI2py.API.objectives import BoundingBoxVolume
 from SPI2py.API.utilities import Multiplexer, estimate_partial_derivative_memory, estimate_projection_error
-from SPI2py.models.geometry.maximal_disjoint_ball_decomposition import mdbd
+from SPI2py.models.geometry.spherical_decomposition import mdbd
 import pyvista as pv
-
-# radiator_and_ion_exchanger = pv.Cube(bounds=(0, 2.850, 0, 0.830, 0, 0.830))
-# radiator_and_ion_exchanger.save('radiator_and_ion_exchanger.stl')
-# # Create the parts
-# mdbd('components/', 'CAD_Files/radiator_and_ion_exchanger.stl','mdbds/radiator_and_ion_exchanger.xyzr',
-#      num_spheres=100, min_radius=0.0001, meshgrid_increment=100, plot=True)
-
 
 # Set the random seed for reproducibility
 np.random.seed(0)
