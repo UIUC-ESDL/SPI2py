@@ -116,15 +116,10 @@ def plot_problem(prob, plot_grid=True, plot_grid_points=True, plot_bounding_box=
             density_values = prob.get_val(f'projections.projection_{i}.pseudo_densities').flatten(order='F')
 
             # Get the grid coordinates
-
-            # x_grid = prob.get_val('mesh.x_grid')
-            # y_grid = prob.get_val('mesh.y_grid')
-            # z_grid = prob.get_val('mesh.z_grid')
-            # grid = pv.StructuredGrid(x_grid, y_grid, z_grid)
             mesh_grid = prob.get_val('mesh.grid')
-            x_grid = mesh_grid[:,:,:,0]
-            y_grid = mesh_grid[:,:,:,1]
-            z_grid = mesh_grid[:,:,:,2]
+            x_grid = mesh_grid[:, :, :, 0]
+            y_grid = mesh_grid[:, :, :, 1]
+            z_grid = mesh_grid[:, :, :, 2]
 
             grid = pv.StructuredGrid(x_grid, y_grid, z_grid)
             grid["density"] = density_values

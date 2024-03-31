@@ -143,7 +143,16 @@ class Projection(ExplicitComponent):
 
         # Outputs
         # TODO Fix copy shape, should be :,:,:,1... not 3(was copy x_centers)
-        self.add_output('pseudo_densities', shape=(20,20,6))
+        # self.add_output('pseudo_densities', shape=(20,20,6))
+
+        # def compute_shape(shapes):
+        #     shape = shapes['centers'][:,:,:].shape
+        #     return [20, 20, 6]
+        # self.add_output('pseudo_densities', compute_shape=compute_shape)
+        # self.add_output('pseudo_densities', compute_shape=lambda shapes: shapes['centers'][:,:,:,0].shape)
+        self.add_output('pseudo_densities', compute_shape=lambda shapes: (shapes['centers'][0],shapes['centers'][1],shapes['centers'][2]))
+
+
         self.add_output('volume', val=0.0)
 
     def setup_partials(self):
