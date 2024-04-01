@@ -1,7 +1,6 @@
-import numpy as np
-import torch
+import jax.numpy as jnp
+from jax import jacfwd, jacrev
 from openmdao.core.explicitcomponent import ExplicitComponent
-from torch.func import jacrev, jacfwd
 from ..models.utilities.aggregation import kreisselmeier_steinhauser_max, kreisselmeier_steinhauser_min
 
 
@@ -45,13 +44,10 @@ class Multiplexer(ExplicitComponent):
         # Convert the input arrays to torch tensors
         input_tensors = ()
         for input_array in input_arrays:
-            input_tensors = input_tensors + (torch.tensor(input_array, dtype=torch.float64),)
+            input_tensors = input_tensors + (jnp.array(input_array),)
 
         # Stack inputs vertically
         stacked_output = self._multiplex(*input_tensors)
-
-        # Convert the stacked output to a numpy array
-        stacked_output = stacked_output.detach().numpy()
 
         # Set the output
         outputs['stacked_output'] = stacked_output
@@ -69,7 +65,7 @@ class Multiplexer(ExplicitComponent):
         # Convert the input arrays to torch tensors
         input_tensors = ()
         for input_array in input_arrays:
-            input_tensors = input_tensors + (torch.tensor(input_array, dtype=torch.float64, requires_grad=True),)
+            input_tensors = input_tensors + (jnp.array(input_array),)
 
         # Calculate the partial derivatives wrt all inputs
         argnums = tuple(range(len(n_i)))
@@ -78,7 +74,7 @@ class Multiplexer(ExplicitComponent):
         # Convert the partial derivatives to numpy arrays
         jac_stacked_output_np = []
         for jac in jac_stacked_output:
-            jac_stacked_output_np.append(jac.detach().numpy())
+            jac_stacked_output_np.append(jac)
 
         # Set the partial derivatives
         for i in range(len(n_i)):
@@ -87,7 +83,8 @@ class Multiplexer(ExplicitComponent):
 
     @staticmethod
     def _multiplex(*args):
-        return torch.vstack(args)
+        return jnp.vstack(args)
+
 
 
 class Aggregator(ExplicitComponent):
@@ -117,7 +114,7 @@ class Aggregator(ExplicitComponent):
         input_vector = inputs['input_vector']
 
         # Convert the input arrays to torch tensors
-        input_vector = torch.tensor(input_vector, dtype=torch.float64)
+        input_vector = jnp.array(input_vector)
 
         # Stack inputs vertically
         aggregated_output = self._compute_aggregation(input_vector)
@@ -133,7 +130,7 @@ class Aggregator(ExplicitComponent):
         input_vector = inputs['input_vector']
 
         # Convert the input arrays to torch tensors
-        input_vector = torch.tensor(input_vector, dtype=torch.float64)
+        input_vector = jnp.array(input_vector)
 
         # Calculate the partial derivatives
         jac_aggregated_output = jacrev(self._compute_aggregation)(input_vector)
@@ -222,7 +219,7 @@ class MinAggregator(Aggregator):
 
 def estimate_partial_derivative_memory(n_points, nx, ny, nz):
     pd_size = n_points*3*nx*ny*nz
-    pd = np.ones((pd_size, 1), dtype=np.float64)
+    pd = jnp.ones((pd_size, 1), dtype=jnp.float64)
 
     print(f"Jacobian size: {pd_size}")
 
@@ -233,8 +230,8 @@ def estimate_partial_derivative_memory(n_points, nx, ny, nz):
 def estimate_projection_error(prob, radii, variable, volume, default_set_val, steps, step_size):
 
     sphere_radii = prob.get_val(radii)
-    sphere_volume = 4/3 * np.pi * sphere_radii**3
-    true_volume = float(np.sum(sphere_volume))
+    sphere_volume = 4/3 * jnp.pi * sphere_radii**3
+    true_volume = float(jnp.sum(sphere_volume))
 
     volumes = []
 
@@ -251,9 +248,9 @@ def estimate_projection_error(prob, radii, variable, volume, default_set_val, st
         volumes.append(float(prob.get_val(volume)))
 
 
-    volumes = np.array(volumes)
-    max_relative_error = round(100 * np.max(np.abs(volumes - volumes[0]) /volumes[0]), 2)
-    max_true_error = round(100 * np.max(np.abs(volumes - true_volume) / true_volume), 2)
+    volumes = jnp.array(volumes)
+    max_relative_error = round(100 * jnp.max(jnp.abs(volumes - volumes[0]) /volumes[0]), 2)
+    max_true_error = round(100 * jnp.max(jnp.abs(volumes - true_volume) / true_volume), 2)
 
     print('Volumes:', volumes)
     print(f'Max error wrt mesh: {max_relative_error} %')
