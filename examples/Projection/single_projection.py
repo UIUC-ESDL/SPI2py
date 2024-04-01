@@ -124,7 +124,7 @@ print("Constraint Value: ", prob.get_val('volume_fraction_constraint.volume_frac
 t1 = time_ns()
 
 # Run the optimization
-# prob.run_driver()
+prob.run_driver()
 
 t2 = time_ns()
 print('Runtime: ', (t2 - t1) / 1e9, 's')
