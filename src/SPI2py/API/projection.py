@@ -1,9 +1,13 @@
-import os
 import jax.numpy as jnp
 from jax import jacfwd
-from openmdao.api import ExplicitComponent, Group, IndepVarComp
-from SPI2py.models.projection.encapsulation import overlap_volume_sphere_sphere
-from ..models.geometry.spherical_decomposition import read_xyzr_file
+from openmdao.api import ExplicitComponent, Group
+from ..models.projection.projection import calculate_pseudo_densities
+
+import os
+
+from openmdao.core.indepvarcomp import IndepVarComp
+
+from SPI2py.models.geometry.spherical_decomposition import read_xyzr_file
 
 
 class Mesh(IndepVarComp):
@@ -88,7 +92,6 @@ class Mesh(IndepVarComp):
         self.add_output('n_el_z', val=n_el_z)
         self.add_output('sample_points', val=all_points)
         self.add_output('sample_radii', val=all_radii)
-
 
 class Projections(Group):
     def initialize(self):
@@ -183,9 +186,6 @@ class Projection(ExplicitComponent):
         # Calculate the volume
         volume = jnp.sum(pseudo_densities) * element_length ** 3
 
-        # pseudo_densities = pseudo_densities.detach().numpy()
-        # volume = volume.detach().numpy()
-
         # Write the outputs
         outputs['pseudo_densities'] = pseudo_densities
         outputs['volume'] = volume
@@ -224,35 +224,7 @@ class Projection(ExplicitComponent):
 
     @staticmethod
     def _project(sphere_positions, sphere_radii, element_length, centers, sample_points, sample_radii, rho_min):
-        """
-        Projects the points to the mesh and calculates the pseudo-densities
 
-        mesh_positions: (nx, ny, nz, n_mesh_points, 1, 3) tensor
-        mesh_radii: (nx, ny, nz, n_mesh_points, 1) tensor
-        object_positions_expanded: (1, 1, 1, 1, n_object_points, 3) tensor
-        object_radii_expanded: (1, 1, 1, 1, n_object_points) tensor
-
-        pseudo_densities: (nx, ny, nz, 1) tensor
-        """
-
-        nx, ny, nz, _ = centers.shape
-
-        element_volumes = (4/3) * jnp.pi * sample_radii ** 3
-
-        object_positions = sphere_positions
-        object_radii = sphere_radii
-        object_radii_transposed = object_radii.T
-        object_radii_expanded = object_radii_transposed[None, None, None, ...]
-
-
-
-        # Assuming sample_points, object_positions, object_radii_expanded, sample_radii, and element_volumes are JAX arrays
-        distances = jnp.linalg.norm(sample_points[..., None, :] - object_positions[None, None, None, None, :, :], axis=-1)
-        volume_overlaps = overlap_volume_sphere_sphere(object_radii_expanded, sample_radii, distances)
-        volume_fractions = volume_overlaps / element_volumes
-        pseudo_densities = jnp.sum(volume_fractions, axis=(3, 4), keepdims=True).squeeze(3)
-
-        # Clip the pseudo-densities
-        pseudo_densities = jnp.clip(pseudo_densities, a_min=rho_min, a_max=1)
+        pseudo_densities = calculate_pseudo_densities(sphere_positions, sphere_radii, element_length, centers, sample_points, sample_radii, rho_min)
 
         return pseudo_densities

@@ -1,13 +1,13 @@
-import torch
+import jax.numpy as jnp
 
 def bounding_box_bounds_points(positions):
 
     # Find overall min and max coordinates
-    x_min, y_min, z_min = torch.min(positions, dim=0)[0].reshape(3, 1)
-    x_max, y_max, z_max = torch.max(positions, dim=0)[0].reshape(3, 1)
+    x_min, y_min, z_min = jnp.min(positions, axis=0).reshape(3, 1)
+    x_max, y_max, z_max = jnp.max(positions, axis=0).reshape(3, 1)
 
     # Combine into a single tensor representing the bounding box
-    bounds = torch.concatenate((x_min, x_max, y_min, y_max, z_min, z_max))
+    bounds = jnp.concatenate((x_min, x_max, y_min, y_max, z_min, z_max))
 
     return bounds
 
@@ -23,15 +23,15 @@ def bounding_box_bounds(positions, radii):
     """
 
     # Calculate min and max coordinates for each sphere
-    min_coords = positions - radii.view(-1, 1)
-    max_coords = positions + radii.view(-1, 1)
+    min_coords = positions - radii.reshape(-1, 1)
+    max_coords = positions + radii.reshape(-1, 1)
 
     # Find overall min and max coordinates
-    x_min, y_min, z_min = torch.min(min_coords, dim=0)[0].reshape(3, 1)
-    x_max, y_max, z_max = torch.max(max_coords, dim=0)[0].reshape(3, 1)
+    x_min, y_min, z_min = jnp.min(min_coords, axis=0).reshape(3, 1)
+    x_max, y_max, z_max = jnp.max(max_coords, axis=0).reshape(3, 1)
 
     # Combine into a single tensor representing the bounding box
-    bounds = torch.concatenate((x_min, x_max, y_min, y_max, z_min, z_max))
+    bounds = jnp.concatenate((x_min, x_max, y_min, y_max, z_min, z_max))
 
     return bounds
 

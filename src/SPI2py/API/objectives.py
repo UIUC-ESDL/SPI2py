@@ -1,5 +1,5 @@
-import torch
-from torch.func import jacrev
+import jax.numpy as jnp
+from jax import jacrev
 from openmdao.api import ExplicitComponent
 from ..models.geometry.bounding_volume import bounding_box_bounds_points, bounding_box_volume, bounding_box_bounds
 
@@ -28,8 +28,8 @@ class BoundingBoxVolume(ExplicitComponent):
         radii = inputs['sphere_radii']
 
         # Convert the inputs to torch tensors
-        positions = torch.tensor(positions, dtype=torch.float64)
-        radii = torch.tensor(radii, dtype=torch.float64)
+        positions = jnp.array(positions)
+        radii = jnp.array(radii)
 
         # Calculate the bounding box volume
         bb_volume, bb_bounds = self._bounding_box_volume(positions, radii)
@@ -45,8 +45,8 @@ class BoundingBoxVolume(ExplicitComponent):
         radii = inputs['sphere_radii']
 
         # Convert the inputs to torch tensors
-        positions = torch.tensor(positions, dtype=torch.float64, requires_grad=True)
-        radii = torch.tensor(radii, dtype=torch.float64)
+        positions = jnp.array(positions)
+        radii = jnp.array(radii)
 
         # Define the Jacobian matrices using PyTorch Autograd
         jac_bbv = jacrev(self._bounding_box_volume_no_bounds, argnums=(0))
@@ -54,11 +54,8 @@ class BoundingBoxVolume(ExplicitComponent):
         # Evaluate the Jacobian matrices
         jac_bbv_val = jac_bbv(positions, radii)
 
-        # Convert the outputs to numpy arrays
-        jac_bbv_positions = jac_bbv_val.detach().numpy()
-
         # Set the outputs
-        partials['bounding_box_volume', 'sphere_positions'] = jac_bbv_positions
+        partials['bounding_box_volume', 'sphere_positions'] = jac_bbv_val
 
     @staticmethod
     def _bounding_box_volume(positions, radii):
@@ -66,6 +63,7 @@ class BoundingBoxVolume(ExplicitComponent):
         bb_volume = bounding_box_volume(bb_bounds)
         return bb_volume, bb_bounds
 
+    # TODO Remove duplicate function
     @staticmethod
     def _bounding_box_volume_no_bounds(positions, radii):
         bb_bounds = bounding_box_bounds(positions, radii)
