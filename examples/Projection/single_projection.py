@@ -48,7 +48,7 @@ n_points_per_object = [n_points for _ in range(n_components)]
 model.add_subsystem('system', System(input_dict=input_file, upper=7, lower=0))
 model.add_subsystem('mesh', Mesh(bounds=bounds,
                                  n_elements_per_unit_length=n_elements_per_unit_length,
-                                 mesh_kernel_min_radius=0.04))
+                                 mesh_kernel_min_radius=0.1))
 
 model.add_subsystem('projections', Projections(n_comp_projections=n_components,
                                                n_int_projections=0))
@@ -107,11 +107,11 @@ prob.setup()
 prob.set_val('system.components.comp_0.translation', [2, 2.5, 1.5])
 prob.set_val('system.components.comp_0.rotation', [0, 0, 0.3])
 
-prob.set_val('system.components.comp_1.translation', [2, 4.5, 1.5])
+prob.set_val('system.components.comp_1.translation', [2, 5.5, 1.5])
 prob.set_val('system.components.comp_1.rotation', [0.1, 0.1, 0])
 
 prob.driver = om.ScipyOptimizeDriver()
-prob.driver.options['maxiter'] = 5
+prob.driver.options['maxiter'] = 10
 prob.driver.options['optimizer'] = 'SLSQP'
 # prob.driver.options['tol'] = 1e-12
 

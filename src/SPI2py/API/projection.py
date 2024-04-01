@@ -4,7 +4,7 @@ from openmdao.api import ExplicitComponent, Group
 from openmdao.core.indepvarcomp import IndepVarComp
 
 from ..models.projection.projection import calculate_pseudo_densities
-from ..models.projection.mesh_kernels.mdbd_kernel import mdbd_kernel_positions, mdbd_kernel_radii
+from ..models.projection.mesh_kernels import mdbd_kernel_positions, mdbd_kernel_radii
 
 
 class Mesh(IndepVarComp):
