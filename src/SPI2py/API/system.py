@@ -4,7 +4,7 @@ from jax import jacfwd
 import openmdao.api as om
 from openmdao.api import ExplicitComponent, Group
 
-from ..models.geometry.spherical_decomposition import read_xyzr_file
+from ..models.utilities.inputs import read_xyzr_file
 from ..models.kinematics.spline_transformations import translate_linear_spline
 from ..models.kinematics.rigid_body_transformations import assemble_transformation_matrix, \
     apply_transformation_matrix
