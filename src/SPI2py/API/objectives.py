@@ -49,10 +49,10 @@ class BoundingBoxVolume(ExplicitComponent):
         radii = jnp.array(radii)
 
         # Define the Jacobian matrices using PyTorch Autograd
-        jac_bbv = jacrev(self._bounding_box_volume_no_bounds, argnums=(0))
+        jac_bbv = jacrev(self._bounding_box_volume, argnums=(0))
 
         # Evaluate the Jacobian matrices
-        jac_bbv_val = jac_bbv(positions, radii)
+        jac_bbv_val = jac_bbv(positions, radii)[0]
 
         # Set the outputs
         partials['bounding_box_volume', 'sphere_positions'] = jac_bbv_val
@@ -62,10 +62,3 @@ class BoundingBoxVolume(ExplicitComponent):
         bb_bounds = bounding_box_bounds(positions, radii)
         bb_volume = bounding_box_volume(bb_bounds)
         return bb_volume, bb_bounds
-
-    # TODO Remove duplicate function
-    @staticmethod
-    def _bounding_box_volume_no_bounds(positions, radii):
-        bb_bounds = bounding_box_bounds(positions, radii)
-        bb_volume = bounding_box_volume(bb_bounds)
-        return bb_volume

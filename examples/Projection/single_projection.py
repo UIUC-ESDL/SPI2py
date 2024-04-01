@@ -36,7 +36,7 @@ model = prob.model
 # bounds = (3, 11, 3, 11, 0, 3)
 # bounds = (0, 8, 1, 8, 0, 3)
 bounds = (0, 7, 0, 7, 0, 3)
-n_elements_per_unit_length = 3.0  # 1.0  # 6.0
+n_elements_per_unit_length = 1.0  # 1.0  # 6.0
 
 # System Parameters
 n_components = 2
@@ -122,7 +122,7 @@ print("Constraint Value: ", prob.get_val('volume_fraction_constraint.volume_frac
 t1 = time_ns()
 
 # Run the optimization
-# prob.run_driver()
+prob.run_driver()
 
 t2 = time_ns()
 print('Runtime: ', (t2 - t1) / 1e9, 's')
@@ -152,9 +152,6 @@ plot_problem(prob, plot_bounding_box=True, plot_grid_points=False)
 
 print('Done')
 
-
-
-# print('Number of elements:', prob.get_val('mesh.mesh_shape').size)
 
 
 
