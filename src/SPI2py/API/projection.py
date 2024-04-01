@@ -1,13 +1,10 @@
-import os
-
 import jax.numpy as jnp
 from jax import jacfwd
 from openmdao.api import ExplicitComponent, Group
 from openmdao.core.indepvarcomp import IndepVarComp
 
 from ..models.projection.projection import calculate_pseudo_densities
-from ..models.utilities.inputs import read_xyzr_file
-from ..models.projection.mesh_kernels import mdbd_kernel
+from ..models.projection.mesh_kernels.mdbd_kernel import mdbd_kernel_positions, mdbd_kernel_radii
 
 
 class Mesh(IndepVarComp):
@@ -15,16 +12,14 @@ class Mesh(IndepVarComp):
 
         self.options.declare('bounds', types=tuple, desc='Bounds of the mesh')
         self.options.declare('n_elements_per_unit_length', types=float, desc='Number of elements per unit length')
-        self.options.declare('mdbd_unit_cube_filepath', types=str)
-        self.options.declare('mdbd_unit_cube_min_radius', types=float)
+        self.options.declare('mesh_kernel_min_radius', types=float)
 
     def setup(self):
 
         # Get the options
         bounds = self.options['bounds']
         n_elements_per_unit_length = self.options['n_elements_per_unit_length']
-        mdbd_unit_cube_filepath = self.options['mdbd_unit_cube_filepath']
-        mdbd_unit_cube_min_radius = self.options['mdbd_unit_cube_min_radius']
+        mesh_kernel_min_radius = self.options['mesh_kernel_min_radius']
 
         # Determine the number of elements in each direction
         x_min, x_max, y_min, y_max, z_min, z_max = bounds
@@ -49,23 +44,14 @@ class Mesh(IndepVarComp):
         z_center_positions = jnp.linspace(z_min + element_half_length, element_length * n_el_z - element_half_length, n_el_z)
         x_centers, y_centers, z_centers = jnp.meshgrid(x_center_positions, y_center_positions, z_center_positions, indexing='ij')
 
-        # Read the unit cube MDBD kernel
-        SPI2py_path = os.path.dirname(os.path.dirname(__file__))
-        mdbd_unit_cube_filepath = os.path.join('models\\projection', mdbd_unit_cube_filepath)
-        mdbd_unit_cube_filepath = os.path.join(SPI2py_path, mdbd_unit_cube_filepath)
 
-
-        # TODO Remove num spheres...
-        kernel_positions, kernel_radii = read_xyzr_file(mdbd_unit_cube_filepath, num_spheres=10)
-
-        # kernel_positions = torch.tensor(kernel_positions, dtype=torch.float64)
-        # kernel_radii = torch.tensor(kernel_radii, dtype=torch.float64).view(-1, 1)
-        kernel_positions = jnp.array(kernel_positions)
-        kernel_radii = jnp.array(kernel_radii).reshape(-1, 1)
+        # Read the MDBD kernel
+        kernel_positions = jnp.array(mdbd_kernel_positions)
+        kernel_radii = jnp.array(mdbd_kernel_radii).reshape(-1, 1)
 
         # Truncate the number of spheres based on the minimum radius
-        kernel_positions = kernel_positions[kernel_radii.flatten() > mdbd_unit_cube_min_radius]
-        kernel_radii = kernel_radii[kernel_radii.flatten() > mdbd_unit_cube_min_radius]
+        kernel_positions = kernel_positions[kernel_radii.flatten() > mesh_kernel_min_radius]
+        kernel_radii = kernel_radii[kernel_radii.flatten() > mesh_kernel_min_radius]
 
         # Scale the sphere positions
         kernel_positions = kernel_positions * element_length

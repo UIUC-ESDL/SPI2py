@@ -48,8 +48,7 @@ n_points_per_object = [n_points for _ in range(n_components)]
 model.add_subsystem('system', System(input_dict=input_file, upper=7, lower=0))
 model.add_subsystem('mesh', Mesh(bounds=bounds,
                                  n_elements_per_unit_length=n_elements_per_unit_length,
-                                 mdbd_unit_cube_filepath='mdbd_unit_cube.xyzr',
-                                 mdbd_unit_cube_min_radius=0.04))
+                                 mesh_kernel_min_radius=0.04))
 
 model.add_subsystem('projections', Projections(n_comp_projections=n_components,
                                                n_int_projections=0))
