@@ -10,8 +10,7 @@ from time import time_ns
 
 from SPI2py.API.system import System
 from SPI2py.API.utilities import Multiplexer, MaxAggregator
-from SPI2py.API.projection import Projection, Projections
-from SPI2py.API.mesh import Mesh
+from SPI2py.API.projection import Projection, Projections, Mesh
 from SPI2py.API.constraints import VolumeFractionConstraint
 from SPI2py.models.utilities.visualization import plot_problem
 from SPI2py.models.utilities.inputs import read_input_file
@@ -124,7 +123,7 @@ print("Constraint Value: ", prob.get_val('volume_fraction_constraint.volume_frac
 t1 = time_ns()
 
 # Run the optimization
-prob.run_driver()
+# prob.run_driver()
 
 t2 = time_ns()
 print('Runtime: ', (t2 - t1) / 1e9, 's')

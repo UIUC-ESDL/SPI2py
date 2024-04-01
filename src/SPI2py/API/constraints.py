@@ -171,30 +171,25 @@ class VolumeFractionConstraint(ExplicitComponent):
             partials['volume_fraction_constraint', f'element_pseudo_densities_{i}'] = jac_volume_fraction_constraint_np[i]
 
     @staticmethod
-    def _volume_fraction_constraint(element_length, *args):
+    def _volume_fraction_constraint(element_length, *pseudo_densities):
 
-        element_pseudo_densities = args
+        # Aggregate the individual volumes of each projection
+        volume_individuals = 0
+        for i in range(len(pseudo_densities)):
+            volume_individuals += pseudo_densities[i].sum() * element_length ** 3
 
-        # Calculate the sum of the individual volumes
-        individual_volumes = 0
-        for i in range(len(element_pseudo_densities)):
-            projected_volume = element_pseudo_densities[i].sum() * element_length ** 3
-            individual_volumes += projected_volume
+        # Superimpose the projections
+        # TODO Add Rho min
+        pseudo_densities_superimposed = jnp.zeros_like(pseudo_densities[0])
+        for i in range(len(pseudo_densities)):
+            pseudo_densities_superimposed += pseudo_densities[i]
 
-        # Calculate the sum of the combined volumes
+        pseudo_densities_superimposed = pseudo_densities_superimposed.clip(0, 1)
 
-        # Add all the element pseudo-densities together
-        combined_pseudo_densities = jnp.zeros_like(element_pseudo_densities[0])
-        for i in range(len(element_pseudo_densities)):
-            combined_pseudo_densities += element_pseudo_densities[i]
-
-        # Ensure that no element densities exceed 1
-        combined_pseudo_densities = combined_pseudo_densities.clip(0, 1)
-
-        # Calculate the volume
-        combined_volume = combined_pseudo_densities.sum() * element_length ** 3
+        # Calculate volume of the superimposed projection
+        volume_superimposed = pseudo_densities_superimposed.sum() * element_length ** 3
 
         # Calculate the volume fraction constraint (negative-null form)
-        volume_fraction_constraint = individual_volumes / combined_volume  - 1
+        volume_fraction = volume_individuals / volume_superimposed  - 1
 
-        return volume_fraction_constraint
+        return volume_fraction

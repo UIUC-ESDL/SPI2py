@@ -9,8 +9,7 @@ import torch
 
 from SPI2py.API.system import System
 from SPI2py.API.utilities import Multiplexer, MaxAggregator
-from SPI2py.API.projection import Projection, Projections
-from SPI2py.API.mesh import Mesh
+from SPI2py.API.projection import Projection, Projections, Mesh
 from SPI2py.API.constraints import VolumeFractionConstraint
 from SPI2py.models.utilities.visualization import plot_problem
 from SPI2py.models.utilities.inputs import read_input_file
