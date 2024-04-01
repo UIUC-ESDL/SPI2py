@@ -77,7 +77,7 @@ def plot_problem(prob, plot_grid=True, plot_grid_points=True, plot_bounding_box=
         spacing = float(prob.get_val('mesh.element_length'))
 
         # Create an empty uniform grid
-        grid = pv.UniformGrid()
+        grid = pv.ImageData()
 
         # Set the grid dimensions
         grid.dimensions = np.array([nx + 1, ny + 1, nz + 1])
