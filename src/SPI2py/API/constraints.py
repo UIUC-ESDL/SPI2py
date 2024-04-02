@@ -148,8 +148,8 @@ class VolumeFractionCollision(ExplicitComponent):
         jac_volume_fraction = jacfwd(self.volume_fraction_collision)(pseudo_densities, element_length)
 
         # Set the partial derivatives
-        for i, jac in enumerate(jac_volume_fraction):
-            partials['volume_fraction', f'pseudo_densities_{i}'] = jac
+        for i, jac_volume_fraction_i in enumerate(jac_volume_fraction):
+            partials['volume_fraction', f'pseudo_densities_{i}'] = jac_volume_fraction_i
 
     @staticmethod
     def volume_fraction_collision(pseudo_densities, element_length):
