@@ -1,20 +1,14 @@
 import jax.numpy as jnp
 from jax import jacrev
 from openmdao.api import ExplicitComponent
-from ..models.geometry.bounding_volume import bounding_box_bounds_points, bounding_box_volume, bounding_box_bounds
+from ..models.geometry.bounding_volume import bounding_box_volume, bounding_box_bounds
 
 
 class BoundingBoxVolume(ExplicitComponent):
 
-    def initialize(self):
-        self.options.declare('n_points_per_object', types=list, desc='Number of points per object')
-
     def setup(self):
-        n_i = self.options['n_points_per_object']
-        n = sum(n_i)
-
-        self.add_input('sphere_positions', shape=(n, 3))
-        self.add_input('sphere_radii', shape=(n, 1))
+        self.add_input('sphere_positions', shape_by_conn=True)
+        self.add_input('sphere_radii', shape_by_conn=True)
         self.add_output('bounding_box_volume', shape=(1,))
         self.add_output('bounding_box_bounds', shape=(6,))
 
@@ -24,14 +18,10 @@ class BoundingBoxVolume(ExplicitComponent):
     def compute(self, inputs, outputs):
 
         # Get the input variables
-        positions = inputs['sphere_positions']
-        radii = inputs['sphere_radii']
+        positions = jnp.array(inputs['sphere_positions'])
+        radii = jnp.array(inputs['sphere_radii'])
 
-        # Convert the inputs to torch tensors
-        positions = jnp.array(positions)
-        radii = jnp.array(radii)
-
-        # Calculate the bounding box volume
+        # Calculate the bounding box bounds and volume
         bb_volume, bb_bounds = self._bounding_box_volume(positions, radii)
 
         # Set the outputs
@@ -41,21 +31,14 @@ class BoundingBoxVolume(ExplicitComponent):
     def compute_partials(self, inputs, partials):
 
         # Get the input variables
-        positions = inputs['sphere_positions']
-        radii = inputs['sphere_radii']
+        positions = jnp.array(inputs['sphere_positions'])
+        radii = jnp.array(inputs['sphere_radii'])
 
-        # Convert the inputs to torch tensors
-        positions = jnp.array(positions)
-        radii = jnp.array(radii)
-
-        # Define the Jacobian matrices using PyTorch Autograd
-        jac_bbv = jacrev(self._bounding_box_volume, argnums=(0))
-
-        # Evaluate the Jacobian matrices
-        jac_bbv_val = jac_bbv(positions, radii)[0]
+        # Calculate the jacobian of the bounding box volume
+        jac_bb_volume, _ = jacrev(self._bounding_box_volume)(positions, radii)
 
         # Set the outputs
-        partials['bounding_box_volume', 'sphere_positions'] = jac_bbv_val
+        partials['bounding_box_volume', 'sphere_positions'] = jac_bb_volume
 
     @staticmethod
     def _bounding_box_volume(positions, radii):

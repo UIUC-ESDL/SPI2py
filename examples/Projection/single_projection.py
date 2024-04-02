@@ -55,7 +55,7 @@ model.add_subsystem('mux_all_sphere_positions', Multiplexer(n_i=n_points_per_obj
 model.add_subsystem('mux_all_sphere_radii', Multiplexer(n_i=n_points_per_object, m=1))
 
 model.add_subsystem('collision', VolumeFractionCollision(n_projections=n_components))
-model.add_subsystem('bbv', BoundingBoxVolume(n_points_per_object=n_points_per_object))
+model.add_subsystem('bbv', BoundingBoxVolume())
 
 
 # TODO Promote?
