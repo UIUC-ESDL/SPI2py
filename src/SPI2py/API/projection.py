@@ -1,5 +1,5 @@
 import jax.numpy as jnp
-from jax import jacfwd
+from jax import jacfwd, jacrev
 from openmdao.api import ExplicitComponent, Group
 from openmdao.core.indepvarcomp import IndepVarComp
 
@@ -131,7 +131,8 @@ class Projection(ExplicitComponent):
 
         # Outputs
         self.add_output('pseudo_densities', compute_shape=lambda shapes: (shapes['centers'][0],shapes['centers'][1],shapes['centers'][2]))
-        self.add_output('volume', val=0.0)
+        self.add_output('true_volume', val=0.0)
+        self.add_output('projected_volume', val=0.0)
 
     def setup_partials(self):
         self.declare_partials('pseudo_densities', 'sphere_positions')
@@ -162,16 +163,20 @@ class Projection(ExplicitComponent):
         sphere_radii = jnp.array(sphere_radii)
 
         # Project
-        pseudo_densities = self._project(sphere_positions, sphere_radii,
+        pseudo_densities= self._project(sphere_positions, sphere_radii,
                                                  element_length,
                                                  centers, sample_points, sample_radii, rho_min)
 
         # Calculate the volume
-        volume = jnp.sum(pseudo_densities) * element_length ** 3
+        true_volume = self._true_volume(sphere_positions, sphere_radii)
+
+        # Calculate the projected volume
+        projected_volume = self._projected_volume(pseudo_densities, element_length)
 
         # Write the outputs
         outputs['pseudo_densities'] = pseudo_densities
-        outputs['volume'] = volume
+        outputs['true_volume'] = true_volume
+        outputs['projected_volume'] = projected_volume
 
     def compute_partials(self, inputs, partials):
 
@@ -202,13 +207,20 @@ class Projection(ExplicitComponent):
         grad_sphere_positions_val = grad_sphere_positions(sphere_positions, sphere_radii, element_length,
                                                  centers,sample_points, sample_radii, rho_min)
 
-
+        # Set the partials
         partials['pseudo_densities', 'sphere_positions'] = grad_sphere_positions_val
+
 
     @staticmethod
     def _project(sphere_positions, sphere_radii, element_length, centers, sample_points, sample_radii, rho_min):
-
         pseudo_densities = calculate_pseudo_densities(sphere_positions, sphere_radii, element_length, centers, sample_points, sample_radii, rho_min)
-
         return pseudo_densities
+
+    @staticmethod
+    def _true_volume(sphere_positions, sphere_radii):
+        return jnp.sum(4 / 3 * jnp.pi * sphere_radii ** 3)
+
+    @staticmethod
+    def _projected_volume(pseudo_densities, element_length):
+        return jnp.sum(pseudo_densities) * element_length ** 3
 

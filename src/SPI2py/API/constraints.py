@@ -94,7 +94,7 @@ from ..models.kinematics.distance_calculations import signed_distances_spheres_s
 #         return signed_distances
 
 
-class VolumeFractionConstraint(ExplicitComponent):
+class VolumetricCollision(ExplicitComponent):
     def initialize(self):
         self.options.declare('n_projections', types=int, desc='Number of objects with projections')
         self.options.declare('relative_volume_tolerance', types=float, desc='Relative volume tolerance')
@@ -132,7 +132,7 @@ class VolumeFractionConstraint(ExplicitComponent):
         for i in range(n):
             element_pseudo_densities_tensors = element_pseudo_densities_tensors + (jnp.array(element_pseudo_densities[i]),)
 
-        volume_fraction_constraint = self._volume_fraction_constraint(element_length, *element_pseudo_densities_tensors)
+        volume_fraction_constraint = self._volume_fraction_overlap(element_length, *element_pseudo_densities_tensors)
 
         # Write the outputs
         outputs['volume_fraction_constraint'] = volume_fraction_constraint
@@ -154,12 +154,11 @@ class VolumeFractionConstraint(ExplicitComponent):
 
         element_pseudo_densities_tensors = ()
         for i in range(n):
-            # element_pseudo_densities_tensors = element_pseudo_densities_tensors + (torch.tensor(element_pseudo_densities[i], dtype=torch.float64, requires_grad=True),)
             element_pseudo_densities_tensors = element_pseudo_densities_tensors + (jnp.array(element_pseudo_densities[i]),)
 
         # Calculate the partial derivatives wrt all inputs
         argnums = tuple(range(n))
-        jac_volume_fraction_constraint = jacfwd(self._volume_fraction_constraint, argnums=argnums)(element_length, *element_pseudo_densities_tensors)
+        jac_volume_fraction_constraint = jacfwd(self._volume_fraction_overlap, argnums=argnums)(element_length, *element_pseudo_densities_tensors)
 
         # Convert the partial derivatives to numpy arrays
         jac_volume_fraction_constraint_np = []
@@ -171,9 +170,9 @@ class VolumeFractionConstraint(ExplicitComponent):
             partials['volume_fraction_constraint', f'element_pseudo_densities_{i}'] = jac_volume_fraction_constraint_np[i]
 
     @staticmethod
-    def _volume_fraction_constraint(element_length, *pseudo_densities):
+    def _volume_fraction_overlap(element_length, *pseudo_densities):
 
-        # Aggregate the individual volumes of each projection
+        # Aggregate the projected volumes
         volume_individuals = 0
         for i in range(len(pseudo_densities)):
             volume_individuals += pseudo_densities[i].sum() * element_length ** 3

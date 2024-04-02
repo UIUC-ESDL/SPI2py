@@ -11,7 +11,7 @@ from time import time_ns
 from SPI2py.API.system import System
 from SPI2py.API.utilities import Multiplexer, MaxAggregator
 from SPI2py.API.projection import Projection, Projections, Mesh
-from SPI2py.API.constraints import VolumeFractionConstraint
+from SPI2py.API.constraints import VolumetricCollision
 from SPI2py.models.utilities.visualization import plot_problem
 from SPI2py.models.utilities.inputs import read_input_file
 from SPI2py.API.objectives import BoundingBoxVolume
@@ -56,7 +56,7 @@ model.add_subsystem('projections', Projections(n_comp_projections=n_components,
 model.add_subsystem('mux_all_sphere_positions', Multiplexer(n_i=n_points_per_object, m=3))
 model.add_subsystem('mux_all_sphere_radii', Multiplexer(n_i=n_points_per_object, m=1))
 
-model.add_subsystem('volume_fraction_constraint', VolumeFractionConstraint(n_projections=n_components))
+model.add_subsystem('volume_fraction_constraint', VolumetricCollision(n_projections=n_components))
 model.add_subsystem('bbv', BoundingBoxVolume(n_points_per_object=n_points_per_object))
 
 
@@ -90,6 +90,7 @@ for i in range(n_components):
 
 model.connect('mux_all_sphere_positions.stacked_output', 'bbv.sphere_positions')
 model.connect('mux_all_sphere_radii.stacked_output', 'bbv.sphere_radii')
+
 
 # Define the objective and constraints
 prob.model.add_objective('bbv.bounding_box_volume', ref=1, ref0=0)
