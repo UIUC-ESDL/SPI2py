@@ -109,7 +109,7 @@ class VolumeFractionCollision(ExplicitComponent):
             self.add_input(f'pseudo_densities_{i}', shape_by_conn=True)
 
         # Set the outputs
-        self.add_output('volume_fraction_collision', shape=(1,))
+        self.add_output('volume_fraction', shape=(1,))
 
     def setup_partials(self):
 
@@ -118,7 +118,7 @@ class VolumeFractionCollision(ExplicitComponent):
 
         # Set the partial derivatives
         for i in range(n_projections):
-            self.declare_partials('volume_fraction_collision', f'pseudo_densities_{i}')
+            self.declare_partials('volume_fraction', f'pseudo_densities_{i}')
 
     def compute(self, inputs, outputs):
 
@@ -130,10 +130,10 @@ class VolumeFractionCollision(ExplicitComponent):
         pseudo_densities = (jnp.array(inputs[f'pseudo_densities_{i}']) for i in range(n_projections))
 
         # Calculate the volume fraction constraint
-        volume_fraction_collision = self.volume_fraction_collision(element_length, *pseudo_densities)
+        volume_fraction = self.volume_fraction_collision(element_length, *pseudo_densities)
 
         # Write the outputs
-        outputs['volume_fraction_collision'] = volume_fraction_collision
+        outputs['volume_fraction'] = volume_fraction
 
     def compute_partials(self, inputs, partials):
 
@@ -146,17 +146,17 @@ class VolumeFractionCollision(ExplicitComponent):
 
         # Calculate the partial derivatives wrt all inputs
         arg_nums = tuple(range(n_projections))
-        jac_volume_fraction_collision = jacfwd(self.volume_fraction_collision, argnums=arg_nums)
-        jac_volume_fraction_collision_val = jac_volume_fraction_collision(element_length, *pseudo_densities)
+        jac_volume_fraction = jacfwd(self.volume_fraction_collision, argnums=arg_nums)
+        jac_volume_fraction_val = jac_volume_fraction(element_length, *pseudo_densities)
 
         # Convert the partial derivatives to numpy arrays
         jac_volume_fraction_constraint_np = []
-        for jac in jac_volume_fraction_collision_val:
+        for jac in jac_volume_fraction_val:
             jac_volume_fraction_constraint_np.append(jac)
 
         # Set the partial derivatives
         for i in range(n_projections):
-            partials['volume_fraction_collision', f'pseudo_densities_{i}'] = jac_volume_fraction_constraint_np[i]
+            partials['volume_fraction', f'pseudo_densities_{i}'] = jac_volume_fraction_constraint_np[i]
 
     @staticmethod
     def volume_fraction_collision(element_length, *pseudo_densities):
