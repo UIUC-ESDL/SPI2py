@@ -11,7 +11,7 @@ from time import time_ns
 from SPI2py.API.system import System
 from SPI2py.API.utilities import Multiplexer, MaxAggregator
 from SPI2py.API.projection import Projection, Projections, Mesh
-from SPI2py.API.constraints import VolumetricCollision
+from SPI2py.API.constraints import VolumeFractionCollision
 from SPI2py.models.utilities.visualization import plot_problem
 from SPI2py.models.utilities.inputs import read_input_file
 from SPI2py.API.objectives import BoundingBoxVolume
@@ -56,14 +56,14 @@ model.add_subsystem('projections', Projections(n_comp_projections=n_components,
 model.add_subsystem('mux_all_sphere_positions', Multiplexer(n_i=n_points_per_object, m=3))
 model.add_subsystem('mux_all_sphere_radii', Multiplexer(n_i=n_points_per_object, m=1))
 
-model.add_subsystem('volume_fraction_constraint', VolumetricCollision(n_projections=n_components))
+model.add_subsystem('volume_fraction_collision', VolumeFractionCollision(n_projections=n_components))
 model.add_subsystem('bbv', BoundingBoxVolume(n_points_per_object=n_points_per_object))
 
 
 # TODO Promote?
 model.connect('mesh.element_length', 'projections.projection_0.element_length')
 model.connect('mesh.element_length', 'projections.projection_1.element_length')
-model.connect('mesh.element_length', 'volume_fraction_constraint.element_length')
+model.connect('mesh.element_length', 'volume_fraction_collision.element_length')
 
 
 model.connect('mesh.centers', 'projections.projection_0.centers')
@@ -81,8 +81,8 @@ model.connect('system.components.comp_0.transformed_sphere_radii', 'projections.
 model.connect('system.components.comp_1.transformed_sphere_positions', 'projections.projection_1.sphere_positions')
 model.connect('system.components.comp_1.transformed_sphere_radii', 'projections.projection_1.sphere_radii')
 
-model.connect('projections.projection_0.pseudo_densities', 'volume_fraction_constraint.element_pseudo_densities_0')
-model.connect('projections.projection_1.pseudo_densities', 'volume_fraction_constraint.element_pseudo_densities_1')
+model.connect('projections.projection_0.pseudo_densities', 'volume_fraction_collision.pseudo_densities_0')
+model.connect('projections.projection_1.pseudo_densities', 'volume_fraction_collision.pseudo_densities_1')
 
 for i in range(n_components):
     model.connect(f'system.components.comp_{i}.transformed_sphere_positions', f'mux_all_sphere_positions.input_{i}')
@@ -94,7 +94,7 @@ model.connect('mux_all_sphere_radii.stacked_output', 'bbv.sphere_radii')
 
 # Define the objective and constraints
 prob.model.add_objective('bbv.bounding_box_volume', ref=1, ref0=0)
-prob.model.add_constraint('volume_fraction_constraint.volume_fraction_constraint', lower=0, upper=0.01)
+prob.model.add_constraint('volume_fraction_collision.volume_fraction_collision', lower=0, upper=0.01)
 
 prob.model.add_design_var('system.components.comp_0.translation', ref=10, lower=0, upper=10)
 # prob.model.add_design_var('rotation', ref=2*3.14159)
@@ -118,7 +118,7 @@ prob.driver.options['optimizer'] = 'SLSQP'
 
 prob.run_model()
 
-print("Constraint Value: ", prob.get_val('volume_fraction_constraint.volume_fraction_constraint'))
+print("Constraint Value: ", prob.get_val('volume_fraction_collision.volume_fraction_collision'))
 
 t1 = time_ns()
 
@@ -136,7 +136,7 @@ pseudo_densities = prob.get_val('projections.projection_0.pseudo_densities')
 print("Checking element: ", element_index)
 print("Pseudo-Density: ", pseudo_densities[element_index[0], element_index[1], element_index[2]])
 print("Max Pseudo-Density: ", pseudo_densities.max())
-print("Constraint Value: ", prob.get_val('volume_fraction_constraint.volume_fraction_constraint'))
+print("Constraint Value: ", prob.get_val('volume_fraction_collision.volume_fraction_collision'))
 
 # Check the initial state
 plot_problem(prob, plot_bounding_box=True, plot_grid_points=False)

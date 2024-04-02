@@ -94,83 +94,72 @@ from ..models.kinematics.distance_calculations import signed_distances_spheres_s
 #         return signed_distances
 
 
-class VolumetricCollision(ExplicitComponent):
+class VolumeFractionCollision(ExplicitComponent):
     def initialize(self):
         self.options.declare('n_projections', types=int, desc='Number of objects with projections')
-        self.options.declare('relative_volume_tolerance', types=float, desc='Relative volume tolerance')
 
     def setup(self):
 
+        # Get the options
+        n_projections = self.options['n_projections']
+
+        # Set the inputs
         self.add_input('element_length', val=0)
+        for i in range(n_projections):
+            self.add_input(f'pseudo_densities_{i}', shape_by_conn=True)
 
-        n = self.options['n_projections']
-        for i in range(n):
-            self.add_input(f'element_pseudo_densities_{i}', shape_by_conn=True)
-
-        self.add_output('volume_fraction_constraint', shape=(1,))
+        # Set the outputs
+        self.add_output('volume_fraction_collision', shape=(1,))
 
     def setup_partials(self):
+
+        # Get the options
         n_projections = self.options['n_projections']
+
+        # Set the partial derivatives
         for i in range(n_projections):
-            self.declare_partials('volume_fraction_constraint', f'element_pseudo_densities_{i}')
+            self.declare_partials('volume_fraction_collision', f'pseudo_densities_{i}')
 
     def compute(self, inputs, outputs):
 
         # Get the options
-        n = self.options['n_projections']
+        n_projections = self.options['n_projections']
 
-        # Calculate the volume
-        element_length = inputs['element_length']
-        element_length = jnp.array(element_length)
+        # Get the inputs
+        element_length = jnp.array(inputs['element_length'])
+        pseudo_densities = (jnp.array(inputs[f'pseudo_densities_{i}']) for i in range(n_projections))
 
-        # Extract the inputs and convert to a numpy array
-        element_pseudo_densities = []
-        for i in range(n):
-            element_pseudo_densities.append(inputs[f'element_pseudo_densities_{i}'])
-
-        element_pseudo_densities_tensors = ()
-        for i in range(n):
-            element_pseudo_densities_tensors = element_pseudo_densities_tensors + (jnp.array(element_pseudo_densities[i]),)
-
-        volume_fraction_constraint = self._volume_fraction_overlap(element_length, *element_pseudo_densities_tensors)
+        # Calculate the volume fraction constraint
+        volume_fraction_collision = self.volume_fraction_collision(element_length, *pseudo_densities)
 
         # Write the outputs
-        outputs['volume_fraction_constraint'] = volume_fraction_constraint
+        outputs['volume_fraction_collision'] = volume_fraction_collision
 
     def compute_partials(self, inputs, partials):
 
         # Get the options
-        n = self.options['n_projections']
+        n_projections = self.options['n_projections']
 
-        # Calculate the volume
-        element_length = inputs['element_length']
-        # element_length = torch.tensor(element_length, dtype=torch.float64, requires_grad=True)
-        element_length = jnp.array(element_length)
-
-        # Extract the inputs and convert to a numpy array
-        element_pseudo_densities = ()
-        for i in range(n):
-            element_pseudo_densities = element_pseudo_densities + (inputs[f'element_pseudo_densities_{i}'],)
-
-        element_pseudo_densities_tensors = ()
-        for i in range(n):
-            element_pseudo_densities_tensors = element_pseudo_densities_tensors + (jnp.array(element_pseudo_densities[i]),)
+        # Get the inputs
+        element_length = jnp.array(inputs['element_length'])
+        pseudo_densities = (jnp.array(inputs[f'pseudo_densities_{i}']) for i in range(n_projections))
 
         # Calculate the partial derivatives wrt all inputs
-        argnums = tuple(range(n))
-        jac_volume_fraction_constraint = jacfwd(self._volume_fraction_overlap, argnums=argnums)(element_length, *element_pseudo_densities_tensors)
+        arg_nums = tuple(range(n_projections))
+        jac_volume_fraction_collision = jacfwd(self.volume_fraction_collision, argnums=arg_nums)
+        jac_volume_fraction_collision_val = jac_volume_fraction_collision(element_length, *pseudo_densities)
 
         # Convert the partial derivatives to numpy arrays
         jac_volume_fraction_constraint_np = []
-        for jac in jac_volume_fraction_constraint:
+        for jac in jac_volume_fraction_collision_val:
             jac_volume_fraction_constraint_np.append(jac)
 
         # Set the partial derivatives
-        for i in range(n):
-            partials['volume_fraction_constraint', f'element_pseudo_densities_{i}'] = jac_volume_fraction_constraint_np[i]
+        for i in range(n_projections):
+            partials['volume_fraction_collision', f'pseudo_densities_{i}'] = jac_volume_fraction_constraint_np[i]
 
     @staticmethod
-    def _volume_fraction_overlap(element_length, *pseudo_densities):
+    def volume_fraction_collision(element_length, *pseudo_densities):
 
         # Aggregate the projected volumes
         volume_individuals = 0
