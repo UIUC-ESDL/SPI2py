@@ -127,10 +127,10 @@ class VolumeFractionCollision(ExplicitComponent):
 
         # Get the inputs
         element_length = jnp.array(inputs['element_length'])
-        pseudo_densities = (jnp.array(inputs[f'pseudo_densities_{i}']) for i in range(n_projections))
+        pseudo_densities = [jnp.array(inputs[f'pseudo_densities_{i}']) for i in range(n_projections)]
 
         # Calculate the volume fraction constraint
-        volume_fraction = self.volume_fraction_collision(element_length, *pseudo_densities)
+        volume_fraction = self.volume_fraction_collision(pseudo_densities, element_length)
 
         # Write the outputs
         outputs['volume_fraction'] = volume_fraction
@@ -142,35 +142,28 @@ class VolumeFractionCollision(ExplicitComponent):
 
         # Get the inputs
         element_length = jnp.array(inputs['element_length'])
-        pseudo_densities = (jnp.array(inputs[f'pseudo_densities_{i}']) for i in range(n_projections))
+        pseudo_densities = [jnp.array(inputs[f'pseudo_densities_{i}']) for i in range(n_projections)]
 
-        # Calculate the partial derivatives wrt all inputs
-        arg_nums = tuple(range(n_projections))
-        jac_volume_fraction = jacfwd(self.volume_fraction_collision, argnums=arg_nums)
-        jac_volume_fraction_val = jac_volume_fraction(element_length, *pseudo_densities)
-
-        # Convert the partial derivatives to numpy arrays
-        jac_volume_fraction_constraint_np = []
-        for jac in jac_volume_fraction_val:
-            jac_volume_fraction_constraint_np.append(jac)
+        # Calculate the partial derivatives
+        jac_volume_fraction = jacfwd(self.volume_fraction_collision)(pseudo_densities, element_length)
 
         # Set the partial derivatives
-        for i in range(n_projections):
-            partials['volume_fraction', f'pseudo_densities_{i}'] = jac_volume_fraction_constraint_np[i]
+        for i, jac in enumerate(jac_volume_fraction):
+            partials['volume_fraction', f'pseudo_densities_{i}'] = jac
 
     @staticmethod
-    def volume_fraction_collision(element_length, *pseudo_densities):
+    def volume_fraction_collision(pseudo_densities, element_length):
 
         # Aggregate the projected volumes
         volume_individuals = 0
-        for i in range(len(pseudo_densities)):
-            volume_individuals += pseudo_densities[i].sum() * element_length ** 3
+        for pseudo_densities_i in pseudo_densities:
+            volume_individuals += pseudo_densities_i.sum() * element_length ** 3
 
         # Superimpose the projections
         # TODO Add Rho min
         pseudo_densities_superimposed = jnp.zeros_like(pseudo_densities[0])
-        for i in range(len(pseudo_densities)):
-            pseudo_densities_superimposed += pseudo_densities[i]
+        for pseudo_densities_i in pseudo_densities:
+            pseudo_densities_superimposed += pseudo_densities_i
 
         pseudo_densities_superimposed = pseudo_densities_superimposed.clip(0, 1)
 
