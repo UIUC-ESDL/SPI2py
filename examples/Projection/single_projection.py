@@ -30,6 +30,8 @@ n_elements_per_unit_length = 1.0
 n_components = 2
 n_points = 25
 n_points_per_object = [n_points for _ in range(n_components)]
+n_interconnects = 0
+n_projections = n_components + n_interconnects
 
 # TODO Move true volume calculation back to objects; interconnects must consider overlapping spheres
 
@@ -48,18 +50,6 @@ model.add_subsystem('mux_all_sphere_radii', Multiplexer(n_i=n_points_per_object,
 # model.add_subsystem('collision', VolumeFractionCollision())
 model.add_subsystem('bbv', BoundingBoxVolume())
 
-model.connect('mesh.element_length', 'projections.projection_0.element_length')
-model.connect('mesh.element_length', 'projections.projection_1.element_length')
-
-model.connect('mesh.centers', 'projections.projection_0.centers')
-model.connect('mesh.centers', 'projections.projection_1.centers')
-
-model.connect('mesh.sample_points', 'projections.projection_0.sample_points')
-model.connect('mesh.sample_radii', 'projections.projection_0.sample_radii')
-
-model.connect('mesh.sample_points', 'projections.projection_1.sample_points')
-model.connect('mesh.sample_radii', 'projections.projection_1.sample_radii')
-
 # Connect the system to the projections
 i = 0
 for j in range(n_components):
@@ -71,12 +61,24 @@ for j in range(n_components):
 #     i += 1
 
 
-# model.connect('projections.aggregator.true_volume', 'collision.true_volumes')
-# model.connect('projections.aggregator.projected_volume', 'collision.projected_volumes')
+# Connect the mesh to the projections
+for i in range(n_projections):
+    model.connect('mesh.element_length', f'projections.projection_{i}.element_length')
+    model.connect('mesh.centers', f'projections.projection_{i}.centers')
+    model.connect('mesh.sample_points', f'projections.projection_{i}.sample_points')
+    model.connect('mesh.sample_radii', f'projections.projection_{i}.sample_radii')
 
-for i in range(n_components):
-    model.connect(f'system.components.comp_{i}.transformed_sphere_positions', f'mux_all_sphere_positions.input_{i}')
-    model.connect(f'system.components.comp_{i}.transformed_sphere_radii', f'mux_all_sphere_radii.input_{i}')
+
+
+# Connect the system to the bounding box
+i = 0
+for j in range(n_components):
+    model.connect(f'system.components.comp_{j}.transformed_sphere_positions', f'mux_all_sphere_positions.input_{i}')
+    model.connect(f'system.components.comp_{j}.transformed_sphere_radii', f'mux_all_sphere_radii.input_{i}')
+    i += 1
+# for j in range(n_interconnects):
+#     pass
+#     i += 1
 
 model.connect('mux_all_sphere_positions.stacked_output', 'bbv.sphere_positions')
 model.connect('mux_all_sphere_radii.stacked_output', 'bbv.sphere_radii')
