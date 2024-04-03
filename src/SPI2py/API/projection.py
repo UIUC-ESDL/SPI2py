@@ -80,29 +80,38 @@ class Projections(Group):
     def initialize(self):
         self.options.declare('n_comp_projections', types=int, desc='Number of component projections')
         self.options.declare('n_int_projections', types=int, desc='Number of interconnect projections')
-        self.options.declare('rho_min', types=float, desc='Minimum value of the density', default=1e-5)
 
     def setup(self):
 
         # Get the options
         n_comp_projections = self.options['n_comp_projections']
         n_int_projections = self.options['n_int_projections']
-        rho_min = self.options['rho_min']
+        n_projections = n_comp_projections + n_int_projections
+
+        # Create the projection aggregator
+        self.add_subsystem('aggregator', ProjectionAggregator(n_projections=n_projections))
 
         # Projection counter
         i=0
 
+
         # TODO Can I automatically connect this???
         # Add the projection components
         for j in range(n_comp_projections):
-            self.add_subsystem('projection_' + str(i), Projection(rho_min=rho_min))
+            self.add_subsystem(f'projection_{i}', Projection())
             # self.connect(f'system.components.comp_{j}.transformed_sphere_positions', 'projection_' + str(i) + '.points')
+            self.connect(f'projection_{i}.pseudo_densities', f'aggregator.pseudo_densities_{i}')
+            self.connect(f'projection_{i}.true_volumes', f'aggregator.true_volume_{i}')
+            self.connect(f'projection_{i}.projected_volumes', f'aggregator.projected_volume_{i}')
             i += 1
 
         # Add the interconnect projection components
         for j in range(n_int_projections):
-            self.add_subsystem('projection_' + str(i), Projection(rho_min=rho_min))
+            self.add_subsystem(f'projection_{i}', Projection())
             # self.connect(f'system.interconnects.int_{j}.transformed_sphere_positions', 'projection_int_' + str(i) + '.points')
+            self.connect(f'projection_{i}.pseudo_densities', f'aggregator.pseudo_densities_{i}')
+            self.connect(f'projection_{i}.true_volumes', f'aggregator.true_volume_{i}')
+            self.connect(f'projection_{i}.projected_volumes', f'aggregator.projected_volume_{i}')
             i += 1
 
 
@@ -114,7 +123,6 @@ class Projection(ExplicitComponent):
     """
 
     def initialize(self):
-        self.options.declare('rho_min', types=(int, float), desc='Minimum value of the density', default=3e-3)
         self.options.declare('color', types=str, desc='Color of the projection', default='blue')
 
     def setup(self):
@@ -130,99 +138,71 @@ class Projection(ExplicitComponent):
         self.add_input('sphere_radii', shape_by_conn=True)
 
         # Outputs
-        self.add_output('pseudo_densities', compute_shape=lambda shapes: (shapes['centers'][0],shapes['centers'][1],shapes['centers'][2]))
-        self.add_output('true_volume', val=0.0)
-        self.add_output('projected_volume', val=0.0)
+        self.add_output('pseudo_densities', compute_shape=lambda shapes: (shapes['centers'][0], shapes['centers'][1],shapes['centers'][2]))
+        self.add_output('true_volumes', val=0.0)
+        self.add_output('projected_volumes', val=0.0)
 
     def setup_partials(self):
         self.declare_partials('pseudo_densities', 'sphere_positions')
 
     def compute(self, inputs, outputs):
 
-        # Get the options
-        rho_min = self.options['rho_min']
-
         # Get the Mesh inputs
-        element_length = inputs['element_length']
-        centers = inputs['centers']
-        sample_points = inputs['sample_points']
-        sample_radii = inputs['sample_radii']
+        element_length   = jnp.array(inputs['element_length'])
+        centers          = jnp.array(inputs['centers'])
+        sample_points    = jnp.array(inputs['sample_points'])
+        sample_radii     = jnp.array(inputs['sample_radii'])
+        sphere_positions = jnp.array(inputs['sphere_positions'])
+        sphere_radii     = jnp.array(inputs['sphere_radii'])
 
-        # Get the Object inputs
-        sphere_positions = inputs['sphere_positions']
-        sphere_radii = inputs['sphere_radii']
+        # Compute the pseudo-densities
+        pseudo_densities = self._project(sphere_positions, sphere_radii, centers, sample_points, sample_radii)
 
-        # Convert the input to Jax arrays
-        element_length = jnp.array(element_length)
-        centers = jnp.array(centers)
-        sample_points = jnp.array(sample_points)
-        sample_radii = jnp.array(sample_radii)
+        # Compute the true volume
+        true_volumes = self._true_volumes(sphere_positions, sphere_radii)
 
-
-        sphere_positions = jnp.array(sphere_positions)
-        sphere_radii = jnp.array(sphere_radii)
-
-        # Project
-        pseudo_densities= self._project(sphere_positions, sphere_radii,
-                                                 element_length,
-                                                 centers, sample_points, sample_radii, rho_min)
-
-        # Calculate the volume
-        true_volume = self._true_volume(sphere_positions, sphere_radii)
-
-        # Calculate the projected volume
-        projected_volume = self._projected_volume(pseudo_densities, element_length)
+        # Compute the projected volume
+        projected_volumes = self._projected_volumes(pseudo_densities, element_length)
 
         # Write the outputs
         outputs['pseudo_densities'] = pseudo_densities
-        outputs['true_volume'] = true_volume
-        outputs['projected_volume'] = projected_volume
+        outputs['true_volumes'] = true_volumes
+        outputs['projected_volumes'] = projected_volumes
 
     def compute_partials(self, inputs, partials):
 
-        # Get the options
-        rho_min = self.options['rho_min']
+        # Get the inputs
+        element_length   = jnp.array(inputs['element_length'])
+        centers          = jnp.array(inputs['centers'])
+        sample_points    = jnp.array(inputs['sample_points'])
+        sample_radii     = jnp.array(inputs['sample_radii'])
+        sphere_positions = jnp.array(inputs['sphere_positions'])
+        sphere_radii     = jnp.array(inputs['sphere_radii'])
 
-        # Get the Mesh inputs
-        element_length = inputs['element_length']
-        centers = inputs['centers']
-        sample_points = inputs['sample_points']
-        sample_radii = inputs['sample_radii']
+        # Calculate the Jacobian of the pseudo-densities
+        jac_pseudo_densities = jacfwd(self._project)(sphere_positions, sphere_radii, sample_points, sample_radii)
 
-        # Get the Object inputs
-        sphere_positions = inputs['sphere_positions']
-        sphere_radii = inputs['sphere_radii']
-
-        # Convert the input to Jax arrays
-        element_length = jnp.array(element_length)
-        centers = jnp.array(centers)
-        sample_points = jnp.array(sample_points)
-        sample_radii = jnp.array(sample_radii)
-
-        sphere_positions = jnp.array(sphere_positions)
-        sphere_radii = jnp.array(sphere_radii)
-
-        # Calculate the Jacobian of the kernel
-        grad_sphere_positions = jacfwd(self._project, argnums=0)
-        grad_sphere_positions_val = grad_sphere_positions(sphere_positions, sphere_radii, element_length,
-                                                 centers,sample_points, sample_radii, rho_min)
+        # Calculate the Jacobian of the projected volumes
+        pseudo_densities = self._project(sphere_positions, sphere_radii,  sample_points, sample_radii)
+        jac_projected_volumes = jacfwd(self._projected_volumes)(pseudo_densities, element_length)
 
         # Set the partials
-        partials['pseudo_densities', 'sphere_positions'] = grad_sphere_positions_val
+        partials['pseudo_densities', 'sphere_positions'] = jac_pseudo_densities
+        partials['projected_volumes', 'projected_volumes'] = jac_projected_volumes
 
 
     @staticmethod
-    def _project(sphere_positions, sphere_radii, element_length, centers, sample_points, sample_radii, rho_min):
-        pseudo_densities = calculate_pseudo_densities(sphere_positions, sphere_radii, element_length, centers, sample_points, sample_radii, rho_min)
+    def _project(sphere_positions, sphere_radii, sample_points, sample_radii):
+        pseudo_densities = calculate_pseudo_densities(sphere_positions, sphere_radii, sample_points, sample_radii)
         return pseudo_densities
 
     @staticmethod
-    def _true_volume(sphere_positions, sphere_radii):
-        return jnp.sum(4 / 3 * jnp.pi * sphere_radii ** 3)
+    def _true_volumes(sphere_positions, sphere_radii):
+        return (4 / 3) * jnp.pi * sphere_radii ** 3
 
     @staticmethod
-    def _projected_volume(pseudo_densities, element_length):
-        return jnp.sum(pseudo_densities) * element_length ** 3
+    def _projected_volumes(pseudo_densities, element_length):
+        return pseudo_densities * element_length ** 3
 
 
 class ProjectionAggregator(ExplicitComponent):
@@ -245,6 +225,7 @@ class ProjectionAggregator(ExplicitComponent):
             self.add_input(f'projected_volume_{i}', val=0.0)
 
         # Set the outputs
+        self.add_output('all_pseudo_densities', shape_by_conn=True)
         self.add_output('aggregate_pseudo_densities', copy_shape=f'pseudo_densities_0')
         self.add_output('aggregate_true_volume', val=0.0)
         self.add_output('aggregate_projected_volume', val=0.0)

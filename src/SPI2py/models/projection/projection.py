@@ -1,19 +1,17 @@
 import jax.numpy as jnp
 from .encapsulation import overlap_volume_sphere_sphere
 
-def calculate_pseudo_densities(sphere_positions, sphere_radii, element_length, centers, sample_points, sample_radii, rho_min):
+def calculate_pseudo_densities(sphere_positions, sphere_radii, sample_points, sample_radii):
     """
     Projects the points to the mesh and calculates the pseudo-densities
 
-    mesh_positions: (nx, ny, nz, n_mesh_points, 1, 3) tensor
-    mesh_radii: (nx, ny, nz, n_mesh_points, 1) tensor
+    mesh_positions: (n_el_x, n_el_y, n_el_z, n_mesh_points, 1, 3) tensor
+    mesh_radii: (n_el_x, n_el_y, n_el_z, n_mesh_points, 1) tensor
     object_positions_expanded: (1, 1, 1, 1, n_object_points, 3) tensor
     object_radii_expanded: (1, 1, 1, 1, n_object_points) tensor
 
-    pseudo_densities: (nx, ny, nz, 1) tensor
+    pseudo_densities: (n_el_x, n_el_y, n_el_z, 1) tensor
     """
-
-    nx, ny, nz, _ = centers.shape
 
     element_volumes = (4 / 3) * jnp.pi * sample_radii ** 3
 
@@ -29,6 +27,6 @@ def calculate_pseudo_densities(sphere_positions, sphere_radii, element_length, c
     pseudo_densities = jnp.sum(volume_fractions, axis=(3, 4), keepdims=True).squeeze(3)
 
     # Clip the pseudo-densities
-    pseudo_densities = jnp.clip(pseudo_densities, a_min=rho_min, a_max=1)
+    pseudo_densities = jnp.clip(pseudo_densities, a_min=0, a_max=1)
 
     return pseudo_densities

@@ -95,18 +95,10 @@ from ..models.kinematics.distance_calculations import signed_distances_spheres_s
 
 
 class VolumeFractionCollision(ExplicitComponent):
-    def initialize(self):
-        self.options.declare('n_projections', types=int, desc='Number of objects with projections')
 
     def setup(self):
 
-        # Get the options
-        n_projections = self.options['n_projections']
-
-        # Set the inputs
-        self.add_input('element_length', val=0)
-        for i in range(n_projections):
-            self.add_input(f'pseudo_densities_{i}', shape_by_conn=True)
+        self.add_input('projected_volumes', shape=(1,))
 
         # Set the outputs
         self.add_output('volume_fraction', shape=(1,))
