@@ -111,8 +111,7 @@ def plot_problem(prob, plot_grid=True, plot_grid_points=True, plot_bounding_box=
         for i in range(n_projections):
 
             # Get the object color
-            # Start i at 1 to skip the projection aggregator
-            color = prob.model.projections._subsystems_myproc[i+1].options['color']
+            color = prob.model.projections._subsystems_myproc[i].options['color']
 
             # Get the pseudo-densities
             density_values = prob.get_val(f'projections.projection_{i}.pseudo_densities').flatten(order='F')

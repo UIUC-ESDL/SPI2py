@@ -86,10 +86,6 @@ class Projections(Group):
         # Get the options
         n_comp_projections = self.options['n_comp_projections']
         n_int_projections = self.options['n_int_projections']
-        n_projections = n_comp_projections + n_int_projections
-
-        # Create the projection aggregator
-        self.add_subsystem('aggregator', ProjectionAggregator(n_projections=n_projections))
 
         # Projection counter
         i = 0
@@ -97,17 +93,11 @@ class Projections(Group):
         # Add the projection components
         for _ in range(n_comp_projections):
             self.add_subsystem(f'projection_{i}', Projection())
-            self.connect(f'projection_{i}.pseudo_densities', f'aggregator.pseudo_densities_{i}')
-            self.connect(f'projection_{i}.true_volume', f'aggregator.true_volume_{i}')
-            self.connect(f'projection_{i}.projected_volume', f'aggregator.projected_volume_{i}')
             i += 1
 
         # Add the interconnect projection components
         for _ in range(n_int_projections):
             self.add_subsystem(f'projection_{i}', Projection())
-            self.connect(f'projection_{i}.pseudo_densities', f'aggregator.pseudo_densities_{i}')
-            self.connect(f'projection_{i}.true_volume', f'aggregator.true_volume_{i}')
-            self.connect(f'projection_{i}.projected_volume', f'aggregator.projected_volume_{i}')
             i += 1
 
 
@@ -303,7 +293,7 @@ class ProjectionAggregator(ExplicitComponent):
 
         projection_errors = jnp.zeros(len(true_volumes))
         for i in range(len(true_volumes)):
-            projection_error_i = jnp.abs(true_volumes[i] - projected_volumes[i]) / true_volumes[i]
+            projection_error_i = jnp.abs(true_volumes[i][0] - projected_volumes[i][0]) / true_volumes[i][0]
             projection_errors = projection_errors.at[i].set(projection_error_i)
             # projection_errors[i] = jnp.abs(true_volumes[i] - projected_volumes[i]) / true_volumes[i]
 

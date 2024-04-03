@@ -7,7 +7,7 @@ import openmdao.api as om
 from time import time_ns
 
 from SPI2py.API.system import System
-from SPI2py.API.projection import Mesh, Projections
+from SPI2py.API.projection import Mesh, Projections, ProjectionAggregator
 from SPI2py.API.constraints import VolumeFractionCollision
 from SPI2py.models.utilities.visualization import plot_problem
 from SPI2py.models.utilities.inputs import read_input_file
@@ -44,6 +44,9 @@ model.add_subsystem('mesh', Mesh(bounds=bounds,
 model.add_subsystem('projections', Projections(n_comp_projections=n_components,
                                                n_int_projections=0))
 
+model.add_subsystem('aggregator', ProjectionAggregator(n_projections=n_projections))
+
+
 model.add_subsystem('mux_all_sphere_positions', Multiplexer(n_i=n_points_per_object, m=3))
 model.add_subsystem('mux_all_sphere_radii', Multiplexer(n_i=n_points_per_object, m=1))
 
@@ -55,9 +58,15 @@ i = 0
 for j in range(n_components):
     model.connect(f'system.components.comp_{j}.transformed_sphere_positions', f'projections.projection_{i}.sphere_positions')
     model.connect(f'system.components.comp_{j}.transformed_sphere_radii', f'projections.projection_{i}.sphere_radii')
+    model.connect(f'projections.projection_{i}.pseudo_densities', f'aggregator.pseudo_densities_{i}')
+    model.connect(f'projections.projection_{i}.true_volume', f'aggregator.true_volume_{i}')
+    model.connect(f'projections.projection_{i}.projected_volume', f'aggregator.projected_volume_{i}')
     i += 1
 # for j in range(n_interconnects):
 #     pass
+#     model.connect(f'projections.projection_{i}.pseudo_densities', f'aggregator.pseudo_densities_{i}')
+#     model.connect(f'projections.projection_{i}.true_volume', f'aggregator.true_volume_{i}')
+#     model.connect(f'projections.projection_{i}.projected_volume', f'aggregator.projected_volume_{i}')
 #     i += 1
 
 
