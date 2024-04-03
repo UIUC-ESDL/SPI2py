@@ -3,27 +3,17 @@ Example 1:  Simple optimization of a 3D layout
 Author:     Chad Peterson
 """
 
-import numpy as np
 import openmdao.api as om
-import torch
 from time import time_ns
 
 from SPI2py.API.system import System
-from SPI2py.API.utilities import Multiplexer, MaxAggregator
-from SPI2py.API.projection import Mesh, Projection, Projections, ProjectionAggregator
+from SPI2py.API.projection import Mesh, Projections
 from SPI2py.API.constraints import VolumeFractionCollision
 from SPI2py.models.utilities.visualization import plot_problem
 from SPI2py.models.utilities.inputs import read_input_file
 from SPI2py.API.objectives import BoundingBoxVolume
 from SPI2py.API.utilities import Multiplexer, estimate_partial_derivative_memory, estimate_projection_error
-from SPI2py.models.geometry.spherical_decomposition import mdbd
-import pyvista as pv
 
-# Set the random seed for reproducibility
-np.random.seed(0)
-
-# Set the default data type
-torch.set_default_dtype(torch.float64)
 
 # Read the input file
 input_file = read_input_file('input_single_projection.toml')
@@ -41,6 +31,7 @@ n_components = 2
 n_points = 25
 n_points_per_object = [n_points for _ in range(n_components)]
 
+# TODO Move true volume calculation back to objects; interconnects must consider overlapping spheres
 
 # Initialize the groups
 model.add_subsystem('system', System(input_dict=input_file, upper=7, lower=0))
@@ -69,12 +60,15 @@ model.connect('mesh.sample_radii', 'projections.projection_0.sample_radii')
 model.connect('mesh.sample_points', 'projections.projection_1.sample_points')
 model.connect('mesh.sample_radii', 'projections.projection_1.sample_radii')
 
-model.connect('system.components.comp_0.transformed_sphere_positions', 'projections.projection_0.sphere_positions')
-model.connect('system.components.comp_0.transformed_sphere_radii', 'projections.projection_0.sphere_radii')
-
-model.connect('system.components.comp_1.transformed_sphere_positions', 'projections.projection_1.sphere_positions')
-model.connect('system.components.comp_1.transformed_sphere_radii', 'projections.projection_1.sphere_radii')
-
+# Connect the system to the projections
+i = 0
+for j in range(n_components):
+    model.connect(f'system.components.comp_{j}.transformed_sphere_positions', f'projections.projection_{i}.sphere_positions')
+    model.connect(f'system.components.comp_{j}.transformed_sphere_radii', f'projections.projection_{i}.sphere_radii')
+    i += 1
+# for j in range(n_interconnects):
+#     pass
+#     i += 1
 
 
 # model.connect('projections.aggregator.true_volume', 'collision.true_volumes')

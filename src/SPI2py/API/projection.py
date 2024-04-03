@@ -96,10 +96,10 @@ class Projections(Group):
 
 
         # TODO Can I automatically connect this???
+        # TODO Where is J being used?
         # Add the projection components
         for j in range(n_comp_projections):
             self.add_subsystem(f'projection_{i}', Projection())
-            # self.connect(f'system.components.comp_{j}.transformed_sphere_positions', 'projection_' + str(i) + '.points')
             self.connect(f'projection_{i}.pseudo_densities', f'aggregator.pseudo_densities_{i}')
             self.connect(f'projection_{i}.true_volumes', f'aggregator.true_volumes_{i}')
             self.connect(f'projection_{i}.projected_volumes', f'aggregator.projected_volumes_{i}')
@@ -108,7 +108,6 @@ class Projections(Group):
         # Add the interconnect projection components
         for j in range(n_int_projections):
             self.add_subsystem(f'projection_{i}', Projection())
-            # self.connect(f'system.interconnects.int_{j}.transformed_sphere_positions', 'projection_int_' + str(i) + '.points')
             self.connect(f'projection_{i}.pseudo_densities', f'aggregator.pseudo_densities_{i}')
             self.connect(f'projection_{i}.true_volumes', f'aggregator.true_volumes_{i}')
             self.connect(f'projection_{i}.projected_volumes', f'aggregator.projected_volumes_{i}')
@@ -226,6 +225,7 @@ class ProjectionAggregator(ExplicitComponent):
         self.add_output('pseudo_densities', copy_shape='pseudo_densities_0')
         self.add_output('true_volume', val=0.0)
         self.add_output('projected_volume', val=0.0)
+        # self.add_output('volume_fraction', val=0.0)
 
     def setup_partials(self):
 
