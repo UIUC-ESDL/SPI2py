@@ -50,12 +50,11 @@ model.add_subsystem('mesh', Mesh(bounds=bounds,
 
 model.add_subsystem('projections', Projections(n_comp_projections=n_components,
                                                n_int_projections=0))
-model.add_subsystem('projections_aggregator', ProjectionAggregator(n_projections=n_components))
 
 model.add_subsystem('mux_all_sphere_positions', Multiplexer(n_i=n_points_per_object, m=3))
 model.add_subsystem('mux_all_sphere_radii', Multiplexer(n_i=n_points_per_object, m=1))
 
-model.add_subsystem('collision', VolumeFractionCollision())
+# model.add_subsystem('collision', VolumeFractionCollision())
 model.add_subsystem('bbv', BoundingBoxVolume())
 
 model.connect('mesh.element_length', 'projections.projection_0.element_length')
@@ -78,8 +77,8 @@ model.connect('system.components.comp_1.transformed_sphere_radii', 'projections.
 
 
 
-model.connect('projections_aggregator.true_volumes', 'collision.true_volumes')
-model.connect('projections_aggregator.projected_volumes', 'collision.projected_volumes')
+# model.connect('projections.aggregator.true_volume', 'collision.true_volumes')
+# model.connect('projections.aggregator.projected_volume', 'collision.projected_volumes')
 
 for i in range(n_components):
     model.connect(f'system.components.comp_{i}.transformed_sphere_positions', f'mux_all_sphere_positions.input_{i}')
@@ -91,7 +90,7 @@ model.connect('mux_all_sphere_radii.stacked_output', 'bbv.sphere_radii')
 
 # Define the objective and constraints
 prob.model.add_objective('bbv.bounding_box_volume', ref=1, ref0=0)
-prob.model.add_constraint('collision.volume_fraction', lower=0, upper=0.01)
+# prob.model.add_constraint('collision.volume_fraction', lower=0, upper=0.01)
 
 prob.model.add_design_var('system.components.comp_0.translation', ref=10, lower=0, upper=10)
 # prob.model.add_design_var('rotation', ref=2*3.14159)
