@@ -71,11 +71,13 @@ for j in range(n_components):
 
 
 # Connect the mesh to the projections
+model.connect('mesh.element_length', 'aggregator.element_length')
 for i in range(n_projections):
     model.connect('mesh.element_length', f'projections.projection_{i}.element_length')
     model.connect('mesh.centers', f'projections.projection_{i}.centers')
     model.connect('mesh.sample_points', f'projections.projection_{i}.sample_points')
     model.connect('mesh.sample_radii', f'projections.projection_{i}.sample_radii')
+
 
 
 
@@ -95,7 +97,8 @@ model.connect('mux_all_sphere_radii.stacked_output', 'bbv.sphere_radii')
 
 # Define the objective and constraints
 prob.model.add_objective('bbv.bounding_box_volume', ref=1, ref0=0)
-# prob.model.add_constraint('collision.volume_fraction', lower=0, upper=0.01)
+prob.model.add_constraint('aggregator.volume_fraction', lower=0.7, upper=1.0)
+# prob.model.add_constraint('aggregator.projection_error', lower=0, upper=0.1)
 
 prob.model.add_design_var('system.components.comp_0.translation', ref=10, lower=0, upper=10)
 # prob.model.add_design_var('rotation', ref=2*3.14159)
@@ -112,6 +115,10 @@ prob.set_val('system.components.comp_0.rotation', [0, 0, 0.3])
 prob.set_val('system.components.comp_1.translation', [2, 5.5, 1.5])
 prob.set_val('system.components.comp_1.rotation', [0.1, 0.1, 0])
 
+# Overlap
+# prob.set_val('system.components.comp_1.translation', [2, 2.5, 1.5])
+# prob.set_val('system.components.comp_1.rotation', [0, 0, 0.3])
+
 prob.driver = om.ScipyOptimizeDriver()
 prob.driver.options['maxiter'] = 10
 prob.driver.options['optimizer'] = 'SLSQP'
@@ -124,7 +131,7 @@ prob.run_model()
 t1 = time_ns()
 
 # Run the optimization
-# prob.run_driver()
+prob.run_driver()
 
 t2 = time_ns()
 print('Runtime: ', (t2 - t1) / 1e9, 's')
@@ -151,6 +158,9 @@ plot_problem(prob, plot_bounding_box=True, plot_grid_points=False)
 #                           [2, 2.5, 1.5],
 #                           10, 0.02)
 
+
+print('Modelling Error:', prob.get_val('aggregator.projection_error'))
+print('Volume Fraction:', prob.get_val('aggregator.volume_fraction'))
 
 print('Done')
 
