@@ -92,33 +92,28 @@ class Projections(Group):
         self.add_subsystem('aggregator', ProjectionAggregator(n_projections=n_projections))
 
         # Projection counter
-        i=0
+        i = 0
 
-
-        # TODO Can I automatically connect this???
-        # TODO Where is J being used?
         # Add the projection components
-        for j in range(n_comp_projections):
+        for _ in range(n_comp_projections):
             self.add_subsystem(f'projection_{i}', Projection())
             self.connect(f'projection_{i}.pseudo_densities', f'aggregator.pseudo_densities_{i}')
-            self.connect(f'projection_{i}.true_volumes', f'aggregator.true_volumes_{i}')
-            self.connect(f'projection_{i}.projected_volumes', f'aggregator.projected_volumes_{i}')
+            self.connect(f'projection_{i}.true_volume', f'aggregator.true_volume_{i}')
+            self.connect(f'projection_{i}.projected_volume', f'aggregator.projected_volume_{i}')
             i += 1
 
         # Add the interconnect projection components
-        for j in range(n_int_projections):
+        for _ in range(n_int_projections):
             self.add_subsystem(f'projection_{i}', Projection())
             self.connect(f'projection_{i}.pseudo_densities', f'aggregator.pseudo_densities_{i}')
-            self.connect(f'projection_{i}.true_volumes', f'aggregator.true_volumes_{i}')
-            self.connect(f'projection_{i}.projected_volumes', f'aggregator.projected_volumes_{i}')
+            self.connect(f'projection_{i}.true_volume', f'aggregator.true_volume_{i}')
+            self.connect(f'projection_{i}.projected_volume', f'aggregator.projected_volume_{i}')
             i += 1
 
 
 class Projection(ExplicitComponent):
     """
     Calculates the pseudo-density of a set of points in a 3D grid
-
-    TODO Deal with objects outside of mesh!
     """
 
     def initialize(self):
@@ -138,8 +133,8 @@ class Projection(ExplicitComponent):
 
         # Outputs
         self.add_output('pseudo_densities', compute_shape=lambda shapes: (shapes['centers'][0], shapes['centers'][1], shapes['centers'][2]))
-        self.add_output('true_volumes', copy_shape='sphere_radii')
-        self.add_output('projected_volumes', compute_shape=lambda shapes: (shapes['centers'][0], shapes['centers'][1], shapes['centers'][2]))
+        self.add_output('true_volume', val=0)
+        self.add_output('projected_volume', val=0)
 
     def setup_partials(self):
         self.declare_partials('pseudo_densities', 'sphere_positions')
@@ -157,15 +152,15 @@ class Projection(ExplicitComponent):
         pseudo_densities = self._project(sphere_positions, sphere_radii, sample_points, sample_radii)
 
         # Compute the true volume
-        true_volumes = self._true_volumes(sphere_positions, sphere_radii)
+        true_volume = self._true_volume(sphere_radii)
 
         # Compute the projected volume
-        projected_volumes = self._projected_volumes(pseudo_densities, element_length)
+        projected_volume = self._projected_volume(pseudo_densities, element_length)
 
         # Write the outputs
         outputs['pseudo_densities'] = pseudo_densities
-        outputs['true_volumes'] = true_volumes
-        outputs['projected_volumes'] = projected_volumes
+        outputs['true_volume'] = true_volume
+        outputs['projected_volume'] = projected_volume
 
     def compute_partials(self, inputs, partials):
 
@@ -185,7 +180,7 @@ class Projection(ExplicitComponent):
 
         # Set the partials
         partials['pseudo_densities', 'sphere_positions'] = jac_pseudo_densities
-        partials['projected_volumes', 'projected_volumes'] = jac_projected_volumes
+        partials['projected_volume', 'sphere_positions'] = jac_projected_volumes
 
 
     @staticmethod
@@ -194,12 +189,12 @@ class Projection(ExplicitComponent):
         return pseudo_densities
 
     @staticmethod
-    def _true_volumes(sphere_positions, sphere_radii):
-        return (4 / 3) * jnp.pi * sphere_radii ** 3
+    def _true_volume(sphere_radii):
+        return jnp.sum((4 / 3) * jnp.pi * sphere_radii ** 3)
 
     @staticmethod
-    def _projected_volumes(pseudo_densities, element_length):
-        return pseudo_densities * element_length ** 3
+    def _projected_volume(pseudo_densities, element_length):
+        return jnp.sum(pseudo_densities * element_length ** 3)
 
 
 class ProjectionAggregator(ExplicitComponent):
@@ -218,14 +213,13 @@ class ProjectionAggregator(ExplicitComponent):
 
         for i in range(n_projections):
             self.add_input(f'pseudo_densities_{i}', shape_by_conn=True)
-            self.add_input(f'true_volumes_{i}', shape_by_conn=True)
-            self.add_input(f'projected_volumes_{i}', shape_by_conn=True)
+            self.add_input(f'true_volume_{i}', val=0)
+            self.add_input(f'projected_volume_{i}', val=0)
 
         # Set the outputs
         self.add_output('pseudo_densities', copy_shape='pseudo_densities_0')
-        self.add_output('true_volume', val=0.0)
-        self.add_output('projected_volume', val=0.0)
-        # self.add_output('volume_fraction', val=0.0)
+        self.add_output('projection_error', val=0.0, desc='How accurately the projections represent each object')
+        self.add_output('volume_fraction', val=0.0, desc='How much of each object overlaps/is out of bounds')
 
     def setup_partials(self):
 
@@ -235,7 +229,8 @@ class ProjectionAggregator(ExplicitComponent):
         # Set the partials
         for i in range(n_projections):
             self.declare_partials('pseudo_densities', f'pseudo_densities_{i}')
-            self.declare_partials('projected_volume', f'projected_volumes_{i}')
+            self.declare_partials('projection_error', f'projected_volume_{i}')
+            self.declare_partials('volume_fraction', f'projected_volume_{i}')
 
 
     def compute(self, inputs, outputs):
@@ -245,19 +240,21 @@ class ProjectionAggregator(ExplicitComponent):
         rho_min = self.options['rho_min']
 
         # Get the inputs
+        element_length = jnp.array(inputs['element_length'])
         pseudo_densities = [jnp.array(inputs[f'pseudo_densities_{i}']) for i in range(n_projections)]
-        true_volumes = [inputs[f'true_volumes_{i}'] for i in range(n_projections)]
-        projected_volumes = [inputs[f'projected_volumes_{i}'] for i in range(n_projections)]
+        true_volumes = [inputs[f'true_volume_{i}'] for i in range(n_projections)]
+        projected_volumes = [inputs[f'projected_volume_{i}'] for i in range(n_projections)]
 
         # Calculate the values
         pseudo_densities = self._aggregate_pseudo_densities(pseudo_densities, rho_min)
-        true_volume = self._aggregate_true_volume(true_volumes)
-        projected_volume = self._aggregate_projected_volume(projected_volumes)
+        pseudo_densities_zero_min = self._aggregate_pseudo_densities(pseudo_densities, 0)
+        projection_error = self._projection_error(true_volumes, projected_volumes)
+        volume_fraction = self._volume_fraction(pseudo_densities_zero_min, projected_volumes, element_length)
 
         # Write the outputs
         outputs['pseudo_densities'] = pseudo_densities
-        outputs['true_volume'] = true_volume
-        outputs['projected_volume'] = projected_volume
+        outputs['projection_error'] = projection_error
+        outputs['volume_fraction'] = volume_fraction
 
     def compute_partials(self, inputs, partials):
 
@@ -266,18 +263,25 @@ class ProjectionAggregator(ExplicitComponent):
         rho_min = self.options['rho_min']
 
         # Get the inputs
+        element_length = jnp.array(inputs['element_length'])
         pseudo_densities = [jnp.array(inputs[f'pseudo_densities_{i}']) for i in range(n_projections)]
-        projected_volumes = [inputs[f'projected_volumes_{i}'] for i in range(n_projections)]
+        true_volumes = [inputs[f'true_volume_{i}'] for i in range(n_projections)]
+        projected_volumes = [inputs[f'projected_volume_{i}'] for i in range(n_projections)]
+
+        # Calculate necessary values
+        pseudo_densities_zero_min = self._aggregate_pseudo_densities(pseudo_densities, 0)
 
         # Calculate the partial derivatives
         jac_pseudo_densities = jacfwd(self._aggregate_pseudo_densities)(pseudo_densities, rho_min)
-        jac_projected_volume = jacfwd(self._aggregate_projected_volume)(projected_volumes)
+        jac_projection_error = jacfwd(self._projection_error)(true_volumes, projected_volumes)
+        jac_volume_fraction = jacfwd(self._volume_fraction)(pseudo_densities_zero_min, projected_volumes, element_length)
 
         # Set the partial derivatives
-        jacs = zip(jac_pseudo_densities, jac_projected_volume)
+        jacs = zip(jac_pseudo_densities, jac_projection_error, jac_volume_fraction)
         for i, jac_pseudo_densities_i, jac_projected_volume_i in enumerate(jacs):
             partials['pseudo_densities', f'pseudo_densities_{i}'] = jac_pseudo_densities_i
-            partials['projected_volume', f'projected_volume_{i}'] = jac_projected_volume_i
+            partials['projection_error', f'projected_volume_{i}'] = jac_projected_volume_i
+            partials['volume_fraction', f'projected_volume_{i}'] = jac_projected_volume_i
 
     @staticmethod
     def _aggregate_pseudo_densities(pseudo_densities, rho_min):
@@ -293,16 +297,35 @@ class ProjectionAggregator(ExplicitComponent):
 
         return aggregate_pseudo_densities
 
-    @staticmethod
-    def _aggregate_true_volume(true_volumes):
-        true_volume = 0.0
-        for volumes in true_volumes:
-            true_volume += jnp.sum(volumes)
-        return true_volume
 
     @staticmethod
-    def _aggregate_projected_volume(projected_volumes):
-        projected_volume = 0.0
-        for volumes in projected_volumes:
-            projected_volume += jnp.sum(volumes)
-        return projected_volume
+    def _projection_error(true_volumes, projected_volumes):
+
+        projection_errors = jnp.zeros(len(true_volumes))
+        for i in range(len(true_volumes)):
+            projection_error_i = jnp.abs(true_volumes[i] - projected_volumes[i]) / true_volumes[i]
+            projection_errors = projection_errors.at[i].set(projection_error_i)
+            # projection_errors[i] = jnp.abs(true_volumes[i] - projected_volumes[i]) / true_volumes[i]
+
+        # TODO Replace with constraint aggregation?
+        max_error = jnp.max(projection_errors)
+        return max_error
+
+    @staticmethod
+    def _volume_fraction(pseudo_densities, volumes_projections, element_length):
+        """
+        Note: Disregard rho_min as it is not applied to the individual pseudo-densities or projections
+        """
+
+        # Add the volume of each projection
+        volume_projections = 0.0
+        for volumes_projection in volumes_projections:
+            volume_projections += jnp.sum(volumes_projection)
+
+        # Calculate volume of the superimposed projection
+        volume_projection = pseudo_densities.sum() * element_length ** 3
+
+        # Calculate the volume fraction constraint (negative-null form)
+        volume_fraction = (volume_projection / volume_projections) - 1
+
+        return volume_fraction
