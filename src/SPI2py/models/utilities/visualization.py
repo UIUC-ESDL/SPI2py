@@ -95,14 +95,14 @@ def plot_problem(prob, plot_grid=True, plot_grid_points=True, plot_bounding_box=
             all_points = prob.get_val('mesh.sample_points')
             all_points = np.array(all_points).reshape(-1,3)
             all_radii = prob.get_val('mesh.sample_radii')
-            # all_radii = np.array(all_radii).reshape(-1,1)
-            # spheres = []
-            # for position, radius in zip(all_points, all_radii):
-            #     spheres.append(pv.Sphere(radius=radius, center=position, theta_resolution=10, phi_resolution=10))
-            #
-            # merged = pv.MultiBlock(spheres).combine().extract_surface().clean()
-            #
-            # plotter.add_mesh(merged, color='blue', opacity=0.025)
+            all_radii = np.array(all_radii).reshape(-1,1)
+            spheres = []
+            for position, radius in zip(all_points, all_radii):
+                spheres.append(pv.Sphere(radius=radius, center=position, theta_resolution=10, phi_resolution=10))
+
+            merged = pv.MultiBlock(spheres).combine().extract_surface().clean()
+
+            plotter.add_mesh(merged, color='blue', opacity=0.025)
 
             plotter.add_points(all_points, color='black', point_size=0.1)
 

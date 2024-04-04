@@ -5,6 +5,14 @@ Provides functions to calculate the distance between classes in various ways.
 
 import jax.numpy as jnp
 
+def distance_points(positions):
+
+    # Calculate the center-to-center distances
+    diff = positions[:, jnp.newaxis, :] - positions[jnp.newaxis, :, :]
+    center_to_center_distances = jnp.sqrt(jnp.sum(diff ** 2, axis=2))
+
+    return center_to_center_distances
+
 
 def distances_points_points(a: jnp.ndarray,
                             b: jnp.ndarray) -> jnp.ndarray:

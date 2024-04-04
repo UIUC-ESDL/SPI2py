@@ -122,6 +122,8 @@ class Component(ExplicitComponent):
         default_translation = jnp.array([[0.0, 0.0, 0.0]])
         default_rotation = jnp.array([[0.0, 0.0, 0.0]])
 
+        volume = jnp.sum((4 / 3) * jnp.pi * sphere_radii ** 3)
+
         # Define the input shapes
         self.add_input('sphere_positions', val=sphere_positions)
         self.add_input('sphere_radii', val=sphere_radii)
@@ -133,6 +135,7 @@ class Component(ExplicitComponent):
         self.add_output('transformed_sphere_positions', val=sphere_positions)
         self.add_output('transformed_sphere_radii', val=sphere_radii)
         self.add_output('transformed_ports', val=ports)
+        self.add_output('volume', val=volume)
 
         # Define the design variables
         # TODO Remove upper/lower
