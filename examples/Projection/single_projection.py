@@ -57,7 +57,7 @@ i = 0
 for j in range(n_components):
     model.connect(f'system.components.comp_{j}.transformed_sphere_positions', f'projections.projection_{i}.sphere_positions')
     model.connect(f'system.components.comp_{j}.transformed_sphere_radii', f'projections.projection_{i}.sphere_radii')
-    model.connect(f'system.components.comp_{j}.volume', f'aggregator.true_volume_{i}')
+    model.connect(f'system.components.comp_{j}.volume', f'projections.projection_{i}.volume')
     model.connect(f'projections.projection_{i}.pseudo_densities', f'aggregator.pseudo_densities_{i}')
     i += 1
 # for j in range(n_interconnects):
@@ -70,6 +70,7 @@ for j in range(n_components):
 # Connect the mesh to the projections
 model.connect('mesh.element_length', 'aggregator.element_length')
 for i in range(n_projections):
+    model.connect('mesh.element_length', f'projections.projection_{i}.element_length')
     model.connect('mesh.centers', f'projections.projection_{i}.centers')
     model.connect('mesh.sample_points', f'projections.projection_{i}.sample_points')
     model.connect('mesh.sample_radii', f'projections.projection_{i}.sample_radii')
@@ -143,7 +144,7 @@ print("Max Pseudo-Density: ", pseudo_densities.max())
 # print("Constraint Value: ", prob.get_val('collision.volume_fraction'))
 
 # Check the initial state
-# plot_problem(prob, plot_bounding_box=True, plot_grid_points=True)
+plot_problem(prob, plot_bounding_box=True, plot_grid_points=False)
 
 
 
@@ -155,8 +156,8 @@ print("Max Pseudo-Density: ", pseudo_densities.max())
 #                           10, 0.02)
 
 print('Kernel Volume Fraction:', prob.get_val('mesh.kernel_volume_fraction'))
-print('Modeling Error:', prob.get_val('aggregator.projection_error'))
-print('Volume Fraction:', prob.get_val('aggregator.volume_fraction'))
+print('Volume Estimation Error (Component 1):', prob.get_val('projections.projection_0.volume_estimation_error'))
+print('Overlap:', prob.get_val('aggregator.volume_fraction'))
 
 print('Done')
 
