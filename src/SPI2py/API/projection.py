@@ -4,6 +4,7 @@ from openmdao.api import ExplicitComponent, Group
 from openmdao.core.indepvarcomp import IndepVarComp
 
 from ..models.projection.projection import calculate_pseudo_densities
+from ..models.utilities.aggregation import kreisselmeier_steinhauser_max
 from ..models.projection.mesh_kernels import mdbd_1_kernel_positions, mdbd_1_kernel_radii
 from ..models.projection.mesh_kernels import mdbd_9_kernel_positions, mdbd_9_kernel_radii
 
@@ -190,7 +191,7 @@ class ProjectionAggregator(ExplicitComponent):
 
         # Set the outputs
         self.add_output('pseudo_densities', copy_shape='pseudo_densities_0')
-        self.add_output('volume_fraction', val=0.0, desc='How much of each object overlaps/is out of bounds')
+        self.add_output('max_pseudo_density', val=0.0, desc='How much of each object overlaps/is out of bounds')
 
     def setup_partials(self):
 
@@ -200,7 +201,7 @@ class ProjectionAggregator(ExplicitComponent):
         # Set the partials
         for i in range(n_projections):
             self.declare_partials('pseudo_densities', f'pseudo_densities_{i}')
-            self.declare_partials('volume_fraction', f'pseudo_densities_{i}')
+            self.declare_partials('max_pseudo_density', f'pseudo_densities_{i}')
 
 
     def compute(self, inputs, outputs):
@@ -214,12 +215,11 @@ class ProjectionAggregator(ExplicitComponent):
         pseudo_densities = [jnp.array(inputs[f'pseudo_densities_{i}']) for i in range(n_projections)]
 
         # Calculate the values
-        # TODO pseudo_densities, max_pseudo_density
-        aggregate_pseudo_densities, volume_fraction = self._aggregate_pseudo_densities(pseudo_densities, element_length, rho_min)
+        aggregate_pseudo_densities, max_pseudo_density = self._aggregate_pseudo_densities(pseudo_densities, element_length, rho_min)
 
         # Write the outputs
         outputs['pseudo_densities'] = aggregate_pseudo_densities
-        outputs['volume_fraction'] = volume_fraction
+        outputs['max_pseudo_density'] = max_pseudo_density
 
     def compute_partials(self, inputs, partials):
 
@@ -232,49 +232,26 @@ class ProjectionAggregator(ExplicitComponent):
         pseudo_densities = [jnp.array(inputs[f'pseudo_densities_{i}']) for i in range(n_projections)]
 
         # Calculate the partial derivatives
-        jac_pseudo_densities, jac_volume_fraction = jacfwd(self._aggregate_pseudo_densities)(pseudo_densities, element_length, rho_min)
+        jac_pseudo_densities, jac_max_pseudo_density = jacfwd(self._aggregate_pseudo_densities)(pseudo_densities, element_length, rho_min)
 
         # Set the partial derivatives
-        jacs = zip(jac_pseudo_densities, jac_volume_fraction)
-        for i, (jac_pseudo_densities_i, jac_projection_error_i, jac_projected_volume_i) in enumerate(jacs):
+        jacs = zip(jac_pseudo_densities, jac_max_pseudo_density)
+        for i, (jac_pseudo_densities_i, jac_max_pseudo_density_i) in enumerate(jacs):
             partials['pseudo_densities', f'pseudo_densities_{i}'] = jac_pseudo_densities_i
-            partials['volume_fraction', f'pseudo_densities_{i}'] = jac_projected_volume_i
+            partials['max_pseudo_density', f'pseudo_densities_{i}'] = jac_max_pseudo_density_i
 
     @staticmethod
     def _aggregate_pseudo_densities(pseudo_densities, element_length, rho_min):
 
+        # Aggregate the pseudo-densities
         aggregate_pseudo_densities = jnp.zeros_like(pseudo_densities[0])
-
         for pseudo_density in pseudo_densities:
             aggregate_pseudo_densities += pseudo_density
 
-        volume_projections = jnp.sum(aggregate_pseudo_densities * element_length ** 3)
-
-        # Apply the minimum and maximum density constraints
+        # Ensure that no pseudo-density is below the minimum value
         aggregate_pseudo_densities = jnp.maximum(aggregate_pseudo_densities, rho_min)
-        aggregate_pseudo_densities = jnp.minimum(aggregate_pseudo_densities, 1.0)
 
-        volume_projection = jnp.sum(aggregate_pseudo_densities * element_length ** 3)
+        # Calculate the maximum pseudo-density
+        max_pseudo_density = kreisselmeier_steinhauser_max(aggregate_pseudo_densities)
 
-        volume_fraction = volume_projection / volume_projections
-
-        return aggregate_pseudo_densities, volume_fraction
-
-    @staticmethod
-    def _volume_fraction(pseudo_densities, volumes_projections, element_length):
-        """
-        Note: Disregard rho_min as it is not applied to the individual pseudo-densities or projections
-        """
-
-        # Add the volume of each projection
-        volume_projections = 0.0
-        for volume_projection in volumes_projections:
-            volume_projections += volume_projection
-
-        # Calculate volume of the superimposed projection
-        volume_projection = pseudo_densities.sum() * element_length ** 3
-
-        # Calculate the volume fraction
-        volume_fraction = (volume_projection / volume_projections)
-
-        return volume_fraction[0]
+        return aggregate_pseudo_densities, max_pseudo_density

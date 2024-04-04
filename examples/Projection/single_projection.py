@@ -94,8 +94,8 @@ model.connect('mux_all_sphere_radii.stacked_output', 'bbv.sphere_radii')
 
 # Define the objective and constraints
 prob.model.add_objective('bbv.bounding_box_volume', ref=1, ref0=0)
-prob.model.add_constraint('aggregator.volume_fraction', lower=0.95, upper=1.0)
-# prob.model.add_constraint('aggregator.projection_error', lower=0, upper=0.1)
+prob.model.add_constraint('aggregator.max_pseudo_density', upper=1.0)
+
 
 prob.model.add_design_var('system.components.comp_0.translation', ref=10, lower=0, upper=10)
 # prob.model.add_design_var('rotation', ref=2*3.14159)
@@ -128,7 +128,7 @@ prob.run_model()
 t1 = time_ns()
 
 # Run the optimization
-# prob.run_driver()
+prob.run_driver()
 
 t2 = time_ns()
 print('Runtime: ', (t2 - t1) / 1e9, 's')
@@ -157,7 +157,7 @@ plot_problem(prob, plot_bounding_box=True, plot_grid_points=False)
 
 print('Kernel Volume Fraction:', prob.get_val('mesh.kernel_volume_fraction'))
 print('Volume Estimation Error (Component 1):', prob.get_val('projections.projection_0.volume_estimation_error'))
-print('Overlap:', prob.get_val('aggregator.volume_fraction'))
+print('Max Pseudo Density:', prob.get_val('aggregator.max_pseudo_density'))
 
 print('Done')
 
