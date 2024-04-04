@@ -92,12 +92,7 @@ def refine_mdbd(xyzr_0):
         volumes = 4/3 * jnp.pi * radii**3
         volume = jnp.sum(volumes)
 
-        volume_cube = 1
-
-        # Fraction inverted to minimize (increasing volume of spheres decreases the fraction)
-        volume_fraction = volume_cube / volume
-
-        return volume_fraction
+        return volume
 
     def constraint_1(x):
         """No overlap between spheres"""
@@ -114,17 +109,15 @@ def refine_mdbd(xyzr_0):
         surface_distances = center_to_center_distances - radii_sum
 
         # Ensure the diagonal is zero since we don't calculate distance from a sphere to itself
-        surface_distances = jnp.where(jnp.eye(len(surface_distances)), 0, surface_distances)
+        # Use 1 to indicate constraint is not tight
+        surface_distances = jnp.where(jnp.eye(len(surface_distances)), 1, surface_distances)
 
         # Negate values so that overlap is positive
         surface_distances = -surface_distances
 
-        # Set negative values to zero
-        surface_distances = jnp.maximum(surface_distances, 0)
-
         surface_distances_flat = surface_distances.flatten()
 
-        constraint = jnp.sum(surface_distances_flat)
+        constraint = jnp.max(surface_distances_flat)
 
         return constraint
 
@@ -136,22 +129,19 @@ def refine_mdbd(xyzr_0):
         lower_bound = -0.5
         upper_bound = 0.5
 
-        lower = -(positions - radii[:, jnp.newaxis] - lower_bound)
-        upper = -(upper_bound - (positions + radii[:, jnp.newaxis]))
-
-        lower_violations = jnp.maximum(lower, 0)
-        upper_violations = jnp.maximum(upper, 0)
+        lower_violations = -(positions - radii[:, jnp.newaxis] - lower_bound)
+        upper_violations = -(upper_bound - (positions + radii[:, jnp.newaxis]))
 
         # Combine the violations into a single array; positive values indicate violations
         all_violations = jnp.concatenate((lower_violations.flatten(), upper_violations.flatten()))
 
-        constraint = jnp.sum(all_violations)
+        constraint = jnp.max(all_violations)
 
         return constraint
 
-    # grad_f = grad(objective)
-    # grad_c1 = grad(constraint_1)
-    # grad_c2 = grad(constraint_2)
+    grad_f = grad(objective)
+    grad_c1 = grad(constraint_1)
+    grad_c2 = grad(constraint_2)
 
 
     # Analyze initial guess
@@ -164,7 +154,8 @@ def refine_mdbd(xyzr_0):
     print(f'Bounds violation = {c2_0}')
 
     # Run the optimization
-    res = minimize(objective, xyzr_0, constraints=[{'type': 'ineq', 'fun': constraint_1}, {'type': 'ineq', 'fun': constraint_2}])
+    res = minimize(objective, xyzr_0,
+                   constraints=[{'type': 'ineq', 'fun': constraint_1}, {'type': 'ineq', 'fun': constraint_2}])
 
     # Analyze the result
     f_res = objective(res.x)

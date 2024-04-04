@@ -46,8 +46,8 @@ class Mesh(IndepVarComp):
 
 
         # Read the MDBD kernel
-        kernel_positions = jnp.array(mdbd_9_kernel_positions)
-        kernel_radii = jnp.array(mdbd_9_kernel_radii).reshape(-1, 1)
+        kernel_positions = jnp.array(mdbd_1_kernel_positions)
+        kernel_radii = jnp.array(mdbd_1_kernel_radii).reshape(-1, 1)
 
         # Scale the sphere positions
         kernel_positions = kernel_positions * element_length
