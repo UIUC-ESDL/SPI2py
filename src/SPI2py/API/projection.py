@@ -7,6 +7,7 @@ from ..models.projection.projection import calculate_pseudo_densities
 from ..models.utilities.aggregation import kreisselmeier_steinhauser_max
 from ..models.projection.mesh_kernels import mdbd_1_kernel_positions, mdbd_1_kernel_radii
 from ..models.projection.mesh_kernels import mdbd_9_kernel_positions, mdbd_9_kernel_radii
+from ..models.projection.mesh_kernels import uniform_64_kernel_positions, uniform_64_kernel_radii
 
 
 
@@ -47,8 +48,10 @@ class Mesh(IndepVarComp):
 
 
         # Read the MDBD kernel
-        kernel_positions = jnp.array(mdbd_1_kernel_positions)
-        kernel_radii = jnp.array(mdbd_1_kernel_radii).reshape(-1, 1)
+        kernel_positions = uniform_64_kernel_positions
+        kernel_radii = uniform_64_kernel_radii
+        kernel_positions = jnp.array(kernel_positions)
+        kernel_radii = jnp.array(kernel_radii).reshape(-1, 1)
 
         # Scale the sphere positions
         kernel_positions = kernel_positions * element_length
