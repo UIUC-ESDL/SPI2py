@@ -102,7 +102,7 @@ def plot_problem(prob, plot_grid=True, plot_grid_points=True, plot_bounding_box=
 
             merged = pv.MultiBlock(spheres).combine().extract_surface().clean()
 
-            plotter.add_mesh(merged, color='blue', opacity=0.025)
+            plotter.add_mesh(merged, color='blue', opacity=0.1)
 
             plotter.add_points(all_points, color='black', point_size=0.1)
 
