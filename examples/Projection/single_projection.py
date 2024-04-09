@@ -75,6 +75,7 @@ model.connect('mesh.element_length', 'aggregator.element_length')
 for i in range(n_projections):
     model.connect('mesh.element_length', f'projections.projection_{i}.element_length')
     model.connect('mesh.centers', f'projections.projection_{i}.centers')
+    model.connect('mesh.element_bounds', f'projections.projection_{i}.element_bounds')
     model.connect('mesh.sample_points', f'projections.projection_{i}.sample_points')
     model.connect('mesh.sample_radii', f'projections.projection_{i}.sample_radii')
 

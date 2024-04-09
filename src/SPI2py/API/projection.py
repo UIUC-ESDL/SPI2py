@@ -48,6 +48,14 @@ class Mesh(IndepVarComp):
         z_center_positions = jnp.linspace(z_min + element_half_length, element_length * n_el_z - element_half_length, n_el_z)
         x_centers, y_centers, z_centers = jnp.meshgrid(x_center_positions, y_center_positions, z_center_positions, indexing='ij')
 
+        # Define the bounds of each mesh element
+        x_min_element = x_centers - element_half_length
+        x_max_element = x_centers + element_half_length
+        y_min_element = y_centers - element_half_length
+        y_max_element = y_centers + element_half_length
+        z_min_element = z_centers - element_half_length
+        z_max_element = z_centers + element_half_length
+        element_bounds = jnp.stack((x_min_element, x_max_element, y_min_element, y_max_element, z_min_element, z_max_element), axis=-1)
 
         # Read the MDBD kernel
         # kernel_positions = uniform_8_kernel_positions
@@ -83,6 +91,7 @@ class Mesh(IndepVarComp):
         # Declare the outputs
         self.add_output('element_length', val=element_length)
         self.add_output('centers', val=meshgrid_centers)
+        self.add_output('element_bounds', val=element_bounds)
         self.add_output('grid', val=grid)
         self.add_output('n_el_x', val=n_el_x)
         self.add_output('n_el_y', val=n_el_y)
@@ -130,6 +139,7 @@ class Projection(ExplicitComponent):
         # Mesh Inputs
         self.add_input('element_length', val=0)
         self.add_input('centers', shape_by_conn=True)
+        self.add_input('element_bounds', shape_by_conn=True)
         self.add_input('sample_points', shape_by_conn=True)
         self.add_input('sample_radii', shape_by_conn=True)
 
@@ -149,7 +159,8 @@ class Projection(ExplicitComponent):
     def compute(self, inputs, outputs):
 
         # Get the Mesh inputs
-        element_length = jnp.array(inputs['element_length'])
+        element_length   = jnp.array(inputs['element_length'])
+        element_bounds   = jnp.array(inputs['element_bounds'])
         sample_points    = jnp.array(inputs['sample_points'])
         sample_radii     = jnp.array(inputs['sample_radii'])
         sphere_positions = jnp.array(inputs['sphere_positions'])
@@ -158,7 +169,7 @@ class Projection(ExplicitComponent):
         aabb             = jnp.array(inputs['AABB'])
 
         # Compute the pseudo-densities
-        pseudo_densities = self._project(sphere_positions, sphere_radii, sample_points, sample_radii)
+        pseudo_densities = self._project(sphere_positions, sphere_radii, sample_points, sample_radii, aabb, element_bounds)
 
         # Compute the volume estimation error
         projected_volume = jnp.sum(pseudo_densities * element_length ** 3)
@@ -171,21 +182,23 @@ class Projection(ExplicitComponent):
     def compute_partials(self, inputs, partials):
 
         # Get the inputs
+        element_bounds = jnp.array(inputs['element_bounds'])
         sample_points    = jnp.array(inputs['sample_points'])
         sample_radii     = jnp.array(inputs['sample_radii'])
         sphere_positions = jnp.array(inputs['sphere_positions'])
         sphere_radii     = jnp.array(inputs['sphere_radii'])
+        aabb = jnp.array(inputs['AABB'])
 
         # Calculate the Jacobian of the pseudo-densities
-        jac_pseudo_densities = jacfwd(self._project)(sphere_positions, sphere_radii, sample_points, sample_radii)
+        jac_pseudo_densities = jacfwd(self._project)(sphere_positions, sphere_radii, sample_points, sample_radii, aabb, element_bounds)
 
         # Set the partials
         partials['pseudo_densities', 'sphere_positions'] = jac_pseudo_densities
 
 
     @staticmethod
-    def _project(sphere_positions, sphere_radii, sample_points, sample_radii):
-        pseudo_densities = calculate_pseudo_densities(sphere_positions, sphere_radii, sample_points, sample_radii)
+    def _project(sphere_positions, sphere_radii, sample_points, sample_radii, aabb, element_bounds):
+        pseudo_densities = calculate_pseudo_densities(sphere_positions, sphere_radii, sample_points, sample_radii, aabb, element_bounds)
         return pseudo_densities
 
 
