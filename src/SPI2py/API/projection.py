@@ -137,6 +137,7 @@ class Projection(ExplicitComponent):
         self.add_input('sphere_positions', shape_by_conn=True)
         self.add_input('sphere_radii', shape_by_conn=True)
         self.add_input('volume', val=0.0)
+        self.add_input('AABB', shape=(1, 6))
 
         # Outputs
         self.add_output('pseudo_densities', compute_shape=lambda shapes: (shapes['centers'][0], shapes['centers'][1], shapes['centers'][2]))
@@ -154,6 +155,7 @@ class Projection(ExplicitComponent):
         sphere_positions = jnp.array(inputs['sphere_positions'])
         sphere_radii     = jnp.array(inputs['sphere_radii'])
         volume           = jnp.array(inputs['volume'])
+        aabb             = jnp.array(inputs['AABB'])
 
         # Compute the pseudo-densities
         pseudo_densities = self._project(sphere_positions, sphere_radii, sample_points, sample_radii)

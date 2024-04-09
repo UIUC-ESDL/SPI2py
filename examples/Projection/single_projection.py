@@ -58,12 +58,14 @@ for j in range(n_components):
     model.connect(f'system.components.comp_{j}.transformed_sphere_positions', f'projections.projection_{i}.sphere_positions')
     model.connect(f'system.components.comp_{j}.transformed_sphere_radii', f'projections.projection_{i}.sphere_radii')
     model.connect(f'system.components.comp_{j}.volume', f'projections.projection_{i}.volume')
+    model.connect(f'system.components.comp_{j}.AABB', f'projections.projection_{i}.AABB')
     model.connect(f'projections.projection_{i}.pseudo_densities', f'aggregator.pseudo_densities_{i}')
     i += 1
 for j in range(n_interconnects):
     model.connect(f'system.interconnects.int_{j}.transformed_sphere_positions', f'projections.projection_{i}.sphere_positions')
     model.connect(f'system.interconnects.int_{j}.transformed_sphere_radii', f'projections.projection_{i}.sphere_radii')
     model.connect(f'system.interconnects.int_{j}.volume', f'projections.projection_{i}.volume')
+    model.connect(f'system.interconnects.int_{j}.AABB', f'projections.projection_{i}.AABB')
     model.connect(f'projections.projection_{i}.pseudo_densities', f'aggregator.pseudo_densities_{i}')
     i += 1
 

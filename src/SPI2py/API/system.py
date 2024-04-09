@@ -136,6 +136,7 @@ class Component(ExplicitComponent):
         self.add_output('transformed_sphere_radii', val=sphere_radii)
         self.add_output('transformed_ports', val=ports)
         self.add_output('volume', val=volume)
+        self.add_output('AABB', shape=(1, 6), desc='Axis-aligned bounding box')
 
         # Define the design variables
         # TODO Remove upper/lower
@@ -166,10 +167,18 @@ class Component(ExplicitComponent):
         sphere_positions_transformed = self.compute_transformation(sphere_positions, translation, rotation)
         ports_transformed = self.compute_transformation(ports, translation, rotation)
 
+        # Calculate the axis-aligned bounding box
+        min_coords = sphere_positions_transformed - sphere_radii
+        max_coords = sphere_positions_transformed + sphere_radii
+        x_min, y_min, z_min = jnp.min(min_coords, axis=0).reshape(3, 1)
+        x_max, y_max, z_max = jnp.max(max_coords, axis=0).reshape(3, 1)
+        aabb = jnp.concatenate((x_min, x_max, y_min, y_max, z_min, z_max))
+
         # Set the outputs
         outputs['transformed_sphere_positions'] = sphere_positions_transformed
         outputs['transformed_sphere_radii'] = sphere_radii
         outputs['transformed_ports'] = ports_transformed
+        outputs['AABB'] = aabb
 
     def compute_partials(self, inputs, partials):
 
@@ -257,6 +266,7 @@ class Interconnect(ExplicitComponent):
         self.add_output('transformed_sphere_positions', shape=shape_positions)
         self.add_output('transformed_sphere_radii', shape=shape_radii)
         self.add_output('volume', val=0.0)
+        self.add_output('AABB', shape=(1, 6), desc='Axis-aligned bounding box')
 
         # Define the design variables
         # self.add_design_var('control_points')
@@ -287,9 +297,17 @@ class Interconnect(ExplicitComponent):
         # Calculate the positions
         translated_positions = translate_linear_spline(positions, start_point, control_points, end_point, n_spheres_per_segment)
 
+        # Calculate the axis-aligned bounding box
+        min_coords = translated_positions - radii
+        max_coords = translated_positions + radii
+        x_min, y_min, z_min = jnp.min(min_coords, axis=0).reshape(3, 1)
+        x_max, y_max, z_max = jnp.max(max_coords, axis=0).reshape(3, 1)
+        aabb = jnp.concatenate((x_min, x_max, y_min, y_max, z_min, z_max))
+
         # Set the outputs
         outputs['transformed_sphere_positions'] = translated_positions
         outputs['transformed_sphere_radii'] = radii
+        outputs['AABB'] = aabb
 
     def compute_partials(self, inputs, partials):
 
