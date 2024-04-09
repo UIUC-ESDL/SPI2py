@@ -256,9 +256,10 @@ class Interconnect(ExplicitComponent):
         # Define the outputs
         self.add_output('transformed_positions', shape=shape_positions)
         self.add_output('transformed_radii', shape=shape_radii)
+        self.add_output('volume', val=0.0)
 
         # Define the design variables
-        self.add_design_var('control_points')
+        # self.add_design_var('control_points')
 
     def setup_partials(self):
         self.declare_partials('transformed_positions', ['start_point', 'control_points', 'end_point'])

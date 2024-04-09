@@ -56,10 +56,12 @@ class Mesh(IndepVarComp):
         # kernel_radii = uniform_64_kernel_radii
         # kernel_positions = mdbd_1_kernel_positions
         # kernel_radii = mdbd_1_kernel_radii
-        kernel_positions = mdbd_9_kernel_positions
-        kernel_radii = mdbd_9_kernel_radii
-        # kernel_positions = mdbd_kernel_positions[:200]
-        # kernel_radii = mdbd_kernel_radii[:200]
+        # kernel_positions = mdbd_9_kernel_positions
+        # kernel_radii = mdbd_9_kernel_radii
+        # kernel_positions = mdbd_kernel_positions[:150]
+        # kernel_radii = mdbd_kernel_radii[:150]
+        kernel_positions = mdbd_kernel_positions[:64]
+        kernel_radii = mdbd_kernel_radii[:64]
         kernel_positions = jnp.array(kernel_positions)
         kernel_radii = jnp.array(kernel_radii).reshape(-1, 1)
 

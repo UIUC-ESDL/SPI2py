@@ -25,7 +25,7 @@ def calculate_pseudo_densities(sphere_positions, sphere_radii, sample_points, sa
     # Assuming sample_points, object_positions, object_radii_expanded, sample_radii, and element_volumes are JAX arrays
     distances = jnp.linalg.norm(sample_points[..., None, :] - object_positions[None, None, None, None, :, :], axis=-1)
     volume_sample_overlaps = overlap_volume_sphere_sphere(object_radii_expanded, sample_radii, distances)
-    volume_element_overlaps = jnp.sum(volume_sample_overlaps, axis=4)
+    volume_element_overlaps = jnp.sum(volume_sample_overlaps, axis=4, keepdims=True)
     volume_fractions = volume_element_overlaps / element_volumes
     pseudo_densities = jnp.sum(volume_fractions, axis=(3, 4), keepdims=True).squeeze(3)
 
