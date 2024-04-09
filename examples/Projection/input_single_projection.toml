@@ -79,7 +79,7 @@ component_2 = 1
 port_2=0
 n_segments=2
 n_spheres_per_segment=25
-radius=0.05
+radius=0.15
 color='black'
 
 #[interconnects.1]
