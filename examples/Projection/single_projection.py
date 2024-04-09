@@ -28,10 +28,15 @@ n_elements_per_unit_length = 2.0
 
 # System Parameters
 n_components = 2
-n_points = 10
-n_interconnects = 1
-n_projections = n_components + n_interconnects
-n_points_per_object = [n_points for _ in range(n_projections)]
+n_spheres = 10
+
+m_interconnects = 1
+m_spheres_per_segment = 25
+m_segments = 2
+
+
+n_projections = n_components + m_interconnects
+n_points_per_object = [n_spheres for _ in range(n_components)] + [m_spheres_per_segment * m_segments for _ in range(m_interconnects)]
 
 # TODO Move true volume calculation back to objects; interconnects must consider overlapping spheres
 
@@ -41,16 +46,16 @@ model.add_subsystem('mesh', Mesh(bounds=bounds,
                                  n_elements_per_unit_length=n_elements_per_unit_length))
 
 model.add_subsystem('projections', Projections(n_comp_projections=n_components,
-                                               n_int_projections=n_interconnects))
+                                               n_int_projections=m_interconnects))
 
 model.add_subsystem('aggregator', ProjectionAggregator(n_projections=n_projections))
 
 
-# model.add_subsystem('mux_all_sphere_positions', Multiplexer(n_i=n_points_per_object, m=3))
-# model.add_subsystem('mux_all_sphere_radii', Multiplexer(n_i=n_points_per_object, m=1))
+model.add_subsystem('mux_all_sphere_positions', Multiplexer(n_i=n_points_per_object, m=3))
+model.add_subsystem('mux_all_sphere_radii', Multiplexer(n_i=n_points_per_object, m=1))
 
 # model.add_subsystem('collision', VolumeFractionCollision())
-# model.add_subsystem('bbv', BoundingBoxVolume())
+model.add_subsystem('bbv', BoundingBoxVolume())
 
 # Connect the system to the projections
 i = 0
@@ -61,7 +66,7 @@ for j in range(n_components):
     model.connect(f'system.components.comp_{j}.AABB', f'projections.projection_{i}.AABB')
     model.connect(f'projections.projection_{i}.pseudo_densities', f'aggregator.pseudo_densities_{i}')
     i += 1
-for j in range(n_interconnects):
+for j in range(m_interconnects):
     model.connect(f'system.interconnects.int_{j}.transformed_sphere_positions', f'projections.projection_{i}.sphere_positions')
     model.connect(f'system.interconnects.int_{j}.transformed_sphere_radii', f'projections.projection_{i}.sphere_radii')
     model.connect(f'system.interconnects.int_{j}.volume', f'projections.projection_{i}.volume')
@@ -82,27 +87,28 @@ for i in range(n_projections):
 
 
 
-# # Connect the system to the bounding box
-# i = 0
-# for j in range(n_components):
-#     model.connect(f'system.components.comp_{j}.transformed_sphere_positions', f'mux_all_sphere_positions.input_{i}')
-#     model.connect(f'system.components.comp_{j}.transformed_sphere_radii', f'mux_all_sphere_radii.input_{i}')
-#     i += 1
-# for j in range(n_interconnects):
-#     model.connect(f'system.interconnects.int_{j}.transformed_sphere_positions', f'mux_all_sphere_positions.input_{i}')
-#     model.connect(f'system.interconnects.int_{j}.transformed_sphere_radii', f'mux_all_sphere_radii.input_{i}')
-#     i += 1
-#
-# model.connect('mux_all_sphere_positions.stacked_output', 'bbv.sphere_positions')
-# model.connect('mux_all_sphere_radii.stacked_output', 'bbv.sphere_radii')
+# Connect the system to the bounding box
+i = 0
+for j in range(n_components):
+    model.connect(f'system.components.comp_{j}.transformed_sphere_positions', f'mux_all_sphere_positions.input_{i}')
+    model.connect(f'system.components.comp_{j}.transformed_sphere_radii', f'mux_all_sphere_radii.input_{i}')
+    i += 1
+for j in range(m_interconnects):
+    model.connect(f'system.interconnects.int_{j}.transformed_sphere_positions', f'mux_all_sphere_positions.input_{i}')
+    model.connect(f'system.interconnects.int_{j}.transformed_sphere_radii', f'mux_all_sphere_radii.input_{i}')
+    i += 1
+
+model.connect('mux_all_sphere_positions.stacked_output', 'bbv.sphere_positions')
+model.connect('mux_all_sphere_radii.stacked_output', 'bbv.sphere_radii')
 
 
 # Define the objective and constraints
-# prob.model.add_objective('bbv.bounding_box_volume', ref=1, ref0=0)
+prob.model.add_objective('bbv.bounding_box_volume', ref=1, ref0=0)
 prob.model.add_constraint('aggregator.max_pseudo_density', upper=1.0)
 
 # prob.model.add_design_var('system.components.comp_0.translation', ref=10, lower=0, upper=10)
 prob.model.add_design_var('system.components.comp_1.translation', ref=5, lower=0, upper=10)
+# prob.model.add_design_var('system.interconnects.int_0.control_points', ref=5, lower=0, upper=10)
 # prob.model.add_design_var('rotation', ref=2*3.14159)
 
 
@@ -159,7 +165,7 @@ print('Max Pseudo Density:', prob.get_val('aggregator.max_pseudo_density'))
 
 
 # Check the initial state
-plot_problem(prob, plot_bounding_box=False, plot_grid_points=False)
+plot_problem(prob, plot_bounding_box=True, plot_grid_points=False)
 
 
 
