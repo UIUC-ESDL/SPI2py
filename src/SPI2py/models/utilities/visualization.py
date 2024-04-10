@@ -3,7 +3,7 @@ import pyvista as pv
 
 # TODO MOVE TO API
 
-def plot_problem(prob, plot_grid=True, plot_grid_points=True, plot_bounding_box=True):
+def plot_problem(prob, plot_grid=True, plot_grid_points=True, plot_bounding_box=True, plot_projection=True):
     """
     Plot the model at a given state.
     """
@@ -108,69 +108,70 @@ def plot_problem(prob, plot_grid=True, plot_grid_points=True, plot_bounding_box=
 
 
         # Plot projections
-        for i in range(n_projections):
+        if plot_projection:
+            for i in range(n_projections):
 
-            # Get the object color
-            color = prob.model.projections._subsystems_myproc[i].options['color']
+                # Get the object color
+                color = prob.model.projections._subsystems_myproc[i].options['color']
 
-            # Get the pseudo-densities
-            density_values = prob.get_val(f'projections.projection_{i}.pseudo_densities').flatten(order='F')
+                # Get the pseudo-densities
+                density_values = prob.get_val(f'projections.projection_{i}.pseudo_densities').flatten(order='F')
 
-            # Get the grid coordinates
-            mesh_grid = prob.get_val('mesh.grid')
-            x_grid = mesh_grid[:, :, :, 0]
-            y_grid = mesh_grid[:, :, :, 1]
-            z_grid = mesh_grid[:, :, :, 2]
+                # Get the grid coordinates
+                mesh_grid = prob.get_val('mesh.grid')
+                x_grid = mesh_grid[:, :, :, 0]
+                y_grid = mesh_grid[:, :, :, 1]
+                z_grid = mesh_grid[:, :, :, 2]
 
-            grid = pv.StructuredGrid(x_grid, y_grid, z_grid)
-            grid["density"] = density_values
+                grid = pv.StructuredGrid(x_grid, y_grid, z_grid)
+                grid["density"] = density_values
 
-            centers = prob.get_val(f'mesh.centers')
+                centers = prob.get_val(f'mesh.centers')
 
-            # Plot the projected pseudo-densities of each element (speed up by skipping near-zero densities)
-            pseudo_densities = prob.get_val(f'projections.projection_{i}.pseudo_densities')
-            density_threshold = 0.15
-            above_threshold_indices = np.argwhere(pseudo_densities > density_threshold)
-            for idx in above_threshold_indices:
-                n_i, n_j, n_k = idx
+                # Plot the projected pseudo-densities of each element (speed up by skipping near-zero densities)
+                pseudo_densities = prob.get_val(f'projections.projection_{i}.pseudo_densities')
+                density_threshold = 0.15
+                above_threshold_indices = np.argwhere(pseudo_densities > density_threshold)
+                for idx in above_threshold_indices:
+                    n_i, n_j, n_k = idx
 
-                # Calculate the center of the current box
-                center = centers[n_i, n_j, n_k]
+                    # Calculate the center of the current box
+                    center = centers[n_i, n_j, n_k]
 
-                # Create the box
-                box = pv.Cube(center=center, x_length=spacing, y_length=spacing, z_length=spacing)
+                    # Create the box
+                    box = pv.Cube(center=center, x_length=spacing, y_length=spacing, z_length=spacing)
 
-                # Add the box to the plotter with the corresponding opacity
-                opacity = pseudo_densities[n_i, n_j, n_k]  # /2 is to make the boxes more transparent
-                plotter.add_mesh(box, color=color, opacity=opacity)
-
-
-            # Define the opacity transfer function
-            # n_points = 127
-            # opacity_transfer_function = np.zeros((n_points, 2))
-            #
-            # # Scalar values from 0 to 1
-            # opacity_transfer_function[:, 0] = np.linspace(0, 1, n_points)  # Scalar values from 0 to 1
-            #
-            # # Opacity values from 0 to 1
-            # opacity_transfer_function[:, 1] = np.linspace(0, 1, n_points)**2
-
-            # opacity = np.linspace(0, 1, 256).tolist()
-            # tf = pv.opacity_transfer_function(opacity, 256).astype(float) / 255.0
-
-            # # Opacity remains at 0 from scalar 0 to 0.5
-            # opacity_transfer_function[:int(n_points/2), 1] = 0
-            #
-            # # Opacity increases from 0 to 0.5 from scalar 0.5 to 1.0
-            # opacity_transfer_function[int(n_points/2):, 1] = np.linspace(0, 0.5, int(n_points/2))
-
-            # tf = np.linspace(0, 255, 256, dtype=np.uint8)
+                    # Add the box to the plotter with the corresponding opacity
+                    opacity = pseudo_densities[n_i, n_j, n_k]  # /2 is to make the boxes more transparent
+                    plotter.add_mesh(box, color=color, opacity=opacity)
 
 
-            # color = "blue"
-            # p.add_volume(grid, cmap='coolwarm', clim=[0, 1], opacity=0.5)
-            # https://matplotlib.org/stable/users/explain/colors/colormaps.html
-            # p.add_volume(grid, scalars="density", opacity="sigmoid", cmap='Purples', clim=[0, 1])
+                # Define the opacity transfer function
+                # n_points = 127
+                # opacity_transfer_function = np.zeros((n_points, 2))
+                #
+                # # Scalar values from 0 to 1
+                # opacity_transfer_function[:, 0] = np.linspace(0, 1, n_points)  # Scalar values from 0 to 1
+                #
+                # # Opacity values from 0 to 1
+                # opacity_transfer_function[:, 1] = np.linspace(0, 1, n_points)**2
+
+                # opacity = np.linspace(0, 1, 256).tolist()
+                # tf = pv.opacity_transfer_function(opacity, 256).astype(float) / 255.0
+
+                # # Opacity remains at 0 from scalar 0 to 0.5
+                # opacity_transfer_function[:int(n_points/2), 1] = 0
+                #
+                # # Opacity increases from 0 to 0.5 from scalar 0.5 to 1.0
+                # opacity_transfer_function[int(n_points/2):, 1] = np.linspace(0, 0.5, int(n_points/2))
+
+                # tf = np.linspace(0, 255, 256, dtype=np.uint8)
+
+
+                # color = "blue"
+                # p.add_volume(grid, cmap='coolwarm', clim=[0, 1], opacity=0.5)
+                # https://matplotlib.org/stable/users/explain/colors/colormaps.html
+                # p.add_volume(grid, scalars="density", opacity="sigmoid", cmap='Purples', clim=[0, 1])
 
 
     plotter.view_isometric()

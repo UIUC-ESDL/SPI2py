@@ -24,14 +24,14 @@ model = prob.model
 
 # Mesh Parameters
 bounds = (0, 10, 0, 10, 0, 3)
-n_elements_per_unit_length = 2.0
+n_elements_per_unit_length = 1.5
 
 # System Parameters
 n_components = 2
 n_spheres = 10
 
 m_interconnects = 1
-m_spheres_per_segment = 25
+m_spheres_per_segment = 10
 m_segments = 2
 
 
@@ -126,7 +126,7 @@ prob.set_val('system.components.comp_1.translation', [7, 4, 2])
 prob.set_val('system.interconnects.int_0.control_points', [[5, 5, 2]])
 
 prob.driver = om.ScipyOptimizeDriver()
-prob.driver.options['maxiter'] = 25
+prob.driver.options['maxiter'] = 10
 prob.driver.options['optimizer'] = 'SLSQP'
 # prob.driver.options['tol'] = 1e-12
 
