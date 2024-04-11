@@ -15,7 +15,7 @@ from ..utilities.aggregation import kreisselmeier_steinhauser_max
 def pseudo_mdbd(directory, input_filename, output_filename, num_spheres=1000, min_radius=0.0001, meshgrid_increment=25, plot=True, color='green'):
 
     # Load the mesh using trimesh
-    mesh_trimesh = trimesh.load(directory + input_filename)
+    mesh_trimesh = trimesh.load(directory+input_filename)
 
     # Define variable bounds based on the object's bounding box
     bounds = mesh_trimesh.bounds
@@ -28,8 +28,6 @@ def pseudo_mdbd(directory, input_filename, output_filename, num_spheres=1000, mi
     z = np.linspace(z_min, z_max, meshgrid_increment)
     xx, yy, zz = np.meshgrid(x, y, z, indexing='ij')
     all_points = np.vstack([xx.ravel(), yy.ravel(), zz.ravel()]).T
-
-    step_size = x[1] - x[0]
 
     # Calculate signed distances for all points
     signed_distances = trimesh.proximity.signed_distance(mesh_trimesh, all_points)
@@ -48,6 +46,7 @@ def pseudo_mdbd(directory, input_filename, output_filename, num_spheres=1000, mi
 
     # Iterate to pack spheres until reaching the limit or the smallest sphere is smaller than min_radius
     while len(sphere_points) < num_spheres and distances_filtered_sorted.size > 0 and distances_filtered_sorted[0] > min_radius:
+
         # Choose the point with the maximum distance from any surface or existing sphere
         sphere_center = points_filtered_sorted[0]
         sphere_radius = distances_filtered_sorted[0]
@@ -58,13 +57,12 @@ def pseudo_mdbd(directory, input_filename, output_filename, num_spheres=1000, mi
 
         # Update distances considering the newly added sphere
         point_distances_to_new_sphere = np.linalg.norm(points_filtered_sorted - sphere_center, axis=1)
-        # within_new_sphere = point_distances_to_new_sphere < sphere_radius + (distances_filtered_sorted-2*step_size)
-        within_new_sphere = point_distances_to_new_sphere < sphere_radius + distances_filtered_sorted #+ step_size/2  # Step size is a fudge factor
+        within_new_sphere = point_distances_to_new_sphere < sphere_radius + distances_filtered_sorted
         points_filtered_sorted = points_filtered_sorted[~within_new_sphere]
         distances_filtered_sorted = distances_filtered_sorted[~within_new_sphere]
 
     if plot:
-        plotter = pv.Plotter()
+        plotter = pv.Plotter(window_size=(300, 300))
 
         spheres = []
         for i in range(len(sphere_points)):
@@ -80,7 +78,8 @@ def pseudo_mdbd(directory, input_filename, output_filename, num_spheres=1000, mi
 
     # OUTPUT: Save the spheres to a file
     spheres = np.hstack((sphere_points, sphere_radii))
-    np.savetxt(directory + output_filename, spheres, delimiter=' ')
+    np.savetxt(directory+output_filename, spheres, delimiter=' ')
+
 
 def refine_mdbd(xyzr_0):
 
@@ -167,6 +166,4 @@ def refine_mdbd(xyzr_0):
     print(f'Bounds violation = {c2_res}')
 
     return res
-
-
 

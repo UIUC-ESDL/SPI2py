@@ -4,13 +4,16 @@ Author:     Chad Peterson
 """
 
 import openmdao.api as om
+from time import time_ns
+
 from SPI2py.API.system import System
 from SPI2py.API.projection import Mesh, Projections, ProjectionAggregator
-from SPI2py.API.objectives import BoundingBoxVolume
-from SPI2py.API.utilities import Multiplexer, MaxAggregator
-
+from SPI2py.API.constraints import VolumeFractionCollision
 from SPI2py.models.utilities.visualization import plot_problem
 from SPI2py.models.utilities.inputs import read_input_file
+from SPI2py.API.objectives import BoundingBoxVolume
+from SPI2py.API.utilities import Multiplexer, estimate_partial_derivative_memory, estimate_projection_error
+
 
 # Read the input file
 input_file = read_input_file('input.toml')
@@ -19,25 +22,25 @@ input_file = read_input_file('input.toml')
 prob = om.Problem()
 model = prob.model
 
-# System Parameters
-n_components = 10
-n_spheres = 10
-n_spheres_per_object = [n_spheres for _ in range(n_components)]
-m_interconnects = 10
-m_segments = 2
-m_spheres_per_segment = 10
-m_spheres = m_segments * m_spheres_per_segment
-m_spheres_per_object = [m_spheres for _ in range(m_interconnects)]
-
 # Mesh Parameters
-bounds = (0, 10, 0, 10, 0, 4)
-n_elements_per_unit_length = 2.0
+bounds = (0, 10, 0, 10, 0, 3)
+n_elements_per_unit_length = 1.5
 
-# Projection Parameters
+# System Parameters
+n_components = 2
+n_spheres = 10
+
+m_interconnects = 1
+m_spheres_per_segment = 10
+m_segments = 2
+
+
 n_projections = n_components + m_interconnects
-n_points_per_object = n_spheres_per_object + m_spheres_per_object
+n_points_per_object = [n_spheres for _ in range(n_components)] + [m_spheres_per_segment * m_segments for _ in range(m_interconnects)]
 
-# Initialize the subsystems
+# TODO Move true volume calculation back to objects; interconnects must consider overlapping spheres
+
+# Initialize the groups
 model.add_subsystem('system', System(input_dict=input_file, upper=7, lower=0))
 model.add_subsystem('mesh', Mesh(bounds=bounds,
                                  n_elements_per_unit_length=n_elements_per_unit_length))
@@ -50,6 +53,8 @@ model.add_subsystem('aggregator', ProjectionAggregator(n_projections=n_projectio
 
 model.add_subsystem('mux_all_sphere_positions', Multiplexer(n_i=n_points_per_object, m=3))
 model.add_subsystem('mux_all_sphere_radii', Multiplexer(n_i=n_points_per_object, m=1))
+
+# model.add_subsystem('collision', VolumeFractionCollision())
 model.add_subsystem('bbv', BoundingBoxVolume())
 
 # Connect the system to the projections
@@ -80,6 +85,8 @@ for i in range(n_projections):
     model.connect('mesh.sample_radii', f'projections.projection_{i}.sample_radii')
 
 
+
+
 # Connect the system to the bounding box
 i = 0
 for j in range(n_components):
@@ -99,73 +106,67 @@ model.connect('mux_all_sphere_radii.stacked_output', 'bbv.sphere_radii')
 prob.model.add_objective('bbv.bounding_box_volume', ref=1, ref0=0)
 prob.model.add_constraint('aggregator.max_pseudo_density', upper=1.0)
 
-prob.model.add_design_var('system.components.comp_0.translation', ref=1, lower=0, upper=10)
-prob.model.add_design_var('system.components.comp_1.translation', ref=1, lower=0, upper=10)
-prob.model.add_design_var('system.components.comp_2.translation', ref=1, lower=0, upper=10)
-prob.model.add_design_var('system.components.comp_3.translation', ref=1, lower=0, upper=10)
-prob.model.add_design_var('system.components.comp_4.translation', ref=1, lower=0, upper=10)
-prob.model.add_design_var('system.components.comp_5.translation', ref=1, lower=0, upper=10)
-prob.model.add_design_var('system.components.comp_6.translation', ref=1, lower=0, upper=10)
-prob.model.add_design_var('system.components.comp_7.translation', ref=1, lower=0, upper=10)
-prob.model.add_design_var('system.components.comp_8.translation', ref=1, lower=0, upper=10)
-prob.model.add_design_var('system.components.comp_9.translation', ref=1, lower=0, upper=10)
-
-
-prob.driver = om.ScipyOptimizeDriver()
-prob.driver.options['maxiter'] = 25
-prob.driver.options['optimizer'] = 'SLSQP'
-# prob.driver.options['tol'] = 1e-9
+# prob.model.add_design_var('system.components.comp_0.translation', ref=10, lower=0, upper=10)
+prob.model.add_design_var('system.components.comp_1.translation', ref=5, lower=0, upper=10)
+# prob.model.add_design_var('system.interconnects.int_0.control_points', ref=5, lower=0, upper=10)
+# prob.model.add_design_var('rotation', ref=2*3.14159)
 
 
 # Set the initial state
 prob.setup()
 
 
-# Configure the system
-prob.set_val('system.components.comp_0.translation', [1, 8, 2])
-prob.set_val('system.components.comp_1.translation', [5, 8, 2])
-prob.set_val('system.components.comp_2.translation', [1, 7, 2])
-prob.set_val('system.components.comp_3.translation', [8, 7, 2])
-prob.set_val('system.components.comp_4.translation', [1, 5.5, 2])
-prob.set_val('system.components.comp_5.translation', [8, 5.5, 2])
-prob.set_val('system.components.comp_6.translation', [0.5, 3, 2])
-prob.set_val('system.components.comp_7.translation', [7.5, 3, 2])
-prob.set_val('system.components.comp_8.translation', [6, 1, 2])
-prob.set_val('system.components.comp_9.translation', [2, 0, 2])
+# # Configure the system
+# # prob.set_val('system.components.comp_0.translation', [2, 7, 2])
+# # prob.set_val('system.components.comp_1.translation', [5.5, 7, 2])
+# # prob.set_val('system.interconnects.int_0.control_points', [[3.75, 7, 2]])
+#
+# prob.set_val('system.components.comp_0.translation', [2, 7, 2])
+# prob.set_val('system.components.comp_1.translation', [7, 4, 2])
+# prob.set_val('system.interconnects.int_0.control_points', [[5, 5, 2]])
+#
+# prob.driver = om.ScipyOptimizeDriver()
+# prob.driver.options['maxiter'] = 10
+# prob.driver.options['optimizer'] = 'SLSQP'
+# # prob.driver.options['tol'] = 1e-12
+#
+# prob.run_model()
+#
+# # print("Constraint Value: ", prob.get_val('collision.volume_fraction'))
+#
+# # plot_problem(prob, plot_bounding_box=True, plot_grid_points=False)
+#
+#
+# # Run the optimization
+# # prob.run_driver()
+#
+#
+#
+# # Debugging
+# # element_index = [1, 2, 1]
+# pseudo_densities = prob.get_val('projections.projection_0.pseudo_densities')
+#
+# # print("Checking element: ", element_index)
+# # print("Pseudo-Density: ", pseudo_densities[element_index[0], element_index[1], element_index[2]])
+# print("Max Pseudo-Density: ", pseudo_densities.max())
+# # print("Constraint Value: ", prob.get_val('collision.volume_fraction'))
+#
+#
+# print('Kernel Volume Fraction:', prob.get_val('mesh.kernel_volume_fraction'))
+# print('Volume Estimation Error (Component 0):', prob.get_val('projections.projection_0.volume_estimation_error'))
+# print('Max Pseudo Density:', prob.get_val('aggregator.max_pseudo_density'))
+#
+#
+# # Check the initial state
+# plot_problem(prob, plot_bounding_box=True, plot_grid_points=False)
+#
+#
+#
+# print('Done')
 
-prob.set_val('system.interconnects.int_0.control_points', [[4.75, 8, 2]])
-prob.set_val('system.interconnects.int_1.control_points', [[8, 8, 2]])
-prob.set_val('system.interconnects.int_2.control_points', [[8, 6, 2]])
-prob.set_val('system.interconnects.int_3.control_points', [[8, 5, 2]])
-prob.set_val('system.interconnects.int_4.control_points', [[6.5, 2.75, 2]])
-prob.set_val('system.interconnects.int_5.control_points', [[5, 1, 2]])
-prob.set_val('system.interconnects.int_6.control_points', [[1.5, 1.5, 2]])
-prob.set_val('system.interconnects.int_7.control_points', [[1, 5, 2]])
-prob.set_val('system.interconnects.int_8.control_points', [[1, 6, 2]])
-prob.set_val('system.interconnects.int_9.control_points', [[1, 8, 2]])
 
 
 
-prob.run_model()
 
 
-# Check the initial state
 
-# print('Initial Objective:', prob.get_val('bbv.bounding_box_volume'))
-# print('Initial Collision:', prob.get_val('collision_multiplexer.stacked_output'))
-
-
-# Run the optimization
-# from time import time_ns
-# start = time_ns()
-# prob.run_driver()
-# end = time_ns()
-# print('Time:', (end - start) / 1e9)
-
-
-# # Check the final state
-# plot_problem(prob)
-# print('Final Objective:', prob.get_val('bbv.bounding_box_volume'))
-# print('Final Collision:', prob.get_val('collision_multiplexer.stacked_output'))
-
-plot_problem(prob, plot_bounding_box=True, plot_grid_points=False)
