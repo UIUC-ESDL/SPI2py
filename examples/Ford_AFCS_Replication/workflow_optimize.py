@@ -20,10 +20,10 @@ prob = om.Problem()
 model = prob.model
 
 # System Parameters
-n_components = 2  # 10
+n_components = 10
 n_spheres = 10
 n_spheres_per_object = [n_spheres for _ in range(n_components)]
-m_interconnects = 1  # 10
+m_interconnects = 10
 m_segments = 2
 m_spheres_per_segment = 10
 m_spheres = m_segments * m_spheres_per_segment
@@ -99,10 +99,20 @@ model.connect('mux_all_sphere_radii.stacked_output', 'bbv.sphere_radii')
 prob.model.add_objective('bbv.bounding_box_volume', ref=1, ref0=0)
 prob.model.add_constraint('aggregator.max_pseudo_density', upper=1.0)
 
-prob.model.add_design_var('system.components.comp_1.translation', ref=5, lower=0, upper=10)
+prob.model.add_design_var('system.components.comp_0.translation', ref=1, lower=0, upper=10)
+prob.model.add_design_var('system.components.comp_1.translation', ref=1, lower=0, upper=10)
+prob.model.add_design_var('system.components.comp_2.translation', ref=1, lower=0, upper=10)
+prob.model.add_design_var('system.components.comp_3.translation', ref=1, lower=0, upper=10)
+prob.model.add_design_var('system.components.comp_4.translation', ref=1, lower=0, upper=10)
+prob.model.add_design_var('system.components.comp_5.translation', ref=1, lower=0, upper=10)
+prob.model.add_design_var('system.components.comp_6.translation', ref=1, lower=0, upper=10)
+prob.model.add_design_var('system.components.comp_7.translation', ref=1, lower=0, upper=10)
+prob.model.add_design_var('system.components.comp_8.translation', ref=1, lower=0, upper=10)
+prob.model.add_design_var('system.components.comp_9.translation', ref=1, lower=0, upper=10)
+
 
 prob.driver = om.ScipyOptimizeDriver()
-prob.driver.options['maxiter'] = 1
+prob.driver.options['maxiter'] = 25
 prob.driver.options['optimizer'] = 'SLSQP'
 # prob.driver.options['tol'] = 1e-9
 
@@ -114,25 +124,25 @@ prob.setup()
 # Configure the system
 prob.set_val('system.components.comp_0.translation', [1, 8, 2])
 prob.set_val('system.components.comp_1.translation', [5, 8, 2])
-prob.set_val('system.components.comp_2.translation', [0.5, 6, 2])
-prob.set_val('system.components.comp_3.translation', [7.5, 6, 2])
-prob.set_val('system.components.comp_4.translation', [0.5, 4.5, 2])
-prob.set_val('system.components.comp_5.translation', [7.5, 5, 2])
-prob.set_val('system.components.comp_6.translation', [0.5, 2, 2])
+prob.set_val('system.components.comp_2.translation', [1, 7, 2])
+prob.set_val('system.components.comp_3.translation', [8, 7, 2])
+prob.set_val('system.components.comp_4.translation', [1, 5.5, 2])
+prob.set_val('system.components.comp_5.translation', [8, 5.5, 2])
+prob.set_val('system.components.comp_6.translation', [0.5, 3, 2])
 prob.set_val('system.components.comp_7.translation', [7.5, 3, 2])
 prob.set_val('system.components.comp_8.translation', [6, 1, 2])
 prob.set_val('system.components.comp_9.translation', [2, 0, 2])
 
-prob.set_val('system.interconnects.int_0.control_points', [[5.0, 7.5, 2]])
-prob.set_val('system.interconnects.int_1.control_points', [[7.50, 7, 2]])
-prob.set_val('system.interconnects.int_2.control_points', [[7.5, 5.47, 2]])
-prob.set_val('system.interconnects.int_3.control_points', [[7.5, 4.3175, 2]])
-prob.set_val('system.interconnects.int_4.control_points', [[6.5, 4, 2]])
-prob.set_val('system.interconnects.int_5.control_points', [[5, 0, 2]])
-prob.set_val('system.interconnects.int_6.control_points', [[0.5, 0, 2]])
-prob.set_val('system.interconnects.int_7.control_points', [[0.5, 3, 2]])
-prob.set_val('system.interconnects.int_8.control_points', [[0.5, 5, 2]])
-prob.set_val('system.interconnects.int_9.control_points', [[0.5, 6.5, 2]])
+prob.set_val('system.interconnects.int_0.control_points', [[4.75, 8, 2]])
+prob.set_val('system.interconnects.int_1.control_points', [[8, 8, 2]])
+prob.set_val('system.interconnects.int_2.control_points', [[8, 6, 2]])
+prob.set_val('system.interconnects.int_3.control_points', [[8, 5, 2]])
+prob.set_val('system.interconnects.int_4.control_points', [[6.5, 2.75, 2]])
+prob.set_val('system.interconnects.int_5.control_points', [[5, 1, 2]])
+prob.set_val('system.interconnects.int_6.control_points', [[1.5, 1.5, 2]])
+prob.set_val('system.interconnects.int_7.control_points', [[1, 5, 2]])
+prob.set_val('system.interconnects.int_8.control_points', [[1, 6, 2]])
+prob.set_val('system.interconnects.int_9.control_points', [[1, 8, 2]])
 
 
 
@@ -145,10 +155,14 @@ prob.run_model()
 # print('Initial Collision:', prob.get_val('collision_multiplexer.stacked_output'))
 
 
-# # Run the optimization
+# Run the optimization
+# from time import time_ns
+# start = time_ns()
 # prob.run_driver()
-#
-#
+# end = time_ns()
+# print('Time:', (end - start) / 1e9)
+
+
 # # Check the final state
 # plot_problem(prob)
 # print('Final Objective:', prob.get_val('bbv.bounding_box_volume'))
