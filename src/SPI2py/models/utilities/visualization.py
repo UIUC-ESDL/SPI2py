@@ -174,8 +174,8 @@ def plot_problem(prob, plot_grid=True, plot_grid_points=True, plot_bounding_box=
                 # p.add_volume(grid, scalars="density", opacity="sigmoid", cmap='Purples', clim=[0, 1])
 
 
-    plotter.view_isometric()
-    # p.view_xy()
+    # plotter.view_isometric()
+    plotter.view_xy()
     plotter.show_axes()
     plotter.show_bounds(color='black')
     # p.background_color = 'white'
