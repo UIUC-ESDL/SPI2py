@@ -23,14 +23,14 @@ prob = om.Problem()
 model = prob.model
 
 # Mesh Parameters
-bounds = (0, 10, 0, 10, 0, 3)
-n_elements_per_unit_length = 1.5
+bounds = (0, 3, 0, 2, 0, 2)
+n_elements_per_unit_length = 1.0
 
 # System Parameters
-n_components = 2
-n_spheres = 10
+n_components = 1
+n_spheres = 50
 
-m_interconnects = 1
+m_interconnects = 0
 m_spheres_per_segment = 10
 m_segments = 2
 
@@ -107,7 +107,7 @@ prob.model.add_objective('bbv.bounding_box_volume', ref=1, ref0=0)
 prob.model.add_constraint('aggregator.max_pseudo_density', upper=1.0)
 
 # prob.model.add_design_var('system.components.comp_0.translation', ref=10, lower=0, upper=10)
-prob.model.add_design_var('system.components.comp_1.translation', ref=5, lower=0, upper=10)
+# prob.model.add_design_var('system.components.comp_1.translation', ref=5, lower=0, upper=10)
 # prob.model.add_design_var('system.interconnects.int_0.control_points', ref=5, lower=0, upper=10)
 # prob.model.add_design_var('rotation', ref=2*3.14159)
 
@@ -121,9 +121,11 @@ prob.setup()
 # prob.set_val('system.components.comp_1.translation', [5.5, 7, 2])
 # prob.set_val('system.interconnects.int_0.control_points', [[3.75, 7, 2]])
 
-prob.set_val('system.components.comp_0.translation', [2, 7, 2])
-prob.set_val('system.components.comp_1.translation', [7, 4, 2])
-prob.set_val('system.interconnects.int_0.control_points', [[5, 5, 2]])
+# prob.set_val('system.components.comp_0.translation', [2, 7, 2])
+# prob.set_val('system.components.comp_1.translation', [7, 4, 2])
+# prob.set_val('system.interconnects.int_0.control_points', [[5, 5, 2]])
+
+prob.set_val('system.components.comp_0.translation', [1.2, 1.2, 1])
 
 prob.driver = om.ScipyOptimizeDriver()
 prob.driver.options['maxiter'] = 10
@@ -165,7 +167,7 @@ print('Max Pseudo Density:', prob.get_val('aggregator.max_pseudo_density'))
 
 
 # Check the initial state
-plot_problem(prob, plot_bounding_box=True, plot_grid_points=False)
+plot_problem(prob, plot_bounding_box=False, plot_grid_points=True)
 
 
 

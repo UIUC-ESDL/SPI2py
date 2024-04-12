@@ -4,55 +4,55 @@
 description = 'Component 0'
 filepath='models/Bot_Eye.xyzr'
 n_spheres=30
-ports = [[-1.5, 0, 0], [1.5, 0, 0]]
-color='purple'
+ports = [[0, 0, 0], [0.75, 0, 0]]
+color='blue'
 
 [components.1]
 description = 'Component 1'
 filepath='models/CogDrivenGear.xyzr'
 n_spheres=30
-ports = [[-1.5, 0, 0], [1.5, 0, 0]]
-color='purple'
+ports = [[-1.75, 0, 0], [0, 1.75, 0]]
+color='orange'
 
 [components.2]
 description = 'Component 2'
 filepath='models/CrossHead_Pin.xyzr'
 n_spheres=30
-ports = [[0, -0.35, 0], [0, 0.35, 0]]
-color='blue'
+ports = [[1.5, 0.5, 1.0], [-0.25, 0.5, 1.0]]
+color='purple'
 
 
 [interconnects]
-#
-#[interconnects.0]
-#component_1 = 0
-#port_1 = 1
-#component_2 = 1
-#port_2=0
-#n_segments=2
-#n_spheres_per_segment=10
-#radius=0.15
-#color='black'
-#
-#[interconnects.1]
-#component_1=1
-#port_1=1
-#component_2=2
-#port_2=0
-#n_segments=2
-#n_spheres_per_segment=10
-#radius=0.15
-#color='black'
-#
-#[interconnects.2]
-#component_1=2
-#port_1=1
-#component_2=0
-#port_2=0
-#n_segments=2
-#n_spheres_per_segment=10
-#radius=0.15
-#color='black'
+
+[interconnects.0]
+component_1 = 0
+port_1 = 1
+component_2 = 1
+port_2=0
+n_segments=2
+n_spheres_per_segment=5
+radius=0.15
+color='black'
+
+[interconnects.1]
+component_1=1
+port_1=1
+component_2=2
+port_2=0
+n_segments=2
+n_spheres_per_segment=5
+radius=0.15
+color='black'
+
+[interconnects.2]
+component_1=2
+port_1=1
+component_2=0
+port_2=0
+n_segments=2
+n_spheres_per_segment=5
+radius=0.15
+color='black'
 
 
 

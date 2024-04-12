@@ -1,70 +1,70 @@
 [components.0]
 description = 'radiator and ion exchanger 1a'
 filepath='models/mdbd/radiator_and_ion_exchanger.xyzr'
-n_spheres=10
+n_spheres=50
 ports = [[0.0, 0.415, 0.415], [2.850, 0.415, 0.415]]
 color='purple'
 
 [components.1]
 description = 'radiator and ion exchanger 1b'
 filepath='models/mdbd/radiator_and_ion_exchanger.xyzr'
-n_spheres=10
+n_spheres=50
 ports = [[0.0, 0.415, 0.415], [2.850, 0.415, 0.415]]
 color='purple'
 
 [components.2]
 description = 'pump 2a'
 filepath='models/mdbd/pump.xyzr'
-n_spheres=10
+n_spheres=50
 ports = [[0.225, 0.0, 0.225], [0.225, 0.45, 0.225]]
 color='blue'
 
 [components.3]
 description = 'pump 2b'
 filepath='models/mdbd/pump.xyzr'
-n_spheres=10
+n_spheres=50
 ports = [[0.225, 0.0, 0.225], [0.225, 0.45, 0.225]]
 color='blue'
 
 [components.4]
 description = 'particle filter 3a'
 filepath='models/mdbd/particle_filter.xyzr'
-n_spheres=10
+n_spheres=50
 ports = [[0.2445, 0, 0.165], [0.2445, 0.330, 0.165]]
 color='yellow'
 
 [components.5]
 description = 'particle filter 3b'
 filepath='models/mdbd/particle_filter.xyzr'
-n_spheres=10
+n_spheres=50
 ports = [[0.2445, 0, 0.165], [0.2445, 0.330, 0.165]]
 color='yellow'
 
 [components.6]
 description = 'fuel cell stack 4a'
 filepath='models/mdbd/fuel_cell_stack.xyzr'
-n_spheres=10
+n_spheres=50
 ports = [[0.9, 0, 0.8], [0.9, 1.6, 0.8]]
 color='green'
 
 [components.7]
 description = 'fuel cell stack 4b'
 filepath='models/mdbd/fuel_cell_stack.xyzr'
-n_spheres=10
+n_spheres=50
 ports = [[0.9, 0, 0.8], [0.9, 1.6, 0.8]]
 color='green'
 
 [components.8]
 description = 'WEG heater and pump 5'
 filepath='models/mdbd/WEG_heater_and_pump.xyzr'
-n_spheres=10
+n_spheres=50
 ports = [[0.8275, 0.0, 0.9165], [0.8275, 1.833, 0.9165]]
 color='gray'
 
 [components.9]
 description = 'heater core 6'
 filepath='models/mdbd/heater_core.xyzr'
-n_spheres=10
+n_spheres=50
 ports = [[0.0, 0.23, 0.23], [0.6725, 0.46, 0.23]]
 color='red'
 

@@ -8,12 +8,11 @@ from time import time_ns
 
 from SPI2py.API.system import System
 from SPI2py.API.projection import Mesh, Projections, ProjectionAggregator
-from SPI2py.API.constraints import VolumeFractionCollision
+from SPI2py.API.objectives import BoundingBoxVolume
+from SPI2py.API.utilities import Multiplexer
+
 from SPI2py.models.utilities.visualization import plot_problem
 from SPI2py.models.utilities.inputs import read_input_file
-from SPI2py.API.objectives import BoundingBoxVolume
-from SPI2py.API.utilities import Multiplexer, estimate_partial_derivative_memory, estimate_projection_error
-
 
 # Read the input file
 input_file = read_input_file('input.toml')
@@ -30,15 +29,13 @@ n_elements_per_unit_length = 1.5
 n_components = 3
 n_spheres = 30
 
-m_interconnects = 0
-m_spheres_per_segment = 10
+m_interconnects = 3
+m_spheres_per_segment = 5
 m_segments = 2
-
 
 n_projections = n_components + m_interconnects
 n_points_per_object = [n_spheres for _ in range(n_components)] + [m_spheres_per_segment * m_segments for _ in range(m_interconnects)]
 
-# TODO Move true volume calculation back to objects; interconnects must consider overlapping spheres
 
 # Initialize the groups
 model.add_subsystem('system', System(input_dict=input_file, upper=7, lower=0))
@@ -104,10 +101,10 @@ model.connect('mux_all_sphere_radii.stacked_output', 'bbv.sphere_radii')
 
 # Define the objective and constraints
 prob.model.add_objective('bbv.bounding_box_volume', ref=1, ref0=0)
-prob.model.add_constraint('aggregator.max_pseudo_density', upper=1.0)
+prob.model.add_constraint('aggregator.max_pseudo_density', upper=0.5)
 
-# prob.model.add_design_var('system.components.comp_0.translation', ref=10, lower=0, upper=10)
-# prob.model.add_design_var('system.components.comp_1.translation', ref=5, lower=0, upper=10)
+# prob.model.add_design_var('system.components.comp_0.translation', ref=5, lower=0, upper=10)
+prob.model.add_design_var('system.components.comp_1.translation', ref=5, lower=0, upper=10)
 prob.model.add_design_var('system.components.comp_2.translation', ref=5, lower=0, upper=10)
 # prob.model.add_design_var('system.interconnects.int_0.control_points', ref=5, lower=0, upper=10)
 # prob.model.add_design_var('rotation', ref=2*3.14159)
@@ -118,54 +115,36 @@ prob.setup()
 
 
 # Configure the system
-# prob.set_val('system.components.comp_0.translation', [2, 7, 2])
-# prob.set_val('system.components.comp_1.translation', [5.5, 7, 2])
-# prob.set_val('system.interconnects.int_0.control_points', [[3.75, 7, 2]])
-
 prob.set_val('system.components.comp_0.translation', [2, 2, 1])
-prob.set_val('system.components.comp_1.translation', [5, 2, 1])
+prob.set_val('system.components.comp_1.translation', [6, 2, 1])
 prob.set_val('system.components.comp_2.translation', [2, 2, 0])
 prob.set_val('system.components.comp_2.rotation', [-np.pi/2, 0, 0])
-# prob.set_val('system.interconnects.int_0.control_points', [[5, 5, 2]])
+prob.set_val('system.interconnects.int_0.control_points', [[4, 2, 1]])
+prob.set_val('system.interconnects.int_1.control_points', [[5, 5, 1]])
+prob.set_val('system.interconnects.int_2.control_points', [[1, 4, 1]])
 
 prob.driver = om.ScipyOptimizeDriver()
 prob.driver.options['maxiter'] = 10
 prob.driver.options['optimizer'] = 'SLSQP'
-# # prob.driver.options['tol'] = 1e-12
 
 prob.run_model()
 
-# # print("Constraint Value: ", prob.get_val('collision.volume_fraction'))
 
-plot_problem(prob, plot_bounding_box=True, plot_grid_points=False)
+# plot_problem(prob, plot_bounding_box=True, plot_grid_points=False)
 
 
 # Run the optimization
-prob.run_driver()
-
-
-
-# # Debugging
-# # element_index = [1, 2, 1]
-# pseudo_densities = prob.get_val('projections.projection_0.pseudo_densities')
-#
-# # print("Checking element: ", element_index)
-# # print("Pseudo-Density: ", pseudo_densities[element_index[0], element_index[1], element_index[2]])
-# print("Max Pseudo-Density: ", pseudo_densities.max())
-# # print("Constraint Value: ", prob.get_val('collision.volume_fraction'))
-#
-#
-# print('Kernel Volume Fraction:', prob.get_val('mesh.kernel_volume_fraction'))
-# print('Volume Estimation Error (Component 0):', prob.get_val('projections.projection_0.volume_estimation_error'))
-# print('Max Pseudo Density:', prob.get_val('aggregator.max_pseudo_density'))
-
+# start = time_ns()
+# prob.run_driver()
+# end = time_ns()
+# print('Elapsed Time: ', (end - start) / 1e9)
 
 # Check the initial state
 plot_problem(prob, plot_bounding_box=True, plot_grid_points=False, plot_projection=True)
 
+print('Max Pseudo Density:', prob.get_val('aggregator.max_pseudo_density'))
 
-
-print('Doner')
+print('Done')
 
 
 

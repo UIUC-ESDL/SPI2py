@@ -21,7 +21,7 @@ model = prob.model
 
 # System Parameters
 n_components = 10
-n_spheres = 10
+n_spheres = 50
 n_spheres_per_object = [n_spheres for _ in range(n_components)]
 m_interconnects = 10
 m_segments = 2
@@ -31,7 +31,7 @@ m_spheres_per_object = [m_spheres for _ in range(m_interconnects)]
 
 # Mesh Parameters
 bounds = (0, 10, 0, 10, 0, 4)
-n_elements_per_unit_length = 2.0
+n_elements_per_unit_length = 3.0
 
 # Projection Parameters
 n_projections = n_components + m_interconnects
@@ -168,4 +168,4 @@ prob.run_model()
 # print('Final Objective:', prob.get_val('bbv.bounding_box_volume'))
 # print('Final Collision:', prob.get_val('collision_multiplexer.stacked_output'))
 
-plot_problem(prob, plot_bounding_box=True, plot_grid_points=False)
+plot_problem(prob, plot_bounding_box=True, plot_grid_points=False, plot_projection=True)

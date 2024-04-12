@@ -3,16 +3,16 @@
 [components.0]
 description = 'radiator and ion exchanger 1a'
 filepath='components/mdbds/radiator_and_ion_exchanger.xyzr'
-n_spheres=10
+n_spheres=50
 ports = [[-1.5, 0, 0], [1.5, 0, 0]]
 color='purple'
 
-[components.1]
-description = 'radiator and ion exchanger 1b'
-filepath='components/mdbds/radiator_and_ion_exchanger.xyzr'
-n_spheres=10
-ports = [[-1.5, 0, 0], [1.5, 0, 0]]
-color='purple'
+#[components.1]
+#description = 'radiator and ion exchanger 1b'
+#filepath='components/mdbds/radiator_and_ion_exchanger.xyzr'
+#n_spheres=10
+#ports = [[-1.5, 0, 0], [1.5, 0, 0]]
+#color='purple'
 
 #[components.2]
 #description = 'pump 2a'
@@ -72,15 +72,15 @@ color='purple'
 
 [interconnects]
 
-[interconnects.0]
-component_1 = 0
-port_1 = 1
-component_2 = 1
-port_2=0
-n_segments=2
-n_spheres_per_segment=10
-radius=0.15
-color='black'
+#[interconnects.0]
+#component_1 = 0
+#port_1 = 1
+#component_2 = 1
+#port_2=0
+#n_segments=2
+#n_spheres_per_segment=10
+#radius=0.15
+#color='black'
 
 #[interconnects.1]
 #component_1=1
