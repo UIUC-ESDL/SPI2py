@@ -12,7 +12,7 @@ import trimesh
 from ..utilities.aggregation import kreisselmeier_steinhauser_max
 
 
-def pseudo_mdbd(directory, input_filename, output_filename, num_spheres=1000, min_radius=0.0001, meshgrid_increment=25, plot=True, color='green'):
+def pseudo_mdbd(directory, input_filename, output_filename, num_spheres=1000, min_radius=0.0001, meshgrid_increment=25, scale=1, plot=True, color='green'):
 
     # Load the mesh using trimesh
     mesh_trimesh = trimesh.load(directory+input_filename)
@@ -75,6 +75,10 @@ def pseudo_mdbd(directory, input_filename, output_filename, num_spheres=1000, mi
         plotter.view_xz()
         plotter.background_color = 'white'
         plotter.show()
+
+    # Scale the spheres
+    sphere_points *= scale
+    sphere_radii *= scale
 
     # OUTPUT: Save the spheres to a file
     spheres = np.hstack((sphere_points, sphere_radii))
