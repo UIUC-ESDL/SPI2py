@@ -22,15 +22,15 @@ prob = om.Problem()
 model = prob.model
 
 # Mesh Parameters
-bounds = (0, 8, 0, 8, 0, 3)
-n_elements_per_unit_length = 1.5
+bounds = (0, 7, 0, 7, 0, 2)
+n_elements_per_unit_length = 1.0
 
 # System Parameters
 n_components = 3
-n_spheres = 30
+n_spheres = 200
 
 m_interconnects = 3
-m_spheres_per_segment = 5
+m_spheres_per_segment = 10
 m_segments = 2
 
 n_projections = n_components + m_interconnects
@@ -100,14 +100,15 @@ model.connect('mux_all_sphere_radii.stacked_output', 'bbv.sphere_radii')
 
 
 # Define the objective and constraints
-prob.model.add_objective('bbv.bounding_box_volume', ref=1, ref0=0)
-prob.model.add_constraint('aggregator.max_pseudo_density', upper=0.5)
+prob.model.add_objective('bbv.bounding_box_volume')
+prob.model.add_constraint('aggregator.max_pseudo_density', upper=0.4)
 
-# prob.model.add_design_var('system.components.comp_0.translation', ref=5, lower=0, upper=10)
-prob.model.add_design_var('system.components.comp_1.translation', ref=5, lower=0, upper=10)
-prob.model.add_design_var('system.components.comp_2.translation', ref=5, lower=0, upper=10)
-# prob.model.add_design_var('system.interconnects.int_0.control_points', ref=5, lower=0, upper=10)
-# prob.model.add_design_var('rotation', ref=2*3.14159)
+# prob.model.add_design_var('system.components.comp_0.translation', ref=5, lower=0, upper=10, indices=[0, 1], flat_indices=True)
+# prob.model.add_design_var('system.components.comp_1.translation', ref=5, lower=0, upper=10, indices=[0, 1], flat_indices=True)
+prob.model.add_design_var('system.components.comp_2.translation', ref=5, lower=0, upper=10, indices=[0, 1], flat_indices=True)
+# prob.model.add_design_var('system.interconnects.int_0.control_points', ref=5, lower=0, upper=10, indices=[0, 1], flat_indices=True)
+prob.model.add_design_var('system.interconnects.int_1.control_points', ref=5, lower=0, upper=10, indices=[0, 1], flat_indices=True)
+prob.model.add_design_var('system.interconnects.int_2.control_points', ref=5, lower=0, upper=10, indices=[0, 1], flat_indices=True)
 
 
 # Set the initial state
@@ -115,29 +116,30 @@ prob.setup()
 
 
 # Configure the system
-prob.set_val('system.components.comp_0.translation', [2, 2, 1])
-prob.set_val('system.components.comp_1.translation', [6, 2, 1])
+prob.set_val('system.components.comp_0.translation', [1, 2, 0.5])
+prob.set_val('system.components.comp_1.translation', [5, 2, 0.5])
 prob.set_val('system.components.comp_2.translation', [2, 2, 0])
 prob.set_val('system.components.comp_2.rotation', [-np.pi/2, 0, 0])
-prob.set_val('system.interconnects.int_0.control_points', [[4, 2, 1]])
-prob.set_val('system.interconnects.int_1.control_points', [[5, 5, 1]])
-prob.set_val('system.interconnects.int_2.control_points', [[1, 4, 1]])
+prob.set_val('system.interconnects.int_0.control_points', [[4, 2, 0.5]])
+prob.set_val('system.interconnects.int_1.control_points', [[5, 5, 0.5]])
+prob.set_val('system.interconnects.int_2.control_points', [[1, 4, 0.5]])
 
 prob.driver = om.ScipyOptimizeDriver()
-prob.driver.options['maxiter'] = 10
+prob.driver.options['maxiter'] = 20
 prob.driver.options['optimizer'] = 'SLSQP'
 
 prob.run_model()
 
+print('Max Pseudo Density:', prob.get_val('aggregator.max_pseudo_density'))
 
-# plot_problem(prob, plot_bounding_box=True, plot_grid_points=False)
+plot_problem(prob, plot_bounding_box=True, plot_grid_points=False)
 
 
 # Run the optimization
-# start = time_ns()
-# prob.run_driver()
-# end = time_ns()
-# print('Elapsed Time: ', (end - start) / 1e9)
+start = time_ns()
+prob.run_driver()
+end = time_ns()
+print('Elapsed Time: ', (end - start) / 1e9)
 
 # Check the initial state
 plot_problem(prob, plot_bounding_box=True, plot_grid_points=False, plot_projection=True)

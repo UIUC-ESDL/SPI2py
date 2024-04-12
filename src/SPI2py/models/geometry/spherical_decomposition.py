@@ -10,9 +10,18 @@ from scipy.optimize import minimize
 import pyvista as pv
 import trimesh
 from ..utilities.aggregation import kreisselmeier_steinhauser_max
+from ..kinematics.rigid_body_transformations import assemble_transformation_matrix, apply_transformation_matrix
 
 
-def pseudo_mdbd(directory, input_filename, output_filename, num_spheres=1000, min_radius=0.0001, meshgrid_increment=25, scale=1, plot=True, color='green'):
+def pseudo_mdbd(directory, input_filename, output_filename,
+                num_spheres=1000,
+                min_radius=0.0001,
+                meshgrid_increment=25,
+                scale=1,
+                translation=(0, 0, 0),
+                rotation=(0, 0, 0),
+                plot=True,
+                color='green'):
 
     # Load the mesh using trimesh
     mesh_trimesh = trimesh.load(directory+input_filename)
@@ -61,6 +70,16 @@ def pseudo_mdbd(directory, input_filename, output_filename, num_spheres=1000, mi
         points_filtered_sorted = points_filtered_sorted[~within_new_sphere]
         distances_filtered_sorted = distances_filtered_sorted[~within_new_sphere]
 
+    # Scale the spheres
+    sphere_points *= scale
+    sphere_radii *= scale
+
+    # Transform the spheres
+    # translation_vec = jnp.array(translation)
+    # rotation_vec = jnp.array(rotation)
+    # transformation = assemble_transformation_matrix(translation_vec, rotation_vec)
+    # sphere_points = apply_transformation_matrix(translation_vec, sphere_points.T, transformation).T
+
     if plot:
         plotter = pv.Plotter(window_size=(300, 300))
 
@@ -74,11 +93,11 @@ def pseudo_mdbd(directory, input_filename, output_filename, num_spheres=1000, mi
 
         plotter.view_xz()
         plotter.background_color = 'white'
+        plotter.show_axes()
+        plotter.show_bounds(color='black')
         plotter.show()
 
-    # Scale the spheres
-    sphere_points *= scale
-    sphere_radii *= scale
+
 
     # OUTPUT: Save the spheres to a file
     spheres = np.hstack((sphere_points, sphere_radii))
