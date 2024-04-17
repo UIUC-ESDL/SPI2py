@@ -4,7 +4,7 @@
 description = 'Component 0'
 filepath='models/Bot_Eye.xyzr'
 n_spheres=200
-ports = [[0, 0, 0], [0.75, 0, 0]]
+ports = [[0, 0.75, 0], [0.75, 0, 0]]
 color='blue'
 
 [components.1]
@@ -18,8 +18,8 @@ color='orange'
 description = 'Component 2'
 filepath='models/CrossHead_Pin.xyzr'
 n_spheres=200
-ports = [[1.5, 0.5, 1.0], [-0.25, 0.5, 1.0]]
-color='purple'
+ports = [[1.25, 0.5, 1.0], [0.15, 0.5, 1.0]]
+color='red'
 
 
 [interconnects]

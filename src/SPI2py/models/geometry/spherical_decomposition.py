@@ -9,8 +9,6 @@ from jax import grad
 from scipy.optimize import minimize
 import pyvista as pv
 import trimesh
-from ..utilities.aggregation import kreisselmeier_steinhauser_max
-from ..kinematics.rigid_body_transformations import assemble_transformation_matrix, apply_transformation_matrix
 
 
 def pseudo_mdbd(directory, input_filename, output_filename,
@@ -81,7 +79,8 @@ def pseudo_mdbd(directory, input_filename, output_filename,
     # sphere_points = apply_transformation_matrix(translation_vec, sphere_points.T, transformation).T
 
     if plot:
-        plotter = pv.Plotter(window_size=(300, 300))
+        plotter = pv.Plotter()
+        # window_size=(300, 300)
 
         spheres = []
         for i in range(len(sphere_points)):
@@ -94,7 +93,7 @@ def pseudo_mdbd(directory, input_filename, output_filename,
         plotter.view_xz()
         plotter.background_color = 'white'
         plotter.show_axes()
-        plotter.show_bounds(color='black')
+        # plotter.show_bounds(color='black')
         plotter.show()
 
 

@@ -58,12 +58,12 @@ class Mesh(IndepVarComp):
         element_bounds = jnp.stack((x_min_element, x_max_element, y_min_element, y_max_element, z_min_element, z_max_element), axis=-1)
 
         # Read the MDBD kernel
-        kernel_positions = uniform_8_kernel_positions
-        kernel_radii = uniform_8_kernel_radii
+        # kernel_positions = uniform_8_kernel_positions
+        # kernel_radii = uniform_8_kernel_radii
         # kernel_positions = uniform_64_kernel_positions
         # kernel_radii = uniform_64_kernel_radii
-        # kernel_positions = mdbd_1_kernel_positions
-        # kernel_radii = mdbd_1_kernel_radii
+        kernel_positions = mdbd_1_kernel_positions
+        kernel_radii = mdbd_1_kernel_radii
         # kernel_positions = mdbd_9_kernel_positions
         # kernel_radii = mdbd_9_kernel_radii
         # kernel_positions = mdbd_kernel_positions[:150]

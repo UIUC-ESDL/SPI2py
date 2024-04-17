@@ -7,8 +7,6 @@ from ..models.utilities.aggregation import kreisselmeier_steinhauser_max, kreiss
 class Multiplexer(ExplicitComponent):
     """
     An ExplicitComponent that vertically stacks a series of inputs with sizes (n, 3) or (n, 1).
-
-    TODO Explicitly implement compute and compute partials. Block identity matrices don't require autograd.
     """
 
     def initialize(self):
@@ -160,98 +158,3 @@ class MinAggregator(Aggregator):
     def _compute_aggregation(input_vector):
         aggregated_output = kreisselmeier_steinhauser_min(input_vector)
         return aggregated_output
-
-
-# class BlockCartesianProduct(ExplicitComponent):
-#     """
-#     Calculates the Cartesian product of a series of input arrays.
-#
-#     In other words, if we have n objects and each object is represented by m_i spheres, then in order to calculate
-#     every collision we must (1) identify every possible collision pair and (2) calculate the resulting Euclidean distance
-#     matrix of each pair. This component is responsible for the first step. Specifically, instead of calculating the
-#     Cartesian product on a sphere-by-sphere basis, we calculate the Cartesian product of the arrays (blocks).
-#     """
-#
-#     def initialize(self):
-#         self.options.declare('input_sizes', types=list, desc='List of sizes (n) for each input array')
-#
-#     def setup(self):
-#         input_sizes = self.options['input_sizes']
-#         total_rows = sum(input_sizes)
-#
-#         # Define inputs and output
-#         for i, size in enumerate(input_sizes):
-#             self.add_input(f'input_{i}', shape=(size, 3))
-#
-#         self.add_output('cartesian_product', shape=(total_rows, 3))
-#
-#     def setup_partials(self):
-#         self.declare_partials('*', '*')
-#
-#     def compute(self, inputs, outputs):
-#
-#             # Get the options
-#             input_sizes = self.options['input_sizes']
-#
-#             # Get the input arrays
-#             input_arrays = ()
-#             for i in range(len(input_sizes)):
-#                 input_arrays = input_arrays + (inputs[f'input_{i}'],)
-#
-#             # Convert the input arrays to torch tensors
-#             input_tensors = ()
-#             for input_array in input_arrays:
-#                 input_tensors = input_tensors + (torch.tensor(input_array, dtype=torch.float64),)
-#
-#             # Calculate the Cartesian product
-#             cartesian_product = self._block_cartesian_product(*input_tensors)
-#
-#             # Convert the stacked output to a numpy array
-#             cartesian_product = cartesian_product.detach().numpy()
-#
-#             # Set the output
-#             outputs['cartesian_product'] = cartesian_product
-#
-#
-#
-# # TODO IMPLEMENT BLOCK PAIRWISE
-
-
-def estimate_partial_derivative_memory(n_points, nx, ny, nz):
-    pd_size = n_points*3*nx*ny*nz
-    pd = jnp.ones((pd_size, 1), dtype=jnp.float64)
-
-    print(f"Jacobian size: {pd_size}")
-
-    memory_usage_bytes = pd.nbytes
-    memory_usage_mb = memory_usage_bytes / (1024 ** 2)
-    print(f"Memory usage: {memory_usage_mb:.2f} MB")
-
-def estimate_projection_error(prob, radii, variable, volume, default_set_val, steps, step_size):
-
-    sphere_radii = prob.get_val(radii)
-    sphere_volume = 4/3 * jnp.pi * sphere_radii**3
-    true_volume = float(jnp.sum(sphere_volume))
-
-    volumes = []
-
-    prob.set_val(variable, default_set_val)
-    prob.run_model()
-    volumes.append(float(prob.get_val(volume)))
-
-    for i in range(steps):
-        default_set_val[0] += step_size
-        default_set_val[1] += step_size
-        default_set_val[2] += step_size
-        prob.set_val(variable, default_set_val)
-        prob.run_model()
-        volumes.append(float(prob.get_val(volume)))
-
-
-    volumes = jnp.array(volumes)
-    max_relative_error = round(100 * jnp.max(jnp.abs(volumes - volumes[0]) /volumes[0]), 2)
-    max_true_error = round(100 * jnp.max(jnp.abs(volumes - true_volume) / true_volume), 2)
-
-    print('Volumes:', volumes)
-    print(f'Max error wrt mesh: {max_relative_error} %')
-    print(f'Max error wrt mdbd volume: {max_true_error} %')

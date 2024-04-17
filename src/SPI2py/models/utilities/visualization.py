@@ -3,7 +3,7 @@ import pyvista as pv
 
 # TODO MOVE TO API
 
-def plot_problem(prob, plot_grid=True, plot_grid_points=True, plot_bounding_box=True, plot_projection=True):
+def plot_problem(prob, plot_objects=True, plot_grid=True, plot_grid_points=True, plot_bounding_box=True, plot_projection=True):
     """
     Plot the model at a given state.
     """
@@ -11,35 +11,14 @@ def plot_problem(prob, plot_grid=True, plot_grid_points=True, plot_bounding_box=
     # Create the plotter
     plotter = pv.Plotter(window_size=[1000, 1000])
 
-    # Plot the components
-    components = []
-    component_colors = []
-    for subsystem in prob.model.system.components._subsystems_myproc:
-        positions = prob.get_val('system.components.' + subsystem.name + '.transformed_sphere_positions')
-        radii = prob.get_val('system.components.' + subsystem.name + '.transformed_sphere_radii')
-        color = subsystem.options['color']
+    if plot_objects:
 
-        spheres = []
-        for position, radius in zip(positions, radii):
-            spheres.append(pv.Sphere(radius=radius, center=position, theta_resolution=30, phi_resolution=30))
-
-        merged = pv.MultiBlock(spheres).combine().extract_surface().clean()
-
-        components.append(merged)
-        component_colors.append(color)
-
-    for comp, color in zip(components, component_colors):
-        plotter.add_mesh(comp, color=color, opacity=0.5)
-
-    # Plot the interconnects
-    if 'interconnects' in prob.model.system._subsystems_allprocs:
-
-        interconnects = []
-        interconnect_colors = []
-        for subsystem in prob.model.system.interconnects._subsystems_myproc:
-
-            positions = prob.get_val('system.interconnects.' + subsystem.name + '.transformed_sphere_positions')
-            radii = prob.get_val('system.interconnects.' + subsystem.name + '.transformed_sphere_radii')
+        # Plot the components
+        components = []
+        component_colors = []
+        for subsystem in prob.model.system.components._subsystems_myproc:
+            positions = prob.get_val('system.components.' + subsystem.name + '.transformed_sphere_positions')
+            radii = prob.get_val('system.components.' + subsystem.name + '.transformed_sphere_radii')
             color = subsystem.options['color']
 
             spheres = []
@@ -48,11 +27,34 @@ def plot_problem(prob, plot_grid=True, plot_grid_points=True, plot_bounding_box=
 
             merged = pv.MultiBlock(spheres).combine().extract_surface().clean()
 
-            interconnects.append(merged)
-            interconnect_colors.append(color)
+            components.append(merged)
+            component_colors.append(color)
 
-        for inter, color in zip(interconnects, interconnect_colors):
-            plotter.add_mesh(inter, color=color, lighting=False)
+        for comp, color in zip(components, component_colors):
+            plotter.add_mesh(comp, color=color, opacity=0.5)
+
+        # Plot the interconnects
+        if 'interconnects' in prob.model.system._subsystems_allprocs:
+
+            interconnects = []
+            interconnect_colors = []
+            for subsystem in prob.model.system.interconnects._subsystems_myproc:
+
+                positions = prob.get_val('system.interconnects.' + subsystem.name + '.transformed_sphere_positions')
+                radii = prob.get_val('system.interconnects.' + subsystem.name + '.transformed_sphere_radii')
+                color = subsystem.options['color']
+
+                spheres = []
+                for position, radius in zip(positions, radii):
+                    spheres.append(pv.Sphere(radius=radius, center=position, theta_resolution=30, phi_resolution=30))
+
+                merged = pv.MultiBlock(spheres).combine().extract_surface().clean()
+
+                interconnects.append(merged)
+                interconnect_colors.append(color)
+
+            for inter, color in zip(interconnects, interconnect_colors):
+                plotter.add_mesh(inter, color=color, lighting=False)
 
 
     if plot_bounding_box:
@@ -98,7 +100,7 @@ def plot_problem(prob, plot_grid=True, plot_grid_points=True, plot_bounding_box=
             all_radii = np.array(all_radii).reshape(-1,1)
             spheres = []
             for position, radius in zip(all_points, all_radii):
-                spheres.append(pv.Sphere(radius=radius, center=position, theta_resolution=10, phi_resolution=10))
+                spheres.append(pv.Sphere(radius=radius, center=position, theta_resolution=15, phi_resolution=15))
 
             merged = pv.MultiBlock(spheres).combine().extract_surface().clean()
 
@@ -177,7 +179,7 @@ def plot_problem(prob, plot_grid=True, plot_grid_points=True, plot_bounding_box=
     # plotter.view_isometric()
     plotter.view_xy()
     plotter.show_axes()
-    plotter.show_bounds(color='black')
+    # plotter.show_bounds(color='black')
     # p.background_color = 'white'
 
 
