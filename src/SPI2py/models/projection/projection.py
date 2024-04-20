@@ -92,8 +92,6 @@ def calculate_pseudo_densities(sphere_positions, sphere_radii, sample_points, sa
 #     pseudo_densities: (n_el_x, n_el_y, n_el_z, 1) tensor
 #     """
 #
-#
-#
 #     element_sample_volumes = (4 / 3) * jnp.pi * sample_radii ** 3
 #     element_volumes = jnp.sum(element_sample_volumes, axis=3, keepdims=True)
 #
@@ -106,6 +104,7 @@ def calculate_pseudo_densities(sphere_positions, sphere_radii, sample_points, sa
 #     object_radii_transposed = object_radii.T
 #     object_radii_expanded = object_radii_transposed[None, None, None, ...]
 #
+#     #
 #     el_x_min, el_x_max = element_bounds[..., 0], element_bounds[..., 1]
 #     el_y_min, el_y_max = element_bounds[..., 2], element_bounds[..., 3]
 #     el_z_min, el_z_max = element_bounds[..., 4], element_bounds[..., 5]
@@ -118,20 +117,21 @@ def calculate_pseudo_densities(sphere_positions, sphere_radii, sample_points, sa
 #                         (el_z_min <= obj_z_max) & (el_z_max >= obj_z_min)
 #
 #     element_in_bounds_expanded = element_in_bounds[..., None]
-#
-#     # relevant_indices = jnp.where(element_in_bounds)
 #     relevant_indices = jnp.where(element_in_bounds_expanded)
 #
+#     #
 #     # Assuming sample_points, object_positions, object_radii_expanded, sample_radii, and element_volumes are JAX arrays
+#     # distances = jnp.linalg.norm(sample_points_expanded - object_positions_expanded, axis=-1)
 #     distances = jnp.linalg.norm(sample_points_expanded[relevant_indices] - object_positions_expanded, axis=-1)
 #
-#
+#     # volume_sample_overlaps = overlap_volume_sphere_sphere(object_radii_expanded, sample_radii, distances)
 #     volume_sample_overlaps = overlap_volume_sphere_sphere(object_radii_expanded, sample_radii[relevant_indices], distances)
 #     volume_element_overlaps = jnp.sum(volume_sample_overlaps, axis=4, keepdims=True)
+#     # volume_fractions = volume_element_overlaps / element_volumes
 #     volume_fractions = volume_element_overlaps / element_volumes[relevant_indices]
-#     # pseudo_densities = jnp.sum(volume_fractions, axis=(3, 4), keepdims=True).squeeze(3)
-#     relevant_pseudo_densities = jnp.sum(volume_fractions, axis=(3, 4), keepdims=True).squeeze(3)
 #
+#     pseudo_densities = jnp.sum(volume_fractions, axis=(3, 4), keepdims=True).squeeze(3)
+#     relevant_pseudo_densities = jnp.sum(volume_fractions, axis=(3, 4), keepdims=True).squeeze(3)
 #     pseudo_densities = jnp.where(element_in_bounds, relevant_pseudo_densities.squeeze(3), 0)
 #
 #     # Clip the pseudo-densities

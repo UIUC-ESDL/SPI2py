@@ -81,7 +81,6 @@ class Mesh(IndepVarComp):
         meshgrid_centers = jnp.stack((x_centers, y_centers, z_centers), axis=-1)
         meshgrid_centers_expanded = jnp.expand_dims(meshgrid_centers, axis=3)
 
-        # TODO, don't precompute all_points?... it can produce
         all_points = meshgrid_centers_expanded + kernel_positions
         all_radii = jnp.zeros((n_el_x, n_el_y, n_el_z, 1, 1)) + kernel_radii
 

@@ -138,18 +138,19 @@ prob.set_val('system.interconnects.int_0.control_points', [[1.6, 1.6, 0.5]])
 prob.set_val('system.interconnects.int_1.control_points', [[2.35, 3.75, 0.5]])
 prob.set_val('system.interconnects.int_2.control_points', [[0.65, 1.75, 0.5]])
 
-# # Setup the problem with complex-step
+# Setup the problem with complex-step
 # prob.setup(force_alloc_complex=True)
 
 # Set where to approximate derivatives
-prob.model.approx_totals(method='fd')
+# prob.model.approx_totals(method='fd')
+# prob.model.approx_totals(method='cs')
 
 
 
 prob.driver = om.ScipyOptimizeDriver()
 prob.driver.options['maxiter'] = 10
-# prob.driver.options['optimizer'] = 'COBYLA'
-prob.driver.options['optimizer'] = 'trust-constr'
+prob.driver.options['optimizer'] = 'COBYLA'
+# prob.driver.options['optimizer'] = 'trust-constr'
 
 prob.run_model()
 
@@ -166,7 +167,7 @@ end = time_ns()
 print('Elapsed Time: ', (end - start) / 1e9)
 
 # Check the initial state
-plot_problem(prob, plot_bounding_box=True, plot_grid_points=False, plot_projection=False)
+plot_problem(prob, plot_bounding_box=False, plot_grid_points=False, plot_projection=True)
 
 print('Max Pseudo Density:', prob.get_val('aggregator.max_pseudo_density'))
 
