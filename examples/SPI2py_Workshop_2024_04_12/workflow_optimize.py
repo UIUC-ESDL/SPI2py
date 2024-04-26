@@ -161,10 +161,10 @@ prob.run_model()
 
 
 # Run the optimization
-start = time_ns()
-prob.run_driver()
-end = time_ns()
-print('Elapsed Time: ', (end - start) / 1e9)
+# start = time_ns()
+# prob.run_driver()
+# end = time_ns()
+# print('Elapsed Time: ', (end - start) / 1e9)
 
 # Check the initial state
 plot_problem(prob, plot_bounding_box=False, plot_grid_points=False, plot_projection=True)

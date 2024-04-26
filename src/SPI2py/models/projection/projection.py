@@ -119,10 +119,11 @@ def calculate_pseudo_densities(sphere_positions, sphere_radii, sample_points, sa
 #     element_in_bounds_expanded = element_in_bounds[..., None]
 #     relevant_indices = jnp.where(element_in_bounds_expanded)
 #
-#     #
+#     relevant_sample_points = sample_points_expanded[element_in_bounds]
+#
 #     # Assuming sample_points, object_positions, object_radii_expanded, sample_radii, and element_volumes are JAX arrays
 #     # distances = jnp.linalg.norm(sample_points_expanded - object_positions_expanded, axis=-1)
-#     distances = jnp.linalg.norm(sample_points_expanded[relevant_indices] - object_positions_expanded, axis=-1)
+#     distances = jnp.linalg.norm(relevant_sample_points - object_positions_expanded, axis=-1)
 #
 #     # volume_sample_overlaps = overlap_volume_sphere_sphere(object_radii_expanded, sample_radii, distances)
 #     volume_sample_overlaps = overlap_volume_sphere_sphere(object_radii_expanded, sample_radii[relevant_indices], distances)
@@ -130,7 +131,7 @@ def calculate_pseudo_densities(sphere_positions, sphere_radii, sample_points, sa
 #     # volume_fractions = volume_element_overlaps / element_volumes
 #     volume_fractions = volume_element_overlaps / element_volumes[relevant_indices]
 #
-#     pseudo_densities = jnp.sum(volume_fractions, axis=(3, 4), keepdims=True).squeeze(3)
+#     # pseudo_densities = jnp.sum(volume_fractions, axis=(3, 4), keepdims=True).squeeze(3)
 #     relevant_pseudo_densities = jnp.sum(volume_fractions, axis=(3, 4), keepdims=True).squeeze(3)
 #     pseudo_densities = jnp.where(element_in_bounds, relevant_pseudo_densities.squeeze(3), 0)
 #
