@@ -37,8 +37,6 @@ m_segments = 2
 n_projections = n_components + m_interconnects
 n_points_per_object = [n_spheres for _ in range(n_components)] + [m_spheres_per_segment * m_segments for _ in range(m_interconnects)]
 
-# TODO Move true volume calculation back to objects; interconnects must consider overlapping spheres
-
 # Initialize the groups
 model.add_subsystem('system', System(input_dict=input_file, upper=7, lower=0))
 model.add_subsystem('mesh', Mesh(bounds=bounds,

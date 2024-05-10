@@ -42,10 +42,9 @@ n_points_per_object = [n_points for _ in range(n_components)]
 
 # Initialize the groups
 model.add_subsystem('system', System(input_dict=input_file, upper=7, lower=0))
-model.add_subsystem('mesh', Mesh(bounds=bounds, n_elements_per_unit_length=n_elements_per_unit_length,
-                                 mdbd_unit_cube_filepath='mdbd_unit_cube.xyzr', mdbd_unit_cube_min_radius=0.1))
+model.add_subsystem('mesh', Mesh(bounds=bounds, n_elements_per_unit_length=n_elements_per_unit_length))
 model.add_subsystem('projections', Projections(n_comp_projections=n_components, n_int_projections=0))
-model.add_subsystem('volume_fraction_constraint', VolumeFractionCollision(n_projections=n_components))
+
 
 model.add_subsystem('mux_all_sphere_positions', Multiplexer(n_i=n_points_per_object, m=3))
 model.add_subsystem('mux_all_sphere_radii', Multiplexer(n_i=n_points_per_object, m=1))
