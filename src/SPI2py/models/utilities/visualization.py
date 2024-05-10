@@ -175,7 +175,6 @@ def plot_problem(prob, plot_objects=True, plot_grid=True, plot_grid_points=True,
                 # https://matplotlib.org/stable/users/explain/colors/colormaps.html
                 # p.add_volume(grid, scalars="density", opacity="sigmoid", cmap='Purples', clim=[0, 1])
 
-
     # plotter.view_isometric()
     plotter.view_xy()
     plotter.show_axes()

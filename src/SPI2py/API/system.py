@@ -4,6 +4,7 @@ from jax import jacfwd
 import openmdao.api as om
 from openmdao.api import ExplicitComponent, Group
 
+from ..models.geometry.point_clouds import generate_point_cloud
 from ..models.utilities.inputs import read_xyzr_file
 from ..models.kinematics.spline_transformations import translate_linear_spline
 from ..models.kinematics.rigid_body_transformations import assemble_transformation_matrix, \

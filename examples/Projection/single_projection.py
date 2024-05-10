@@ -8,11 +8,10 @@ from time import time_ns
 
 from SPI2py.API.system import System
 from SPI2py.API.projection import Mesh, Projections, ProjectionAggregator
-from SPI2py.API.constraints import VolumeFractionCollision
 from SPI2py.models.utilities.visualization import plot_problem
 from SPI2py.models.utilities.inputs import read_input_file
 from SPI2py.API.objectives import BoundingBoxVolume
-from SPI2py.API.utilities import Multiplexer, estimate_partial_derivative_memory, estimate_projection_error
+from SPI2py.API.utilities import Multiplexer
 
 
 # Read the input file
@@ -153,13 +152,6 @@ pseudo_densities = prob.get_val('projections.projection_0.pseudo_densities')
 print("Max Pseudo-Density: ", pseudo_densities.max())
 # print("Constraint Value: ", prob.get_val('collision.volume_fraction'))
 
-
-# estimate_projection_error(prob,
-#                           'system.components.comp_0.sphere_radii',
-#                           'system.components.comp_0.translation',
-#                           'projections.projection_0.volume',
-#                           [2, 2.5, 1.5],
-#                           10, 0.02)
 
 print('Kernel Volume Fraction:', prob.get_val('mesh.kernel_volume_fraction'))
 print('Volume Estimation Error (Component 0):', prob.get_val('projections.projection_0.volume_estimation_error'))
