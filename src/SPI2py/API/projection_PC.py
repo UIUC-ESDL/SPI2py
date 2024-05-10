@@ -144,7 +144,10 @@ class Projection(ExplicitComponent):
         Projects the points to the mesh and calculates the pseudo-densities
         """
 
-        grid_x, grid_y, grid_z = centers
+        # grid_x, grid_y, grid_z = centers
+        grid_x = centers[:, :, :, 0]
+        grid_y = centers[:, :, :, 1]
+        grid_z = centers[:, :, :, 2]
         grid_coords = jnp.vstack([grid_x.ravel(), grid_y.ravel(), grid_z.ravel()])
 
         # Perform KDE

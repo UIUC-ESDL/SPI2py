@@ -130,22 +130,22 @@ def plot_problem(prob, plot_objects=True, plot_grid=True, plot_grid_points=True,
 
                 centers = prob.get_val(f'mesh.centers')
 
-                # Plot the projected pseudo-densities of each element (speed up by skipping near-zero densities)
-                pseudo_densities = prob.get_val(f'projections.projection_{i}.pseudo_densities')
-                density_threshold = 0.15
-                above_threshold_indices = np.argwhere(pseudo_densities > density_threshold)
-                for idx in above_threshold_indices:
-                    n_i, n_j, n_k = idx
-
-                    # Calculate the center of the current box
-                    center = centers[n_i, n_j, n_k]
-
-                    # Create the box
-                    box = pv.Cube(center=center, x_length=spacing, y_length=spacing, z_length=spacing)
-
-                    # Add the box to the plotter with the corresponding opacity
-                    opacity = pseudo_densities[n_i, n_j, n_k]  # /2 is to make the boxes more transparent
-                    plotter.add_mesh(box, color=color, opacity=opacity)
+                # # Plot the projected pseudo-densities of each element (speed up by skipping near-zero densities)
+                # pseudo_densities = prob.get_val(f'projections.projection_{i}.pseudo_densities')
+                # density_threshold = 0.15
+                # above_threshold_indices = np.argwhere(pseudo_densities > density_threshold)
+                # for idx in above_threshold_indices:
+                #     n_i, n_j, n_k = idx
+                #
+                #     # Calculate the center of the current box
+                #     center = centers[n_i, n_j, n_k]
+                #
+                #     # Create the box
+                #     box = pv.Cube(center=center, x_length=spacing, y_length=spacing, z_length=spacing)
+                #
+                #     # Add the box to the plotter with the corresponding opacity
+                #     opacity = pseudo_densities[n_i, n_j, n_k]  # /2 is to make the boxes more transparent
+                #     plotter.add_mesh(box, color=color, opacity=opacity)
 
 
                 # Define the opacity transfer function
@@ -171,9 +171,9 @@ def plot_problem(prob, plot_objects=True, plot_grid=True, plot_grid_points=True,
 
 
                 # color = "blue"
-                # p.add_volume(grid, cmap='coolwarm', clim=[0, 1], opacity=0.5)
+                plotter.add_volume(grid, cmap='coolwarm', clim=[0, 1], opacity=0.5)
                 # https://matplotlib.org/stable/users/explain/colors/colormaps.html
-                # p.add_volume(grid, scalars="density", opacity="sigmoid", cmap='Purples', clim=[0, 1])
+                # plotter.add_volume(grid, scalars="density", opacity="sigmoid", cmap='Purples', clim=[0, 1])
 
     # plotter.view_isometric()
     plotter.view_xy()

@@ -62,13 +62,13 @@ for j in range(n_components):
     model.connect(f'system.components.comp_{j}.transformed_points', f'projections.projection_{i}.points')
     model.connect(f'projections.projection_{i}.pseudo_densities', f'aggregator.pseudo_densities_{i}')
     i += 1
-for j in range(m_interconnects):
-    model.connect(f'system.interconnects.int_{j}.transformed_sphere_positions', f'projections.projection_{i}.sphere_positions')
-    model.connect(f'system.interconnects.int_{j}.transformed_sphere_radii', f'projections.projection_{i}.sphere_radii')
-    model.connect(f'system.interconnects.int_{j}.volume', f'projections.projection_{i}.volume')
-    model.connect(f'system.interconnects.int_{j}.AABB', f'projections.projection_{i}.AABB')
-    model.connect(f'projections.projection_{i}.pseudo_densities', f'aggregator.pseudo_densities_{i}')
-    i += 1
+# for j in range(m_interconnects):
+#     model.connect(f'system.interconnects.int_{j}.transformed_sphere_positions', f'projections.projection_{i}.sphere_positions')
+#     model.connect(f'system.interconnects.int_{j}.transformed_sphere_radii', f'projections.projection_{i}.sphere_radii')
+#     model.connect(f'system.interconnects.int_{j}.volume', f'projections.projection_{i}.volume')
+#     model.connect(f'system.interconnects.int_{j}.AABB', f'projections.projection_{i}.AABB')
+#     model.connect(f'projections.projection_{i}.pseudo_densities', f'aggregator.pseudo_densities_{i}')
+#     i += 1
 
 
 # Connect the mesh to the projections
@@ -84,11 +84,11 @@ for i in range(n_projections):
 # Connect the system to the bounding box
 i = 0
 for j in range(n_components):
-    model.connect(f'system.components.comp_{j}.transformed_points', f'mux_all_sphere_positions.input_{i}')
+    model.connect(f'system.components.comp_{j}.transformed_points', f'mux_all_points.input_{i}')
     i += 1
-for j in range(m_interconnects):
-    model.connect(f'system.interconnects.int_{j}.transformed_sphere_positions', f'mux_all_sphere_positions.input_{i}')
-    i += 1
+# for j in range(m_interconnects):
+#     model.connect(f'system.interconnects.int_{j}.transformed_sphere_positions', f'mux_all_sphere_positions.input_{i}')
+#     i += 1
 
 # model.connect('mux_all_sphere_positions.stacked_output', 'bbv.points')
 
@@ -158,7 +158,7 @@ prob.run_model()
 # print('Elapsed Time: ', (end - start) / 1e9)
 
 # Check the initial state
-# plot_problem(prob, plot_bounding_box=False, plot_grid_points=False, plot_projection=True)
+plot_problem(prob, plot_objects=False, plot_bounding_box=False, plot_grid_points=False, plot_projection=True)
 
 print('Max Pseudo Density:', prob.get_val('aggregator.max_pseudo_density'))
 

@@ -2,21 +2,21 @@
 
 [components.0]
 description = 'Component 0'
-filepath='models/Bot_Eye.xyzr'
+filepath='models/Bot_Eye.xyz'
 n_points=200
 ports = [[0, 0.75, 0], [0.75, 0, 0]]
 color='blue'
 
 [components.1]
 description = 'Component 1'
-filepath='models/CogDrivenGear.xyzr'
+filepath='models/CogDrivenGear.xyz'
 n_points=200
 ports = [[-1.75, 0, 0], [0, 1.75, 0]]
 color='orange'
 
 [components.2]
 description = 'Component 2'
-filepath='models/CrossHead_Pin.xyzr'
+filepath='models/CrossHead_Pin.xyz'
 n_points=200
 ports = [[1.25, 0.5, 1.0], [0.15, 0.5, 1.0]]
 color='red'
