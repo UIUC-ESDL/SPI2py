@@ -17,7 +17,7 @@ from SPI2py.models.utilities.inputs import read_input_file
 # jax.config.update("jax_enable_x64", True)
 
 # Read the input file
-input_file = read_input_file('input.toml')
+input_file = read_input_file('input_MDBD.toml')
 
 # Initialize the problem
 prob = om.Problem()

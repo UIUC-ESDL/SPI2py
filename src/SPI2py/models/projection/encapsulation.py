@@ -23,3 +23,6 @@ def overlap_volume_sphere_sphere(r_1, r_2, d):
     overlap_volume = jnp.where(no_overlap, jnp.zeros_like(d), overlap_volume)
 
     return overlap_volume
+
+def overlap_capsule_sphere():
+    pass

@@ -59,18 +59,8 @@ class Mesh(IndepVarComp):
         element_bounds = jnp.stack((x_min_element, x_max_element, y_min_element, y_max_element, z_min_element, z_max_element), axis=-1)
 
         # Read the MDBD kernel
-        # kernel_positions = uniform_8_kernel_positions
-        # kernel_radii = uniform_8_kernel_radii
-        # kernel_positions = uniform_64_kernel_positions
-        # kernel_radii = uniform_64_kernel_radii
         kernel_positions = mdbd_1_kernel_positions
         kernel_radii = mdbd_1_kernel_radii
-        # kernel_positions = mdbd_9_kernel_positions
-        # kernel_radii = mdbd_9_kernel_radii
-        # kernel_positions = mdbd_kernel_positions[:150]
-        # kernel_radii = mdbd_kernel_radii[:150]
-        # kernel_positions = mdbd_kernel_positions[:64]
-        # kernel_radii = mdbd_kernel_radii[:64]
 
         kernel_positions = jnp.array(kernel_positions)
         kernel_radii = jnp.array(kernel_radii).reshape(-1, 1)
@@ -100,7 +90,6 @@ class Mesh(IndepVarComp):
         self.add_output('n_el_z', val=n_el_z)
         self.add_output('sample_points', val=all_points)
         self.add_output('sample_radii', val=all_radii)
-        self.add_output('kernel_volume_fraction', val=kernel_volume_fraction)
 
 
 class Projections(Group):
@@ -202,120 +191,6 @@ class Projection(ExplicitComponent):
     def _project(sphere_positions, sphere_radii, sample_points, sample_radii, aabb, element_bounds):
         pseudo_densities = calculate_pseudo_densities(sphere_positions, sphere_radii, sample_points, sample_radii, aabb, element_bounds)
         return pseudo_densities
-
-
-
-
-
-# class Projection(ExplicitComponent):
-#     """
-#     Calculates the pseudo-density of a set of points in a 3D grid
-#
-#     TODO Deal with objects outside of mesh!
-#     """
-#
-#     def initialize(self):
-#         self.options.declare('rho_min', types=(int, float), desc='Minimum value of the density', default=3e-3)
-#
-#     def setup(self):
-#
-#         # Mesh Inputs
-#         self.add_input('mesh_element_length', val=0)
-#         self.add_input('mesh_shape', shape_by_conn=True)
-#         self.add_input('mesh_element_center_positions', shape_by_conn=True)
-#
-#         # Object Inputs
-#         self.add_input('points', shape_by_conn=True)
-#         self.add_input('reference_density', 0.0, desc='Number of points per a 1x1x1 cube')
-#
-#         # Outputs
-#         # TODO Fix
-#         self.add_output('mesh_element_pseudo_densities', copy_shape='mesh_shape')
-#         self.add_output('volume', val=0.0)
-#
-#     def setup_partials(self):
-#         self.declare_partials('mesh_element_pseudo_densities', 'points')
-#
-#     def compute(self, inputs, outputs):
-#
-#         # Get the options
-#         rho_min = self.options['rho_min']
-#
-#         # Get the Mesh inputs
-#         mesh_element_length = inputs['mesh_element_length']
-#         mesh_element_center_positions = inputs['mesh_element_center_positions']
-#
-#         # Get the Object inputs
-#         points = inputs['points']
-#         reference_density = inputs['reference_density']
-#
-#         # Convert the input to a JAX numpy array
-#         points = jnp.array(points)
-#         mesh_element_center_positions = jnp.array(mesh_element_center_positions)
-#
-#         # Project
-#         element_pseudo_densities = self._project(points, mesh_element_length, mesh_element_center_positions, rho_min, reference_density)
-#
-#         # Calculate the volume
-#         volume = jnp.sum(element_pseudo_densities) * mesh_element_length ** 3
-#
-#         # Write the outputs
-#         outputs['mesh_element_pseudo_densities'] = element_pseudo_densities
-#         outputs['volume'] = volume
-#
-#     # def compute_partials(self, inputs, partials):
-#     #
-#     #     # Get the options
-#     #     rho_min = self.options['rho_min']
-#     #
-#     #     # Get the inputs
-#     #     points = inputs['points']
-#     #     element_length = inputs['mesh_element_length']
-#     #     element_min_pseudo_densities = inputs['element_min_pseudo_densities']
-#     #     element_center_positions = inputs['element_center_positions']
-#     #
-#     #     # Convert the input to a JAX numpy array
-#     #     points = np.array(points)
-#     #     element_min_pseudo_densities = np.array(element_min_pseudo_densities)
-#     #     element_center_positions = np.array(element_center_positions)
-#     #
-#     #     # Calculate the Jacobian of the kernel
-#     #     grad_kernel = jacfwd(self._project, argnums=0)
-#     #     grad_kernel_val = grad_kernel(points, element_center_positions, element_min_pseudo_densities)
-#     #
-#     #     partials['mesh_element_pseudo_densities', 'points'] = grad_kernel_val # TODO Check all the transposing... (?)
-#
-#     @staticmethod
-#     def _project(points, mesh_element_length, mesh_element_center_positions, rho_min, reference_density):
-#         """
-#         Projects the points to the mesh and calculates the pseudo-densities
-#         """
-#
-#         grid_x, grid_y, grid_z = mesh_element_center_positions
-#         grid_coords = jnp.vstack([grid_x.ravel(), grid_y.ravel(), grid_z.ravel()])
-#
-#         element_volume = mesh_element_length ** 3
-#
-#         # # Scale the relative density to the mesh
-#         # relative_density_volume = 1
-#         # scale_factor = element_volume / relative_density_volume
-#         # points_per_mesh_element = scale_factor * reference_density
-#
-#         # Perform KDE
-#         kernel = gaussian_kde(points.T, bw_method='scott')
-#         density_values = kernel(grid_coords).reshape(grid_x.shape)
-#         points_per_cell = density_values * element_volume * len(points)
-#
-#         pseudo_densities = density_values + rho_min
-#         # Normalize the pseudo-densities
-#         min_density = jnp.min(pseudo_densities)
-#         max_density = jnp.max(pseudo_densities)
-#         pseudo_densities = (pseudo_densities - min_density) / (max_density - min_density)
-#
-#         # Clip the minimum pseudo-densities to rho_min (to avoid numerical issues associated w/ zero densities)
-#         pseudo_densities = jnp.clip(pseudo_densities, rho_min, 1)
-#
-#         return pseudo_densities
 
 
 class ProjectionAggregator(ExplicitComponent):
