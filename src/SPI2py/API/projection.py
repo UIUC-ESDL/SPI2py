@@ -264,6 +264,76 @@ class ProjectInterconnect(ExplicitComponent):
         pseudo_densities = calculate_pseudo_densities(sphere_positions, sphere_radii, sample_points, sample_radii, aabb, element_bounds)
         return pseudo_densities
 
+class CylinderProjection(ExplicitComponent):
+
+    def initialize(self):
+        self.options.declare('dimension', types=int, values=[2, 3])
+
+    def setup(self):
+        dimension = self.options['dimension']
+
+        self.add_input('x', shape=(dimension,))
+        self.add_input('x1', shape=(dimension,))
+        self.add_input('x2', shape=(dimension,))
+        self.add_input('r_b', shape=(1,))
+        self.add_input('r', shape=(1,))
+        self.add_input('alpha', shape=(1,))
+        self.add_input('q', shape=(1,))
+
+        self.add_output('rho', shape=(1,))
+
+    def setup_partials(self):
+        self.declare_partials('*', '*')
+
+    def compute(self, inputs, outputs):
+        x = inputs['x']
+        x1 = inputs['x1']
+        x2 = inputs['x2']
+        r_b = inputs['r_b'][0]
+        r = inputs['r'][0]
+        alpha = inputs['alpha'][0]
+        q = inputs['q'][0]
+
+        phi = self.signed_distance(x, x1, x2, r_b)
+        rho = self.projected_density(phi, r)
+        rho_penalized = self.penalized_density(rho, alpha, q)
+
+        outputs['rho'] = rho_penalized
+
+    def compute_partials(self, inputs, partials):
+        # Implement partial derivatives here
+        pass
+
+    @staticmethod
+    def H_tilde(x, dimension):
+        if dimension == 2:
+            return 1 - (jnp.arccos(x) + x * jnp.sqrt(1 - x ** 2)) / jnp.pi
+        elif dimension == 3:
+            return 0.5 + (3 * x) / 4 - (x ** 3) / 4
+
+    def projected_density(self, phi, r):
+        x = phi / r
+        return jnp.where(x > 1, 1, jnp.where(x < -1, 0, self.H_tilde(x, self.options['dimension'])))
+
+    @staticmethod
+    def signed_distance(x, x1, x2, r_b):
+        x21 = x2 - x1
+        l_b = jnp.linalg.norm(x21)
+        a_b = x21 / l_b
+        xe1 = x - x1
+        l_be = jnp.dot(xe1, a_b)
+        r_be = jnp.linalg.norm(xe1 - l_be * a_b)
+
+        d1 = jnp.linalg.norm(xe1)
+        d2 = jnp.linalg.norm(x - x2)
+
+        d_b = jnp.where(l_be <= 0, d1,
+                        jnp.where(l_be > l_b, d2, r_be))
+        return r_b - d_b
+
+    @staticmethod
+    def penalized_density(rho, alpha, q):
+        return (alpha * rho) ** q
 
 class ProjectionAggregator(ExplicitComponent):
 
