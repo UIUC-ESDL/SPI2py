@@ -13,7 +13,6 @@ from ..models.projection.mesh_kernels import uniform_64_kernel_positions, unifor
 from ..models.projection.mesh_kernels import mdbd_kernel_positions, mdbd_kernel_radii
 
 
-
 class Mesh(IndepVarComp):
     def initialize(self):
 
@@ -108,16 +107,16 @@ class Projections(Group):
 
         # Add the projection components
         for _ in range(n_comp_projections):
-            self.add_subsystem(f'projection_{i}', Projection())
+            self.add_subsystem(f'projection_{i}', ProjectComponent())
             i += 1
 
         # Add the interconnect projection components
         for _ in range(n_int_projections):
-            self.add_subsystem(f'projection_{i}', Projection())
+            self.add_subsystem(f'projection_{i}', ProjectComponent())
             i += 1
 
 
-class Projection(ExplicitComponent):
+class ProjectComponent(ExplicitComponent):
     """
     Calculates the pseudo-density of a set of points in a 3D grid
     """
@@ -138,7 +137,80 @@ class Projection(ExplicitComponent):
         self.add_input('sphere_positions', shape_by_conn=True)
         self.add_input('sphere_radii', shape_by_conn=True)
         self.add_input('volume', val=0.0)
-        self.add_input('AABB', shape=(1, 6))
+
+        # Outputs
+        self.add_output('pseudo_densities', compute_shape=lambda shapes: (shapes['centers'][0], shapes['centers'][1], shapes['centers'][2]))
+        self.add_output('volume_estimation_error', val=0.0, desc='How accurately the projection represents the object')
+
+    def setup_partials(self):
+        self.declare_partials('pseudo_densities', 'sphere_positions')
+
+    def compute(self, inputs, outputs):
+
+        # Get the Mesh inputs
+        element_length   = jnp.array(inputs['element_length'])
+        element_bounds   = jnp.array(inputs['element_bounds'])
+        sample_points    = jnp.array(inputs['sample_points'])
+        sample_radii     = jnp.array(inputs['sample_radii'])
+        sphere_positions = jnp.array(inputs['sphere_positions'])
+        sphere_radii     = jnp.array(inputs['sphere_radii'])
+        volume           = jnp.array(inputs['volume'])
+
+        # Compute the pseudo-densities
+        pseudo_densities = self._project(sphere_positions, sphere_radii, sample_points, sample_radii, element_bounds)
+
+        # Compute the volume estimation error
+        projected_volume = jnp.sum(pseudo_densities * element_length ** 3)
+        volume_estimation_error = jnp.abs(volume - projected_volume) / volume
+
+        # Write the outputs
+        outputs['pseudo_densities'] = pseudo_densities
+        outputs['volume_estimation_error'] = volume_estimation_error
+
+    def compute_partials(self, inputs, partials):
+
+        # Get the inputs
+        element_bounds = jnp.array(inputs['element_bounds'])
+        sample_points    = jnp.array(inputs['sample_points'])
+        sample_radii     = jnp.array(inputs['sample_radii'])
+        sphere_positions = jnp.array(inputs['sphere_positions'])
+        sphere_radii     = jnp.array(inputs['sphere_radii'])
+
+
+        # Calculate the Jacobian of the pseudo-densities
+        jac_pseudo_densities = jacfwd(self._project)(sphere_positions, sphere_radii, sample_points, sample_radii, element_bounds)
+
+        # Set the partials
+        partials['pseudo_densities', 'sphere_positions'] = jac_pseudo_densities
+
+
+    @staticmethod
+    def _project(sphere_positions, sphere_radii, sample_points, sample_radii, element_bounds):
+        pseudo_densities = calculate_pseudo_densities(sphere_positions, sphere_radii, sample_points, sample_radii, element_bounds)
+        return pseudo_densities
+
+
+class ProjectInterconnect(ExplicitComponent):
+    """
+    Calculates the pseudo-density of a set of points in a 3D grid
+    """
+
+    def initialize(self):
+        self.options.declare('color', types=str, desc='Color of the projection', default='blue')
+
+    def setup(self):
+
+        # Mesh Inputs
+        self.add_input('element_length', val=0)
+        self.add_input('centers', shape_by_conn=True)
+        self.add_input('element_bounds', shape_by_conn=True)
+        self.add_input('sample_points', shape_by_conn=True)
+        self.add_input('sample_radii', shape_by_conn=True)
+
+        # Object Inputs
+        self.add_input('sphere_positions', shape_by_conn=True)
+        self.add_input('sphere_radii', shape_by_conn=True)
+        self.add_input('volume', val=0.0)
 
         # Outputs
         self.add_output('pseudo_densities', compute_shape=lambda shapes: (shapes['centers'][0], shapes['centers'][1], shapes['centers'][2]))
@@ -160,7 +232,7 @@ class Projection(ExplicitComponent):
         aabb             = jnp.array(inputs['AABB'])
 
         # Compute the pseudo-densities
-        pseudo_densities = self._project(sphere_positions, sphere_radii, sample_points, sample_radii, aabb, element_bounds)
+        pseudo_densities = self._project(sphere_positions, sphere_radii, sample_points, sample_radii, element_bounds)
 
         # Compute the volume estimation error
         projected_volume = jnp.sum(pseudo_densities * element_length ** 3)
@@ -271,6 +343,8 @@ class ProjectionAggregator(ExplicitComponent):
 
         # Ensure that no pseudo-density is below the minimum value
         aggregate_pseudo_densities = jnp.maximum(aggregate_pseudo_densities, rho_min)
+
+        # TODO rethink max if we need to overlap interconnects and components
 
         # Calculate the maximum pseudo-density
         max_pseudo_density = kreisselmeier_steinhauser_max(aggregate_pseudo_densities)

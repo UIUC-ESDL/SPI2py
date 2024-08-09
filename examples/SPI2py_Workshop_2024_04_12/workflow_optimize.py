@@ -4,7 +4,6 @@ Author:     Chad Peterson
 """
 import numpy as np
 import openmdao.api as om
-from time import time_ns
 
 from SPI2py.API.system import System
 from SPI2py.API.projection import Mesh, Projections, ProjectionAggregator
@@ -14,7 +13,6 @@ from SPI2py.API.utilities import Multiplexer
 from SPI2py.models.utilities.visualization import plot_problem
 from SPI2py.models.utilities.inputs import read_input_file
 
-# jax.config.update("jax_enable_x64", True)
 
 # Read the input file
 input_file = read_input_file('input.toml')
@@ -32,12 +30,10 @@ n_components = 3
 n_spheres = 200
 
 m_interconnects = 0
-m_spheres_per_segment = 10
 m_segments = 2
 
 n_projections = n_components + m_interconnects
-n_points_per_object = [n_spheres for _ in range(n_components)] + [m_spheres_per_segment * m_segments for _ in range(m_interconnects)]
-
+n_points_per_object = [n_spheres for _ in range(n_components)] + [m_segments + 1 for _ in range(m_interconnects)]
 
 # Initialize the groups
 model.add_subsystem('system', System(input_dict=input_file, upper=7, lower=0))
@@ -50,10 +46,13 @@ model.add_subsystem('projections', Projections(n_comp_projections=n_components,
 model.add_subsystem('aggregator', ProjectionAggregator(n_projections=n_projections))
 
 
+# TODO, separate spheres and cylinders
 model.add_subsystem('mux_all_sphere_positions', Multiplexer(n_i=n_points_per_object, m=3))
 model.add_subsystem('mux_all_sphere_radii', Multiplexer(n_i=n_points_per_object, m=1))
 
 # model.add_subsystem('collision', VolumeFractionCollision())
+
+# TODO, For interconnects, get the sphere of the start/stop of each segment
 model.add_subsystem('bbv', BoundingBoxVolume())
 
 # Connect the system to the projections
@@ -62,14 +61,14 @@ for j in range(n_components):
     model.connect(f'system.components.comp_{j}.transformed_sphere_positions', f'projections.projection_{i}.sphere_positions')
     model.connect(f'system.components.comp_{j}.transformed_sphere_radii', f'projections.projection_{i}.sphere_radii')
     model.connect(f'system.components.comp_{j}.volume', f'projections.projection_{i}.volume')
-    model.connect(f'system.components.comp_{j}.AABB', f'projections.projection_{i}.AABB')
     model.connect(f'projections.projection_{i}.pseudo_densities', f'aggregator.pseudo_densities_{i}')
     i += 1
+
+# TODO Implement
 for j in range(m_interconnects):
     model.connect(f'system.interconnects.int_{j}.transformed_sphere_positions', f'projections.projection_{i}.sphere_positions')
     model.connect(f'system.interconnects.int_{j}.transformed_sphere_radii', f'projections.projection_{i}.sphere_radii')
     model.connect(f'system.interconnects.int_{j}.volume', f'projections.projection_{i}.volume')
-    model.connect(f'system.interconnects.int_{j}.AABB', f'projections.projection_{i}.AABB')
     model.connect(f'projections.projection_{i}.pseudo_densities', f'aggregator.pseudo_densities_{i}')
     i += 1
 
@@ -84,14 +83,13 @@ for i in range(n_projections):
     model.connect('mesh.sample_radii', f'projections.projection_{i}.sample_radii')
 
 
-
-
 # Connect the system to the bounding box
 i = 0
 for j in range(n_components):
     model.connect(f'system.components.comp_{j}.transformed_sphere_positions', f'mux_all_sphere_positions.input_{i}')
     model.connect(f'system.components.comp_{j}.transformed_sphere_radii', f'mux_all_sphere_radii.input_{i}')
     i += 1
+
 for j in range(m_interconnects):
     model.connect(f'system.interconnects.int_{j}.transformed_sphere_positions', f'mux_all_sphere_positions.input_{i}')
     model.connect(f'system.interconnects.int_{j}.transformed_sphere_radii', f'mux_all_sphere_radii.input_{i}')

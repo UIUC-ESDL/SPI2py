@@ -1,7 +1,7 @@
 import jax.numpy as jnp
 from .encapsulation import overlap_volume_sphere_sphere
 
-def calculate_pseudo_densities(sphere_positions, sphere_radii, sample_points, sample_radii, aabb, element_bounds):
+def calculate_pseudo_densities(sphere_positions, sphere_radii, sample_points, sample_radii, element_bounds):
     """
     Projects the points to the mesh and calculates the pseudo-densities
 
@@ -15,7 +15,6 @@ def calculate_pseudo_densities(sphere_positions, sphere_radii, sample_points, sa
 
     element_sample_volumes = (4 / 3) * jnp.pi * sample_radii ** 3
     element_volumes = jnp.sum(element_sample_volumes, axis=3, keepdims=True)
-
 
     object_positions = sphere_positions
     object_radii = sphere_radii

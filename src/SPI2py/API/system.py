@@ -73,12 +73,10 @@ class System(Group):
                 component_2 = interconnects_dict[key]['component_2']
                 port_2 = interconnects_dict[key]['port_2']
                 n_segments = interconnects_dict[key]['n_segments']
-                n_spheres_per_segment = interconnects_dict[key]['n_spheres_per_segment']
                 radius = interconnects_dict[key]['radius']
                 color = interconnects_dict[key]['color']
 
                 interconnect = Interconnect(n_segments=n_segments,
-                                            n_spheres_per_segment=n_spheres_per_segment,
                                             radius=radius,
                                             color=color)
 
@@ -137,12 +135,6 @@ class Component(ExplicitComponent):
         self.add_output('transformed_sphere_radii', val=sphere_radii)
         self.add_output('transformed_ports', val=ports)
         self.add_output('volume', val=volume)
-        self.add_output('AABB', shape=(1, 6), desc='Axis-aligned bounding box')
-
-        # Define the design variables
-        # TODO Remove upper/lower
-        # self.add_design_var('translation', ref=10, lower=lower, upper=upper)
-        # self.add_design_var('rotation', ref=2*3.14159)
 
     def setup_partials(self):
         self.declare_partials('transformed_sphere_positions', ['translation', 'rotation'])
@@ -168,18 +160,11 @@ class Component(ExplicitComponent):
         sphere_positions_transformed = self.compute_transformation(sphere_positions, translation, rotation)
         ports_transformed = self.compute_transformation(ports, translation, rotation)
 
-        # Calculate the axis-aligned bounding box
-        min_coords = sphere_positions_transformed - sphere_radii
-        max_coords = sphere_positions_transformed + sphere_radii
-        x_min, y_min, z_min = jnp.min(min_coords, axis=0).reshape(3, 1)
-        x_max, y_max, z_max = jnp.max(max_coords, axis=0).reshape(3, 1)
-        aabb = jnp.concatenate((x_min, x_max, y_min, y_max, z_min, z_max))
 
         # Set the outputs
         outputs['transformed_sphere_positions'] = sphere_positions_transformed
         outputs['transformed_sphere_radii'] = sphere_radii
         outputs['transformed_ports'] = ports_transformed
-        outputs['AABB'] = aabb
 
     def compute_partials(self, inputs, partials):
 
@@ -236,7 +221,6 @@ class Interconnect(ExplicitComponent):
 
     def initialize(self):
         self.options.declare('n_segments', types=int)
-        self.options.declare('n_spheres_per_segment', types=int)
         self.options.declare('radius', types=float)
         self.options.declare('color', types=str)
 
@@ -244,13 +228,12 @@ class Interconnect(ExplicitComponent):
 
         # Unpack the options
         n_segments = self.options['n_segments']
-        n_spheres_per_segment = self.options['n_spheres_per_segment']
         radius = self.options['radius']
 
         # Define the input shapes
         shape_control_points = (n_segments - 1, 3)
-        shape_positions = (n_spheres_per_segment * n_segments, 3)
-        shape_radii = (n_spheres_per_segment * n_segments, 1)
+        shape_positions = (n_segments + 1, 3)
+        shape_radii = (n_segments + 1, 1)
 
         # Define the input values
         positions = jnp.zeros(shape_positions)
@@ -260,17 +243,11 @@ class Interconnect(ExplicitComponent):
         self.add_input('start_point', shape=(1, 3))
         self.add_input('control_points', shape=shape_control_points)
         self.add_input('end_point', shape=(1, 3))
-        self.add_input('positions', val=positions)
-        self.add_input('radii', val=radii)
 
         # Define the outputs
         self.add_output('transformed_sphere_positions', shape=shape_positions)
         self.add_output('transformed_sphere_radii', shape=shape_radii)
         self.add_output('volume', val=0.0)
-        self.add_output('AABB', shape=(1, 6), desc='Axis-aligned bounding box')
-
-        # Define the design variables
-        # self.add_design_var('control_points')
 
     def setup_partials(self):
         self.declare_partials('transformed_sphere_positions', ['start_point', 'control_points', 'end_point'])
@@ -282,63 +259,52 @@ class Interconnect(ExplicitComponent):
         start_point = inputs['start_point']
         control_points = inputs['control_points']
         end_point = inputs['end_point']
-        positions = inputs['positions']
-        radii = inputs['radii']
 
-        # Unpack the options
-        n_spheres_per_segment = self.options['n_spheres_per_segment']
+        radius = self.options['radius']
 
         # Convert the inputs to Jax arrays
         start_point = jnp.array(start_point)
         control_points = jnp.array(control_points)
         end_point = jnp.array(end_point)
-        positions = jnp.array(positions)
-        radii = jnp.array(radii)
+
+        # vstack
+        points = jnp.vstack([start_point, control_points, end_point])
+        radii = radius * jnp.ones((points.shape[0], 1))
 
         # Calculate the positions
-        translated_positions = translate_linear_spline(positions, start_point, control_points, end_point, n_spheres_per_segment)
-
-        # Calculate the axis-aligned bounding box
-        min_coords = translated_positions - radii
-        max_coords = translated_positions + radii
-        x_min, y_min, z_min = jnp.min(min_coords, axis=0).reshape(3, 1)
-        x_max, y_max, z_max = jnp.max(max_coords, axis=0).reshape(3, 1)
-        aabb = jnp.concatenate((x_min, x_max, y_min, y_max, z_min, z_max))
+        # translated_positions = translate_linear_spline(sphere_positions, start_point, control_points, end_point)
 
         # Set the outputs
-        outputs['transformed_sphere_positions'] = translated_positions
+        outputs['transformed_sphere_positions'] = points
         outputs['transformed_sphere_radii'] = radii
-        outputs['AABB'] = aabb
 
-    def compute_partials(self, inputs, partials):
-
-        # Unpack the inputs
-        start_point = inputs['start_point']
-        control_points = inputs['control_points']
-        end_point = inputs['end_point']
-        positions = inputs['positions']
-        radii = inputs['radii']
-
-        # Unpack the options
-        n_spheres_per_segment = self.options['n_spheres_per_segment']
-
-        # Convert the inputs to Jax arrays
-        start_point = jnp.array(start_point)
-        control_points = jnp.array(control_points)
-        end_point = jnp.array(end_point)
-        positions = jnp.array(positions)
-        radii = jnp.array(radii)
-
-        # Calculate the partial derivatives
-        jac_translated_positions = jacfwd(translate_linear_spline, argnums=(1, 2, 3))
-        jac_translated_positions_val = jac_translated_positions(positions, start_point, control_points, end_point, n_spheres_per_segment)
-
-        # Slice the Jacobian
-        jac_translated_positions_start_point = jac_translated_positions_val[0]
-        jac_translated_positions_control_points = jac_translated_positions_val[1]
-        jac_translated_positions_end_point = jac_translated_positions_val[2]
-
-        # Set the outputs
-        partials['transformed_sphere_positions', 'start_point'] = jac_translated_positions_start_point
-        partials['transformed_sphere_positions', 'control_points'] = jac_translated_positions_control_points
-        partials['transformed_sphere_positions', 'end_point'] = jac_translated_positions_end_point
+    # def compute_partials(self, inputs, partials):
+    #
+    #     # Unpack the inputs
+    #     start_point = inputs['start_point']
+    #     control_points = inputs['control_points']
+    #     end_point = inputs['end_point']
+    #
+    #     # Unpack the options
+    #     radius = self.options['radius']
+    #
+    #     # Convert the inputs to Jax arrays
+    #     start_point = jnp.array(start_point)
+    #     control_points = jnp.array(control_points)
+    #     end_point = jnp.array(end_point)
+    #     positions = jnp.array(positions)
+    #     radii = jnp.array(radii)
+    #
+    #     # Calculate the partial derivatives
+    #     jac_translated_positions = jacfwd(translate_linear_spline, argnums=(1, 2, 3))
+    #     jac_translated_positions_val = jac_translated_positions(positions, start_point, control_points, end_point)
+    #
+    #     # Slice the Jacobian
+    #     jac_translated_positions_start_point = jac_translated_positions_val[0]
+    #     jac_translated_positions_control_points = jac_translated_positions_val[1]
+    #     jac_translated_positions_end_point = jac_translated_positions_val[2]
+    #
+    #     # Set the outputs
+    #     partials['transformed_sphere_positions', 'start_point'] = jac_translated_positions_start_point
+    #     partials['transformed_sphere_positions', 'control_points'] = jac_translated_positions_control_points
+    #     partials['transformed_sphere_positions', 'end_point'] = jac_translated_positions_end_point
