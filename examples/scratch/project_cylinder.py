@@ -8,13 +8,21 @@ def plot_density_grid(sphere_positions, sphere_radii,
                       cylinder_start_positions, cylinder_stop_positions, cylinder_radii,
                       densities):
 
+    n, m, o = sphere_positions.shape[0], sphere_positions.shape[1], sphere_positions.shape[2]
+
     plotter = pv.Plotter(shape=(1, 3), window_size=(1500, 500))
 
     # Plot 1: The grid of spheres with uniform color
     plotter.subplot(0, 0)
-    for pos, radius in zip(sphere_positions, sphere_radii):
-        sphere = pv.Sphere(center=pos, radius=radius)
-        plotter.add_mesh(sphere, color='lightgray', opacity=0.25)
+
+    for i in range(n):
+        for j in range(m):
+            for k in range(o):
+                pos = sphere_positions[i, j, k]
+                radius = sphere_radii[i, j, k]
+                sphere = pv.Sphere(center=pos, radius=radius)
+                plotter.add_mesh(sphere, color='lightgray', opacity=0.25)
+
     plotter.add_text("Grid Spheres", position='upper_edge', font_size=14)
     plotter.show_bounds(all_edges=True)
 
@@ -34,12 +42,26 @@ def plot_density_grid(sphere_positions, sphere_radii,
     # Plot 3: The combined density with colored spheres
     plotter.subplot(0, 2)
     cmap = plt.get_cmap("gray")  # Get the grayscale colormap
-    for pos, radius, density in zip(sphere_positions, sphere_radii, densities):
-        sphere = pv.Sphere(center=pos, radius=radius)
-        color = cmap(density[0])[:3]  # Use the "gray" colormap for a white-to-black scale
-        plotter.add_mesh(sphere, color=color, opacity=0.9)
-    plotter.add_text("Combined Density", position='upper_edge', font_size=14)
 
+    for i in range(n):
+        for j in range(m):
+            for k in range(o):
+                pos = sphere_positions[i, j, k]
+                radius = sphere_radii[i, j, k]
+                density = densities[i, j, k]
+                sphere = pv.Sphere(center=pos, radius=radius)
+                opacity = max(0.03, min(density, 1))
+                plotter.add_mesh(sphere, color='black', opacity=opacity)
+
+    for cylinder_start_position, cylinder_stop_position, cylinder_radius in zip(cylinder_start_positions, cylinder_stop_positions, cylinder_radii):
+        length = np.linalg.norm(cylinder_stop_position - cylinder_start_position)
+        direction = (cylinder_stop_position - cylinder_start_position) / length
+        center = (cylinder_start_position + cylinder_stop_position) / 2
+        cylinder = pv.Cylinder(center=center, direction=direction, radius=cylinder_radius, height=length)
+        plotter.add_mesh(cylinder, color='blue', opacity=0.1)
+
+    plotter.add_text("Combined Density", position='upper_edge', font_size=14)
+    plotter.show_bounds(all_edges=True)
 
     plotter.link_views()
     # plotter.view_isometric()
@@ -68,40 +90,55 @@ def create_cylinders(points, radius):
     return x1, x2, r
 
 
-
-
-def phi_b(x, x1, x2, r_b):
-    """
-    Calculate the signed distance from each point x to the corresponding line segment defined by x1, x2, and radii r_b.
-
-    Parameters:
-    - x: (-1, 3) array, points from which the distances are calculated.
-    - x1: (-1, 3) array, start points of the line segments.
-    - x2: (-1, 3) array, end points of the line segments.
-    - r_b: (-1, 1) array, radii of the line segments.
-
-    Returns:
-    - phi_b: (-1, 1) array, signed distances from each point x to the corresponding line segment.
-   """
+def d_b(x, x1, x2):
 
     # EQ 9
     x21 = x2 - x1
     xe_1b = x - x1
 
     # EQs 10, 11, 12, 13
-    l_b = np.linalg.norm(x21, axis=1, keepdims=True)
+    l_b = np.linalg.norm(x21)
     a_b = x21 / l_b
-    l_be = np.sum(xe_1b * a_b, axis=1, keepdims=True)
-    r_be = np.linalg.norm(xe_1b - l_be * a_b, axis=1, keepdims=True)
+    l_be = np.dot(xe_1b, a_b)
+    r_be = np.linalg.norm(xe_1b - l_be * a_b)
 
     # EQ 14
-    d_be_1 = np.linalg.norm(xe_1b, axis=1, keepdims=True)
-    d_be_2 = np.linalg.norm(x - x2, axis=1, keepdims=True)
+    d_be_1 = np.linalg.norm(xe_1b)
+    d_be_2 = np.linalg.norm(x - x2)
     d_be_3 = r_be
 
-    d_be = np.where(l_be <= 0, d_be_1,  # if l_be <= 0
-                    np.where(l_be < l_b, d_be_2,  # if l_be < l_b
-                             d_be_3))  # otherwise
+    if l_be <= 0:
+        d_be = d_be_1
+    elif l_be < l_b:
+        d_be = d_be_2
+    else:
+        d_be = d_be_3
+
+    return d_be
+
+def phi_b(x, x1, x2, r_b):
+
+    # EQ 9
+    x21 = x2 - x1
+    xe_1b = x - x1
+
+    # EQs 10, 11, 12, 13
+    l_b = np.linalg.norm(x21)
+    a_b = x21 / l_b
+    l_be = np.dot(xe_1b, a_b)
+    r_be = np.linalg.norm(xe_1b - l_be * a_b)
+
+    # EQ 14
+    d_be_1 = np.linalg.norm(xe_1b)
+    d_be_2 = np.linalg.norm(x - x2)
+    d_be_3 = r_be
+
+    if l_be <= 0:
+        d_be = d_be_1
+    elif l_be < l_b:
+        d_be = d_be_2
+    else:
+        d_be = d_be_3
 
     # EQ 8
     phi_b = d_be - r_b
@@ -115,40 +152,32 @@ def H_tilde(x):
 
 
 def rho_b(phi_b, r):
-    """
-    Vectorized calculation of rho_b for each row in phi_b and r.
+    # EQ 2
+    if phi_b / r < -1:
+        return 0
 
-    Parameters:
-    - phi_b: (-1, 1) array, input values representing signed distances.
-    - r: (-1, 1) array, input values representing the radii.
+    elif -1 <= phi_b / r <= 1:
+        return H_tilde(phi_b / r)
 
-    Returns:
-    - rho_b_values: (-1, 1) array, calculated rho_b values for each row.
-    """
+    elif phi_b / r > 1:
+        return 1
 
-    # Calculate phi_b/r
-    ratio = phi_b / r
-
-    # Vectorized conditions
-    rho_b_values = np.where(ratio < -1, 0,  # If phi_b/r < -1
-                            np.where(ratio > 1, 1,  # If phi_b/r > 1
-                                     H_tilde(ratio)))  # If -1 <= phi_b/r <= 1
-
-    return rho_b_values
+    else:
+        raise ValueError('Something went wrong')
 
 
-def calculate_densities(positions_flat, radii_flat, x1, x2, r):
-
-    densities = []
-
-    for position, radius in zip(positions_flat, radii_flat):
-        phi = phi_b(position, x1, x2, r)
-        rho = rho_b(phi, radius)
-        densities.append(rho)
-
-    densities_array = np.vstack(densities)  # Shape (-1, n_segments)
-
-    return densities_array
+# def calculate_densities(positions_flat, radii_flat, x1, x2, r):
+#
+#     densities = []
+#
+#     for position, radius in zip(positions_flat, radii_flat):
+#         phi = phi_b(position, x1, x2, r)
+#         rho = rho_b(phi, radius)
+#         densities.append(rho)
+#
+#     densities_array = np.vstack(densities)  # Shape (-1, n_segments)
+#
+#     return densities_array
 
 
 # def calculate_densities(positions_flat, radii_flat, x1, x2, r):
@@ -176,27 +205,62 @@ def calculate_densities(positions_flat, radii_flat, x1, x2, r):
 
 
 # Example usage
-n, m, o = 5, 5, 1
-line_segment_points = [(0, 0, 0), (2.5, 2.5, 0)]
+# n, m, o = 5, 5, 1
+# line_segment_points = [(0, 0, 0), (2.5, 2.5, 0)]
+# line_segment_radius = 0.5
+
+n, m, o = 2, 4, 1
+line_segment_points = [(0, 0, 0), (0, 3, 0)]
 line_segment_radius = 0.5
 
 # Create grid
 positions, radii = create_grid(n, m, o)
-positions_flat = positions.reshape(-1, 3)  # Flattened positions (-1, 3)
-radii_flat = radii.reshape(-1, 1)  # Flattened radii (-1, 1)
+ # Flattened radii (-1, 1)
 
 # Create line segment arrays
-x1, x2, r = create_cylinders(line_segment_points, line_segment_radius)
+# x1, x2, r = create_cylinders(line_segment_points, line_segment_radius)
+x1, x2 = line_segment_points
+x1, x2 = np.array(x1), np.array(x2)
+r = np.array(line_segment_radius)
+
+distances = np.zeros((n, m, o))
+densities = np.zeros((n, m, o))
+for i in range(n):
+    for j in range(m):
+        for k in range(o):
+            position = positions[i, j, k]
+            radius = radii[i, j, k]
+            phi = phi_b(position, x1, x2, r)
+            rho = rho_b(phi, radius)
+            distances[i, j, k] = phi
+            densities[i, j, k] = rho
+
+            print("Distance", phi, "Density", rho)
+
+# print(densities)
 
 
 
 
 
+
+
+
+
+
+
+
+
+
+# phi = phi_b(np.array([[4, 4, 0]]), x1, x2, r)
+# rho = rho_b(phi, 0.5)
+#
+# print('Density', rho)
 
 # Calculate densities
 # densities_array = calculate_densities(positions_flat, radii_flat, x1, x2, r)
-#
-# plot_density_grid(positions.reshape(-1, 3), radii.reshape(-1, 1), x1, x2, r, densities_array)
+
+# plot_density_grid(positions, radii, x1.reshape(-1, 3), x2.reshape(-1, 3), r.reshape(-1, 1), densities)
 
 
 
@@ -207,7 +271,7 @@ x1, x2, r = create_cylinders(line_segment_points, line_segment_radius)
 
 
 # plot_density_grid(positions, radii, combined_density, line_segment_points)
-
+#
 
 
 
