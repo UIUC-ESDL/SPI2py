@@ -2,6 +2,7 @@ import numpy as np
 import pyvista as pv
 from matplotlib import cm
 import matplotlib.pyplot as plt
+from SPI2py.models.kinematics.distance_calculations import minimum_distance_segment_segment
 
 
 def plot_density_grid(sphere_positions, sphere_radii,
@@ -90,58 +91,13 @@ def create_cylinders(points, radius):
     return x1, x2, r
 
 
-def d_b(x, x1, x2):
-
-    # EQ 9
-    x21 = x2 - x1
-    xe_1b = x - x1
-
-    # EQs 10, 11, 12, 13
-    l_b = np.linalg.norm(x21)
-    a_b = x21 / l_b
-    l_be = np.dot(xe_1b, a_b)
-    r_be = np.linalg.norm(xe_1b - l_be * a_b)
-
-    # EQ 14
-    d_be_1 = np.linalg.norm(xe_1b)
-    d_be_2 = np.linalg.norm(x - x2)
-    d_be_3 = r_be
-
-    if l_be <= 0:
-        d_be = d_be_1
-    elif l_be < l_b:
-        d_be = d_be_2
-    else:
-        d_be = d_be_3
-
-    return d_be
-
 def phi_b(x, x1, x2, r_b):
 
-    # EQ 9
-    x21 = x2 - x1
-    xe_1b = x - x1
-
-    # EQs 10, 11, 12, 13
-    l_b = np.linalg.norm(x21)
-    a_b = x21 / l_b
-    l_be = np.dot(xe_1b, a_b)
-    r_be = np.linalg.norm(xe_1b - l_be * a_b)
-
-    # EQ 14
-    d_be_1 = np.linalg.norm(xe_1b)
-    d_be_2 = np.linalg.norm(x - x2)
-    d_be_3 = r_be
-
-    if l_be <= 0:
-        d_be = d_be_1
-    elif l_be < l_b:
-        d_be = d_be_2
-    else:
-        d_be = d_be_3
+    d_be = minimum_distance_segment_segment(x, x, x1, x2)
 
     # EQ 8
-    phi_b = d_be - r_b
+    # phi_b = d_be - r_b
+    phi_b = r_b - d_be
 
     return phi_b
 
@@ -209,8 +165,8 @@ def rho_b(phi_b, r):
 # line_segment_points = [(0, 0, 0), (2.5, 2.5, 0)]
 # line_segment_radius = 0.5
 
-n, m, o = 2, 4, 1
-line_segment_points = [(0, 0, 0), (0, 3, 0)]
+n, m, o = 4, 4, 1
+line_segment_points = [(0, 0, 0), (3, 3, 0)]
 line_segment_radius = 0.5
 
 # Create grid
@@ -260,7 +216,7 @@ for i in range(n):
 # Calculate densities
 # densities_array = calculate_densities(positions_flat, radii_flat, x1, x2, r)
 
-# plot_density_grid(positions, radii, x1.reshape(-1, 3), x2.reshape(-1, 3), r.reshape(-1, 1), densities)
+plot_density_grid(positions, radii, x1.reshape(-1, 3), x2.reshape(-1, 3), r.reshape(-1, 1), densities)
 
 
 
