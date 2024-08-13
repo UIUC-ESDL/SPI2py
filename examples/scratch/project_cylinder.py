@@ -65,14 +65,10 @@ def plot_density_grid(sphere_positions, sphere_radii,
     plotter.show_bounds(all_edges=True)
 
     plotter.link_views()
-    # plotter.view_isometric()
-    plotter.view_xy()
-
-    # Set the same bounds for all plots
-    # plotter.set_scale(xscale=1, yscale=1, zscale=1)
+    plotter.view_isometric()
+    # plotter.view_xy()
 
     plotter.show()
-
 
 
 def create_grid(n, m, o, spacing=1.0):
@@ -93,10 +89,9 @@ def create_cylinders(points, radius):
 
 def phi_b(x, x1, x2, r_b):
 
-    d_be = minimum_distance_segment_segment(x, x, x1, x2)
+    d_be = float(minimum_distance_segment_segment(x, x, x1, x2))
 
-    # EQ 8
-    # phi_b = d_be - r_b
+    # EQ 8 (order reversed)
     phi_b = r_b - d_be
 
     return phi_b
@@ -122,76 +117,71 @@ def rho_b(phi_b, r):
         raise ValueError('Something went wrong')
 
 
-# def calculate_densities(positions_flat, radii_flat, x1, x2, r):
+# def calculate_densities(positions, radii, x1, x2, r):
 #
-#     densities = []
+#     densities = np.zeros_like(radii)
 #
-#     for position, radius in zip(positions_flat, radii_flat):
+#     for i, (position, radius) in enumerate(zip(positions, radii)):
 #         phi = phi_b(position, x1, x2, r)
 #         rho = rho_b(phi, radius)
-#         densities.append(rho)
+#         densities[i] = rho
 #
-#     densities_array = np.vstack(densities)  # Shape (-1, n_segments)
+#     return densities
+
+
+# def calculate_combined_densities(positions, radii, X1, X2, R):
 #
-#     return densities_array
-
-
-# def calculate_densities(positions_flat, radii_flat, x1, x2, r):
-#     # Calculate signed distances for each segment
-#     densities = []
-#     for start, stop, radius in zip(x1, x2, r):
-#         start_arr = np.tile(start, (positions_flat.shape[0], 1))  # Match shape (-1, 3)
-#         stop_arr = np.tile(stop, (positions_flat.shape[0], 1))  # Match shape (-1, 3)
-#         r_arr = np.full((positions_flat.shape[0], 1), radius)  # Match shape (-1, 1) with the correct radius for the segment
-#         phi = phi_b(positions_flat, start_arr, stop_arr, r_arr)
-#         rho = rho_b(phi, radii_flat)  # radii_flat should be shaped correctly from the grid
-#         densities.append(rho)
+#     combined_densities = np.zeros_like(radii)
 #
-#     densities_array = np.hstack(densities)  # Shape (-1, n_segments)
-#     return densities_array
+#     for x1, x2, r in zip(positions, radii, X1, X2, R):
+#         densities = calculate_densities(positions, radii, x1, x2, r)
+#         combined_densities += densities
+#
+#     # Clip the combined densities to be between 0 and 1
+#     combined_densities = np.clip(combined_densities, 0, 1)
+#
+#     return combined_densities
 
-# Step 4: Combine densities and reshape
-# def combine_and_reshape_densities(densities_array, n, m, o):
-#     combined_density = np.sum(densities_array, axis=1, keepdims=True)
-#     combined_density = np.clip(combined_density, 0, 1)
-#     return combined_density.reshape(n, m, o)
 
-# line_segment_points = [(0, 0, 0), (1, 1, 1), (1, 1, 3)]
-# line_segment_radius = 0.2
+def calculate_density(position, radius, x1, x2, r):
+    phi = phi_b(position, x1, x2, r)
+    rho = rho_b(phi, radius)
+    return rho
+
+def calculate_combined_density(position, radius, X1, X2, R):
+
+    combined_density = 0
+    for x1, x2, r in zip(X1, X2, R):
+        density = calculate_density(position, radius, x1, x2, r)
+        combined_density += density
+
+    # Clip the combined densities to be between 0 and 1
+    combined_density = max(0, min(combined_density, 1))
+
+    return combined_density
 
 
 # Example usage
-# n, m, o = 5, 5, 1
-# line_segment_points = [(0, 0, 0), (2.5, 2.5, 0)]
-# line_segment_radius = 0.5
-
-n, m, o = 4, 4, 1
-line_segment_points = [(0, 0, 0), (3, 3, 0)]
+n, m, o = 10, 10, 10
+line_segment_points = [(0, 0, 0), (2.5, 2.5, 0), (2.5, 5, 0)]
 line_segment_radius = 0.5
 
+
 # Create grid
-positions, radii = create_grid(n, m, o)
- # Flattened radii (-1, 1)
+positions, radii = create_grid(n, m, o, spacing=0.5)
 
 # Create line segment arrays
-# x1, x2, r = create_cylinders(line_segment_points, line_segment_radius)
-x1, x2 = line_segment_points
-x1, x2 = np.array(x1), np.array(x2)
-r = np.array(line_segment_radius)
+X1, X2, R = create_cylinders(line_segment_points, line_segment_radius)
 
-distances = np.zeros((n, m, o))
+
 densities = np.zeros((n, m, o))
 for i in range(n):
     for j in range(m):
         for k in range(o):
             position = positions[i, j, k]
             radius = radii[i, j, k]
-            phi = phi_b(position, x1, x2, r)
-            rho = rho_b(phi, radius)
-            distances[i, j, k] = phi
-            densities[i, j, k] = rho
-
-            print("Distance", phi, "Density", rho)
+            combined_density = calculate_combined_density(position, radius, X1, X2, R)
+            densities[i, j, k] += combined_density
 
 # print(densities)
 
@@ -216,7 +206,7 @@ for i in range(n):
 # Calculate densities
 # densities_array = calculate_densities(positions_flat, radii_flat, x1, x2, r)
 
-plot_density_grid(positions, radii, x1.reshape(-1, 3), x2.reshape(-1, 3), r.reshape(-1, 1), densities)
+plot_density_grid(positions, radii, X1.reshape(-1, 3), X2.reshape(-1, 3), R.reshape(-1, 1), densities)
 
 
 
