@@ -113,7 +113,7 @@ class Projections(Group):
 
         # Add the interconnect projection components
         for _ in range(n_int_projections):
-            self.add_subsystem(f'projection_{i}', ProjectComponent())
+            self.add_subsystem(f'projection_{i}', ProjectInterconnect())
             i += 1
 
 
@@ -267,7 +267,7 @@ class ProjectInterconnect(ExplicitComponent):
             r = np.full((x1.shape[0], 1), radius)
             return x1, x2, r
 
-        X1, X2, R = create_cylinders(sample_points, sample_radii)
+        X1, X2, R = create_cylinders(sphere_positions, sphere_radii)
 
         pseudo_densities = calculate_densities(sample_points, sample_radii, X1, X2, R)
         return pseudo_densities
