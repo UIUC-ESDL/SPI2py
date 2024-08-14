@@ -77,22 +77,14 @@ def create_cylinders(points, radius):
 
 def signed_distance(x, x1, x2, r_b):
 
-    # Reshape the grid positions
-    n, m, o = x.shape[:-2]
-    x_flat = x.reshape(-1, 3)
-
     # Expand dimensions to allow broadcasting
     x1 = x1[:, np.newaxis, np.newaxis, np.newaxis, :]  # Shape (-1, 1, 1, 1, 3)
     x2 = x2[:, np.newaxis, np.newaxis, np.newaxis, :]  # Shape (-1, 1, 1, 1, 3)
-    r_b = r_b[:, np.newaxis, np.newaxis, np.newaxis]  # Shape (-1, 1, 1, 1)
 
     # Convert output from JAX.numpy to numpy
-    d_be = np.array(minimum_distance_segment_segment(x_flat, x_flat, x1, x2))
+    d_be = np.array(minimum_distance_segment_segment(x, x, x1, x2))
 
     phi_b = r_b - d_be
-
-    phi_b = phi_b.reshape(n, m, o, -1)
-
     return phi_b
 
 
@@ -118,6 +110,9 @@ def calculate_densities(positions, radii, x1, x2, r):
     # Sum densities across all cylinders
     combined_density = np.clip(np.sum(rho, axis=0), 0, 1)
 
+    # # Sum densities across all spheres within each grid cell and all cylinders
+    # combined_density = np.clip(np.sum(rho, axis=(0, 4)), 0, 1)  # Sum over the first and last axes
+
     return combined_density
 
 
@@ -125,9 +120,9 @@ def calculate_densities(positions, radii, x1, x2, r):
 n, m, o = 5, 5, 2
 positions, radii = create_grid(n, m, o, spacing=1)
 
-# # Reshape the positions and radii
-# positions = positions.reshape(-1, 3)
-# radii = radii.reshape(-1, 1)
+# Reshape the positions and radii
+positions = positions.reshape(-1, 3)
+radii = radii.reshape(-1, 1)
 
 # Create line segment arrays
 line_segment_points = [(0, 0, 0), (2, 2, 0), (2, 4, 0)]
@@ -137,7 +132,7 @@ X1, X2, R = create_cylinders(line_segment_points, line_segment_radius)
 densities = calculate_densities(positions, radii, X1, X2, R)
 
 
-plot_density_grid(positions.reshape(-1, 3), radii.reshape(-1, 1), X1.reshape(-1, 3), X2.reshape(-1, 3), R.reshape(-1, 1), densities.reshape(-1, 1))
+plot_density_grid(positions, radii, X1.reshape(-1, 3), X2.reshape(-1, 3), R.reshape(-1, 1), densities.reshape(-1, 1))
 
 
 
