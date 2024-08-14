@@ -44,11 +44,27 @@ def plot_problem(prob, plot_objects=True, plot_grid=True, plot_grid_points=True,
                 radii = prob.get_val('system.interconnects.' + subsystem.name + '.transformed_sphere_radii')
                 color = subsystem.options['color']
 
+                # Plot the spheres
                 spheres = []
                 for position, radius in zip(positions, radii):
                     spheres.append(pv.Sphere(radius=radius, center=position, theta_resolution=30, phi_resolution=30))
 
-                merged = pv.MultiBlock(spheres).combine().extract_surface().clean()
+                # Plot the cylinders
+                cylinders = []
+                for i in range(len(positions) - 1):
+                    start = positions[i]
+                    stop = positions[i + 1]
+                    radius = radii[i]
+                    length = np.linalg.norm(stop - start)
+                    direction = (stop - start) / length
+                    center = (start + stop) / 2
+                    cylinder = pv.Cylinder(center=center, direction=direction, radius=radius, height=length)
+                    cylinders.append(cylinder)
+
+                # merged = pv.MultiBlock(spheres).combine().extract_surface().clean()
+                merged_spheres = pv.MultiBlock(spheres).combine().extract_surface().clean()
+                merged_cylinders = pv.MultiBlock(cylinders).combine().extract_surface().clean()
+                merged = merged_spheres + merged_cylinders
 
                 interconnects.append(merged)
                 interconnect_colors.append(color)

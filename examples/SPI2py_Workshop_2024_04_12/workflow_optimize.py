@@ -29,7 +29,7 @@ n_elements_per_unit_length = 2.0
 n_components = 3
 n_spheres = 200
 
-m_interconnects = 0
+m_interconnects = 1
 m_segments = 2
 
 n_projections = n_components + m_interconnects
@@ -68,7 +68,7 @@ for j in range(n_components):
 for j in range(m_interconnects):
     model.connect(f'system.interconnects.int_{j}.transformed_sphere_positions', f'projections.projection_{i}.sphere_positions')
     model.connect(f'system.interconnects.int_{j}.transformed_sphere_radii', f'projections.projection_{i}.sphere_radii')
-    model.connect(f'system.interconnects.int_{j}.volume', f'projections.projection_{i}.volume')
+    # model.connect(f'system.interconnects.int_{j}.volume', f'projections.projection_{i}.volume')
     model.connect(f'projections.projection_{i}.pseudo_densities', f'aggregator.pseudo_densities_{i}')
     i += 1
 

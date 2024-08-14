@@ -1,7 +1,7 @@
 import numpy as np
 import pyvista as pv
 from SPI2py.models.kinematics.distance_calculations import minimum_distance_segment_segment
-
+from SPI2py.models.projection.projection_interconnects import calculate_densities
 
 def plot_density_grid(sphere_positions, sphere_radii,
                       cylinder_start_positions, cylinder_stop_positions, cylinder_radii,
@@ -71,47 +71,10 @@ def create_grid(n, m, o, spacing=1.0):
 def create_cylinders(points, radius):
     x1 = np.array(points[:-1])  # Start positions (-1, 3)
     x2 = np.array(points[1:])   # Stop positions (-1, 3)
-    r  = np.full((x1.shape[0], 1), line_segment_radius)
+    r  = np.full((x1.shape[0], 1), radius)
     return x1, x2, r
 
 
-def signed_distance(x, x1, x2, r_b):
-
-    # Expand dimensions to allow broadcasting
-    x  = x[np.newaxis, :, :]  # Shape (1, -1, 3)
-    x1 = x1[:, np.newaxis, :]  # Shape (-1, 1, 3)
-    x2 = x2[:, np.newaxis, :]  # Shape (-1, 1, 3)
-
-    # Convert output from JAX.numpy to numpy
-    d_be = np.array(minimum_distance_segment_segment(x, x, x1, x2))
-
-    phi_b = r_b - d_be
-    return phi_b
-
-
-def regularized_Heaviside(x):
-    H_tilde = 0.5 + 0.75 * x - 0.25 * x ** 3  # EQ 3 in 3D
-    return H_tilde
-
-
-def density(phi_b, r):
-    ratio = phi_b / r
-    rho = np.where(ratio < -1, 0,
-                   np.where(ratio > 1, 1,
-                            regularized_Heaviside(ratio)))
-    return rho
-
-
-def calculate_densities(positions, radii, x1, x2, r):
-
-    # Vectorized signed distance and density calculations using your distance function
-    phi = signed_distance(positions, x1, x2, r)
-    rho = density(phi, radii.T)
-
-    # Sum densities across all cylinders
-    combined_density = np.clip(np.sum(rho, axis=0), 0, 1)
-
-    return combined_density
 
 
 # Create grid

@@ -235,10 +235,6 @@ class Interconnect(ExplicitComponent):
         shape_positions = (n_segments + 1, 3)
         shape_radii = (n_segments + 1, 1)
 
-        # Define the input values
-        positions = jnp.zeros(shape_positions)
-        radii = radius * jnp.ones(shape_radii)
-
         # Define the inputs
         self.add_input('start_point', shape=(1, 3))
         self.add_input('control_points', shape=shape_control_points)
