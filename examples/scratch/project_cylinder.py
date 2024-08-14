@@ -64,9 +64,14 @@ def create_grid(n, m, o, spacing=1.0):
     y = np.linspace(0, (m-1) * spacing, m)
     z = np.linspace(0, (o-1) * spacing, o)
     xv, yv, zv = np.meshgrid(x, y, z, indexing='ij')
+
     positions = np.stack((xv, yv, zv), axis=-1)  # Shape (n, m, o, 3)
     radii = np.ones((n, m, o)) * spacing / 2  # Uniform radii
-    return positions[..., np.newaxis, :], radii[..., np.newaxis, :]
+
+    positions_expanded = np.expand_dims(positions, axis=3)
+    radii_expanded = np.expand_dims(radii, axis=(3, 4))
+
+    return positions_expanded, radii_expanded
 
 def create_cylinders(points, radius):
     x1 = np.array(points[:-1])  # Start positions (-1, 3)
@@ -77,14 +82,11 @@ def create_cylinders(points, radius):
 
 def signed_distance(x, x1, x2, r_b):
 
-    # Expand dimensions to allow broadcasting
-    x1 = x1[:, np.newaxis, np.newaxis, np.newaxis, :]  # Shape (-1, 1, 1, 1, 3)
-    x2 = x2[:, np.newaxis, np.newaxis, np.newaxis, :]  # Shape (-1, 1, 1, 1, 3)
-
     # Convert output from JAX.numpy to numpy
     d_be = np.array(minimum_distance_segment_segment(x, x, x1, x2))
 
     phi_b = r_b - d_be
+
     return phi_b
 
 
@@ -103,36 +105,46 @@ def density(phi_b, r):
 
 def calculate_densities(positions, radii, x1, x2, r):
 
+    # Expand dimensions to allow broadcasting
+    # x1 = x1[:, np.newaxis, np.newaxis, np.newaxis, :]  # Shape (-1, 1, 1, 1, 3)
+    # x2 = x2[:, np.newaxis, np.newaxis, np.newaxis, :]  # Shape (-1, 1, 1, 1, 3)
+    positions_expanded = positions[..., np.newaxis, :]  # shape becomes (n, m, o, p, 1, 3)
+    x1_expanded = x1[np.newaxis, np.newaxis, np.newaxis, :, :]  # shape becomes (1, 1, 1, q, 3)
+    x2_expanded = x2[np.newaxis, np.newaxis, np.newaxis, :, :]  # shape becomes (1, 1, 1, q, 3)
+
+    r_T_expanded = r.T[np.newaxis, np.newaxis, np.newaxis, :, :]  # shape becomes (1, 1, 1, q, 1)
+
     # Vectorized signed distance and density calculations using your distance function
-    phi = signed_distance(positions, x1, x2, r)
-    rho = density(phi, radii.T)
+    phi = signed_distance(positions_expanded, x1_expanded, x2_expanded, r_T_expanded)
+
+    rho = density(phi, radii)
 
     # Sum densities across all cylinders
-    combined_density = np.clip(np.sum(rho, axis=0), 0, 1)
+    combined_density = np.clip(np.sum(rho, axis=4), 0, 1)
 
-    # # Sum densities across all spheres within each grid cell and all cylinders
-    # combined_density = np.clip(np.sum(rho, axis=(0, 4)), 0, 1)  # Sum over the first and last axes
+    # # # Sum densities across all spheres within each grid cell and all cylinders
+    # # combined_density = np.clip(np.sum(rho, axis=(0, 4)), 0, 1)  # Sum over the first and last axes
 
     return combined_density
 
 
-# # Create grid
-# n, m, o = 5, 5, 2
-# positions, radii = create_grid(n, m, o, spacing=1)
-#
+# Create grid
+n, m, o = 5, 5, 2
+positions, radii = create_grid(n, m, o, spacing=1)
+
 # # Reshape the positions and radii
 # positions = positions.reshape(-1, 3)
 # radii = radii.reshape(-1, 1)
-#
-# # Create line segment arrays
-# line_segment_points = [(0, 0, 0), (2, 2, 0), (2, 4, 0)]
-# line_segment_radius = 0.25
-# X1, X2, R = create_cylinders(line_segment_points, line_segment_radius)
-#
-# densities = calculate_densities(positions, radii, X1, X2, R)
-#
-#
-# plot_density_grid(positions, radii, X1.reshape(-1, 3), X2.reshape(-1, 3), R.reshape(-1, 1), densities.reshape(-1, 1))
+
+# Create line segment arrays
+line_segment_points = [(0, 0, 0), (2, 2, 0), (2, 4, 0)]
+line_segment_radius = 0.25
+X1, X2, R = create_cylinders(line_segment_points, line_segment_radius)
+
+densities = calculate_densities(positions, radii, X1, X2, R)
+
+
+plot_density_grid(positions.reshape(-1,3), radii.reshape(-1,1), X1.reshape(-1, 3), X2.reshape(-1, 3), R.reshape(-1, 1), densities.reshape(-1, 1))
 
 # a = np.array([[0., 0., 0.]])
 # b = np.array([[1., 0., 0.]])
@@ -140,17 +152,17 @@ def calculate_densities(positions, radii, x1, x2, r):
 # d = np.array([[1., 0., 1.]])
 # dist = minimum_distance_segment_segment(a, b, c, d)
 
-n, m, o, p, q = 2, 2, 2, 4, 5  # example dimensions
-points = np.random.rand(n, m, o, p, 3)
-start = np.random.rand(q, 3)
-stop = np.random.rand(q, 3)
-
-# Reshape arrays to allow broadcasting
-points_expanded = points[..., np.newaxis, :]  # shape becomes (n, m, o, p, 1, 3)
-start_expanded = start[np.newaxis, np.newaxis, np.newaxis, np.newaxis, :, :]  # shape becomes (1, 1, 1, 1, q, 3)
-stop_expanded = stop[np.newaxis, np.newaxis, np.newaxis, np.newaxis, :, :]  # shape becomes (1, 1, 1, 1, q, 3)
-
-distances = minimum_distance_segment_segment(points_expanded, points_expanded, start_expanded, stop_expanded)
+# n, m, o, p, q = 2, 2, 2, 4, 5  # example dimensions
+# points = np.random.rand(n, m, o, p, 3)
+# start = np.random.rand(q, 3)
+# stop = np.random.rand(q, 3)
+#
+# # Reshape arrays to allow broadcasting
+# points_expanded = points[..., np.newaxis, :]  # shape becomes (n, m, o, p, 1, 3)
+# start_expanded = start[np.newaxis, np.newaxis, np.newaxis, np.newaxis, :, :]  # shape becomes (1, 1, 1, 1, q, 3)
+# stop_expanded = stop[np.newaxis, np.newaxis, np.newaxis, np.newaxis, :, :]  # shape becomes (1, 1, 1, 1, q, 3)
+#
+# distances = minimum_distance_segment_segment(points_expanded, points_expanded, start_expanded, stop_expanded)
 
 
 
