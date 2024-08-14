@@ -267,15 +267,11 @@ class ProjectInterconnect(ExplicitComponent):
             r = np.full((x1.shape[0], 1), radius)
             return x1, x2, r
 
-        n, m, o = sample_points.shape[:-2]
-        radius = sample_radii[0, 0, 0, 0]
-        sample_points = sample_points.reshape(-1, 3)
-        sample_radii = sample_radii.reshape(-1, 1)
 
-        X1, X2, R = create_cylinders(sphere_positions, radius)
+        # FIXME different radii for different int segments
+        X1, X2, R = create_cylinders(sphere_positions, sphere_radii[0])
 
         pseudo_densities = calculate_densities(sample_points, sample_radii, X1, X2, R)
-        pseudo_densities = pseudo_densities.reshape(n, m, o)
         return pseudo_densities
 
 

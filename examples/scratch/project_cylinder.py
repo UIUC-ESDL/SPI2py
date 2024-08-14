@@ -106,12 +106,9 @@ def density(phi_b, r):
 def calculate_densities(positions, radii, x1, x2, r):
 
     # Expand dimensions to allow broadcasting
-    # x1 = x1[:, np.newaxis, np.newaxis, np.newaxis, :]  # Shape (-1, 1, 1, 1, 3)
-    # x2 = x2[:, np.newaxis, np.newaxis, np.newaxis, :]  # Shape (-1, 1, 1, 1, 3)
     positions_expanded = positions[..., np.newaxis, :]  # shape becomes (n, m, o, p, 1, 3)
     x1_expanded = x1[np.newaxis, np.newaxis, np.newaxis, :, :]  # shape becomes (1, 1, 1, q, 3)
     x2_expanded = x2[np.newaxis, np.newaxis, np.newaxis, :, :]  # shape becomes (1, 1, 1, q, 3)
-
     r_T_expanded = r.T[np.newaxis, np.newaxis, np.newaxis, :, :]  # shape becomes (1, 1, 1, q, 1)
 
     # Vectorized signed distance and density calculations using your distance function
@@ -122,14 +119,11 @@ def calculate_densities(positions, radii, x1, x2, r):
     # Sum densities across all cylinders
     combined_density = np.clip(np.sum(rho, axis=4), 0, 1)
 
-    # # # Sum densities across all spheres within each grid cell and all cylinders
-    # # combined_density = np.clip(np.sum(rho, axis=(0, 4)), 0, 1)  # Sum over the first and last axes
-
     return combined_density
 
 
 # Create grid
-n, m, o = 5, 5, 2
+n, m, o = 14, 14, 4
 positions, radii = create_grid(n, m, o, spacing=1)
 
 # # Reshape the positions and radii
