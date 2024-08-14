@@ -29,7 +29,7 @@ n_elements_per_unit_length = 2.0
 n_components = 3
 n_spheres = 200
 
-m_interconnects = 1
+m_interconnects = 3
 m_segments = 2
 
 n_projections = n_components + m_interconnects
@@ -117,19 +117,19 @@ prob.setup()
 
 
 # Configure the system
-# prob.set_val('system.components.comp_0.translation', [1, 2.5, 0.5])
-# prob.set_val('system.components.comp_1.translation', [5, 2, 0.5])
-# prob.set_val('system.components.comp_2.translation', [2, 2, 0])
-# prob.set_val('system.components.comp_2.rotation', [-np.pi/2, 0, 0])
-# prob.set_val('system.interconnects.int_0.control_points', [[2.5, 2, 0.5]])
-# prob.set_val('system.interconnects.int_1.control_points', [[5, 5, 0.5]])
-# prob.set_val('system.interconnects.int_2.control_points', [[1, 4, 0.5]])
+prob.set_val('system.components.comp_0.translation', [1, 2.5, 0.5])
+prob.set_val('system.components.comp_1.translation', [5, 2, 0.5])
+prob.set_val('system.components.comp_2.translation', [2, 2, 0])
+prob.set_val('system.components.comp_2.rotation', [-np.pi/2, 0, 0])
+prob.set_val('system.interconnects.int_0.control_points', [[2.5, 2, 0.5]])
+prob.set_val('system.interconnects.int_1.control_points', [[5, 5, 0.5]])
+prob.set_val('system.interconnects.int_2.control_points', [[1, 4, 0.5]])
 
 # Demo optimal
-prob.set_val('system.components.comp_0.translation', [1, 1, 0.5])
-prob.set_val('system.components.comp_1.translation', [3.5, 2, 0.5])
-prob.set_val('system.components.comp_2.translation', [0.5, 1, 0])
-prob.set_val('system.components.comp_2.rotation', [-np.pi/2, 0, 0])
+# prob.set_val('system.components.comp_0.translation', [1, 1, 0.5])
+# prob.set_val('system.components.comp_1.translation', [3.5, 2, 0.5])
+# prob.set_val('system.components.comp_2.translation', [0.5, 1, 0])
+# prob.set_val('system.components.comp_2.rotation', [-np.pi/2, 0, 0])
 # prob.set_val('system.interconnects.int_0.control_points', [[1.6, 1.6, 0.5]])
 # prob.set_val('system.interconnects.int_1.control_points', [[2.35, 3.75, 0.5]])
 # prob.set_val('system.interconnects.int_2.control_points', [[0.65, 1.75, 0.5]])

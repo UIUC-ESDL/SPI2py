@@ -168,17 +168,18 @@ def signed_distances_spheres_spheres(centers_a: jnp.ndarray,
 #     return minimum_distance
 
 
-def clamp_bound(num):
-    """
-    Vectorized clamping for JAX arrays.
-    """
-    return jnp.clip(num, 0., 1.)
-
 
 def minimum_distance_segment_segment(a, b, c, d):
     """
     Vectorized calculation of minimum distances between line segments or points.
     """
+
+    def clamp_bound(num):
+        """
+        Vectorized clamping for JAX arrays.
+        """
+        return jnp.clip(num, 0., 1.)
+
     d1 = b - a
     d2 = d - c
     d12 = c - a

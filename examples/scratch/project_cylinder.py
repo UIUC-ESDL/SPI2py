@@ -116,25 +116,41 @@ def calculate_densities(positions, radii, x1, x2, r):
     return combined_density
 
 
-# Create grid
-n, m, o = 5, 5, 2
-positions, radii = create_grid(n, m, o, spacing=1)
+# # Create grid
+# n, m, o = 5, 5, 2
+# positions, radii = create_grid(n, m, o, spacing=1)
+#
+# # Reshape the positions and radii
+# positions = positions.reshape(-1, 3)
+# radii = radii.reshape(-1, 1)
+#
+# # Create line segment arrays
+# line_segment_points = [(0, 0, 0), (2, 2, 0), (2, 4, 0)]
+# line_segment_radius = 0.25
+# X1, X2, R = create_cylinders(line_segment_points, line_segment_radius)
+#
+# densities = calculate_densities(positions, radii, X1, X2, R)
+#
+#
+# plot_density_grid(positions, radii, X1.reshape(-1, 3), X2.reshape(-1, 3), R.reshape(-1, 1), densities.reshape(-1, 1))
 
-# Reshape the positions and radii
-positions = positions.reshape(-1, 3)
-radii = radii.reshape(-1, 1)
+# a = np.array([[0., 0., 0.]])
+# b = np.array([[1., 0., 0.]])
+# c = np.array([[0., 0., 2.]])
+# d = np.array([[1., 0., 1.]])
+# dist = minimum_distance_segment_segment(a, b, c, d)
 
-# Create line segment arrays
-line_segment_points = [(0, 0, 0), (2, 2, 0), (2, 4, 0)]
-line_segment_radius = 0.25
-X1, X2, R = create_cylinders(line_segment_points, line_segment_radius)
+n, m, o, p, q = 2, 2, 2, 4, 5  # example dimensions
+points = np.random.rand(n, m, o, p, 3)
+start = np.random.rand(q, 3)
+stop = np.random.rand(q, 3)
 
-densities = calculate_densities(positions, radii, X1, X2, R)
+# Reshape arrays to allow broadcasting
+points_expanded = points[..., np.newaxis, :]  # shape becomes (n, m, o, p, 1, 3)
+start_expanded = start[np.newaxis, np.newaxis, np.newaxis, np.newaxis, :, :]  # shape becomes (1, 1, 1, 1, q, 3)
+stop_expanded = stop[np.newaxis, np.newaxis, np.newaxis, np.newaxis, :, :]  # shape becomes (1, 1, 1, 1, q, 3)
 
-
-plot_density_grid(positions, radii, X1.reshape(-1, 3), X2.reshape(-1, 3), R.reshape(-1, 1), densities.reshape(-1, 1))
-
-
+distances = minimum_distance_segment_segment(points_expanded, points_expanded, start_expanded, stop_expanded)
 
 
 
