@@ -23,7 +23,7 @@ model = prob.model
 
 # Mesh Parameters
 bounds = (0, 7, 0, 7, 0, 2)
-n_elements_per_unit_length = 3.0
+n_elements_per_unit_length = 4.0
 
 # System Parameters
 n_components = 3
