@@ -107,9 +107,9 @@ prob.model.add_constraint('aggregator.max_pseudo_density', upper=1.1)
 # prob.model.add_design_var('system.components.comp_0.translation', ref=5, lower=0, upper=10, indices=[0, 1], flat_indices=True)
 prob.model.add_design_var('system.components.comp_1.translation', ref=5, lower=0, upper=10, indices=[0, 1], flat_indices=True)
 prob.model.add_design_var('system.components.comp_2.translation', ref=5, lower=0, upper=10, indices=[0, 1], flat_indices=True)
-# prob.model.add_design_var('system.interconnects.int_0.control_points', ref=5, lower=0, upper=10, indices=[0, 1], flat_indices=True)
-# prob.model.add_design_var('system.interconnects.int_1.control_points', ref=5, lower=0, upper=10, indices=[0, 1], flat_indices=True)
-# prob.model.add_design_var('system.interconnects.int_2.control_points', ref=5, lower=0, upper=10, indices=[0, 1], flat_indices=True)
+prob.model.add_design_var('system.interconnects.int_0.control_points', ref=5, lower=0, upper=10, indices=[0, 1], flat_indices=True)
+prob.model.add_design_var('system.interconnects.int_1.control_points', ref=5, lower=0, upper=10, indices=[0, 1], flat_indices=True)
+prob.model.add_design_var('system.interconnects.int_2.control_points', ref=5, lower=0, upper=10, indices=[0, 1], flat_indices=True)
 
 
 # Set the initial state
@@ -144,7 +144,7 @@ prob.set_val('system.interconnects.int_2.control_points', [[1, 4, 0.5]])
 
 
 prob.driver = om.ScipyOptimizeDriver()
-prob.driver.options['maxiter'] = 10
+prob.driver.options['maxiter'] = 200
 prob.driver.options['optimizer'] = 'COBYLA'
 # prob.driver.options['optimizer'] = 'trust-constr'
 
@@ -158,7 +158,7 @@ prob.run_model()
 
 # Run the optimization
 # start = time_ns()
-# prob.run_driver()
+prob.run_driver()
 # end = time_ns()
 # print('Elapsed Time: ', (end - start) / 1e9)
 
