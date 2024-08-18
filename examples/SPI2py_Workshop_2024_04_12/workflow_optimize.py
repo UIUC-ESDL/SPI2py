@@ -64,7 +64,6 @@ for j in range(n_components):
     model.connect(f'projections.projection_{i}.pseudo_densities', f'aggregator.pseudo_densities_{i}')
     i += 1
 
-# TODO Implement
 for j in range(m_interconnects):
     model.connect(f'system.interconnects.int_{j}.transformed_sphere_positions', f'projections.projection_{i}.sphere_positions')
     model.connect(f'system.interconnects.int_{j}.transformed_sphere_radii', f'projections.projection_{i}.sphere_radii')
@@ -79,8 +78,8 @@ for i in range(n_projections):
     model.connect('mesh.element_length', f'projections.projection_{i}.element_length')
     model.connect('mesh.centers', f'projections.projection_{i}.centers')
     model.connect('mesh.element_bounds', f'projections.projection_{i}.element_bounds')
-    model.connect('mesh.sample_points', f'projections.projection_{i}.sample_points')
-    model.connect('mesh.sample_radii', f'projections.projection_{i}.sample_radii')
+    model.connect('mesh.sample_points', f'projections.projection_{i}.element_sphere_positions')
+    model.connect('mesh.sample_radii', f'projections.projection_{i}.element_sphere_radii')
 
 
 # Connect the system to the bounding box
@@ -158,7 +157,7 @@ prob.run_model()
 
 # Run the optimization
 # start = time_ns()
-prob.run_driver()
+# prob.run_driver()
 # end = time_ns()
 # print('Elapsed Time: ', (end - start) / 1e9)
 

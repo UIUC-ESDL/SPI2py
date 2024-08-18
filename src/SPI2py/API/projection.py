@@ -8,10 +8,10 @@ from ..models.projection.projection import calculate_pseudo_densities
 from ..models.projection.projection_interconnects import calculate_densities
 from ..models.utilities.aggregation import kreisselmeier_steinhauser_max
 from ..models.projection.mesh_kernels import mdbd_1_kernel_positions, mdbd_1_kernel_radii
-from ..models.projection.mesh_kernels import mdbd_9_kernel_positions, mdbd_9_kernel_radii
-from ..models.projection.mesh_kernels import uniform_8_kernel_positions, uniform_8_kernel_radii
-from ..models.projection.mesh_kernels import uniform_64_kernel_positions, uniform_64_kernel_radii
-from ..models.projection.mesh_kernels import mdbd_kernel_positions, mdbd_kernel_radii
+# from ..models.projection.mesh_kernels import mdbd_9_kernel_positions as kernel_positions, mdbd_9_kernel_radii as kernel_radii
+# from ..models.projection.mesh_kernels import uniform_8_kernel_positions as kernel_positions, uniform_8_kernel_radii as kernel_radii
+# from ..models.projection.mesh_kernels import uniform_64_kernel_positions as kernel_positions, uniform_64_kernel_radii as kernel_radii
+# from ..models.projection.mesh_kernels import mdbd_kernel_positions, mdbd_kernel_radii
 
 
 class Mesh(IndepVarComp):
@@ -26,7 +26,7 @@ class Mesh(IndepVarComp):
         bounds = self.options['bounds']
         n_elements_per_unit_length = self.options['n_elements_per_unit_length']
 
-        # Determine the number of elements in each direction
+        # Create the mesh grid
         x_min, x_max, y_min, y_max, z_min, z_max = bounds
 
         n_el_x = int(n_elements_per_unit_length * (x_max - x_min))
@@ -59,11 +59,8 @@ class Mesh(IndepVarComp):
         element_bounds = jnp.stack((x_min_element, x_max_element, y_min_element, y_max_element, z_min_element, z_max_element), axis=-1)
 
         # Read the MDBD kernel
-        kernel_positions = mdbd_1_kernel_positions
-        kernel_radii = mdbd_1_kernel_radii
-
-        kernel_positions = jnp.array(kernel_positions)
-        kernel_radii = jnp.array(kernel_radii).reshape(-1, 1)
+        kernel_positions = jnp.array(mdbd_1_kernel_positions)
+        kernel_radii = jnp.array(mdbd_1_kernel_radii).reshape(-1, 1)
 
         # Scale the sphere positions
         kernel_positions = kernel_positions * element_length
@@ -76,9 +73,9 @@ class Mesh(IndepVarComp):
         all_radii = jnp.zeros((n_el_x, n_el_y, n_el_z, 1, 1)) + kernel_radii
 
         # Calculate the kernel volume fraction
-        kernel_volume = jnp.sum(4/3 * jnp.pi * kernel_radii ** 3)
-        element_volume = element_length ** 3
-        kernel_volume_fraction = kernel_volume / element_volume
+        volume_element = element_length ** 3
+        volume_kernel = jnp.sum(4/3 * jnp.pi * kernel_radii ** 3)
+        volume_approximation_error = abs((volume_kernel - volume_element) / volume_element)
 
         # Declare the outputs
         self.add_output('element_length', val=element_length)
@@ -91,6 +88,10 @@ class Mesh(IndepVarComp):
         self.add_output('sample_points', val=all_points)
         self.add_output('sample_radii', val=all_radii)
 
+        # Outputs for additional info
+        self.add_output('element_volume', val=volume_element)
+        self.add_output('kernel_volume', val=volume_kernel)
+        self.add_output('volume_approximation_error', val=volume_approximation_error)
 
 class Projections(Group):
     def initialize(self):
@@ -131,8 +132,8 @@ class ProjectComponent(ExplicitComponent):
         self.add_input('element_length', val=0)
         self.add_input('centers', shape_by_conn=True)
         self.add_input('element_bounds', shape_by_conn=True)
-        self.add_input('sample_points', shape_by_conn=True)
-        self.add_input('sample_radii', shape_by_conn=True)
+        self.add_input('element_sphere_positions', shape_by_conn=True)
+        self.add_input('element_sphere_radii', shape_by_conn=True)
 
         # Object Inputs
         self.add_input('sphere_positions', shape_by_conn=True)
@@ -151,8 +152,8 @@ class ProjectComponent(ExplicitComponent):
         # Get the Mesh inputs
         element_length   = jnp.array(inputs['element_length'])
         element_bounds   = jnp.array(inputs['element_bounds'])
-        sample_points    = jnp.array(inputs['sample_points'])
-        sample_radii     = jnp.array(inputs['sample_radii'])
+        sample_points    = jnp.array(inputs['element_sphere_positions'])
+        sample_radii     = jnp.array(inputs['element_sphere_radii'])
         sphere_positions = jnp.array(inputs['sphere_positions'])
         sphere_radii     = jnp.array(inputs['sphere_radii'])
         volume           = jnp.array(inputs['volume'])
@@ -172,11 +173,10 @@ class ProjectComponent(ExplicitComponent):
 
         # Get the inputs
         element_bounds = jnp.array(inputs['element_bounds'])
-        sample_points    = jnp.array(inputs['sample_points'])
-        sample_radii     = jnp.array(inputs['sample_radii'])
+        sample_points = jnp.array(inputs['element_sphere_positions'])
+        sample_radii = jnp.array(inputs['element_sphere_radii'])
         sphere_positions = jnp.array(inputs['sphere_positions'])
         sphere_radii     = jnp.array(inputs['sphere_radii'])
-
 
         # Calculate the Jacobian of the pseudo-densities
         jac_pseudo_densities = jacfwd(self._project)(sphere_positions, sphere_radii, sample_points, sample_radii, element_bounds)
@@ -196,15 +196,14 @@ class ProjectInterconnect(ExplicitComponent):
     def initialize(self):
         self.options.declare('color', types=str, desc='Color of the projection', default='blue')
 
-
     def setup(self):
 
         # Mesh Inputs
         self.add_input('element_length', val=0)
-        self.add_input('centers', shape_by_conn=True)
         self.add_input('element_bounds', shape_by_conn=True)
-        self.add_input('sample_points', shape_by_conn=True)
-        self.add_input('sample_radii', shape_by_conn=True)
+        self.add_input('centers', shape_by_conn=True)
+        self.add_input('element_sphere_positions', shape_by_conn=True)
+        self.add_input('element_sphere_radii', shape_by_conn=True)
 
         # Object Inputs
         self.add_input('sphere_positions', shape_by_conn=True)
@@ -223,8 +222,8 @@ class ProjectInterconnect(ExplicitComponent):
         # Get the Mesh inputs
         element_length   = jnp.array(inputs['element_length'])
         element_bounds   = jnp.array(inputs['element_bounds'])
-        sample_points    = jnp.array(inputs['sample_points'])
-        sample_radii     = jnp.array(inputs['sample_radii'])
+        sample_points    = jnp.array(inputs['element_sphere_positions'])
+        sample_radii     = jnp.array(inputs['element_sphere_radii'])
         sphere_positions = jnp.array(inputs['sphere_positions'])
         sphere_radii     = jnp.array(inputs['sphere_radii'])
         volume           = jnp.array(inputs['volume'])
