@@ -74,7 +74,6 @@ port_1 = 1
 component_2 = 1
 port_2=0
 n_segments=2
-n_spheres_per_segment=10
 radius=0.1
 color='black'
 
@@ -84,7 +83,6 @@ port_1=1
 component_2=3
 port_2=1
 n_segments=2
-n_spheres_per_segment=10
 radius=0.1
 color='black'
 
@@ -94,7 +92,6 @@ port_1=0
 component_2=5
 port_2=1
 n_segments=2
-n_spheres_per_segment=10
 radius=0.1
 color='black'
 
@@ -104,7 +101,6 @@ port_1=0
 component_2=7
 port_2=1
 n_segments=2
-n_spheres_per_segment=10
 radius=0.1
 color='black'
 
@@ -114,7 +110,6 @@ port_1=0
 component_2=8
 port_2=1
 n_segments=2
-n_spheres_per_segment=10
 radius=0.1
 color='black'
 
@@ -124,7 +119,6 @@ port_1=0
 component_2=9
 port_2=1
 n_segments=2
-n_spheres_per_segment=10
 radius=0.1
 color='black'
 
@@ -134,7 +128,6 @@ port_1=0
 component_2=6
 port_2=0
 n_segments=2
-n_spheres_per_segment=10
 radius=0.1
 color='black'
 
@@ -144,7 +137,6 @@ port_1=1
 component_2=4
 port_2=0
 n_segments=2
-n_spheres_per_segment=10
 radius=0.1
 color='black'
 
@@ -154,7 +146,6 @@ port_1=1
 component_2=2
 port_2=0
 n_segments=2
-n_spheres_per_segment=10
 radius=0.1
 color='black'
 
@@ -164,7 +155,6 @@ port_1=1
 component_2=0
 port_2=0
 n_segments=2
-n_spheres_per_segment=10
 radius=0.1
 color='black'
 
