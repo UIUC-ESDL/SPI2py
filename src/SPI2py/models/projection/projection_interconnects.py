@@ -1,5 +1,7 @@
 """
 From Norato's paper...
+
+TODO ADD UNVECTORIZED CODE BACK IN, TOO
 """
 
 import numpy as np
@@ -43,6 +45,7 @@ def calculate_densities(positions, radii, x1, x2, r):
     rho = density(phi, radii)
 
     # Sum densities across all cylinders
+    # TODO Sanity check multiple spheres... sum 4,5
     combined_density = np.clip(np.sum(rho, axis=4), 0, 1)
 
     return combined_density

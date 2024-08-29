@@ -7,7 +7,7 @@ import openmdao.api as om
 from SPI2py.API.system import System
 from SPI2py.API.projection import Mesh, Projections, ProjectionAggregator
 from SPI2py.API.objectives import BoundingBoxVolume
-from SPI2py.API.utilities import Multiplexer, MaxAggregator
+from SPI2py.API.utilities import Multiplexer
 
 from SPI2py.models.utilities.visualization import plot_problem
 from SPI2py.models.utilities.inputs import read_input_file
@@ -20,8 +20,8 @@ prob = om.Problem()
 model = prob.model
 
 # Mesh Parameters
-bounds = (0, 7, 0, 7, 0, 2)
-n_elements_per_unit_length = 4.0
+bounds = (0, 10, -1, 10, 1, 4)
+n_elements_per_unit_length = 6.0
 
 # System Parameters
 n_components = 10
@@ -33,10 +33,6 @@ m_segments = 2
 # Projection Parameters
 n_projections = n_components + m_interconnects
 n_points_per_object = [n_spheres for _ in range(n_components)] + [m_segments + 1 for _ in range(m_interconnects)]
-
-# Mesh Parameters
-bounds = (0, 10, 0, 10, 0, 4)
-n_elements_per_unit_length = 4.0
 
 # Initialize the subsystems
 model.add_subsystem('system', System(input_dict=input_file, upper=7, lower=0))
@@ -116,27 +112,27 @@ prob.setup()
 
 
 # Configure the system
-prob.set_val('system.components.comp_0.translation', [1, 8, 2])
-prob.set_val('system.components.comp_1.translation', [5, 8, 2])
+prob.set_val('system.components.comp_0.translation', [1.25, 8, 2])
+prob.set_val('system.components.comp_1.translation', [5.25, 8, 2])
 prob.set_val('system.components.comp_2.translation', [1, 7, 2])
 prob.set_val('system.components.comp_3.translation', [8, 7, 2])
 prob.set_val('system.components.comp_4.translation', [1, 5.5, 2])
 prob.set_val('system.components.comp_5.translation', [8, 5.5, 2])
 prob.set_val('system.components.comp_6.translation', [0.5, 3, 2])
 prob.set_val('system.components.comp_7.translation', [7.5, 3, 2])
-prob.set_val('system.components.comp_8.translation', [6, 1, 2])
-prob.set_val('system.components.comp_9.translation', [2, 0, 2])
+prob.set_val('system.components.comp_8.translation', [6, 0.75, 2])
+prob.set_val('system.components.comp_9.translation', [2, -0.5, 2])
 
-prob.set_val('system.interconnects.int_0.control_points', [[4.75, 8, 2]])
-prob.set_val('system.interconnects.int_1.control_points', [[8, 8, 2]])
-prob.set_val('system.interconnects.int_2.control_points', [[8, 6, 2]])
-prob.set_val('system.interconnects.int_3.control_points', [[8, 5, 2]])
-prob.set_val('system.interconnects.int_4.control_points', [[6.5, 2.75, 2]])
-prob.set_val('system.interconnects.int_5.control_points', [[5, 1, 2]])
-prob.set_val('system.interconnects.int_6.control_points', [[1.5, 1.5, 2]])
-prob.set_val('system.interconnects.int_7.control_points', [[1, 5, 2]])
-prob.set_val('system.interconnects.int_8.control_points', [[1, 6, 2]])
-prob.set_val('system.interconnects.int_9.control_points', [[1, 8, 2]])
+prob.set_val('system.interconnects.int_0.control_points', [[4.75, 8.4, 2.25]])
+prob.set_val('system.interconnects.int_1.control_points', [[8.25, 8, 2.25]])
+prob.set_val('system.interconnects.int_2.control_points', [[8.25, 6, 2.25]])
+prob.set_val('system.interconnects.int_3.control_points', [[8.25, 5, 2.25]])
+prob.set_val('system.interconnects.int_4.control_points', [[7, 2.75, 2.25]])
+prob.set_val('system.interconnects.int_5.control_points', [[2.625, 0.5, 2.25]])
+prob.set_val('system.interconnects.int_6.control_points', [[1.5, -0.25, 2.25]])
+prob.set_val('system.interconnects.int_7.control_points', [[1.25, 5, 2.25]])
+prob.set_val('system.interconnects.int_8.control_points', [[1.25, 6, 2.25]])
+prob.set_val('system.interconnects.int_9.control_points', [[1.25, 8, 2.25]])
 
 # Set up the optimizer
 prob.driver = om.ScipyOptimizeDriver()
@@ -152,7 +148,7 @@ prob.run_model()
 
 # Check the initial state
 # print('Max Pseudo Density:', prob.get_val('aggregator.max_pseudo_density'))
-plot_problem(prob, plot_bounding_box=False, plot_grid_points=False, plot_projection=True)
+plot_problem(prob)
 
 
 print('Done')

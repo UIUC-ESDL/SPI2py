@@ -119,10 +119,21 @@ prob.set_val('system.interconnects.int_0.control_points', [[2.5, 2, 0.5]])
 prob.set_val('system.interconnects.int_1.control_points', [[5, 5, 0.5]])
 prob.set_val('system.interconnects.int_2.control_points', [[1, 4, 0.5]])
 
+# # Demo optimal
+# prob.set_val('system.components.comp_0.translation', [1, 1, 0.5])
+# prob.set_val('system.components.comp_1.translation', [3.5, 2, 0.5])
+# prob.set_val('system.components.comp_2.translation', [0.5, 1, 0])
+# prob.set_val('system.components.comp_2.rotation', [-np.pi/2, 0, 0])
+# prob.set_val('system.interconnects.int_0.control_points', [[1.6, 1.6, 0.5]])
+# prob.set_val('system.interconnects.int_1.control_points', [[2.35, 3.75, 0.5]])
+# prob.set_val('system.interconnects.int_2.control_points', [[0.65, 1.75, 0.5]])
+
+
 # Set up the optimizer
 prob.driver = om.ScipyOptimizeDriver()
 prob.driver.options['maxiter'] = 25
-prob.driver.options['optimizer'] = 'COBYLA'
+# prob.driver.options['optimizer'] = 'COBYLA'
+prob.driver.options['optimizer'] = 'SLSQP'
 
 # Run the model once
 prob.run_model()
@@ -131,8 +142,8 @@ prob.run_model()
 # prob.run_driver()
 
 # Check the initial state
-# print('Max Pseudo Density:', prob.get_val('aggregator.max_pseudo_density'))
-plot_problem(prob, plot_bounding_box=False, plot_grid_points=False, plot_projection=True)
+print('Max Pseudo Density:', prob.get_val('aggregator.max_pseudo_density'))
+plot_problem(prob)
 
 
 print('Done')

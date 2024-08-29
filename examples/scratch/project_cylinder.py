@@ -1,6 +1,11 @@
 import numpy as np
 import pyvista as pv
 from SPI2py.models.kinematics.distance_calculations import minimum_distance_segment_segment
+from SPI2py.models.projection.mesh_kernels import mdbd_1_kernel_positions, mdbd_1_kernel_radii
+from SPI2py.models.projection.mesh_kernels import mdbd_9_kernel_positions, mdbd_9_kernel_radii
+
+# pv.set_plot_theme('document')  # Optional: sets a simpler plot theme
+# pv.global_theme.window_backend = 'pyvistaqt'
 
 
 def plot_density_grid(sphere_positions, sphere_radii,
@@ -125,6 +130,36 @@ def calculate_densities(positions, radii, x1, x2, r):
 # Create grid
 n, m, o = 14, 14, 4
 positions, radii = create_grid(n, m, o, spacing=1)
+
+# Define 4 spheres that fit in a 1x1 cube
+# kernel_pos = np.array([[0.25, 0.25, 0.25],
+#                    [0.75, 0.25, 0.25],
+#                    [0.25, 0.75, 0.25],
+#                    [0.75, 0.75, 0.25]])
+#
+# kernal_rad = np.array([[0.25],
+#                        [0.25],
+#                        [0.25],
+#                        [0.25]])
+
+kernel_pos = np.array([[0.25, 0.25, 0.25],
+                   [0.75, 0.25, 0.25],
+                   [0.25, 0.75, 0.25],
+                   [0.75, 0.75, 0.25]])
+
+kernal_rad = np.array([[0.25],
+                       [0.25],
+                       [0.25],
+                       [0.25]])
+
+# # Expand...
+# element_length = 1 / 2
+# kernel_positions = np.array(mdbd_1_kernel_positions)
+# kernel_radii = np.array(mdbd_1_kernel_radii).reshape(-1, 1)
+# kernel_positions = kernel_positions * element_length
+# kernel_radii = kernel_radii * element_length
+# positions = positions*kernel_positions
+# radii = radii*kernel_radii
 
 # # Reshape the positions and radii
 # positions = positions.reshape(-1, 3)
