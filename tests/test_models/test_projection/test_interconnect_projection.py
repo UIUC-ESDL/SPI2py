@@ -1,1 +1,3 @@
-# TODO VECTORIZED AND UNVECTORIZED TESTS should match
+from SPI2py.models.projection.project_interconnects import calculate_combined_densities as ccd1
+from SPI2py.models.projection.project_interconnects_vectorized import calculate_combined_densities as ccd2
+

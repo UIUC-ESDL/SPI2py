@@ -1,11 +1,9 @@
 """
 From Norato's paper...
-
-TODO ADD UNVECTORIZED CODE BACK IN, TOO
 """
 
 import numpy as np
-from ..kinematics.distance_calculations import minimum_distance_segment_segment
+from ..kinematics.distance_calculations_vectorized import minimum_distance_segment_segment
 
 
 def signed_distance(x, x1, x2, r_b):
@@ -31,7 +29,7 @@ def density(phi_b, r):
     return rho
 
 
-def calculate_densities(positions, radii, x1, x2, r):
+def calculate_combined_densities(positions, radii, x1, x2, r):
 
     # Expand dimensions to allow broadcasting
     positions_expanded = positions[..., np.newaxis, :]  # shape becomes (n, m, o, p, 1, 3)
