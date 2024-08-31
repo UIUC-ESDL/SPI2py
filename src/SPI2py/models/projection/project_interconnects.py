@@ -3,12 +3,27 @@ From Norato's paper...
 """
 
 import numpy as np
-from ..kinematics.distance_calculations_vectorized import minimum_distance_segment_segment
 
+def d_b(x_e, x_1b, x_2b):
+    x_2b1b = x_2b - x_1b  # EQ 9
+    x_e1b = x_e - x_1b  # EQ 9
+    x_e2b = x_e - x_2b  # EQ 9
+    l_b = np.linalg.norm(x_2b1b)  # EQ 10
+    a_b = x_2b1b / l_b  # EQ 11
+    l_be = np.dot(a_b, x_e1b)  # 12
+    r_be = np.linalg.norm(x_e1b - (l_be * a_b))  # EQ 13
+
+    # EQ 14
+    if l_be <= 0:
+        return np.linalg.norm(x_e1b)
+    elif l_be > l_b:
+        return np.linalg.norm(x_e2b)
+    else:
+        return r_be
 
 def phi_b(x, x1, x2, r_b):
 
-    d_be = float(minimum_distance_segment_segment(x, x, x1, x2))
+    d_be = d_b(x, x1, x2)
 
     # EQ 8 (order reversed)
     phi_b = r_b - d_be
@@ -53,13 +68,15 @@ def calculate_combined_density(position, radius, X1, X2, R):
 
     return combined_density
 
-def calculate_combined_densities(positions, radii, X1, X2, R):
-    n, m, o = positions.shape
-    densities = np.zeros((n, m, o))
-    for i in range(n):
-        for j in range(m):
-            for k in range(o):
+def calculate_combined_densities(positions, radii, X1, X2, R, mode):
+    m, n, p = positions.shape[0], positions.shape[1], positions.shape[2]
+    densities = np.zeros((m, n, p))
+    for i in range(m):
+        for j in range(n):
+            for k in range(p):
                 position = positions[i, j, k]
                 radius = radii[i, j, k]
-                combined_density = calculate_combined_density(position, radius, X1, X2, R)
+                combined_density = calculate_combined_density(position, radius, X1, X2, R, mode)
                 densities[i, j, k] += combined_density
+
+    return densities

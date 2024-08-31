@@ -20,7 +20,10 @@ def plot_grid():
     # plotter.add_points(all_points, color='black', point_size=0.1)
     pass
 
-def plot_pseudo_densities():
+def plot_densities(plotter, densities):
+
+    # # Get the dimensions of the grid
+    # m, n, p = densities.shape[0], densities.shape[1], densities.shape[2]
     pass
 
 def plot_bounding_box():
@@ -34,7 +37,6 @@ def plot_problem(prob):
     """
 
     # Create the plotter
-    # plotter = pv.Plotter(window_size=[1000, 1000])
     plotter = pv.Plotter(shape=(1, 2), window_size=(1000, 500))
 
     # Plot 1: Objects
@@ -44,8 +46,8 @@ def plot_problem(prob):
     components = []
     component_colors = []
     for subsystem in prob.model.system.components._subsystems_myproc:
-        positions = prob.get_val('system.components.' + subsystem.name + '.transformed_sphere_positions')
-        radii = prob.get_val('system.components.' + subsystem.name + '.transformed_sphere_radii')
+        positions = prob.get_val(f'system.components.{subsystem.name}.transformed_sphere_positions')
+        radii = prob.get_val(f'system.components.{subsystem.name}.transformed_sphere_radii')
         color = subsystem.options['color']
 
         spheres = []
@@ -67,8 +69,8 @@ def plot_problem(prob):
         interconnect_colors = []
         for subsystem in prob.model.system.interconnects._subsystems_myproc:
 
-            positions = prob.get_val('system.interconnects.' + subsystem.name + '.transformed_sphere_positions')
-            radii = prob.get_val('system.interconnects.' + subsystem.name + '.transformed_sphere_radii')
+            positions = prob.get_val(f'system.interconnects.{subsystem.name}.transformed_sphere_positions')
+            radii = prob.get_val(f'system.interconnects.{subsystem.name}.transformed_sphere_radii')
             color = subsystem.options['color']
 
             # Plot the spheres

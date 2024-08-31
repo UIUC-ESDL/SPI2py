@@ -44,6 +44,16 @@ def calculate_combined_densities(positions, radii, x1, x2, r):
 
     # Sum densities across all cylinders
     # TODO Sanity check multiple spheres... sum 4,5
-    combined_density = np.clip(np.sum(rho, axis=4), 0, 1)
+    # combined_density = np.clip(np.sum(rho, axis=4), 0, 1)
+
+    # Combine the pseudo densities for all cylinders in each kernel sphere
+    # Collapse the last axis to get the combined density for each kernel sphere
+    combined_density = np.sum(rho, axis=4, keepdims=False)
+
+    # Combine the pseudo densities for all kernel spheres in one grid
+    combined_density = np.sum(combined_density, axis=3, keepdims=False)
+
+    # Clip
+    combined_density = np.clip(combined_density, 0, 1)
 
     return combined_density
