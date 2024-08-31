@@ -3,7 +3,8 @@ import pyvista as pv
 from SPI2py.models.kinematics.distance_calculations_vectorized import minimum_distance_segment_segment
 
 
-def plot_density_grid(sphere_positions, sphere_radii,
+def plot_density_grid(grid_centers, spacing,
+                      sphere_positions, sphere_radii,
                       cylinder_start_positions, cylinder_stop_positions, cylinder_radii,
                       densities):
 
@@ -47,12 +48,13 @@ def plot_density_grid(sphere_positions, sphere_radii,
     for ni in range(n):
         for mi in range(m):
             for oi in range(o):
-                pos = sphere_positions[ni, mi, oi, 0]
-                radius = sphere_radii[ni, mi, oi, 0]
-                density = densities[ni, mi, oi]
-                sphere = pv.Sphere(center=pos, radius=radius)
-                opacity = max(0.03, min(density, 1))
-                plotter.add_mesh(sphere, color='black', opacity=opacity)
+                pos = grid_centers[ni, mi, oi]
+                box = pv.Cube(center=pos, x_length=spacing, y_length=spacing, z_length=spacing)
+                opacity = densities[ni, mi, oi]
+                plotter.add_mesh(box, color='black', opacity=opacity)
+                # sphere = pv.Sphere(center=pos, radius=radius)
+                # opacity = max(0.03, min(density, 1))
+                # plotter.add_mesh(sphere, color='black', opacity=opacity)
 
     for cylinder_start_position, cylinder_stop_position, cylinder_radius in zip(cylinder_start_positions, cylinder_stop_positions, cylinder_radii):
         length = np.linalg.norm(cylinder_stop_position - cylinder_start_position)
@@ -139,7 +141,7 @@ def calculate_densities(positions, radii, x1, x2, r):
 
 
 # Create grid
-n, m, o = 7, 7, 4
+n, m, o = 4, 4, 2
 positions, radii = create_grid(n, m, o, spacing=1)
 
 kernel_pos = np.array([[-0.25, -0.25, -0.25],
@@ -179,20 +181,32 @@ def apply_kernel(grid_pos, grid_rad, kernel_pos, kernel_rad):
 
     return all_pos, all_rad
 
-positions, radii = apply_kernel(positions, radii, kernel_pos, kernel_rad)
+positions_expanded, radii_expanded = apply_kernel(positions, radii, kernel_pos, kernel_rad)
 
 # positions = positions + kernel_pos
 # radii = np.zeros_like(radii) + kernel_rad
 
-# Create line segment arrays
-line_segment_points = [(0, 0, 0), (2, 2, 0), (2, 4, 0)]
-line_segment_radius = 0.25
-X1, X2, R = create_cylinders(line_segment_points, line_segment_radius)
+# # Create line segment arrays
+# line_segment_points = [(0, 0, 0), (2, 2, 0), (2, 4, 0)]
+# line_segment_radius = 0.25
+# X1, X2, R = create_cylinders(line_segment_points, line_segment_radius)
 
-densities = calculate_densities(positions, radii, X1, X2, R)
+# Start positions
+X1 = np.array([[0.5, 0.5, 0.5],
+               [3.5, 0.5, 0.5]])
+
+# Stop positions
+X2 = np.array([[3.5, 0.5, 0.5],
+               [3.5, 1.5, 1.5]])
+
+# Radii
+R = np.array([[0.5],
+              [0.5]])
+
+densities = calculate_densities(positions_expanded, radii_expanded, X1, X2, R)
 
 
-plot_density_grid(positions, radii, X1, X2, R, densities)
+plot_density_grid(positions, 1, positions_expanded, radii_expanded, X1, X2, R, densities)
 
 
 

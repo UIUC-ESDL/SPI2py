@@ -149,23 +149,10 @@ def plot_problem(prob):
 
             # Get the object color
             color = prob.model.projections._subsystems_myproc[i].options['color']
-
-            # Get the pseudo-densities
-            density_values = prob.get_val(f'projections.projection_{i}.pseudo_densities').flatten(order='F')
-
-            # Get the grid coordinates
-            mesh_grid = prob.get_val('mesh.grid')
-            x_grid = mesh_grid[:, :, :, 0]
-            y_grid = mesh_grid[:, :, :, 1]
-            z_grid = mesh_grid[:, :, :, 2]
-
-            grid = pv.StructuredGrid(x_grid, y_grid, z_grid)
-            grid["density"] = density_values
-
+            pseudo_densities = prob.get_val(f'projections.projection_{i}.pseudo_densities')
             centers = prob.get_val(f'mesh.centers')
 
             # Plot the projected pseudo-densities of each element (speed up by skipping near-zero densities)
-            pseudo_densities = prob.get_val(f'projections.projection_{i}.pseudo_densities')
             density_threshold = 1e-3
             above_threshold_indices = np.argwhere(pseudo_densities > density_threshold)
             for idx in above_threshold_indices:
@@ -173,13 +160,13 @@ def plot_problem(prob):
 
                 # Calculate the center of the current box
                 center = centers[n_i, n_j, n_k]
+                density = pseudo_densities[n_i, n_j, n_k]
 
                 # Create the box
                 box = pv.Cube(center=center, x_length=spacing, y_length=spacing, z_length=spacing)
+                plotter.add_mesh(box, color=color, opacity=density)
 
-                # Add the box to the plotter with the corresponding opacity
-                opacity = pseudo_densities[n_i, n_j, n_k]
-                plotter.add_mesh(box, color=color, opacity=opacity)
+
 
 
 
