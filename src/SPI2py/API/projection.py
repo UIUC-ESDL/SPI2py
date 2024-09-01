@@ -296,6 +296,7 @@ class ProjectionAggregator(ExplicitComponent):
         for i in range(n_projections):
             self.add_input(f'pseudo_densities_{i}', shape_by_conn=True)
 
+
         # Set the outputs
         self.add_output('pseudo_densities', copy_shape='pseudo_densities_0')
         self.add_output('max_pseudo_density', val=0.0, desc='How much of each object overlaps/is out of bounds')
@@ -323,6 +324,7 @@ class ProjectionAggregator(ExplicitComponent):
 
         # Calculate the values
         aggregate_pseudo_densities, max_pseudo_density = self._aggregate_pseudo_densities(pseudo_densities, element_length, rho_min)
+
 
         # Write the outputs
         outputs['pseudo_densities'] = aggregate_pseudo_densities

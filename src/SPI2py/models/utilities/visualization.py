@@ -104,67 +104,71 @@ def plot_problem(prob):
     # Plot 2: The combined density with colored spheres
     plotter.subplot(0, 1)
 
-    # # Bounding box
-    # bounds = prob.get_val('bbv.bounding_box_bounds')
-    # bounding_box = pv.Box(bounds=bounds)
-    # bounding_box_color = 'black'
-    # plotter.add_mesh(bounding_box, color=bounding_box_color, opacity=0.2)
 
+    # # Get the options
+    # n_comp_projections = prob.model.projections.options['n_comp_projections']
+    # n_int_projections = prob.model.projections.options['n_int_projections']
+    # n_projections = n_comp_projections + n_int_projections
 
-    if 'projections' in prob.model._subsystems_allprocs:
+    bounds = prob.model.mesh.options['bounds']
+    x_min, x_max, y_min, y_max, z_min, z_max = bounds
+    nx = int(prob.get_val('mesh.n_el_x'))
+    ny = int(prob.get_val('mesh.n_el_y'))
+    nz = int(prob.get_val('mesh.n_el_z'))
+    spacing = float(prob.get_val('mesh.element_length'))
 
-        # Get the options
-        n_comp_projections = prob.model.projections.options['n_comp_projections']
-        n_int_projections = prob.model.projections.options['n_int_projections']
-        n_projections = n_comp_projections + n_int_projections
+    # Create an empty uniform grid
+    grid = pv.ImageData()
 
-        bounds = prob.model.mesh.options['bounds']
-        x_min, x_max, y_min, y_max, z_min, z_max = bounds
-        nx = int(prob.get_val('mesh.n_el_x'))
-        ny = int(prob.get_val('mesh.n_el_y'))
-        nz = int(prob.get_val('mesh.n_el_z'))
-        spacing = float(prob.get_val('mesh.element_length'))
+    # Set the grid dimensions
+    grid.dimensions = np.array([nx + 1, ny + 1, nz + 1])
 
-        # Create an empty uniform grid
-        grid = pv.ImageData()
+    # Set the spacing
+    grid.spacing = (spacing, spacing, spacing)
 
-        # Set the grid dimensions
-        grid.dimensions = np.array([nx + 1, ny + 1, nz + 1])
+    # Set the origin of the grid to the minimum XYZ coordinates
+    grid.origin = (x_min, y_min, z_min)
 
-        # Set the spacing
-        grid.spacing = (spacing, spacing, spacing)
+    plotter.add_mesh(grid, color='lightgrey', show_edges=True, opacity=0.15, lighting=False)
 
-        # Set the origin of the grid to the minimum XYZ coordinates
-        grid.origin = (x_min, y_min, z_min)
+    colors = [subsystem.options['color'] for subsystem in prob.model.system.components._subsystems_myproc]
+    for nxi in range(nx):
+        for nyi in range(ny):
+            for nzi in range(nz):
+                densities = [prob.get_val(f'system.components.comp_{i}.pseudo_densities')[nxi, nyi, nzi] for i in range(len(colors))]
+                max_idx = np.argmax(densities)
 
-        plotter.add_mesh(grid, color='lightgrey', show_edges=True, opacity=0.15, lighting=False)
-
-
-
-
-
-        # Plot projections
-
-        for i in range(n_projections):
-
-            # Get the object color
-            color = prob.model.projections._subsystems_myproc[i].options['color']
-            pseudo_densities = prob.get_val(f'projections.projection_{i}.pseudo_densities')
-            centers = prob.get_val(f'mesh.centers')
-
-            # Plot the projected pseudo-densities of each element (speed up by skipping near-zero densities)
-            density_threshold = 1e-3
-            above_threshold_indices = np.argwhere(pseudo_densities > density_threshold)
-            for idx in above_threshold_indices:
-                n_i, n_j, n_k = idx
-
-                # Calculate the center of the current box
-                center = centers[n_i, n_j, n_k]
-                density = pseudo_densities[n_i, n_j, n_k]
-
-                # Create the box
+                color = colors[max_idx]
+                density = densities[max_idx]
+                center = prob.get_val(f'mesh.centers')[nxi, nyi, nzi] # FIXME
                 box = pv.Cube(center=center, x_length=spacing, y_length=spacing, z_length=spacing)
                 plotter.add_mesh(box, color=color, opacity=density)
+
+
+
+
+        # # Plot projections
+        #
+        # # for i in range(n_projections):
+        #
+        #     # Get the object color
+        #     color = prob.model.projections._subsystems_myproc[i].options['color']
+        #     pseudo_densities = prob.get_val(f'projections.projection_{i}.pseudo_densities')
+        #     centers = prob.get_val(f'mesh.centers')
+        #
+        #     # Plot the projected pseudo-densities of each element (speed up by skipping near-zero densities)
+        #     density_threshold = 1e-3
+        #     above_threshold_indices = np.argwhere(pseudo_densities > density_threshold)
+        #     for idx in above_threshold_indices:
+        #         n_i, n_j, n_k = idx
+        #
+        #         # Calculate the center of the current box
+        #         center = centers[n_i, n_j, n_k]
+        #         density = pseudo_densities[n_i, n_j, n_k]
+        #
+        #         # Create the box
+        #         box = pv.Cube(center=center, x_length=spacing, y_length=spacing, z_length=spacing)
+        #         plotter.add_mesh(box, color=color, opacity=density)
 
 
 
