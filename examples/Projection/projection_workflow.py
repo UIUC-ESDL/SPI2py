@@ -7,7 +7,7 @@ import numpy as np
 import openmdao.api as om
 import torch
 
-from SPI2py.API.system import System
+from SPI2py.API.system import SpatialConfiguration
 from SPI2py.API.utilities import Multiplexer, MaxAggregator
 from SPI2py.API.projection import ProjectComponent, Projections, Mesh
 from SPI2py.models.utilities.visualization import plot_problem
@@ -41,7 +41,7 @@ n_points_per_object = [n_points for _ in range(n_components)]
 
 
 # Initialize the groups
-model.add_subsystem('system', System(input_dict=input_file, upper=7, lower=0))
+model.add_subsystem('system', SpatialConfiguration(input_dict=input_file, upper=7, lower=0))
 model.add_subsystem('mesh', Mesh(bounds=bounds, n_elements_per_unit_length=n_elements_per_unit_length))
 model.add_subsystem('projections', Projections(n_comp_projections=n_components, n_int_projections=0))
 

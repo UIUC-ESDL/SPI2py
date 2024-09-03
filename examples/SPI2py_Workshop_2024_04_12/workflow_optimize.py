@@ -5,8 +5,8 @@ Author:     Chad Peterson
 import numpy as np
 import openmdao.api as om
 
-from SPI2py.API.system import System
-from SPI2py.API.projection import Mesh, Projections, ProjectionAggregator
+from SPI2py.API.SpatialConfiguration import SpatialConfiguration
+from SPI2py.API.projection import Mesh #, Projections, ProjectionAggregator
 from SPI2py.API.objectives import BoundingBoxVolume
 from SPI2py.API.utilities import Multiplexer
 
@@ -36,11 +36,11 @@ n_projections = n_components + m_interconnects
 n_points_per_object = [n_spheres for _ in range(n_components)] + [m_segments + 1 for _ in range(m_interconnects)]
 
 # Initialize the groups
-model.add_subsystem('system', System(input_dict=input_file))
+model.add_subsystem('spatial_config', SpatialConfiguration(input_dict=input_file))
 model.add_subsystem('mesh', Mesh(bounds=bounds,
                                  n_elements_per_unit_length=n_elements_per_unit_length))
 
-model.add_subsystem('aggregator', ProjectionAggregator(n_projections=n_projections))
+# model.add_subsystem('aggregator', ProjectionAggregator(n_projections=n_projections))
 
 
 # # TODO, separate spheres and cylinders
@@ -55,35 +55,23 @@ model.add_subsystem('aggregator', ProjectionAggregator(n_projections=n_projectio
 # # Connect the mesh to the projections
 # model.connect('mesh.element_length', 'aggregator.element_length')
 for i in range(n_components):
-    model.connect('mesh.element_length', f'system.components.comp_{i}.element_length')
-    model.connect('mesh.centers', f'system.components.comp_{i}.centers')
-    model.connect('mesh.element_bounds', f'system.components.comp_{i}.element_bounds')
-    model.connect('mesh.sample_points', f'system.components.comp_{i}.element_sphere_positions')
-    model.connect('mesh.sample_radii', f'system.components.comp_{i}.element_sphere_radii')
+    model.connect('mesh.element_length', f'spatial_config.components.comp_{i}.element_length')
+    model.connect('mesh.centers', f'spatial_config.components.comp_{i}.centers')
+    model.connect('mesh.element_bounds', f'spatial_config.components.comp_{i}.element_bounds')
+    model.connect('mesh.sample_points', f'spatial_config.components.comp_{i}.element_sphere_positions')
+    model.connect('mesh.sample_radii', f'spatial_config.components.comp_{i}.element_sphere_radii')
 
-# TODO For interconnects
-
-# Connect the system to the bounding box
-i = 0
-for j in range(n_components):
-    model.connect(f'system.components.comp_{j}.pseudo_densities', f'aggregator.pseudo_densities_{i}')
-    i += 1
-
-# for j in range(m_interconnects):
-#     model.connect(f'system.interconnects.int_{j}.transformed_sphere_positions', f'mux_all_sphere_positions.input_{i}')
-#     model.connect(f'system.interconnects.int_{j}.transformed_sphere_radii', f'mux_all_sphere_radii.input_{i}')
-#     i += 1
 
 # # Connect the system to the bounding box
 # i = 0
 # for j in range(n_components):
-#     model.connect(f'system.components.comp_{j}.transformed_sphere_positions', f'mux_all_sphere_positions.input_{i}')
-#     model.connect(f'system.components.comp_{j}.transformed_sphere_radii', f'mux_all_sphere_radii.input_{i}')
+#     model.connect(f'spatial_config.components.comp_{j}.transformed_sphere_positions', f'mux_all_sphere_positions.input_{i}')
+#     model.connect(f'spatial_config.components.comp_{j}.transformed_sphere_radii', f'mux_all_sphere_radii.input_{i}')
 #     i += 1
 
 # for j in range(m_interconnects):
-#     model.connect(f'system.interconnects.int_{j}.transformed_sphere_positions', f'mux_all_sphere_positions.input_{i}')
-#     model.connect(f'system.interconnects.int_{j}.transformed_sphere_radii', f'mux_all_sphere_radii.input_{i}')
+#     model.connect(f'spatial_config.interconnects.int_{j}.transformed_sphere_positions', f'mux_all_sphere_positions.input_{i}')
+#     model.connect(f'spatial_config.interconnects.int_{j}.transformed_sphere_radii', f'mux_all_sphere_radii.input_{i}')
 #     i += 1
 
 # model.connect('mux_all_sphere_positions.stacked_output', 'bbv.sphere_positions')
@@ -95,33 +83,33 @@ for j in range(n_components):
 # prob.model.add_constraint('aggregator.max_pseudo_density', upper=1.1)
 
 # Define the design variables
-# prob.model.add_design_var('system.components.comp_0.translation', ref=5, lower=0, upper=10, indices=[0, 1], flat_indices=True)
-# prob.model.add_design_var('system.components.comp_1.translation', ref=5, lower=0, upper=10, indices=[0, 1], flat_indices=True)
-# prob.model.add_design_var('system.components.comp_2.translation', ref=5, lower=0, upper=10, indices=[0, 1], flat_indices=True)
-# prob.model.add_design_var('system.interconnects.int_0.control_points', ref=5, lower=0, upper=10, indices=[0, 1], flat_indices=True)
-# prob.model.add_design_var('system.interconnects.int_1.control_points', ref=5, lower=0, upper=10, indices=[0, 1], flat_indices=True)
-# prob.model.add_design_var('system.interconnects.int_2.control_points', ref=5, lower=0, upper=10, indices=[0, 1], flat_indices=True)
+# prob.model.add_design_var('spatial_config.components.comp_0.translation', ref=5, lower=0, upper=10, indices=[0, 1], flat_indices=True)
+# prob.model.add_design_var('spatial_config.components.comp_1.translation', ref=5, lower=0, upper=10, indices=[0, 1], flat_indices=True)
+# prob.model.add_design_var('spatial_config.components.comp_2.translation', ref=5, lower=0, upper=10, indices=[0, 1], flat_indices=True)
+# prob.model.add_design_var('spatial_config.interconnects.int_0.control_points', ref=5, lower=0, upper=10, indices=[0, 1], flat_indices=True)
+# prob.model.add_design_var('spatial_config.interconnects.int_1.control_points', ref=5, lower=0, upper=10, indices=[0, 1], flat_indices=True)
+# prob.model.add_design_var('spatial_config.interconnects.int_2.control_points', ref=5, lower=0, upper=10, indices=[0, 1], flat_indices=True)
 
 # Set the initial state
 prob.setup()
 
 # Set the initial spatial configuration
-prob.set_val('system.components.comp_0.translation', [1, 2.5, 0.5])
-prob.set_val('system.components.comp_1.translation', [5, 2, 0.5])
-prob.set_val('system.components.comp_2.translation', [2, 2, 0])
-prob.set_val('system.components.comp_2.rotation', [-np.pi/2, 0, 0])
-# prob.set_val('system.interconnects.int_0.control_points', [[2.5, 2, 0.5]])
-# prob.set_val('system.interconnects.int_1.control_points', [[5, 5, 0.5]])
-# prob.set_val('system.interconnects.int_2.control_points', [[1, 4, 0.5]])
+prob.set_val('spatial_config.components.comp_0.translation', [1, 2.5, 0.5])
+prob.set_val('spatial_config.components.comp_1.translation', [5, 2, 0.5])
+prob.set_val('spatial_config.components.comp_2.translation', [2, 2, 0])
+prob.set_val('spatial_config.components.comp_2.rotation', [-np.pi/2, 0, 0])
+# prob.set_val('spatial_config.interconnects.int_0.control_points', [[2.5, 2, 0.5]])
+# prob.set_val('spatial_config.interconnects.int_1.control_points', [[5, 5, 0.5]])
+# prob.set_val('spatial_config.interconnects.int_2.control_points', [[1, 4, 0.5]])
 
 # # Demo optimal
-# prob.set_val('system.components.comp_0.translation', [1, 1, 0.5])
-# prob.set_val('system.components.comp_1.translation', [3.5, 2, 0.5])
-# prob.set_val('system.components.comp_2.translation', [0.5, 1, 0])
-# prob.set_val('system.components.comp_2.rotation', [-np.pi/2, 0, 0])
-# prob.set_val('system.interconnects.int_0.control_points', [[1.6, 1.6, 0.5]])
-# prob.set_val('system.interconnects.int_1.control_points', [[2.35, 3.75, 0.5]])
-# prob.set_val('system.interconnects.int_2.control_points', [[0.65, 1.75, 0.5]])
+# prob.set_val('spatial_config.components.comp_0.translation', [1, 1, 0.5])
+# prob.set_val('spatial_config.components.comp_1.translation', [3.5, 2, 0.5])
+# prob.set_val('spatial_config.components.comp_2.translation', [0.5, 1, 0])
+# prob.set_val('spatial_config.components.comp_2.rotation', [-np.pi/2, 0, 0])
+# prob.set_val('spatial_config.interconnects.int_0.control_points', [[1.6, 1.6, 0.5]])
+# prob.set_val('spatial_config.interconnects.int_1.control_points', [[2.35, 3.75, 0.5]])
+# prob.set_val('spatial_config.interconnects.int_2.control_points', [[0.65, 1.75, 0.5]])
 
 
 # # Set up the optimizer

@@ -122,77 +122,77 @@ class Projections(Group):
             i += 1
 
 
-class ProjectComponent(ExplicitComponent):
-    """
-    Calculates the pseudo-density of a set of points in a 3D grid
-    """
-
-    def initialize(self):
-        self.options.declare('color', types=str, desc='Color of the projection', default='blue')
-
-    def setup(self):
-
-        # Mesh Inputs
-        self.add_input('element_length', val=0)
-        self.add_input('centers', shape_by_conn=True)
-        self.add_input('element_bounds', shape_by_conn=True)
-        self.add_input('element_sphere_positions', shape_by_conn=True)
-        self.add_input('element_sphere_radii', shape_by_conn=True)
-
-        # Object Inputs
-        self.add_input('sphere_positions', shape_by_conn=True)
-        self.add_input('sphere_radii', shape_by_conn=True)
-        self.add_input('volume', val=0.0)
-
-        # Outputs
-        self.add_output('pseudo_densities', compute_shape=lambda shapes: (shapes['centers'][0], shapes['centers'][1], shapes['centers'][2]))
-        self.add_output('volume_estimation_error', val=0.0, desc='How accurately the projection represents the object')
-
-    def setup_partials(self):
-        self.declare_partials('pseudo_densities', 'sphere_positions')
-
-    def compute(self, inputs, outputs):
-
-        # Get the Mesh inputs
-        element_length   = jnp.array(inputs['element_length'])
-        element_bounds   = jnp.array(inputs['element_bounds'])
-        sample_points    = jnp.array(inputs['element_sphere_positions'])
-        sample_radii     = jnp.array(inputs['element_sphere_radii'])
-        sphere_positions = jnp.array(inputs['sphere_positions'])
-        sphere_radii     = jnp.array(inputs['sphere_radii'])
-        volume           = jnp.array(inputs['volume'])
-
-        # Compute the pseudo-densities
-        pseudo_densities = self._project(sphere_positions, sphere_radii, sample_points, sample_radii, element_bounds)
-
-        # Compute the volume estimation error
-        projected_volume = jnp.sum(pseudo_densities * element_length ** 3)
-        volume_estimation_error = jnp.abs(volume - projected_volume) / volume
-
-        # Write the outputs
-        outputs['pseudo_densities'] = pseudo_densities
-        outputs['volume_estimation_error'] = volume_estimation_error
-
-    def compute_partials(self, inputs, partials):
-
-        # Get the inputs
-        element_bounds = jnp.array(inputs['element_bounds'])
-        sample_points = jnp.array(inputs['element_sphere_positions'])
-        sample_radii = jnp.array(inputs['element_sphere_radii'])
-        sphere_positions = jnp.array(inputs['sphere_positions'])
-        sphere_radii     = jnp.array(inputs['sphere_radii'])
-
-        # Calculate the Jacobian of the pseudo-densities
-        jac_pseudo_densities = jacfwd(self._project)(sphere_positions, sphere_radii, sample_points, sample_radii, element_bounds)
-
-        # Set the partials
-        partials['pseudo_densities', 'sphere_positions'] = jac_pseudo_densities
-
-
-    @staticmethod
-    def _project(sphere_positions, sphere_radii, sample_points, sample_radii, element_bounds):
-        pseudo_densities = calculate_pseudo_densities(sphere_positions, sphere_radii, sample_points, sample_radii, element_bounds)
-        return pseudo_densities
+# class ProjectComponent(ExplicitComponent):
+#     """
+#     Calculates the pseudo-density of a set of points in a 3D grid
+#     """
+#
+#     def initialize(self):
+#         self.options.declare('color', types=str, desc='Color of the projection', default='blue')
+#
+#     def setup(self):
+#
+#         # Mesh Inputs
+#         self.add_input('element_length', val=0)
+#         self.add_input('centers', shape_by_conn=True)
+#         self.add_input('element_bounds', shape_by_conn=True)
+#         self.add_input('element_sphere_positions', shape_by_conn=True)
+#         self.add_input('element_sphere_radii', shape_by_conn=True)
+#
+#         # Object Inputs
+#         self.add_input('sphere_positions', shape_by_conn=True)
+#         self.add_input('sphere_radii', shape_by_conn=True)
+#         self.add_input('volume', val=0.0)
+#
+#         # Outputs
+#         self.add_output('pseudo_densities', compute_shape=lambda shapes: (shapes['centers'][0], shapes['centers'][1], shapes['centers'][2]))
+#         self.add_output('volume_estimation_error', val=0.0, desc='How accurately the projection represents the object')
+#
+#     def setup_partials(self):
+#         self.declare_partials('pseudo_densities', 'sphere_positions')
+#
+#     def compute(self, inputs, outputs):
+#
+#         # Get the Mesh inputs
+#         element_length   = jnp.array(inputs['element_length'])
+#         element_bounds   = jnp.array(inputs['element_bounds'])
+#         sample_points    = jnp.array(inputs['element_sphere_positions'])
+#         sample_radii     = jnp.array(inputs['element_sphere_radii'])
+#         sphere_positions = jnp.array(inputs['sphere_positions'])
+#         sphere_radii     = jnp.array(inputs['sphere_radii'])
+#         volume           = jnp.array(inputs['volume'])
+#
+#         # Compute the pseudo-densities
+#         pseudo_densities = self._project(sphere_positions, sphere_radii, sample_points, sample_radii, element_bounds)
+#
+#         # Compute the volume estimation error
+#         projected_volume = jnp.sum(pseudo_densities * element_length ** 3)
+#         volume_estimation_error = jnp.abs(volume - projected_volume) / volume
+#
+#         # Write the outputs
+#         outputs['pseudo_densities'] = pseudo_densities
+#         outputs['volume_estimation_error'] = volume_estimation_error
+#
+#     def compute_partials(self, inputs, partials):
+#
+#         # Get the inputs
+#         element_bounds = jnp.array(inputs['element_bounds'])
+#         sample_points = jnp.array(inputs['element_sphere_positions'])
+#         sample_radii = jnp.array(inputs['element_sphere_radii'])
+#         sphere_positions = jnp.array(inputs['sphere_positions'])
+#         sphere_radii     = jnp.array(inputs['sphere_radii'])
+#
+#         # Calculate the Jacobian of the pseudo-densities
+#         jac_pseudo_densities = jacfwd(self._project)(sphere_positions, sphere_radii, sample_points, sample_radii, element_bounds)
+#
+#         # Set the partials
+#         partials['pseudo_densities', 'sphere_positions'] = jac_pseudo_densities
+#
+#
+#     @staticmethod
+#     def _project(sphere_positions, sphere_radii, sample_points, sample_radii, element_bounds):
+#         pseudo_densities = calculate_pseudo_densities(sphere_positions, sphere_radii, sample_points, sample_radii, element_bounds)
+#         return pseudo_densities
 
 
 class ProjectInterconnect(ExplicitComponent):
@@ -279,93 +279,93 @@ class ProjectInterconnect(ExplicitComponent):
 
 
 
-class ProjectionAggregator(ExplicitComponent):
-
-    def initialize(self):
-        self.options.declare('n_projections', types=int, desc='Number of projections')
-        self.options.declare('rho_min', types=(int, float), desc='Minimum value of the density', default=3e-3)
-
-    def setup(self):
-
-        # Get the options
-        n_projections = self.options['n_projections']
-
-        # Set the inputs
-        self.add_input('element_length', val=0)
-
-        for i in range(n_projections):
-            self.add_input(f'pseudo_densities_{i}', shape_by_conn=True)
-
-
-        # Set the outputs
-        self.add_output('pseudo_densities', copy_shape='pseudo_densities_0')
-        self.add_output('max_pseudo_density', val=0.0, desc='How much of each object overlaps/is out of bounds')
-
-    def setup_partials(self):
-
-        # Get the options
-        n_projections = self.options['n_projections']
-
-        # Set the partials
-        for i in range(n_projections):
-            self.declare_partials('pseudo_densities', f'pseudo_densities_{i}')
-            self.declare_partials('max_pseudo_density', f'pseudo_densities_{i}')
-
-
-    def compute(self, inputs, outputs):
-
-        # Get the options
-        n_projections = self.options['n_projections']
-        rho_min = self.options['rho_min']
-
-        # Get the inputs
-        element_length = jnp.array(inputs['element_length'])
-        pseudo_densities = [jnp.array(inputs[f'pseudo_densities_{i}']) for i in range(n_projections)]
-
-        # Calculate the values
-        aggregate_pseudo_densities, max_pseudo_density = self._aggregate_pseudo_densities(pseudo_densities, element_length, rho_min)
-
-
-        # Write the outputs
-        outputs['pseudo_densities'] = aggregate_pseudo_densities
-        outputs['max_pseudo_density'] = max_pseudo_density
-
-    def compute_partials(self, inputs, partials):
-
-        # Get the options
-        n_projections = self.options['n_projections']
-        rho_min = self.options['rho_min']
-
-        # Get the inputs
-        element_length = jnp.array(inputs['element_length'])
-        pseudo_densities = [jnp.array(inputs[f'pseudo_densities_{i}']) for i in range(n_projections)]
-
-        # Calculate the partial derivatives
-        jac_pseudo_densities, jac_max_pseudo_density = jacfwd(self._aggregate_pseudo_densities)(pseudo_densities, element_length, rho_min)
-
-        # Set the partial derivatives
-        jacs = zip(jac_pseudo_densities, jac_max_pseudo_density)
-        for i, (jac_pseudo_densities_i, jac_max_pseudo_density_i) in enumerate(jacs):
-            partials['pseudo_densities', f'pseudo_densities_{i}'] = jac_pseudo_densities_i
-            partials['max_pseudo_density', f'pseudo_densities_{i}'] = jac_max_pseudo_density_i
-
-    @staticmethod
-    def _aggregate_pseudo_densities(pseudo_densities, element_length, rho_min):
-
-        # Aggregate the pseudo-densities
-        aggregate_pseudo_densities = jnp.zeros_like(pseudo_densities[0])
-        for pseudo_density in pseudo_densities:
-            aggregate_pseudo_densities += pseudo_density
-
-        # Ensure that no pseudo-density is below the minimum value
-        aggregate_pseudo_densities = jnp.maximum(aggregate_pseudo_densities, rho_min)
-
-        # TODO rethink max if we need to overlap interconnects and components
-
-        # Calculate the maximum pseudo-density
-        max_pseudo_density = kreisselmeier_steinhauser_max(aggregate_pseudo_densities)
-
-        return aggregate_pseudo_densities, max_pseudo_density
+# class ProjectionAggregator(ExplicitComponent):
+#
+#     def initialize(self):
+#         self.options.declare('n_projections', types=int, desc='Number of projections')
+#         self.options.declare('rho_min', types=(int, float), desc='Minimum value of the density', default=3e-3)
+#
+#     def setup(self):
+#
+#         # Get the options
+#         n_projections = self.options['n_projections']
+#
+#         # Set the inputs
+#         self.add_input('element_length', val=0)
+#
+#         for i in range(n_projections):
+#             self.add_input(f'pseudo_densities_{i}', shape_by_conn=True)
+#
+#
+#         # Set the outputs
+#         self.add_output('pseudo_densities', copy_shape='pseudo_densities_0')
+#         self.add_output('max_pseudo_density', val=0.0, desc='How much of each object overlaps/is out of bounds')
+#
+#     def setup_partials(self):
+#
+#         # Get the options
+#         n_projections = self.options['n_projections']
+#
+#         # Set the partials
+#         for i in range(n_projections):
+#             self.declare_partials('pseudo_densities', f'pseudo_densities_{i}')
+#             self.declare_partials('max_pseudo_density', f'pseudo_densities_{i}')
+#
+#
+#     def compute(self, inputs, outputs):
+#
+#         # Get the options
+#         n_projections = self.options['n_projections']
+#         rho_min = self.options['rho_min']
+#
+#         # Get the inputs
+#         element_length = jnp.array(inputs['element_length'])
+#         pseudo_densities = [jnp.array(inputs[f'pseudo_densities_{i}']) for i in range(n_projections)]
+#
+#         # Calculate the values
+#         aggregate_pseudo_densities, max_pseudo_density = self._aggregate_pseudo_densities(pseudo_densities, element_length, rho_min)
+#
+#
+#         # Write the outputs
+#         outputs['pseudo_densities'] = aggregate_pseudo_densities
+#         outputs['max_pseudo_density'] = max_pseudo_density
+#
+#     def compute_partials(self, inputs, partials):
+#
+#         # Get the options
+#         n_projections = self.options['n_projections']
+#         rho_min = self.options['rho_min']
+#
+#         # Get the inputs
+#         element_length = jnp.array(inputs['element_length'])
+#         pseudo_densities = [jnp.array(inputs[f'pseudo_densities_{i}']) for i in range(n_projections)]
+#
+#         # Calculate the partial derivatives
+#         jac_pseudo_densities, jac_max_pseudo_density = jacfwd(self._aggregate_pseudo_densities)(pseudo_densities, element_length, rho_min)
+#
+#         # Set the partial derivatives
+#         jacs = zip(jac_pseudo_densities, jac_max_pseudo_density)
+#         for i, (jac_pseudo_densities_i, jac_max_pseudo_density_i) in enumerate(jacs):
+#             partials['pseudo_densities', f'pseudo_densities_{i}'] = jac_pseudo_densities_i
+#             partials['max_pseudo_density', f'pseudo_densities_{i}'] = jac_max_pseudo_density_i
+#
+#     @staticmethod
+#     def _aggregate_pseudo_densities(pseudo_densities, element_length, rho_min):
+#
+#         # Aggregate the pseudo-densities
+#         aggregate_pseudo_densities = jnp.zeros_like(pseudo_densities[0])
+#         for pseudo_density in pseudo_densities:
+#             aggregate_pseudo_densities += pseudo_density
+#
+#         # Ensure that no pseudo-density is below the minimum value
+#         aggregate_pseudo_densities = jnp.maximum(aggregate_pseudo_densities, rho_min)
+#
+#         # TODO rethink max if we need to overlap interconnects and components
+#
+#         # Calculate the maximum pseudo-density
+#         max_pseudo_density = kreisselmeier_steinhauser_max(aggregate_pseudo_densities)
+#
+#         return aggregate_pseudo_densities, max_pseudo_density
 
 ######
 

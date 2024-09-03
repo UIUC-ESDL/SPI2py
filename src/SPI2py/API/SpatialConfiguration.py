@@ -6,13 +6,14 @@ from openmdao.api import ExplicitComponent, Group
 
 from ..models.geometry.point_clouds import generate_point_cloud
 from ..models.utilities.inputs import read_xyzr_file
+from ..models.utilities.aggregation import kreisselmeier_steinhauser_max
 from ..models.kinematics.spline_transformations import translate_linear_spline
 from ..models.kinematics.rigid_body_transformations import assemble_transformation_matrix, \
     apply_transformation_matrix
 from .projection import Mesh, calculate_pseudo_densities
 from ..models.projection.project_interconnects_vectorized import calculate_combined_densities
 
-class System(Group):
+class SpatialConfiguration(Group):
 
     def initialize(self):
         self.options.declare('input_dict', types=dict)
@@ -87,6 +88,112 @@ class System(Group):
                              src_indices=om.slicer[port_2, :])
 
             self.add_subsystem('interconnects', interconnects)
+
+        # Create the system
+        system = System(n_projections=len(components_dict) + len(interconnects_dict), rho_min=1e-3)
+        self.add_subsystem('system', system)
+
+
+
+        # Connect the components to the system
+        i = 0
+        for j in range(len(components_dict)):
+            self.connect(f'components.comp_{j}.pseudo_densities',
+                          f'system.pseudo_densities_{i}')
+            i += 1
+
+        # Connect the interconnects to the system
+        for j in range(len(interconnects_dict)):
+            self.connect(f'spatial_config.interconnects.int_{j}.pseudo_densities',
+                          f'spatial_config.system.pseudo_densities_{i}')
+            i += 1
+
+class System(ExplicitComponent):
+
+    def initialize(self):
+        self.options.declare('n_projections', types=int, desc='Number of projections')
+        self.options.declare('rho_min', types=(int, float), desc='Minimum value of the density', default=3e-3)
+
+    def setup(self):
+        # Get the options
+        n_projections = self.options['n_projections']
+
+        # Set the inputs
+        self.add_input('element_length', val=0)
+
+        for i in range(n_projections):
+            self.add_input(f'pseudo_densities_{i}', shape_by_conn=True)
+
+        # Set the outputs
+        self.add_output('pseudo_densities', copy_shape='pseudo_densities_0')
+        self.add_output('max_pseudo_density', val=0.0, desc='How much of each object overlaps/is out of bounds')
+        # TODO output penalized and unpenalized, and min and w/o min
+
+    def setup_partials(self):
+
+        # Get the options
+        n_projections = self.options['n_projections']
+
+        # Set the partials
+        for i in range(n_projections):
+            self.declare_partials('pseudo_densities', f'pseudo_densities_{i}')
+            self.declare_partials('max_pseudo_density', f'pseudo_densities_{i}')
+
+
+    def compute(self, inputs, outputs):
+
+        # Get the options
+        n_projections = self.options['n_projections']
+        rho_min = self.options['rho_min']
+
+        # Get the inputs
+        element_length = jnp.array(inputs['element_length'])
+        pseudo_densities = [jnp.array(inputs[f'pseudo_densities_{i}']) for i in range(n_projections)]
+
+        # Calculate the values
+        aggregate_pseudo_densities, max_pseudo_density = self._aggregate_pseudo_densities(pseudo_densities, element_length, rho_min)
+
+
+        # Write the outputs
+        outputs['pseudo_densities'] = aggregate_pseudo_densities
+        outputs['max_pseudo_density'] = max_pseudo_density
+
+    def compute_partials(self, inputs, partials):
+
+        # Get the options
+        n_projections = self.options['n_projections']
+        rho_min = self.options['rho_min']
+
+        # Get the inputs
+        element_length = jnp.array(inputs['element_length'])
+        pseudo_densities = [jnp.array(inputs[f'pseudo_densities_{i}']) for i in range(n_projections)]
+
+        # Calculate the partial derivatives
+        jac_pseudo_densities, jac_max_pseudo_density = jacfwd(self._aggregate_pseudo_densities)(pseudo_densities, element_length, rho_min)
+
+        # Set the partial derivatives
+        jacs = zip(jac_pseudo_densities, jac_max_pseudo_density)
+        for i, (jac_pseudo_densities_i, jac_max_pseudo_density_i) in enumerate(jacs):
+            partials['pseudo_densities', f'pseudo_densities_{i}'] = jac_pseudo_densities_i
+            partials['max_pseudo_density', f'pseudo_densities_{i}'] = jac_max_pseudo_density_i
+
+    @staticmethod
+    def _aggregate_pseudo_densities(pseudo_densities, element_length, rho_min):
+
+        # Aggregate the pseudo-densities
+        aggregate_pseudo_densities = jnp.zeros_like(pseudo_densities[0])
+        for pseudo_density in pseudo_densities:
+            aggregate_pseudo_densities += pseudo_density
+
+        # Ensure that no pseudo-density is below the minimum value
+        aggregate_pseudo_densities = jnp.maximum(aggregate_pseudo_densities, rho_min)
+
+        # TODO rethink max if we need to overlap interconnects and components
+
+        # Calculate the maximum pseudo-density
+        max_pseudo_density = kreisselmeier_steinhauser_max(aggregate_pseudo_densities)
+
+        return aggregate_pseudo_densities, max_pseudo_density
 
 
 class Component(ExplicitComponent):

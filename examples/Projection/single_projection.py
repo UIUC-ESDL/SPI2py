@@ -6,7 +6,7 @@ Author:     Chad Peterson
 import openmdao.api as om
 from time import time_ns
 
-from SPI2py.API.system import System
+from SPI2py.API.system import SpatialConfiguration
 from SPI2py.API.projection import Mesh, Projections, ProjectionAggregator
 from SPI2py.models.utilities.visualization import plot_problem
 from SPI2py.models.utilities.inputs import read_input_file
@@ -38,7 +38,7 @@ n_projections = n_components + m_interconnects
 n_points_per_object = [n_spheres for _ in range(n_components)] + [m_spheres_per_segment * m_segments for _ in range(m_interconnects)]
 
 # Initialize the groups
-model.add_subsystem('system', System(input_dict=input_file, upper=7, lower=0))
+model.add_subsystem('system', SpatialConfiguration(input_dict=input_file, upper=7, lower=0))
 model.add_subsystem('mesh', Mesh(bounds=bounds,
                                  n_elements_per_unit_length=n_elements_per_unit_length))
 
