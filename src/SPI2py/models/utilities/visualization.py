@@ -115,29 +115,8 @@ def plot_problem(prob):
     spacing = float(prob.get_val('mesh.element_length'))
     plot_grid(plotter, nx, ny, nz, bounds, spacing)
 
-    # min_density = 1e-3
-    # colors = [subsystem.options['color'] for subsystem in prob.model.system.components._subsystems_myproc]
-    # for nxi in range(nx):
-    #     for nyi in range(ny):
-    #         for nzi in range(nz):
-    #             densities = [prob.get_val(f'system.components.comp_{i}.pseudo_densities')[nxi, nyi, nzi] for i in range(len(colors))]
-    #
-    #             if np.max(densities) > min_density:
-    #                 max_idx = np.argmax(densities)
-    #                 color = colors[max_idx]
-    #                 density = densities[max_idx]
-    #                 center = prob.get_val(f'mesh.centers')[nxi, nyi, nzi] # FIXME
-    #                 box = pv.Cube(center=center, x_length=spacing, y_length=spacing, z_length=spacing)
-    #                 plotter.add_mesh(box, color=color, opacity=density)
-
-
-
 
     # Plot projections
-
-    # for i in range(n_projections):
-
-    # Get the object color
     pseudo_densities = prob.get_val(f'spatial_config.system.pseudo_densities')
     centers = prob.get_val(f'mesh.centers')
 
@@ -156,15 +135,12 @@ def plot_problem(prob):
         plotter.add_mesh(box, color='black', opacity=density)
 
 
-
-
-
+    # Configure the plot
     plotter.link_views()
-    # plotter.view_isometric()
     plotter.view_xy()
+    # plotter.view_isometric()
     plotter.show_axes()
     # plotter.show_bounds(color='black')
     # p.background_color = 'white'
-
 
     plotter.show()

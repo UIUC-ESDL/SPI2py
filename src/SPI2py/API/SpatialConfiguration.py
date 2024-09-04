@@ -104,8 +104,8 @@ class SpatialConfiguration(Group):
 
         # Connect the interconnects to the system
         for j in range(len(interconnects_dict)):
-            self.connect(f'spatial_config.interconnects.int_{j}.pseudo_densities',
-                          f'spatial_config.system.pseudo_densities_{i}')
+            self.connect(f'interconnects.int_{j}.pseudo_densities',
+                          f'system.pseudo_densities_{i}')
             i += 1
 
 class System(ExplicitComponent):
@@ -187,8 +187,6 @@ class System(ExplicitComponent):
 
         # Ensure that no pseudo-density is below the minimum value
         aggregate_pseudo_densities = jnp.maximum(aggregate_pseudo_densities, rho_min)
-
-        # TODO rethink max if we need to overlap interconnects and components
 
         # Calculate the maximum pseudo-density
         max_pseudo_density = kreisselmeier_steinhauser_max(aggregate_pseudo_densities)
@@ -379,15 +377,11 @@ class Interconnect(ExplicitComponent):
         self.add_input('element_sphere_positions', shape_by_conn=True)
         self.add_input('element_sphere_radii', shape_by_conn=True)
 
-        # Object Inputs
-        self.add_input('sphere_positions', shape_by_conn=True)
-        self.add_input('sphere_radii', shape_by_conn=True)
-        self.add_input('volume', val=0.0)
 
         # Define the outputs
         self.add_output('transformed_sphere_positions', shape=shape_positions)
         self.add_output('transformed_sphere_radii', shape=shape_radii)
-        self.add_output('volume', val=0.0)
+        # self.add_output('volume', val=0.0)
 
         # Outputs
         self.add_output('pseudo_densities',
@@ -428,12 +422,9 @@ class Interconnect(ExplicitComponent):
         element_bounds = jnp.array(inputs['element_bounds'])
         sample_points = jnp.array(inputs['element_sphere_positions'])
         sample_radii = jnp.array(inputs['element_sphere_radii'])
-        sphere_positions = jnp.array(inputs['sphere_positions'])
-        sphere_radii = jnp.array(inputs['sphere_radii'])
-        volume = jnp.array(inputs['volume'])
 
         # Compute the pseudo-densities
-        pseudo_densities = self._project(sample_points, sample_radii, sphere_positions, sphere_radii)
+        pseudo_densities = self._project(sample_points, sample_radii, points, radii)
 
         outputs['pseudo_densities'] = pseudo_densities
 

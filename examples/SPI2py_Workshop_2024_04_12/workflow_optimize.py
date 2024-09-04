@@ -3,16 +3,18 @@ Example 1:  Simple optimization of a 3D layout
 Author:     Chad Peterson
 """
 import numpy as np
+import jax
 import openmdao.api as om
 
 from SPI2py.API.SpatialConfiguration import SpatialConfiguration
-from SPI2py.API.projection import Mesh #, Projections, ProjectionAggregator
+from SPI2py.API.projection import Mesh
 from SPI2py.API.objectives import BoundingBoxVolume
 from SPI2py.API.utilities import Multiplexer
 
 from SPI2py.models.utilities.visualization import plot_problem
 from SPI2py.models.utilities.inputs import read_input_file
 
+jax.config.update("jax_enable_x64", True)
 
 # Read the input file
 input_file = read_input_file('input.toml')
@@ -23,13 +25,13 @@ model = prob.model
 
 # Mesh Parameters
 bounds = (0, 7, 0, 7, 0, 2)
-n_elements_per_unit_length = 4.0
+n_elements_per_unit_length = 3.0
 
 # System Parameters
 n_components = 3
 n_spheres = 200
 
-m_interconnects = 0
+m_interconnects = 3
 m_segments = 2
 
 n_projections = n_components + m_interconnects
@@ -39,8 +41,6 @@ n_points_per_object = [n_spheres for _ in range(n_components)] + [m_segments + 1
 model.add_subsystem('spatial_config', SpatialConfiguration(input_dict=input_file))
 model.add_subsystem('mesh', Mesh(bounds=bounds,
                                  n_elements_per_unit_length=n_elements_per_unit_length))
-
-# model.add_subsystem('aggregator', ProjectionAggregator(n_projections=n_projections))
 
 
 # # TODO, separate spheres and cylinders
@@ -61,6 +61,12 @@ for i in range(n_components):
     model.connect('mesh.sample_points', f'spatial_config.components.comp_{i}.element_sphere_positions')
     model.connect('mesh.sample_radii', f'spatial_config.components.comp_{i}.element_sphere_radii')
 
+for i in range(m_interconnects):
+    model.connect('mesh.element_length', f'spatial_config.interconnects.int_{i}.element_length')
+    model.connect('mesh.centers', f'spatial_config.interconnects.int_{i}.centers')
+    model.connect('mesh.element_bounds', f'spatial_config.interconnects.int_{i}.element_bounds')
+    model.connect('mesh.sample_points', f'spatial_config.interconnects.int_{i}.element_sphere_positions')
+    model.connect('mesh.sample_radii', f'spatial_config.interconnects.int_{i}.element_sphere_radii')
 
 # # Connect the system to the bounding box
 # i = 0
@@ -98,7 +104,7 @@ prob.set_val('spatial_config.components.comp_0.translation', [1, 2.5, 0.5])
 prob.set_val('spatial_config.components.comp_1.translation', [5, 2, 0.5])
 prob.set_val('spatial_config.components.comp_2.translation', [2, 2, 0])
 prob.set_val('spatial_config.components.comp_2.rotation', [-np.pi/2, 0, 0])
-# prob.set_val('spatial_config.interconnects.int_0.control_points', [[2.5, 2, 0.5]])
+prob.set_val('spatial_config.interconnects.int_0.control_points', [[2.5, 2, 0.5]])
 # prob.set_val('spatial_config.interconnects.int_1.control_points', [[5, 5, 0.5]])
 # prob.set_val('spatial_config.interconnects.int_2.control_points', [[1, 4, 0.5]])
 
@@ -125,8 +131,14 @@ prob.run_model()
 # prob.run_driver()
 
 # Check the initial state
-# print('Max Pseudo Density:', prob.get_val('aggregator.max_pseudo_density'))
-plot_problem(prob)
+print('Max Pseudo Density:', prob.get_val('spatial_config.system.max_pseudo_density'))
+print('Comp_0 Pseudo Density:', np.max(prob.get_val('spatial_config.components.comp_0.pseudo_densities')))
+print('Comp_1 Pseudo Density:', np.max(prob.get_val('spatial_config.components.comp_1.pseudo_densities')))
+print('Comp_2 Pseudo Density:', np.max(prob.get_val('spatial_config.components.comp_2.pseudo_densities')))
+print('Int_0 Pseudo Density:', np.max(prob.get_val('spatial_config.interconnects.int_0.pseudo_densities')))
+print('Int_1 Pseudo Density:', np.max(prob.get_val('spatial_config.interconnects.int_1.pseudo_densities')))
+print('Int_2 Pseudo Density:', np.max(prob.get_val('spatial_config.interconnects.int_2.pseudo_densities')))
+# plot_problem(prob)
 
 
 print('Done')
