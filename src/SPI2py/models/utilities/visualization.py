@@ -130,9 +130,14 @@ def plot_problem(prob):
         center = centers[n_i, n_j, n_k]
         density = pseudo_densities[n_i, n_j, n_k]
 
-        # Create the box
-        box = pv.Cube(center=center, x_length=spacing, y_length=spacing, z_length=spacing)
-        plotter.add_mesh(box, color='black', opacity=density)
+        if density > 1:
+            # Create the box
+            box = pv.Cube(center=center, x_length=2*spacing, y_length=2*spacing, z_length=2*spacing)
+            plotter.add_mesh(box, color='red', opacity=0.5)
+        else:
+            # Create the box
+            box = pv.Cube(center=center, x_length=spacing, y_length=spacing, z_length=spacing)
+            plotter.add_mesh(box, color='black', opacity=density)
 
 
     # Configure the plot

@@ -108,7 +108,6 @@ class Component(ExplicitComponent):
         self.options.declare('sphere_radii', types=list)
         self.options.declare('ports', types=list)
 
-
     def setup(self):
 
         # Unpack the options
@@ -121,17 +120,12 @@ class Component(ExplicitComponent):
         sphere_radii = np.array(sphere_radii).reshape(-1, 1)
         ports = np.array(ports).reshape(-1, 3)
 
-        default_translation = np.array([[0.0, 0.0, 0.0]])
-        default_rotation = np.array([[0.0, 0.0, 0.0]])
-
-        volume = np.sum((4 / 3) * np.pi * sphere_radii ** 3)
-
         # Define the input shapes
         self.add_input('sphere_positions', val=sphere_positions)
         self.add_input('sphere_radii', val=sphere_radii)
         self.add_input('ports', val=ports)
-        self.add_input('translation', val=default_translation)
-        self.add_input('rotation', val=default_rotation)
+        self.add_input('translation', val=np.array([[0.0, 0.0, 0.0]]))
+        self.add_input('rotation', val=np.array([[0.0, 0.0, 0.0]]))
 
         # Mesh Inputs
         self.add_input('element_length', val=0)
@@ -140,20 +134,24 @@ class Component(ExplicitComponent):
         self.add_input('element_sphere_positions', shape_by_conn=True)
         self.add_input('element_sphere_radii', shape_by_conn=True)
 
-        # Define the outputs
-        # TODO Change output to bounds
+        # Outputs:
         self.add_output('transformed_sphere_positions', val=sphere_positions)
         self.add_output('transformed_sphere_radii', val=sphere_radii)
         self.add_output('transformed_ports', val=ports)
-        self.add_output('volume', val=volume)
 
         # Outputs: Projections
+        # Define the outputs
+
         self.add_output('pseudo_densities',
                         compute_shape=lambda shapes: (shapes['centers'][0], shapes['centers'][1], shapes['centers'][2]))
-        # self.add_output('volume_estimation_error', val=0.0, desc='How accurately the projection represents the object')
+
+        # Define diagnostic outputs
+        self.add_output('mesh_kernel_volume_error', val=0.0, desc="How accurately the mesh kernel represents the element volume")
+        self.add_output('projection_volume_error', val=0.0, desc='How accurately the projection represents the object')
+
+
 
     # def setup_partials(self):
-    #     self.declare_partials('transformed_sphere_positions', ['translation', 'rotation'])
     #     self.declare_partials('transformed_ports', ['translation', 'rotation'])
     #     self.declare_partials('pseudo_densities', ['translation', 'rotation'])
 
@@ -178,6 +176,10 @@ class Component(ExplicitComponent):
 
         # Compute the pseudo-densities
         pseudo_densities = self._project(sphere_positions_transformed, sphere_radii, sample_points, sample_radii, element_bounds)
+
+        # # Define diagnostic outputs
+        # self.add_output('mdbd_volume', val=np.sum((4 / 3) * np.pi * sphere_radii ** 3))
+        # self.add_output('projected_volume', val=0.0)
 
         # Set the outputs
         outputs['transformed_sphere_positions'] = sphere_positions_transformed
@@ -222,18 +224,23 @@ class Component(ExplicitComponent):
     #     partials['transformed_ports', 'rotation'] = grad_ports_rotation
 
     @staticmethod
-    def _compute_primal(positions, translation, rotation):
+    def _compute_primal(sphere_positions, port_positions, translation, rotation):
 
         # Assemble the transformation matrix
         t = assemble_transformation_matrix(translation, rotation)
 
         # Apply the transformation matrix to the sphere positions and port positions
         # Use the translation vector as the origin
-        positions_transformed = apply_transformation_matrix(translation.T,
-                                                            positions.T,
+
+        spheres_transformed = apply_transformation_matrix(translation.T,
+                                                            sphere_positions.T,
                                                             t).T
 
-        return positions_transformed
+        positions_transformed = apply_transformation_matrix(translation.T,
+                                                            port_positions.T,
+                                                            t).T
+
+        return spheres_transformed, positions_transformed
 
     @staticmethod
     def _project(sphere_positions, sphere_radii, sample_points, sample_radii, element_bounds):
@@ -296,14 +303,10 @@ class Interconnect(ExplicitComponent):
 
         radius = self.options['radius']
 
-        # Convert the inputs to Jax arrays
-        start_point = jnp.array(start_point)
-        control_points = jnp.array(control_points)
-        end_point = jnp.array(end_point)
 
         # vstack
-        points = jnp.vstack([start_point, control_points, end_point])
-        radii = radius * jnp.ones((points.shape[0], 1))
+        points = np.vstack([start_point, control_points, end_point])
+        radii = radius * np.ones((points.shape[0], 1))
 
         # Calculate the positions
         # translated_positions = translate_linear_spline(sphere_positions, start_point, control_points, end_point)
@@ -313,10 +316,10 @@ class Interconnect(ExplicitComponent):
         outputs['transformed_sphere_radii'] = radii
 
         # Get the Mesh inputs
-        element_length = jnp.array(inputs['element_length'])
-        element_bounds = jnp.array(inputs['element_bounds'])
-        sample_points = jnp.array(inputs['element_sphere_positions'])
-        sample_radii = jnp.array(inputs['element_sphere_radii'])
+        element_length = inputs['element_length']
+        element_bounds = inputs['element_bounds']
+        sample_points = inputs['element_sphere_positions']
+        sample_radii = inputs['element_sphere_radii']
 
         # Compute the pseudo-densities
         pseudo_densities = self._project(sample_points, sample_radii, points, radii)
@@ -410,8 +413,8 @@ class System(ExplicitComponent):
         rho_min = self.options['rho_min']
 
         # Get the inputs
-        element_length = jnp.array(inputs['element_length'])
-        pseudo_densities = [jnp.array(inputs[f'pseudo_densities_{i}']) for i in range(n_projections)]
+        element_length = inputs['element_length']
+        pseudo_densities = [inputs[f'pseudo_densities_{i}'] for i in range(n_projections)]
 
         # Calculate the values
         aggregate_pseudo_densities, max_pseudo_density = self._aggregate_pseudo_densities(pseudo_densities, element_length, rho_min)
@@ -428,8 +431,8 @@ class System(ExplicitComponent):
         rho_min = self.options['rho_min']
 
         # Get the inputs
-        element_length = jnp.array(inputs['element_length'])
-        pseudo_densities = [jnp.array(inputs[f'pseudo_densities_{i}']) for i in range(n_projections)]
+        element_length = np.array(inputs['element_length'])
+        pseudo_densities = [np.array(inputs[f'pseudo_densities_{i}']) for i in range(n_projections)]
 
         # Calculate the partial derivatives
         jac_pseudo_densities, jac_max_pseudo_density = jacfwd(self._aggregate_pseudo_densities)(pseudo_densities, element_length, rho_min)
@@ -444,12 +447,12 @@ class System(ExplicitComponent):
     def _aggregate_pseudo_densities(pseudo_densities, element_length, rho_min):
 
         # Aggregate the pseudo-densities
-        aggregate_pseudo_densities = jnp.zeros_like(pseudo_densities[0])
+        aggregate_pseudo_densities = np.zeros_like(pseudo_densities[0])
         for pseudo_density in pseudo_densities:
             aggregate_pseudo_densities += pseudo_density
 
         # Ensure that no pseudo-density is below the minimum value
-        aggregate_pseudo_densities = jnp.maximum(aggregate_pseudo_densities, rho_min)
+        aggregate_pseudo_densities = np.maximum(aggregate_pseudo_densities, rho_min)
 
         # Calculate the maximum pseudo-density
         max_pseudo_density = kreisselmeier_steinhauser_max(aggregate_pseudo_densities)

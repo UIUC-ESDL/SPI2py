@@ -89,12 +89,12 @@ for i in range(m_interconnects):
 # prob.model.add_constraint('aggregator.max_pseudo_density', upper=1.1)
 
 # Define the design variables
-# prob.model.add_design_var('spatial_config.components.comp_0.translation', ref=5, lower=0, upper=10, indices=[0, 1], flat_indices=True)
-# prob.model.add_design_var('spatial_config.components.comp_1.translation', ref=5, lower=0, upper=10, indices=[0, 1], flat_indices=True)
-# prob.model.add_design_var('spatial_config.components.comp_2.translation', ref=5, lower=0, upper=10, indices=[0, 1], flat_indices=True)
-# prob.model.add_design_var('spatial_config.interconnects.int_0.control_points', ref=5, lower=0, upper=10, indices=[0, 1], flat_indices=True)
-# prob.model.add_design_var('spatial_config.interconnects.int_1.control_points', ref=5, lower=0, upper=10, indices=[0, 1], flat_indices=True)
-# prob.model.add_design_var('spatial_config.interconnects.int_2.control_points', ref=5, lower=0, upper=10, indices=[0, 1], flat_indices=True)
+prob.model.add_design_var('spatial_config.components.comp_0.translation', ref=5, lower=0, upper=10, indices=[0, 1], flat_indices=True)
+prob.model.add_design_var('spatial_config.components.comp_1.translation', ref=5, lower=0, upper=10, indices=[0, 1], flat_indices=True)
+prob.model.add_design_var('spatial_config.components.comp_2.translation', ref=5, lower=0, upper=10, indices=[0, 1], flat_indices=True)
+prob.model.add_design_var('spatial_config.interconnects.int_0.control_points', ref=5, lower=0, upper=10, indices=[0, 1], flat_indices=True)
+prob.model.add_design_var('spatial_config.interconnects.int_1.control_points', ref=5, lower=0, upper=10, indices=[0, 1], flat_indices=True)
+prob.model.add_design_var('spatial_config.interconnects.int_2.control_points', ref=5, lower=0, upper=10, indices=[0, 1], flat_indices=True)
 
 # Set the initial state
 prob.setup()
@@ -105,8 +105,8 @@ prob.set_val('spatial_config.components.comp_1.translation', [5, 2, 0.5])
 prob.set_val('spatial_config.components.comp_2.translation', [2, 2, 0])
 prob.set_val('spatial_config.components.comp_2.rotation', [-np.pi/2, 0, 0])
 prob.set_val('spatial_config.interconnects.int_0.control_points', [[2.5, 2, 0.5]])
-# prob.set_val('spatial_config.interconnects.int_1.control_points', [[5, 5, 0.5]])
-# prob.set_val('spatial_config.interconnects.int_2.control_points', [[1, 4, 0.5]])
+prob.set_val('spatial_config.interconnects.int_1.control_points', [[5, 5, 0.5]])
+prob.set_val('spatial_config.interconnects.int_2.control_points', [[1, 4, 0.5]])
 
 # # Demo optimal
 # prob.set_val('spatial_config.components.comp_0.translation', [1, 1, 0.5])
@@ -138,7 +138,7 @@ print('Comp_2 Pseudo Density:', np.max(prob.get_val('spatial_config.components.c
 print('Int_0 Pseudo Density:', np.max(prob.get_val('spatial_config.interconnects.int_0.pseudo_densities')))
 print('Int_1 Pseudo Density:', np.max(prob.get_val('spatial_config.interconnects.int_1.pseudo_densities')))
 print('Int_2 Pseudo Density:', np.max(prob.get_val('spatial_config.interconnects.int_2.pseudo_densities')))
-# plot_problem(prob)
+plot_problem(prob)
 
 
 print('Done')
