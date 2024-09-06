@@ -118,10 +118,10 @@ prob.set_val('spatial_config.interconnects.int_2.control_points', [[1, 4, 0.5]])
 # prob.set_val('spatial_config.interconnects.int_2.control_points', [[0.65, 1.75, 0.5]])
 
 
-# # Set up the optimizer
-# prob.driver = om.ScipyOptimizeDriver()
-# prob.driver.options['maxiter'] = 25
-# # prob.driver.options['optimizer'] = 'COBYLA'
+# Set up the optimizer
+prob.driver = om.ScipyOptimizeDriver()
+prob.driver.options['maxiter'] = 25
+prob.driver.options['optimizer'] = 'COBYLA'
 # prob.driver.options['optimizer'] = 'SLSQP'
 
 # Run the model once
