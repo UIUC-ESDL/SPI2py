@@ -3,6 +3,25 @@ import pyvista as pv
 
 # TODO MOVE TO API
 
+def plot_mdbd(positions, radii, color='green'):
+
+    plotter = pv.Plotter()
+
+    spheres = []
+    for i in range(len(positions)):
+        sphere = pv.Sphere(center=positions[i], radius=radii[i])
+        spheres.append(sphere)
+
+    merged = pv.MultiBlock(spheres).combine().extract_surface().clean()
+    plotter.add_mesh(merged, color=color, opacity=0.95)
+
+    plotter.view_xz()
+    plotter.background_color = 'white'
+    plotter.show_axes()
+    # plotter.show_bounds(color='black')
+    plotter.show()
+
+
 def plot_grid(plotter, nx, ny, nz, bounds, spacing):
 
     # Unpack bounds

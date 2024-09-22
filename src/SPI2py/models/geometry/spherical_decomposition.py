@@ -11,15 +11,11 @@ import pyvista as pv
 import trimesh
 
 
-def pseudo_mdbd(directory, input_filename, output_filename,
+def pseudo_mdbd(directory, input_filename,
                 num_spheres=1000,
                 min_radius=0.0001,
                 meshgrid_increment=25,
-                scale=1,
-                translation=(0, 0, 0),
-                rotation=(0, 0, 0),
-                plot=True,
-                color='green'):
+                scale=1):
 
     # Load the mesh using trimesh
     mesh_trimesh = trimesh.load(directory+input_filename)
@@ -72,31 +68,9 @@ def pseudo_mdbd(directory, input_filename, output_filename,
     sphere_points *= scale
     sphere_radii *= scale
 
-    # Transform the spheres
-    # translation_vec = jnp.array(translation)
-    # rotation_vec = jnp.array(rotation)
-    # transformation = assemble_transformation_matrix(translation_vec, rotation_vec)
-    # sphere_points = apply_transformation_matrix(translation_vec, sphere_points.T, transformation).T
+    return sphere_points, sphere_radii
 
-    if plot:
-        plotter = pv.Plotter()
-        # window_size=(300, 300)
-
-        spheres = []
-        for i in range(len(sphere_points)):
-            sphere = pv.Sphere(center=sphere_points[i], radius=sphere_radii[i])
-            spheres.append(sphere)
-
-        merged = pv.MultiBlock(spheres).combine().extract_surface().clean()
-        plotter.add_mesh(merged, color=color, opacity=0.95)
-
-        plotter.view_xz()
-        plotter.background_color = 'white'
-        plotter.show_axes()
-        # plotter.show_bounds(color='black')
-        plotter.show()
-
-
+def save_mdbd(directory, output_filename, sphere_points, sphere_radii):
 
     # OUTPUT: Save the spheres to a file
     spheres = np.hstack((sphere_points, sphere_radii))
