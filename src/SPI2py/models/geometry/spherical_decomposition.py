@@ -7,9 +7,7 @@ import numpy as np
 import jax.numpy as jnp
 from jax import grad
 from scipy.optimize import minimize
-import pyvista as pv
 import trimesh
-
 
 def pseudo_mdbd(directory, input_filename,
                 num_spheres=1000,
