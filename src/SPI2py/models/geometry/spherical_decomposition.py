@@ -7,15 +7,11 @@ import numpy as np
 import jax.numpy as jnp
 from jax import grad
 from scipy.optimize import minimize
-import trimesh
 import pyvista as pv
-from scipy.spatial import cKDTree
-import open3d as o3d
-from vedo import load, Points, Mesh
 import vtk
 
 
-def calculate_signed_distance(mesh, points):
+def calculate_signed_distance(mesh, points, invert=True):
     """
     Calculate the signed distance from a set of points to the surface of a mesh.
 
@@ -40,6 +36,10 @@ def calculate_signed_distance(mesh, points):
     # Calculate the signed distance for each point
     signed_distances = np.array([implicit_distance.EvaluateFunction(point) for point in points])
 
+    # Invert the distances if needed
+    if invert:
+        signed_distances *= -1
+
     return signed_distances
 
 def pseudo_mdbd(directory, input_filename,
@@ -49,12 +49,10 @@ def pseudo_mdbd(directory, input_filename,
                 scale=1):
 
     # Load the mesh using trimesh
-    mesh_trimesh = trimesh.load(directory+input_filename)
-    mesh_pyvista = pv.read(directory+input_filename)
+    mesh = pv.read(directory+input_filename)
 
     # Define variable bounds based on the object's bounding box
-    bounds_pv = mesh_pyvista.bounds
-    x_min, x_max, y_min, y_max, z_min, z_max = bounds_pv
+    x_min, x_max, y_min, y_max, z_min, z_max = mesh.bounds
 
     # Create a 3D meshgrid within the bounds
     x = np.linspace(x_min, x_max, meshgrid_increment)
@@ -62,14 +60,8 @@ def pseudo_mdbd(directory, input_filename,
     z = np.linspace(z_min, z_max, meshgrid_increment)
     all_points = np.array(np.meshgrid(x, y, z)).reshape(3, -1).T
 
-    # Calculate signed distances for all points
-    # signed_distances = trimesh.proximity.signed_distance(mesh_trimesh, all_points)
-
-    # Calculate signed distances for all points with pyvista
-    # all_points_pv = pv.PolyData(all_points)
-    # _ = mesh_pyvista.compute_implicit_distance(all_points_pv, inplace=True)
-    # signed_distances_pv = mesh_pyvista['implicit_distance']
-    signed_distances = -calculate_signed_distance(mesh_pyvista, all_points)
+    # Calculate inverted signed distances for all points
+    signed_distances = calculate_signed_distance(mesh, all_points, invert=True)
 
     # Filter points inside the mesh
     interior_points = all_points[signed_distances > 0]
