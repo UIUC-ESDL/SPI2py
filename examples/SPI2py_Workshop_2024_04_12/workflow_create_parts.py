@@ -13,7 +13,7 @@ cog_driven_gear = pv.read(directory+filename_cog_driven_gear)
 
 
 start = time_ns()
-pos, rad = pseudo_mdbd(directory, filename_bot_eye, num_spheres=300, meshgrid_increment=25, scale=0.1)
+pos, rad = pseudo_mdbd(directory, filename_bot_eye, n_spheres=300, n_steps=25, scale=0.1)
 stop = time_ns()
 print(f"Elapsed time: {(stop-start)/1e9} seconds")
 

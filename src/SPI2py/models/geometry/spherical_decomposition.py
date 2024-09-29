@@ -11,7 +11,7 @@ import pyvista as pv
 import vtk
 
 
-def calculate_signed_distance(mesh, points, invert=True):
+def compute_signed_distance(mesh, points, invert=True):
     """
     Calculate the signed distance from a set of points to the surface of a mesh.
 
@@ -42,46 +42,43 @@ def calculate_signed_distance(mesh, points, invert=True):
 
     return signed_distances
 
-def pseudo_mdbd(directory, input_filename,
-                num_spheres=1000,
-                min_radius=0.0001,
-                meshgrid_increment=25,
+def pseudo_mdbd(directory,
+                filename,
+                n_spheres=1000,
+                n_steps=25,
                 scale=1):
 
-    # Load the mesh using trimesh
-    mesh = pv.read(directory+input_filename)
+    # Read the mesh
+    mesh = pv.read(directory+filename)
 
-    # Define variable bounds based on the object's bounding box
+    # Create a meshgrid of points
     x_min, x_max, y_min, y_max, z_min, z_max = mesh.bounds
-
-    # Create a 3D meshgrid within the bounds
-    x = np.linspace(x_min, x_max, meshgrid_increment)
-    y = np.linspace(y_min, y_max, meshgrid_increment)
-    z = np.linspace(z_min, z_max, meshgrid_increment)
+    x = np.linspace(x_min, x_max, n_steps)
+    y = np.linspace(y_min, y_max, n_steps)
+    z = np.linspace(z_min, z_max, n_steps)
     all_points = np.array(np.meshgrid(x, y, z)).reshape(3, -1).T
 
     # Calculate inverted signed distances for all points
-    signed_distances = calculate_signed_distance(mesh, all_points, invert=True)
+    signed_distances = compute_signed_distance(mesh, all_points, invert=True)
 
-    # Filter points inside the mesh
-    interior_points = all_points[signed_distances > 0]
-    interior_distances = signed_distances[signed_distances > 0]
+    # Remove points outside the mesh
+    mask_interior = signed_distances > 0
+    points_interior = all_points[mask_interior]
+    distances_interior = signed_distances[mask_interior]
 
     # Sort points by their distance from the surface, descending
-    sorted_indices = np.argsort(interior_distances)[::-1]
-    points_filtered_sorted = interior_points[sorted_indices]
-    distances_filtered_sorted = interior_distances[sorted_indices]
+    sorted_indices = np.argsort(distances_interior)[::-1]
+    points_filtered_sorted = points_interior[sorted_indices]
+    distances_filtered_sorted = distances_interior[sorted_indices]
 
-    sphere_points = np.empty((0, 3))
-    sphere_radii = np.empty((0, 1))
+    # Preallocate arrays for sphere centers and radii
+    sphere_points = np.zeros((n_spheres, 3))
+    sphere_radii = np.zeros((n_spheres, 1))
 
     # Iterate to pack spheres until reaching the limit or the smallest sphere is smaller than min_radius
-    while len(sphere_points) < num_spheres:
+    for i in range(n_spheres):
 
         if distances_filtered_sorted.size == 0:
-            break
-
-        if distances_filtered_sorted[0] < min_radius:
             break
 
         # Choose the point with the maximum distance from any surface or existing sphere
@@ -89,14 +86,20 @@ def pseudo_mdbd(directory, input_filename,
         sphere_radius = distances_filtered_sorted[0]
 
         # Update lists of points and distances
-        sphere_points = np.vstack([sphere_points, sphere_center])
-        sphere_radii = np.vstack([sphere_radii, sphere_radius])
+        # sphere_points = np.vstack([sphere_points, sphere_center])
+        # sphere_radii = np.vstack([sphere_radii, sphere_radius])
+        sphere_points[i] = sphere_center
+        sphere_radii[i] = sphere_radius
 
         # Update distances considering the newly added sphere
         point_distances_to_new_sphere = np.linalg.norm(points_filtered_sorted - sphere_center, axis=1)
         within_new_sphere = point_distances_to_new_sphere < sphere_radius + distances_filtered_sorted
         points_filtered_sorted = points_filtered_sorted[~within_new_sphere]
         distances_filtered_sorted = distances_filtered_sorted[~within_new_sphere]
+
+    # Trim the arrays to remove unused entries
+    sphere_points = sphere_points[:i]
+    sphere_radii = sphere_radii[:i]
 
     # Scale the spheres
     sphere_points *= scale
@@ -105,141 +108,6 @@ def pseudo_mdbd(directory, input_filename,
     return sphere_points, sphere_radii
 
 
-# def pseudo_mdbd(directory, input_filename,
-#                 num_spheres=1000,
-#                 min_radius=0.0001,
-#                 meshgrid_increment=25,
-#                 scale=1):
-#
-#     # Load the mesh using trimesh
-#     mesh_trimesh = trimesh.load(directory+input_filename)
-#
-#     # Define variable bounds based on the object's bounding box
-#     bounds = mesh_trimesh.bounds
-#     x_min, y_min, z_min = bounds[0]  # Min bounds
-#     x_max, y_max, z_max = bounds[1]  # Max bounds
-#
-#     # Create a 3D meshgrid within the bounds
-#     x = np.linspace(x_min, x_max, meshgrid_increment)
-#     y = np.linspace(y_min, y_max, meshgrid_increment)
-#     z = np.linspace(z_min, z_max, meshgrid_increment)
-#     xx, yy, zz = np.meshgrid(x, y, z, indexing='ij')
-#     all_points = np.vstack([xx.ravel(), yy.ravel(), zz.ravel()]).T
-#
-#     # Calculate signed distances for all points
-#     signed_distances = trimesh.proximity.signed_distance(mesh_trimesh, all_points)
-#
-#     # Filter points inside the mesh
-#     interior_points = all_points[signed_distances > 0]
-#     interior_distances = signed_distances[signed_distances > 0]
-#
-#     # Sort points by their distance from the surface, descending
-#     sorted_indices = np.argsort(interior_distances)[::-1]
-#     points_filtered_sorted = interior_points[sorted_indices]
-#     distances_filtered_sorted = interior_distances[sorted_indices]
-#
-#     sphere_points = np.empty((0, 3))
-#     sphere_radii = np.empty((0, 1))
-#
-#     # Iterate to pack spheres until reaching the limit or the smallest sphere is smaller than min_radius
-#     while len(sphere_points) < num_spheres and distances_filtered_sorted.size > 0 and distances_filtered_sorted[0] > min_radius:
-#
-#         # Choose the point with the maximum distance from any surface or existing sphere
-#         sphere_center = points_filtered_sorted[0]
-#         sphere_radius = distances_filtered_sorted[0]
-#
-#         # Update lists of points and distances
-#         sphere_points = np.vstack([sphere_points, sphere_center])
-#         sphere_radii = np.vstack([sphere_radii, sphere_radius])
-#
-#         # Update distances considering the newly added sphere
-#         point_distances_to_new_sphere = np.linalg.norm(points_filtered_sorted - sphere_center, axis=1)
-#         within_new_sphere = point_distances_to_new_sphere < sphere_radius + distances_filtered_sorted
-#         points_filtered_sorted = points_filtered_sorted[~within_new_sphere]
-#         distances_filtered_sorted = distances_filtered_sorted[~within_new_sphere]
-#
-#     # Scale the spheres
-#     sphere_points *= scale
-#     sphere_radii *= scale
-#
-#     return sphere_points, sphere_radii
-
-
-# def pseudo_mdbd(directory, input_filename,
-#                 num_spheres=1000,
-#                 min_radius=1e-6,
-#                 meshgrid_increment=25,
-#                 scale=1):
-#
-#     # Load the mesh using PyVista
-#     mesh = pv.read(directory + input_filename)
-#
-#     # Ensure the mesh is manifold and clean (optional)
-#     mesh.clean(inplace=True)
-#
-#     # Define variable bounds based on the object's bounding box
-#     bounds = mesh.bounds
-#     x_min, x_max, y_min, y_max, z_min, z_max = bounds
-#
-#     # Create a 3D meshgrid within the bounds
-#     x = np.linspace(x_min, x_max, meshgrid_increment)
-#     y = np.linspace(y_min, y_max, meshgrid_increment)
-#     z = np.linspace(z_min, z_max, meshgrid_increment)
-#     xx, yy, zz = np.meshgrid(x, y, z, indexing='ij')
-#     all_points = np.vstack([xx.ravel(), yy.ravel(), zz.ravel()]).T
-#
-#     # Create a PyVista PolyData object from the points
-#     points = pv.PolyData(all_points)
-#
-#     # Use PyVista's select_enclosed_points method
-#     enclosed = points.select_enclosed_points(mesh, tolerance=0.0)
-#
-#     # Extract the mask of interior points
-#     interior_mask = enclosed['SelectedPoints'].astype(bool)
-#     interior_points = all_points[interior_mask]
-#
-#     # Build a KD-tree of the mesh surface points for efficient distance computation
-#     surface_points = mesh.points
-#     kdtree = cKDTree(surface_points)
-#
-#     # Calculate signed distances from interior points to the mesh surface
-#     distances, _ = kdtree.query(interior_points)
-#     distances = distances.reshape(-1)
-#
-#     # Sort points by their distance from the surface, descending
-#     sorted_indices = np.argsort(distances)[::-1]
-#     points_filtered_sorted = interior_points[sorted_indices]
-#     distances_filtered_sorted = distances[sorted_indices]
-#
-#     sphere_centers = []
-#     sphere_radii = []
-#
-#     # Iterate to pack spheres until reaching the limit or the smallest sphere is smaller than min_radius
-#     while len(sphere_centers) < num_spheres and distances_filtered_sorted.size > 0:
-#         # Choose the point with the maximum distance
-#         sphere_center = points_filtered_sorted[0]
-#         sphere_radius = distances_filtered_sorted[0]
-#
-#         if sphere_radius < min_radius:
-#             break
-#
-#         # Append the sphere's center and radius
-#         sphere_centers.append(sphere_center)
-#         sphere_radii.append(sphere_radius)
-#
-#         # Update distances to ensure no overlap with the newly added sphere
-#         distances_to_new_sphere = np.linalg.norm(points_filtered_sorted - sphere_center, axis=1)
-#         within_new_sphere = distances_to_new_sphere < sphere_radius
-#
-#         # Update the list of candidate points
-#         points_filtered_sorted = points_filtered_sorted[~within_new_sphere]
-#         distances_filtered_sorted = distances_filtered_sorted[~within_new_sphere]
-#
-#     # Convert lists to arrays and scale
-#     sphere_points = np.array(sphere_centers) * scale
-#     sphere_radii = np.array(sphere_radii) * scale
-#
-#     return sphere_points, sphere_radii
 
 def save_mdbd(directory, output_filename, sphere_points, sphere_radii):
 
