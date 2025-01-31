@@ -1,5 +1,6 @@
 import jax.numpy as jnp
 
+
 def bounding_box_bounds_points(positions):
 
     # Find overall min and max coordinates
@@ -10,6 +11,7 @@ def bounding_box_bounds_points(positions):
     bounds = jnp.concatenate((x_min, x_max, y_min, y_max, z_min, z_max))
 
     return bounds
+
 
 def bounding_box_bounds(positions, radii):
     """
@@ -43,5 +45,3 @@ def bounding_box_volume(bounds):
     volume = (x_max - x_min) * (y_max - y_min) * (z_max - z_min)
 
     return volume
-
-

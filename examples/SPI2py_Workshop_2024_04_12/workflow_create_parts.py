@@ -1,4 +1,4 @@
-from SPI2py.models.geometry.spherical_decomposition import pseudo_mdbd, save_mdbd
+from SPI2py.models.geometry.spherical_decomposition import convert_stl_to_mdbd
 from SPI2py.models.utilities.visualization import plot_mdbd
 from time import time_ns
 
@@ -13,7 +13,7 @@ cog_driven_gear = pv.read(directory+filename_cog_driven_gear)
 
 
 start = time_ns()
-pos, rad = pseudo_mdbd(directory, filename_bot_eye, n_spheres=300, n_steps=25, scale=0.1)
+pos, rad = convert_stl_to_mdbd(directory, filename_bot_eye, n_spheres=500, n_steps=30, scale=0.1)
 stop = time_ns()
 print(f"Elapsed time: {(stop-start)/1e9} seconds")
 
