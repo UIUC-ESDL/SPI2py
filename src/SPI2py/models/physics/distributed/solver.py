@@ -24,20 +24,18 @@ def solve_system(nodes,
     """
 
     # Generate the mesh and element connectivity.
+    # ...
 
     # Assemble the global stiffness matrix and load vector.
     K, f = assemble_global_stiffness_matrix(nodes, elements, density, base_k)
 
     # Apply the boundary conditions and partition the system.
-    # K, f, u_p, idx_f, idx_p = apply_boundary_conditions(K, f, boundary_conditions)
     K_ff, K_fp, K_pf, K_pp, f_f, f_p, u_p, idx_f, idx_p = apply_boundary_conditions(K, f, boundary_conditions)
 
-    # Partition the system.
-    # K_ff, K_fp, K_pf, K_pp, f_f, f_p = partition_global_system(K, f, idx_f, idx_p)
-
     # Solve the partitioned system for the unknown displacements.
-    # K_ff u_f + K_fp u_p = f_f
-    # K_ff u_f = f_f - K_fp u_p
+    # K_ff @ u_f + K_fp @ u_p = f_f
+    # K_ff @ u_f = f_f - K_fp @ u_p
+    # u_f = K_ff^-1 @ (f_f - K_fp @ u_p)
     u_f = jnp.linalg.solve(K_ff, f_f - K_fp @ u_p)
 
     # Reassemble the full solution.

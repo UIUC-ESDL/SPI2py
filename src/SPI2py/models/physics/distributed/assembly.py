@@ -71,7 +71,7 @@ def apply_boundary_conditions(K, f, boundary_conditions):
     layout of two pipes with fixed but different temperatures, we can see how selecting one Dirichlet
     condition over the other, averaging those conditions, reformulating them as high heat loads rather than
     fixed temperature, etc., impact the optimization process.
-    TODO Vectorize
+    TODO Vectorize?
     """
     dirichlet_bcs = []
     robin_bcs = []
@@ -88,15 +88,21 @@ def apply_boundary_conditions(K, f, boundary_conditions):
     r_h = [bc.h for bc in robin_bcs][0]
     r_T_inf = [bc.T_inf for bc in robin_bcs][0]
     r_area = [bc.area for bc in robin_bcs][0]
-    K, f = apply_robin_bc(K, f, r_nodes, r_h, r_T_inf, r_area)
 
+    # Add the Robin (convective) contribution to the diagonal entries.
+    K_add = (r_h * r_area)
 
-    # Combine Dirichlet BCs.
+    # Add the corresponding contribution to the load vector.
+    f_add = (r_h * r_area * r_T_inf)
+
+    K = K.at[r_nodes, r_nodes].add(K_add)
+    f = f.at[r_nodes].add(f_add)
+
+    # Combine and apply the Dirichlet BCs.
     d_nodes = [bc.nodes for bc in dirichlet_bcs]
     d_T = [bc.T for bc in dirichlet_bcs]
 
     idx_p, u_p = combine_fixed_conditions(d_nodes, d_T)
-    # K, f = apply_dirichlet_bc(K, f, idx_p, u_p)
 
     # Obtain the number of nodes and all node indices.
     n_nodes = K.shape[0]
@@ -108,14 +114,6 @@ def apply_boundary_conditions(K, f, boundary_conditions):
     # Partition the stiffness matrix and load vector.
     K_ff, K_fp, K_pf, K_pp, f_f, f_p = partition_global_system(K, f, idx_f, idx_p)
 
-    # Compute the modified load vector for free DOFs.
-    # K_ff u_f + K_fp u_p = f_f
-    # K_ff u_f = f_f - K_fp u_p
-    # K_ff_at_u_f = f[idx_f] - K_fp @ u_p
-
-
-    # return idx_f, K_ff, f_f
-    # return K, f, u_p, idx_f, idx_p
     return K_ff, K_fp, K_pf, K_pp, f_f, f_p, u_p, idx_f, idx_p
 
 
@@ -197,69 +195,6 @@ def combine_fixed_conditions(idx_p, D_p):
     combined_fixed_values = jnp.concatenate(combined_values)
     return combined_fixed_nodes, combined_fixed_values
 
-
-# def apply_dirichlet_bc(K, f, idx_p, u_p):
-#     """
-#     Partition the global system to enforce Dirichlet (fixed) BCs.
-#
-#     Parameters:
-#       K: Global stiffness matrix (n_nodes x n_nodes).
-#       f: Global load vector (n_nodes,).
-#       idx_p: 1D array of node indices (DOFs) to be fixed.
-#       u_p: 1D array (or scalar broadcastable) of prescribed values at these DOFs.
-#
-#     Returns:
-#       idx_f: 1D array of indices corresponding to free DOFs.
-#       K_ff: Reduced stiffness matrix for free DOFs.
-#       f_free: Modified load vector for free DOFs: f_free = f_free - K_fd * fixed_values.
-#     """
-#
-#     # Obtain the number of nodes and all node indices.
-#     # n_nodes = K.shape[0]
-#     # idx = jnp.arange(n_nodes)
-#
-#     # Find the free indices by subtracting the fixed indices from all indices.
-#     # idx_f = jnp.setdiff1d(idx, idx_p)
-#
-#     # Partition the stiffness matrix and load vector.
-#     # K_ff = K[idx_f][:, idx_f]
-#     # K_fp = K[idx_f][:, idx_p]
-#
-#     # Compute the modified load vector for free DOFs.
-#     # K_ff u_f + K_fp u_p = f_f
-#     # K_ff u_f = f_f - K_fp u_p
-#     # f_f = f[idx_f] - K_fp @ u_p
-#
-#     return idx_f, K_ff, f_f
-
-
-def apply_robin_bc(K, f, robin_indices, h, T_inf, area):
-    """
-    Incorporate a Robin (convective) boundary condition by modifying K and f.
-
-    For nodes in robin_indices, add h*area to the diagonal of K and
-    add h*area*T_inf to f.
-
-    Parameters:
-      K: Global stiffness matrix (n_nodes x n_nodes).
-      f: Global load vector (n_nodes,).
-      robin_indices: 1D array of node indices where the Robin BC is applied.
-      h: Convection coefficient.
-      T_inf: Ambient (free-stream) temperature.
-      area: Effective area associated with each Robin node.
-
-    Returns:
-      K_new, f_new: The modified stiffness matrix and load vector.
-    """
-    # Add the Robin (convective) contribution to the diagonal entries.
-    K_add = (h * area)
-
-    # Add the corresponding contribution to the load vector.
-    f_add = (h * area * T_inf)
-
-    K_new, f_new = append_global_system(K, f, robin_indices, K_add, f_add)
-
-    return K_new, f_new
 
 
 @dataclass
