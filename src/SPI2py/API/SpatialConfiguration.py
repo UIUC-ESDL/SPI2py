@@ -4,12 +4,11 @@ from jax import jacfwd
 import openmdao.api as om
 from openmdao.api import ExplicitComponent, Group
 
-from ..models.utilities.inputs import read_xyzr_file
+from ..models.utilities.input_and_output import read_xyzr_file, read_csv_file
 from ..models.utilities.aggregation import kreisselmeier_steinhauser_max
-from ..models.computational_geometry.rigid_body_transformations import assemble_transformation_matrix, \
-    apply_transformation_matrix
-from .projection import Mesh, calculate_pseudo_densities
-from ..models.projection.project_interconnects_vectorized import calculate_combined_densities
+from ..models.mechanics.transformations_rigidbody import transform_points
+from ..models.projection.projection import project_component, project_interconnect
+
 
 class SpatialConfiguration(Group):
 
@@ -36,7 +35,7 @@ class SpatialConfiguration(Group):
                 ports = components_dict[key]['ports']
                 color = components_dict[key]['color']
 
-                sphere_positions, sphere_radii = read_xyzr_file(filepath, num_spheres=n_spheres)
+                sphere_positions, sphere_radii = read_csv_file(filepath, n_spheres)
 
                 component = Component(description=description,
                                       color=color,
@@ -104,8 +103,8 @@ class Component(ExplicitComponent):
     def initialize(self):
         self.options.declare('description', types=str)
         self.options.declare('color', types=str)
-        self.options.declare('sphere_positions', types=list)
-        self.options.declare('sphere_radii', types=list)
+        self.options.declare('sphere_positions', types=np.ndarray)
+        self.options.declare('sphere_radii', types=np.ndarray)
         self.options.declare('ports', types=list)
 
     def setup(self):
@@ -223,28 +222,28 @@ class Component(ExplicitComponent):
     #     partials['transformed_ports', 'translation'] = grad_ports_translation
     #     partials['transformed_ports', 'rotation'] = grad_ports_rotation
 
-    @staticmethod
-    def _compute_primal(sphere_positions, port_positions, translation, rotation):
-
-        # Assemble the transformation matrix
-        t = assemble_transformation_matrix(translation, rotation)
-
-        # Apply the transformation matrix to the sphere positions and port positions
-        # Use the translation vector as the origin
-
-        spheres_transformed = apply_transformation_matrix(translation.T,
-                                                            sphere_positions.T,
-                                                            t).T
-
-        positions_transformed = apply_transformation_matrix(translation.T,
-                                                            port_positions.T,
-                                                            t).T
-
-        return spheres_transformed, positions_transformed
+    # @staticmethod
+    # def _compute_primal(sphere_positions, port_positions, translation, rotation):
+    #
+    #     # Assemble the transformation matrix
+    #     t = assemble_transformation_matrix(translation, rotation)
+    #
+    #     # Apply the transformation matrix to the sphere positions and port positions
+    #     # Use the translation vector as the origin
+    #
+    #     spheres_transformed = apply_transformation_matrix(translation.T,
+    #                                                         sphere_positions.T,
+    #                                                         t).T
+    #
+    #     positions_transformed = apply_transformation_matrix(translation.T,
+    #                                                         port_positions.T,
+    #                                                         t).T
+    #
+    #     return spheres_transformed, positions_transformed
 
     @staticmethod
     def _project(sphere_positions, sphere_radii, sample_points, sample_radii, element_bounds):
-        pseudo_densities = calculate_pseudo_densities(sphere_positions, sphere_radii, sample_points, sample_radii,
+        pseudo_densities = project_component(sphere_positions, sphere_radii, sample_points, sample_radii,
                                                       element_bounds)
         return pseudo_densities
 
@@ -338,7 +337,7 @@ class Interconnect(ExplicitComponent):
         # FIXME different radii for different int segments
         X1, X2, R = create_cylinders(sphere_positions, sphere_radii[0])
 
-        pseudo_densities = calculate_combined_densities(sample_points, sample_radii, X1, X2, R)
+        pseudo_densities = project_interconnect(sample_points, sample_radii, X1, X2, R)
         return pseudo_densities
 
     # def compute_partials(self, inputs, partials):

@@ -1,6 +1,5 @@
 import jax.numpy as jnp
-from .mesh import generate_mesh_vec, find_active_nodes, find_face_nodes, generate_mesh
-from .assembly import assemble_global_stiffness_matrix, apply_boundary_conditions, partition_global_system
+from .assembly import assemble_global_stiffness_matrix, apply_boundary_conditions
 
 
 def solve_system(nodes,

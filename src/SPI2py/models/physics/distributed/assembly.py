@@ -1,4 +1,3 @@
-import jax
 from jax import vmap
 import jax.numpy as jnp
 from dataclasses import dataclass, field

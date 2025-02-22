@@ -1,7 +1,6 @@
 import math
 import jax.numpy as jnp
 from jax import grad, jacfwd, jacrev
-from jax.scipy.stats import gaussian_kde
 from openmdao.api import ExplicitComponent, Group
 from openmdao.core.indepvarcomp import IndepVarComp
 
@@ -9,7 +8,7 @@ from ..models.physics.distributed.mesh import generate_mesh_vec
 from ..models.projection.projection import project_component
 from ..models.projection.projection import project_interconnect
 from ..models.utilities.aggregation import kreisselmeier_steinhauser_max
-from ..models.projection.grid_kernels import create_uniform_kernel, apply_kernel
+from ..models.projection.mesh_kernels import create_uniform_kernel, apply_kernel
 
 
 
@@ -28,76 +27,45 @@ class Mesh(IndepVarComp):
         element_size = self.options['element_size']
 
         # Calculate the element length
-        lx = x_max - x_min
-        ly = y_max - y_min
-        lz = z_max - z_min
+        # lx = x_max - x_min
+        # ly = y_max - y_min
+        # lz = z_max - z_min
 
         # Calculate the number of elements
         # Bounds may be exceeded by 1 element
-        nx = math.ceil(lx / element_size)
-        ny = math.ceil(ly / element_size)
-        nz = math.ceil(lz / element_size)
+        # nx = math.ceil(lx / element_size)
+        # ny = math.ceil(ly / element_size)
+        # nz = math.ceil(lz / element_size)
 
         # Define the mesh grid positions
-        nodes, elements = generate_mesh_vec(nx, ny, nz, lx, ly, lz)
-
-
-
-        # x_grid_positions = jnp.linspace(x_min, x_max, n_el_x + 1)
-        # y_grid_positions = jnp.linspace(y_min, y_max, n_el_y + 1)
-        # z_grid_positions = jnp.linspace(z_min, z_max, n_el_z + 1)
-        # x_grid, y_grid, z_grid = jnp.meshgrid(x_grid_positions, y_grid_positions, z_grid_positions, indexing='ij')
-        # grid = jnp.stack((x_grid, y_grid, z_grid), axis=-1)
-        #
-        # # Define the mesh center points
-        # x_center_positions = jnp.linspace(x_min + element_half_length, element_length * n_el_x - element_half_length, n_el_x)
-        # y_center_positions = jnp.linspace(y_min + element_half_length, element_length * n_el_y - element_half_length, n_el_y)
-        # z_center_positions = jnp.linspace(z_min + element_half_length, element_length * n_el_z - element_half_length, n_el_z)
-        # x_centers, y_centers, z_centers = jnp.meshgrid(x_center_positions, y_center_positions, z_center_positions, indexing='ij')
-        #
-        # # Define the bounds of each mesh element
-        # x_min_element = x_centers - element_half_length
-        # x_max_element = x_centers + element_half_length
-        # y_min_element = y_centers - element_half_length
-        # y_max_element = y_centers + element_half_length
-        # z_min_element = z_centers - element_half_length
-        # z_max_element = z_centers + element_half_length
-        # element_bounds = jnp.stack((x_min_element, x_max_element, y_min_element, y_max_element, z_min_element, z_max_element), axis=-1)
+        # nodes, elements = generate_mesh_vec(nx, ny, nz, lx, ly, lz)
+        nodes, elements, centers, nx, ny, nz, lx, ly, lz = generate_mesh_vec(0, 2, 0, 4, 0, 2, element_size=element_size)
+        centers = centers.reshape(nx, ny, nz, 1, 3)
 
         # Read the MDBD kernel
         uniform_8_kernel_positions, uniform_8_kernel_radii = create_uniform_kernel(1, mode='circumscription')
         kernel_positions = jnp.array(uniform_8_kernel_positions)
         kernel_radii = jnp.array(uniform_8_kernel_radii).reshape(-1, 1)
 
-        # # Scale the sphere positions
-        # kernel_positions = kernel_positions * element_length
-        # kernel_radii = kernel_radii * element_length
-
-        # meshgrid_centers = jnp.stack((x_centers, y_centers, z_centers), axis=-1)
-        # meshgrid_centers_expanded = jnp.expand_dims(meshgrid_centers, axis=3)
-
-        # all_points = meshgrid_centers_expanded + kernel_positions
-        # all_radii = jnp.zeros((n_el_x, n_el_y, n_el_z, 1, 1)) + kernel_radii
-
         # # Calculate the kernel volume fraction
-        # volume_element = element_length ** 3
+        volume_element = element_size ** 3
         # volume_kernel = jnp.sum(4/3 * jnp.pi * kernel_radii ** 3)
         # volume_approximation_error = abs((volume_kernel - volume_element) / volume_element)
 
         # Declare the outputs
-        self.add_output('element_length', val=element_length)
-        self.add_output('grid_centers', val=meshgrid_centers)
-        self.add_output('grid', val=grid)
-        self.add_output('n_el_x', val=n_el_x)
-        self.add_output('n_el_y', val=n_el_y)
-        self.add_output('n_el_z', val=n_el_z)
-        self.add_output('sample_points', val=all_points)
-        self.add_output('sample_radii', val=all_radii)
+        self.add_output('element_size', val=element_size)
+        self.add_output('mesh_centers', val=centers)
+        self.add_output('mesh_nodes', val=nodes)
+        self.add_output('mesh_elements', val=elements)
+        self.add_output('n_el_x', val=nx)
+        self.add_output('n_el_y', val=ny)
+        self.add_output('n_el_z', val=nz)
 
         # Outputs for additional info
-        self.add_output('element_volume', val=volume_element)
-        self.add_output('kernel_volume', val=volume_kernel)
-        self.add_output('volume_approximation_error', val=volume_approximation_error)
+        # self.add_output('element_volume', val=volume_element)
+        # self.add_output('kernel_volume', val=volume_kernel)
+        # self.add_output('volume_approximation_error', val=volume_approximation_error)
+
 
 class Projections(Group):
     def initialize(self):
@@ -135,11 +103,8 @@ class ProjectComponent(ExplicitComponent):
     def setup(self):
 
         # Mesh Inputs
-        self.add_input('element_length', val=0)
-        self.add_input('centers', shape_by_conn=True)
-        self.add_input('element_bounds', shape_by_conn=True)
-        self.add_input('element_sphere_positions', shape_by_conn=True)
-        self.add_input('element_sphere_radii', shape_by_conn=True)
+        self.add_input('element_size', val=0)
+        self.add_input('mesh_centers', shape_by_conn=True)
 
         # Object Inputs
         self.add_input('sphere_positions', shape_by_conn=True)
@@ -147,19 +112,17 @@ class ProjectComponent(ExplicitComponent):
         self.add_input('volume', val=0.0)
 
         # Outputs
-        self.add_output('pseudo_densities', compute_shape=lambda shapes: (shapes['centers'][0], shapes['centers'][1], shapes['centers'][2]))
-        self.add_output('volume_estimation_error', val=0.0, desc='How accurately the projection represents the object')
+        self.add_output('pseudo_densities', compute_shape=lambda shapes: (shapes['mesh_centers'][0], shapes['mesh_centers'][1], shapes['mesh_centers'][2]))
+        # self.add_output('volume_estimation_error', val=0.0, desc='How accurately the projection represents the object')
 
-    def setup_partials(self):
-        self.declare_partials('pseudo_densities', 'sphere_positions')
+    # def setup_partials(self):
+    #     self.declare_partials('pseudo_densities', 'sphere_positions')
 
     def compute(self, inputs, outputs):
 
         # Get the Mesh inputs
-        element_length   = jnp.array(inputs['element_length'])
-        element_bounds   = jnp.array(inputs['element_bounds'])
-        sample_points    = jnp.array(inputs['element_sphere_positions'])
-        sample_radii     = jnp.array(inputs['element_sphere_radii'])
+        element_size   = jnp.array(inputs['element_size'])
+        mesh_centers  = jnp.array(inputs['mesh_centers'])
         sphere_positions = jnp.array(inputs['sphere_positions'])
         sphere_radii     = jnp.array(inputs['sphere_radii'])
         volume           = jnp.array(inputs['volume'])
@@ -168,7 +131,7 @@ class ProjectComponent(ExplicitComponent):
         pseudo_densities = self._project(sphere_positions, sphere_radii, sample_points, sample_radii, element_bounds)
 
         # Compute the volume estimation error
-        projected_volume = jnp.sum(pseudo_densities * element_length ** 3)
+        projected_volume = jnp.sum(pseudo_densities * element_size ** 3)
         volume_estimation_error = jnp.abs(volume - projected_volume) / volume
 
         # Write the outputs
@@ -192,8 +155,8 @@ class ProjectComponent(ExplicitComponent):
 
 
     @staticmethod
-    def _project(sphere_positions, sphere_radii, sample_points, sample_radii, element_bounds):
-        pseudo_densities = project_component(sphere_positions, sphere_radii, element_bounds)
+    def _project(mesh_centers, mesh_size, obj_points, obj_radii, kernel_points, kernel_radii):
+        pseudo_densities, kernel_points, kernel_radii = project_component(mesh_centers, mesh_size, obj_points, obj_radii, kernel_points, kernel_radii)
         return pseudo_densities
 
 
@@ -205,11 +168,8 @@ class ProjectInterconnect(ExplicitComponent):
     def setup(self):
 
         # Mesh Inputs
-        self.add_input('element_length', val=0)
-        self.add_input('element_bounds', shape_by_conn=True)
-        self.add_input('centers', shape_by_conn=True)
-        self.add_input('element_sphere_positions', shape_by_conn=True)
-        self.add_input('element_sphere_radii', shape_by_conn=True)
+        self.add_input('element_size', val=0)
+        self.add_input('mesh_centers', shape_by_conn=True)
 
         # Object Inputs
         self.add_input('sphere_positions', shape_by_conn=True)
@@ -226,7 +186,7 @@ class ProjectInterconnect(ExplicitComponent):
     def compute(self, inputs, outputs):
 
         # Get the Mesh inputs
-        element_length   = jnp.array(inputs['element_length'])
+        element_size   = jnp.array(inputs['element_size'])
         element_bounds   = jnp.array(inputs['element_bounds'])
         sample_points    = jnp.array(inputs['element_sphere_positions'])
         sample_radii     = jnp.array(inputs['element_sphere_radii'])
@@ -238,7 +198,7 @@ class ProjectInterconnect(ExplicitComponent):
         pseudo_densities = self._project(sample_points, sample_radii, sphere_positions, sphere_radii)
 
         # Compute the volume estimation error
-        # projected_volume = jnp.sum(pseudo_densities * element_length ** 3)
+        # projected_volume = jnp.sum(pseudo_densities * element_size ** 3)
         # volume_estimation_error = jnp.abs(volume - projected_volume) / volume
 
         # Write the outputs
