@@ -127,11 +127,10 @@ class Component(ExplicitComponent):
         self.add_input('rotation', val=np.array([[0.0, 0.0, 0.0]]))
 
         # Mesh Inputs
-        self.add_input('element_length', val=0)
-        self.add_input('centers', shape_by_conn=True)
-        self.add_input('element_bounds', shape_by_conn=True)
-        self.add_input('element_sphere_positions', shape_by_conn=True)
-        self.add_input('element_sphere_radii', shape_by_conn=True)
+        self.add_input('element_size', val=0)
+        self.add_input('mesh_centers', shape_by_conn=True)
+        self.add_input('mesh_kernel_points', shape_by_conn=True)
+        self.add_input('mesh_kernel_radii', shape_by_conn=True)
 
         # Outputs:
         self.add_output('transformed_sphere_positions', val=sphere_positions)
@@ -145,8 +144,8 @@ class Component(ExplicitComponent):
                         compute_shape=lambda shapes: (shapes['centers'][0], shapes['centers'][1], shapes['centers'][2]))
 
         # Define diagnostic outputs
-        self.add_output('mesh_kernel_volume_error', val=0.0, desc="How accurately the mesh kernel represents the element volume")
-        self.add_output('projection_volume_error', val=0.0, desc='How accurately the projection represents the object')
+        # self.add_output('mesh_kernel_volume_error', val=0.0, desc="How accurately the mesh kernel represents the element volume")
+        # self.add_output('projection_volume_error', val=0.0, desc='How accurately the projection represents the object')
 
 
 

@@ -36,8 +36,8 @@ n_points_per_object = [n_spheres for _ in range(n_components)] + [m_segments + 1
 
 # Initialize the subsystems
 model.add_subsystem('system', SpatialConfiguration(input_dict=input_file))
-# model.add_subsystem('mesh', Mesh(bounds=bounds,
-#                                  n_elements_per_unit_length=n_elements_per_unit_length))
+model.add_subsystem('mesh', Mesh(bounds=bounds,
+                                 n_elements_per_unit_length=n_elements_per_unit_length))
 
 # model.add_subsystem('projections', Projections(n_comp_projections=n_components,
 #                                                n_int_projections=m_interconnects))
