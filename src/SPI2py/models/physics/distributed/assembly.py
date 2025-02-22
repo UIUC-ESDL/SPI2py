@@ -1,6 +1,8 @@
 import jax
 from jax import vmap
 import jax.numpy as jnp
+from dataclasses import dataclass, field
+from chex import assert_shape, assert_type
 from .element import assemble_local_stiffness_matrix
 from .quadrature import gauss_quad
 
@@ -60,6 +62,64 @@ def assemble_global_stiffness_matrix(nodes, elements, density, base_k):
     return K_global, f_global
 
 
+def apply_boundary_conditions(K, f, boundary_conditions):
+    """
+    A central function to apply boundary conditions to the global stiffness matrix and load vector.
+
+    This includes modifying and partitioning the system. This also provides a means to control and
+    investigate the superimposition of boundary conditions. For example, if we are optimizing the
+    layout of two pipes with fixed but different temperatures, we can see how selecting one Dirichlet
+    condition over the other, averaging those conditions, reformulating them as high heat loads rather than
+    fixed temperature, etc., impact the optimization process.
+    TODO Vectorize
+    """
+    dirichlet_bcs = []
+    robin_bcs = []
+    for bc in boundary_conditions:
+        if bc.bc_type == "dirichlet":
+            dirichlet_bcs.append(bc)
+        elif bc.bc_type == "robin":
+            robin_bcs.append(bc)
+        else:
+            raise ValueError(f"Unknown boundary condition type: {bc.bc_type}")
+
+    # Apply Robin boundary conditions.
+    r_nodes = [bc.nodes for bc in robin_bcs][0]
+    r_h = [bc.h for bc in robin_bcs][0]
+    r_T_inf = [bc.T_inf for bc in robin_bcs][0]
+    r_area = [bc.area for bc in robin_bcs][0]
+    K, f = apply_robin_bc(K, f, r_nodes, r_h, r_T_inf, r_area)
+
+
+    # Combine Dirichlet BCs.
+    d_nodes = [bc.nodes for bc in dirichlet_bcs]
+    d_T = [bc.T for bc in dirichlet_bcs]
+
+    idx_p, u_p = combine_fixed_conditions(d_nodes, d_T)
+    # K, f = apply_dirichlet_bc(K, f, idx_p, u_p)
+
+    # Obtain the number of nodes and all node indices.
+    n_nodes = K.shape[0]
+    idx = jnp.arange(n_nodes)
+
+    # Find the free indices by subtracting the fixed indices from all indices.
+    idx_f = jnp.setdiff1d(idx, idx_p)
+
+    # Partition the stiffness matrix and load vector.
+    K_ff, K_fp, K_pf, K_pp, f_f, f_p = partition_global_system(K, f, idx_f, idx_p)
+
+    # Compute the modified load vector for free DOFs.
+    # K_ff u_f + K_fp u_p = f_f
+    # K_ff u_f = f_f - K_fp u_p
+    # K_ff_at_u_f = f[idx_f] - K_fp @ u_p
+
+
+    # return idx_f, K_ff, f_f
+    # return K, f, u_p, idx_f, idx_p
+    return K_ff, K_fp, K_pf, K_pp, f_f, f_p, u_p, idx_f, idx_p
+
+
+
 def append_global_system(K, f, append_indices, K_add, f_add):
     """
     Modify the global stiffness matrix K and load vector f by updating values at specified nodes.
@@ -80,41 +140,36 @@ def append_global_system(K, f, append_indices, K_add, f_add):
     return K_new, f_new
 
 
-def partition_global_system(K, f, prescribed_indices, prescribed_values):
+def partition_global_system(K, f, idx_f, idx_p):
     """
     Set the values of the global stiffness matrix K and load vector f at specified nodes.
 
     Parameters:
       K: Global stiffness matrix (n_nodes x n_nodes).
       f: Global load vector (n_nodes,).
-      prescribed_indices: 1D array of node indices to be prescribed.
-      prescribed_values: 1D array of prescribed values at these nodes.
+      idx_f: 1D array of free node indices.
+      idx_p: 1D array of prescribed node indices.
 
     Returns:
-      K_new: Modified stiffness matrix.
-      f_new: Modified load vector.
+        K_ff: Reduced stiffness matrix for free DOFs.
+        K_fp: Stiffness matrix coupling free and prescribed DOFs.
+        K_pf: Stiffness matrix coupling prescribed and free DOFs.
+        K_pp: Reduced stiffness matrix for prescribed DOFs.
+        f_f: Modified load vector for free DOFs.
+        f_p: Modified load vector for prescribed DOFs.
     """
 
-    # Obtain the number of nodes and all node indices.
-    n_nodes = K.shape[0]
-    all_indices = jnp.arange(n_nodes)
-
-    # Find the free indices by subtracting the fixed indices from all indices.
-    idx_f = jnp.setdiff1d(all_indices, prescribed_indices)
-    idx_p = prescribed_indices
-
     # Partition the stiffness matrix and load vector.
-    # [K_ff K_fp] {D_f} = {R_f}
-    # [K_pf K_pp] {D_p} = {R_p}
+    # [K_ff K_fp] {u_f} = {f_f}
+    # [K_pf K_pp] {u_p} = {f_p}
     K_ff = K[idx_f][:, idx_f]
-    K_fp = K[idx_f][:, prescribed_indices]
-    K_pf = K[prescribed_indices][:, idx_f]
-    K_pp = K[prescribed_indices][:, prescribed_indices]
-    D_p = prescribed_values
-    R_f = f[idx_f]
-    R_p = f[prescribed_indices]
+    K_fp = K[idx_f][:, idx_p]
+    K_pf = K[idx_p][:, idx_f]
+    K_pp = K[idx_p][:, idx_p]
+    f_f = f[idx_f]
+    f_p = f[idx_p]
 
-    return K_ff, K_fp, K_pf, K_pp, D_p, R_f, R_p, idx_f, idx_p
+    return K_ff, K_fp, K_pf, K_pp, f_f, f_p
 
 
 def combine_fixed_conditions(idx_p, D_p):
@@ -143,39 +198,39 @@ def combine_fixed_conditions(idx_p, D_p):
     return combined_fixed_nodes, combined_fixed_values
 
 
-def apply_dirichlet_bc(K, f, fixed_indices, fixed_values):
-    """
-    Partition the global system to enforce Dirichlet (fixed) BCs.
-
-    Parameters:
-      K: Global stiffness matrix (n_nodes x n_nodes).
-      f: Global load vector (n_nodes,).
-      fixed_indices: 1D array of node indices (DOFs) to be fixed.
-      fixed_values: 1D array (or scalar broadcastable) of prescribed values at these DOFs.
-
-    Returns:
-      free_indices: 1D array of indices corresponding to free DOFs.
-      K_ff: Reduced stiffness matrix for free DOFs.
-      f_free: Modified load vector for free DOFs: f_free = f_free - K_fd * fixed_values.
-    """
-
-    # Obtain the number of nodes and all node indices.
-    n_nodes = K.shape[0]
-    all_indices = jnp.arange(n_nodes)
-
-    # Find the free indices by subtracting the fixed indices from all indices.
-    free_indices = jnp.setdiff1d(all_indices, fixed_indices)
-
-    # Partition the stiffness matrix and load vector.
-    K_ff = K[free_indices][:, free_indices]
-    K_fd = K[free_indices][:, fixed_indices]
-
-    # Compute the modified load vector for free DOFs.
-    # K_ff u_f + K_fp u_p = f_f
-    # K_ff u_f = f_f - K_fp u_p
-    f_free = f[free_indices] - K_fd @ fixed_values
-
-    return free_indices, K_ff, f_free
+# def apply_dirichlet_bc(K, f, idx_p, u_p):
+#     """
+#     Partition the global system to enforce Dirichlet (fixed) BCs.
+#
+#     Parameters:
+#       K: Global stiffness matrix (n_nodes x n_nodes).
+#       f: Global load vector (n_nodes,).
+#       idx_p: 1D array of node indices (DOFs) to be fixed.
+#       u_p: 1D array (or scalar broadcastable) of prescribed values at these DOFs.
+#
+#     Returns:
+#       idx_f: 1D array of indices corresponding to free DOFs.
+#       K_ff: Reduced stiffness matrix for free DOFs.
+#       f_free: Modified load vector for free DOFs: f_free = f_free - K_fd * fixed_values.
+#     """
+#
+#     # Obtain the number of nodes and all node indices.
+#     # n_nodes = K.shape[0]
+#     # idx = jnp.arange(n_nodes)
+#
+#     # Find the free indices by subtracting the fixed indices from all indices.
+#     # idx_f = jnp.setdiff1d(idx, idx_p)
+#
+#     # Partition the stiffness matrix and load vector.
+#     # K_ff = K[idx_f][:, idx_f]
+#     # K_fp = K[idx_f][:, idx_p]
+#
+#     # Compute the modified load vector for free DOFs.
+#     # K_ff u_f + K_fp u_p = f_f
+#     # K_ff u_f = f_f - K_fp u_p
+#     # f_f = f[idx_f] - K_fp @ u_p
+#
+#     return idx_f, K_ff, f_f
 
 
 def apply_robin_bc(K, f, robin_indices, h, T_inf, area):
@@ -207,50 +262,49 @@ def apply_robin_bc(K, f, robin_indices, h, T_inf, area):
     return K_new, f_new
 
 
-# def apply_load(f, load_indices, load_value):
-#     """
-#     Apply a prescribed load to the specified nodes by adding load_value to f.
-#
-#     Parameters:
-#       f: Global load vector (n_nodes,).
-#       load_indices: 1D array of node indices where the load is applied.
-#       load_value: The load value (e.g., a heat source or force).
-#
-#     Returns:
-#       Updated load vector f.
-#
-#     """
-#     f = f.at[load_indices].add(load_value)
-#     return f
+@dataclass
+class BoundaryCondition:
+    """
+    Base class for a boundary condition.
+    """
+
+    nodes: jnp.ndarray
+    bc_type: str = field(init=False)
+
+    def __post_init__(self):
+
+        # Nodes should be a 1D array.
+        assert_shape(self.nodes, (None,))
 
 
+@dataclass
+class DirichletBC(BoundaryCondition):
+    """
+    Dirichlet boundary condition.
+    """
+
+    T: (int, float)
+
+    def __post_init__(self):
+
+        # Nodes should be a 1D array.
+        self.bc_type = "dirichlet"
+
+        # Value should be a scalar.
+        assert isinstance(self.T, (int, float))
 
 
+@dataclass
+class RobinBC(BoundaryCondition):
+    """
+    Robin boundary condition.
+    """
+    h: (int, float)
+    T_inf: (int, float)
+    area: (int, float)
 
-# def combine_fixed_conditions(fixed_nodes_list, fixed_values_list):
-#     """
-#     Combine multiple sets of fixed nodes and their prescribed values into single arrays.
-#
-#     Parameters:
-#       fixed_nodes_list: a list (or tuple) of 1D arrays of fixed node indices.
-#       fixed_values_list: a list (or tuple) of 1D arrays (or scalars) of prescribed values,
-#                          corresponding to each set of fixed nodes.
-#
-#     Returns:
-#       combined_fixed_nodes: a 1D array containing all fixed node indices.
-#       combined_fixed_values: a 1D array containing the prescribed value for each fixed node.
-#
-#     Note: If any of the fixed_values in the list is a scalar, it is broadcasted to match the size
-#     of its corresponding fixed_nodes array.
-#     """
-#     combined_nodes = []
-#     combined_values = []
-#     for nodes_i, values_i in zip(fixed_nodes_list, fixed_values_list):
-#         # Ensure values_i is a 1D array broadcasted to the same length as nodes_i.
-#         values_i = jnp.broadcast_to(jnp.atleast_1d(values_i), (nodes_i.shape[0],))
-#         combined_nodes.append(nodes_i)
-#         combined_values.append(values_i)
-#
-#     combined_fixed_nodes = jnp.concatenate(combined_nodes)
-#     combined_fixed_values = jnp.concatenate(combined_values)
-#     return combined_fixed_nodes, combined_fixed_values
+    def __post_init__(self):
+        self.bc_type = "robin"
+        assert isinstance(self.h, (int, float))
+        assert isinstance(self.T_inf, (int, float))
+        assert isinstance(self.area, (int, float))

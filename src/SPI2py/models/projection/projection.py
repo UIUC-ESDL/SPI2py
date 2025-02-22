@@ -5,11 +5,11 @@ Geometry Project by Norato...
 import jax.numpy as jnp
 from chex import assert_shape, assert_type
 
-from .grid_kernels import apply_kernel
+
 from ..geometry.cylinders import create_cylinders
 from ..geometry.intersection import volume_intersection_two_spheres
 from ..mechanics.distance import minimum_distances_points_segments, minimum_distances_segments_segments
-from ..projection.grid_kernels import apply_kernel
+from ..projection.mesh_kernels import apply_kernel
 from ..physics.distributed.mesh import generate_mesh_vec
 from ..geometry.spheres import get_aabb_indices
 from ..utilities.aggregation import kreisselmeier_steinhauser_max, kreisselmeier_steinhauser_min

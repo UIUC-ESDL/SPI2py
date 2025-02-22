@@ -7,9 +7,9 @@ from SPI2py.models.projection.projection import project_component, combine_densi
 from SPI2py.models.utilities.visualization import plot_grid, plot_spheres, plot_AABB, plot_stl_file
 from SPI2py.models.projection.mesh_kernels import create_uniform_kernel
 from SPI2py.models.physics.distributed.mesh import generate_mesh_vec, find_active_nodes, find_face_nodes
-# from SPI2py.models.physics.distributed.assembly import apply_dirichlet_bc, apply_robin_bc, apply_load
+from SPI2py.models.physics.distributed.assembly import DirichletBC, RobinBC
 from SPI2py.models.physics.distributed.mesh import generate_mesh_vec
-from SPI2py.models.physics.distributed.solver import solve_system_partitioned
+from SPI2py.models.physics.distributed.solver import solve_system
 from SPI2py.models.utilities.visualization import plot_temperature_distribution
 
 # Create grid
@@ -42,29 +42,33 @@ densities_combined = combine_densities(densities_be, min_density=2e-2, penalty_f
 # FEA
 density = jnp.ones(nx * ny * nz)
 
-# For simplicity, assume all elements are “solid” (density = 1.0)
 
 
-# conv_area = (lx * ly) / ((nx + 1) * (ny + 1))
-conv_surface_area = el_size**2
 
-robin_nodes = find_face_nodes(nodes, jnp.array([0.0, 0.0, 1.0]))
-dirichlet_nodes = find_face_nodes(nodes, jnp.array([0.0, 0.0, -1.0]))
+# Define boundary conditions
+
+# Fixed-temperature surface
+fixed_temp_surface_nodes = find_face_nodes(nodes, jnp.array([0.0, 0.0, -1.0]))
+dirichlet_bc_1 = DirichletBC(fixed_temp_surface_nodes, T=200)
+
+# Heat-generating component
+# TODO Change
 comp_nodes = find_active_nodes(densities_combined, threshold=3e-2)
+dirichlet_bc_2 = DirichletBC(comp_nodes, T=150.0)
+
+# Convection surface
+conv_surface_area = el_size**2
+convection_nodes = find_face_nodes(nodes, jnp.array([0.0, 0.0, 1.0]))
+robin_bc_1 = RobinBC(convection_nodes, h=10.0, T_inf=200, area=conv_surface_area)
+
+
 
 # Run the FEA pipeline.
-nodes, elements, T = solve_system_partitioned(nodes,
-                                    elements,
-                                    base_k=1.0,
-                                    density=densities_combined.flatten(),  # density,
-                                    h=10.0,  # Convection coefficient
-                                    T_inf=30.0,  # Ambient temperature for convection
-                                    fixed_nodes=dirichlet_nodes,
-                                    fixed_values=200,
-                                    robin_nodes=robin_nodes,
-                                    conv_area=conv_surface_area,
-                                    comp_nodes=comp_nodes,
-                                    comp_temp=150.0)
+nodes, elements, T = solve_system(nodes,
+                                  elements,
+                                  base_k=1.0,
+                                  density=densities_combined.flatten(),
+                                  boundary_conditions=[dirichlet_bc_1, dirichlet_bc_2, robin_bc_1],)
 
 
 T_np = np.array(T)
@@ -92,11 +96,12 @@ plot_stl_file(plotter, (0, 1), 'models/Bot_Eye_scaled.stl', translation=(0.625, 
 # Plot the grid without the kernel
 plot_grid(plotter, (0, 2), el_centers, el_size, densities=densities_combined)
 
+dirichlet_nodes = jnp.concatenate([dirichlet_bc_1.nodes, dirichlet_bc_2.nodes])
 plot_temperature_distribution(plotter,
                               (0, 2),
                               nodes_plot,
                               T_plot,
-                              robin_nodes,
+                              convection_nodes,
                               dirichlet_nodes,
                               (nx + 1, ny + 1, nz + 1),
                               cmap='jet')

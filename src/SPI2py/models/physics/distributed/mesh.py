@@ -181,12 +181,6 @@ def generate_mesh_vec(x_min, x_max, y_min, y_max, z_min, z_max, element_size=1.0
     C_Z = C_Z.ravel()
     centers = jnp.stack([C_X, C_Y, C_Z], axis=-1)
 
-    # Stack the coordinates to form a position array
-    # pos = np.stack((xv, yv, zv), axis=-1)
-
-    # # Expand dimensions to include an extra axis as in your original function
-    # centers = jnp.expand_dims(centers, axis=3)
-
     return nodes, elements, centers, nx, ny, nz, lx, ly, lz
 
 
