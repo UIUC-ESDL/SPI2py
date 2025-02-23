@@ -5,7 +5,8 @@ Author:     Chad Peterson
 
 import openmdao.api as om
 from SPI2py.API.system import SpatialConfiguration
-from SPI2py.API.projection import Mesh, Projections, ProjectionAggregator
+from SPI2py.API.projection import Projection, ProjectionAggregator
+from SPI2py.API.FEA import Mesh
 from SPI2py.API.objectives import BoundingBoxVolume
 from SPI2py.API.utilities import Multiplexer
 
@@ -39,8 +40,8 @@ model.add_subsystem('system', SpatialConfiguration(input_dict=input_file, upper=
 model.add_subsystem('mesh', Mesh(bounds=bounds,
                                  n_elements_per_unit_length=n_elements_per_unit_length))
 
-model.add_subsystem('projections', Projections(n_comp_projections=n_components,
-                                               n_int_projections=m_interconnects))
+model.add_subsystem('projections', Projection(n_comp_projections=n_components,
+                                              n_int_projections=m_interconnects))
 
 model.add_subsystem('aggregator', ProjectionAggregator(n_projections=n_projections))
 

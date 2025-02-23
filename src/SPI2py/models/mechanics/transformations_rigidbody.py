@@ -3,6 +3,7 @@
 """
 
 import jax.numpy as jnp
+from chex import assert_shape
 
 
 def transform_points(positions, reference_point, translation, rotation):
@@ -20,10 +21,10 @@ def transform_points(positions, reference_point, translation, rotation):
     """
 
     # Ensure inputs are proper shapes
-    translation = jnp.asarray(translation).reshape(3)
-    rotation = jnp.asarray(rotation).reshape(3)
-    reference_point = jnp.asarray(reference_point).reshape(3)
-    positions = jnp.asarray(positions)
+    assert_shape(positions, (None, 3))
+    assert_shape(reference_point, (3,))
+    assert_shape(translation, (3,))
+    assert_shape(rotation, (3,))
 
     # Assemble the transformation matrix
     t = jnp.eye(4, dtype=jnp.float64)

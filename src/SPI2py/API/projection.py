@@ -1,95 +1,37 @@
-import math
 import jax.numpy as jnp
-from jax import grad, jacfwd, jacrev
+from jax import jacfwd
 from openmdao.api import ExplicitComponent, Group
-from openmdao.core.indepvarcomp import IndepVarComp
 
-from ..models.physics.distributed.mesh import generate_mesh_vec
 from ..models.projection.projection import project_component
 from ..models.projection.projection import project_interconnect
+from SPI2py.models.projection.mesh_kernels import create_uniform_kernel
 from ..models.utilities.aggregation import kreisselmeier_steinhauser_max
-from ..models.projection.mesh_kernels import create_uniform_kernel, apply_kernel
-
-
-
-class Mesh(IndepVarComp):
-    def initialize(self):
-
-        self.options.declare('bounds', types=tuple, desc='Bounds of the mesh')
-        self.options.declare('n_elements_per_unit_length', types=float, desc='Number of elements per unit length')
-
-    def setup(self):
-
-        # Get the options
-        x_min, x_max = self.options['x_bounds']
-        y_min, y_max = self.options['y_bounds']
-        z_min, z_max = self.options['z_bounds']
-        element_size = self.options['element_size']
-
-        # Calculate the element length
-        # lx = x_max - x_min
-        # ly = y_max - y_min
-        # lz = z_max - z_min
-
-        # Calculate the number of elements
-        # Bounds may be exceeded by 1 element
-        # nx = math.ceil(lx / element_size)
-        # ny = math.ceil(ly / element_size)
-        # nz = math.ceil(lz / element_size)
-
-        # Define the mesh grid positions
-        # nodes, elements = generate_mesh_vec(nx, ny, nz, lx, ly, lz)
-        nodes, elements, centers, nx, ny, nz, lx, ly, lz = generate_mesh_vec(0, 2, 0, 4, 0, 2, element_size=element_size)
-        centers = centers.reshape(nx, ny, nz, 1, 3)
-
-        # Read the MDBD kernel
-        uniform_8_kernel_positions, uniform_8_kernel_radii = create_uniform_kernel(1, mode='circumscription')
-        kernel_positions = jnp.array(uniform_8_kernel_positions)
-        kernel_radii = jnp.array(uniform_8_kernel_radii).reshape(-1, 1)
-
-        # # Calculate the kernel volume fraction
-        volume_element = element_size ** 3
-        # volume_kernel = jnp.sum(4/3 * jnp.pi * kernel_radii ** 3)
-        # volume_approximation_error = abs((volume_kernel - volume_element) / volume_element)
-
-        # Declare the outputs
-        self.add_output('element_size', val=element_size)
-        self.add_output('mesh_centers', val=centers)
-        self.add_output('mesh_nodes', val=nodes)
-        self.add_output('mesh_elements', val=elements)
-        self.add_output('n_el_x', val=nx)
-        self.add_output('n_el_y', val=ny)
-        self.add_output('n_el_z', val=nz)
-
-        # Outputs for additional info
-        # self.add_output('element_volume', val=volume_element)
-        # self.add_output('kernel_volume', val=volume_kernel)
-        # self.add_output('volume_approximation_error', val=volume_approximation_error)
 
 
 class Projections(Group):
-    def initialize(self):
-        self.options.declare('n_comp_projections', types=int, desc='Number of component projections')
-        self.options.declare('n_int_projections', types=int, desc='Number of interconnect projections')
-
-    def setup(self):
-
-        # Get the options
-        n_comp_projections = self.options['n_comp_projections']
-        n_int_projections = self.options['n_int_projections']
-
-        # Projection counter
-        i = 0
-
-        # Add the projection components
-        for _ in range(n_comp_projections):
-            self.add_subsystem(f'projection_{i}', ProjectComponent())
-            i += 1
-
-        # Add the interconnect projection components
-        for _ in range(n_int_projections):
-            self.add_subsystem(f'projection_{i}', ProjectInterconnect())
-            i += 1
+    pass
+    # def initialize(self):
+    #     self.options.declare('n_comp_projections', types=int, desc='Number of component projections')
+    #     self.options.declare('n_int_projections', types=int, desc='Number of interconnect projections')
+    #
+    # def setup(self):
+    #
+    #     # Get the options
+    #     n_comp_projections = self.options['n_comp_projections']
+    #     n_int_projections = self.options['n_int_projections']
+    #
+    #     # Projection counter
+    #     i = 0
+    #
+    #     # Add the projection components
+    #     for _ in range(n_comp_projections):
+    #         self.add_subsystem(f'projection_{i}', ProjectComponent())
+    #         i += 1
+    #
+    #     # Add the interconnect projection components
+    #     for _ in range(n_int_projections):
+    #         self.add_subsystem(f'projection_{i}', ProjectInterconnect())
+    #         i += 1
 
 
 class ProjectComponent(ExplicitComponent):
@@ -99,6 +41,7 @@ class ProjectComponent(ExplicitComponent):
 
     def initialize(self):
         self.options.declare('color', types=str, desc='Color of the projection', default='blue')
+        self.options.declare('kernel_steps_per_unit_length', types=(int, float), desc='Number of kernel steps per unit length', default=1.0)
 
     def setup(self):
 
@@ -109,16 +52,25 @@ class ProjectComponent(ExplicitComponent):
         # Object Inputs
         self.add_input('sphere_positions', shape_by_conn=True)
         self.add_input('sphere_radii', shape_by_conn=True)
-        self.add_input('volume', val=0.0)
+        # self.add_input('volume', val=0.0)
 
         # Outputs
         self.add_output('pseudo_densities', compute_shape=lambda shapes: (shapes['mesh_centers'][0], shapes['mesh_centers'][1], shapes['mesh_centers'][2]))
         # self.add_output('volume_estimation_error', val=0.0, desc='How accurately the projection represents the object')
 
+        # volume_kernel = jnp.sum(4/3 * jnp.pi * kernel_radii ** 3)
+        # volume_approximation_error = abs((volume_kernel - volume_element) / volume_element)
+
     # def setup_partials(self):
     #     self.declare_partials('pseudo_densities', 'sphere_positions')
 
+
+
     def compute(self, inputs, outputs):
+
+        # Get the Mesh inputs
+        kernel_steps_per_unit_length = self.options['kernel_steps_per_unit_length']
+        kernel_points, kernel_radii = create_uniform_kernel(kernel_steps_per_unit_length, mode='circumscription')
 
         # Get the Mesh inputs
         element_size   = jnp.array(inputs['element_size'])
@@ -128,15 +80,15 @@ class ProjectComponent(ExplicitComponent):
         volume           = jnp.array(inputs['volume'])
 
         # Compute the pseudo-densities
-        pseudo_densities = self._project(sphere_positions, sphere_radii, sample_points, sample_radii, element_bounds)
+        pseudo_densities = self._project(mesh_centers, element_size, sphere_positions, sphere_radii, kernel_points, kernel_radii)
 
         # Compute the volume estimation error
-        projected_volume = jnp.sum(pseudo_densities * element_size ** 3)
-        volume_estimation_error = jnp.abs(volume - projected_volume) / volume
+        # projected_volume = jnp.sum(pseudo_densities * element_size ** 3)
+        # volume_estimation_error = jnp.abs(volume - projected_volume) / volume
 
         # Write the outputs
         outputs['pseudo_densities'] = pseudo_densities
-        outputs['volume_estimation_error'] = volume_estimation_error
+        # outputs['volume_estimation_error'] = volume_estimation_error
 
     # def compute_partials(self, inputs, partials):
     #

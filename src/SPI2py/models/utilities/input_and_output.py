@@ -39,7 +39,7 @@ def read_xyzr_file(filepath, num_spheres=100):
 
     return positions, radii
 
-def read_csv_file(filepath, S_c):
+def read_csv_file(filepath, min_radius):
     """
     Reads a .csv file and returns the positions and radii of the spheres.
 
@@ -48,7 +48,7 @@ def read_csv_file(filepath, S_c):
     """
 
     xyzr_be = np.loadtxt(filepath, delimiter=',')
-    xyzr_be = xyzr_be[xyzr_be[:, 3] >= S_c]
+    xyzr_be = xyzr_be[xyzr_be[:, 3] >= min_radius]
     pos = xyzr_be[:, :3]
     rad = xyzr_be[:, 3:4]
 

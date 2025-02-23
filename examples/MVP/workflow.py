@@ -4,8 +4,9 @@ Author:     Chad Peterson
 """
 
 import openmdao.api as om
-from SPI2py.API.SpatialConfiguration import SpatialConfiguration
-from SPI2py.API.projection import Mesh, Projections, ProjectionAggregator
+from SPI2py.API.system import System, Components, Interconnects, Component, Interconnect
+from SPI2py.API.projection import Projections, ProjectionAggregator, ProjectComponent
+from SPI2py.API.FEA import Mesh
 from SPI2py.API.objectives import BoundingBoxVolume
 from SPI2py.API.utilities import Multiplexer, read_input_file
 
@@ -13,7 +14,7 @@ from SPI2py.API.utilities import Multiplexer, read_input_file
 # from SPI2py.models.utilities.inputs import read_input_file
 
 # Read the input file
-input_file = read_input_file('input.toml')
+# input_file = read_input_file('input.toml')
 
 # Initialize the problem
 prob = om.Problem()
@@ -35,9 +36,61 @@ n_projections = n_components + m_interconnects
 n_points_per_object = [n_spheres for _ in range(n_components)] + [m_segments + 1 for _ in range(m_interconnects)]
 
 # Initialize the subsystems
-model.add_subsystem('system', SpatialConfiguration(input_dict=input_file))
-model.add_subsystem('mesh', Mesh(bounds=bounds,
-                                 n_elements_per_unit_length=n_elements_per_unit_length))
+model.add_subsystem('system', System())
+model.system.add_subsystem('components', Components())
+model.system.add_subsystem('interconnects', Interconnects())
+model.add_subsystem('mesh', Mesh(x_bounds=(0, 5), y_bounds=(0, 5), z_bounds=(0, 5), element_size=1))
+model.add_subsystem('projections', Projections())
+
+# Define the individual components
+comp_1 = Component(description='Cross Head Pin',filepath='csvs/CrossHead_Pin_5k_300s.csv',n_spheres=50,ports = [[0.0, 0.415, 0.415], [2.850, 0.415, 0.415]],color='purple')
+proj_1 = ProjectComponent()
+
+model.system.components.add_subsystem('comp_1', comp_1)
+model.projections.add_subsystem('proj_1', proj_1)
+
+# Connect the components to the system
+model.connect('system.components.comp_1.transformed_sphere_positions', 'projections.proj_1.sphere_positions')
+model.connect('system.components.comp_1.transformed_sphere_radii', 'projections.proj_1.sphere_radii')
+
+model.connect('mesh.element_size', 'projections.proj_1.element_size')
+model.connect('mesh.mesh_centers', 'projections.proj_1.mesh_centers')
+
+
+
+#                 interconnects.add_subsystem(f'int_{i}', interconnect)
+#
+#                 # Connect the interconnects to the components
+#                 self.connect(f'components.comp_{component_1}.transformed_ports',
+#                              f'interconnects.int_{i}.start_point',
+#                              src_indices=om.slicer[port_1, :])
+#                 self.connect(f'components.comp_{component_2}.transformed_ports',
+#                              f'interconnects.int_{i}.end_point',
+#                              src_indices=om.slicer[port_2, :])
+#
+#             self.add_subsystem('interconnects', interconnects)
+#
+#         # Create the system
+#         system = System(n_projections=len(components_dict) + len(interconnects_dict), rho_min=1e-3)
+#         self.add_subsystem('system', system)
+#
+#
+#         # Connect the components to the system
+#         i = 0
+#         for j in range(len(components_dict)):
+#             self.connect(f'components.comp_{j}.pseudo_densities',
+#                           f'system.pseudo_densities_{i}')
+#             i += 1
+#
+#         # Connect the interconnects to the system
+#         for j in range(len(interconnects_dict)):
+#             self.connect(f'interconnects.int_{j}.pseudo_densities',
+#                           f'system.pseudo_densities_{i}')
+#             i += 1
+
+# model.add_subsystem('system', SpatialConfiguration(input_dict=input_file))
+# model.add_subsystem('mesh', Mesh(bounds=bounds,
+#                                  n_elements_per_unit_length=n_elements_per_unit_length))
 
 # model.add_subsystem('projections', Projections(n_comp_projections=n_components,
 #                                                n_int_projections=m_interconnects))
@@ -114,7 +167,7 @@ prob.setup()
 # prob.driver.options['optimizer'] = 'COBYLA'
 
 # Run the model once
-# prob.run_model()
+prob.run_model()
 
 # Run the optimization
 # prob.run_driver()
