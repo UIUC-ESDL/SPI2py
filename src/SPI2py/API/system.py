@@ -89,7 +89,7 @@ class Component(ExplicitComponent):
         rotation = inputs['rotation']
 
         # Calculate the transformed sphere positions and port positions
-        sphere_positions_transformed, ports_transformed = self._compute_primal(sphere_positions, port_positions,translation, rotation)
+        sphere_positions_transformed, ports_transformed = self._compute_primal(sphere_positions, port_positions, translation, rotation)
 
         # Set the outputs
         outputs['transformed_sphere_positions'] = sphere_positions_transformed
@@ -145,15 +145,15 @@ class Component(ExplicitComponent):
         spheres_ref_point = sphere_positions[0]
         ports_ref_point = port_positions[0]
 
-        spheres_positions_transformed = transform_points(sphere_positions.T,
+        spheres_positions_transformed = transform_points(sphere_positions,
                                                          spheres_ref_point,
-                                               translation,
-                                               rotation).T
+                                               translation.flatten(),
+                                               rotation.flatten())
 
-        ports_transformed = transform_points(port_positions.T,
+        ports_transformed = transform_points(port_positions,
                                              ports_ref_point,
-                                               translation,
-                                               rotation).T
+                                               translation.flatten(),
+                                               rotation.flatten())
 
         return spheres_positions_transformed, ports_transformed
 

@@ -41,7 +41,7 @@ class ProjectComponent(ExplicitComponent):
 
     def initialize(self):
         self.options.declare('color', types=str, desc='Color of the projection', default='blue')
-        self.options.declare('kernel_steps_per_unit_length', types=(int, float), desc='Number of kernel steps per unit length', default=1.0)
+        self.options.declare('kernel_steps_per_unit_length', types=int, desc='Number of kernel steps per unit length', default=1)
 
     def setup(self):
 
@@ -71,13 +71,16 @@ class ProjectComponent(ExplicitComponent):
         # Get the Mesh inputs
         kernel_steps_per_unit_length = self.options['kernel_steps_per_unit_length']
         kernel_points, kernel_radii = create_uniform_kernel(kernel_steps_per_unit_length, mode='circumscription')
+        kernel_points = kernel_points.reshape(-1, 3)
+        kernel_radii = kernel_radii.reshape(-1, 1)
+
 
         # Get the Mesh inputs
         element_size   = jnp.array(inputs['element_size'])
         mesh_centers  = jnp.array(inputs['mesh_centers'])
         sphere_positions = jnp.array(inputs['sphere_positions'])
         sphere_radii     = jnp.array(inputs['sphere_radii'])
-        volume           = jnp.array(inputs['volume'])
+        # volume           = jnp.array(inputs['volume'])
 
         # Compute the pseudo-densities
         pseudo_densities = self._project(mesh_centers, element_size, sphere_positions, sphere_radii, kernel_points, kernel_radii)
@@ -107,8 +110,14 @@ class ProjectComponent(ExplicitComponent):
 
 
     @staticmethod
-    def _project(mesh_centers, mesh_size, obj_points, obj_radii, kernel_points, kernel_radii):
-        pseudo_densities, kernel_points, kernel_radii = project_component(mesh_centers, mesh_size, obj_points, obj_radii, kernel_points, kernel_radii)
+    def _project(mesh_centers, mesh_size,
+                 obj_points, obj_radii,
+                 kernel_points, kernel_radii):
+
+        # TODO Fix mesh size to scalar
+        pseudo_densities, kernel_points, kernel_radii = project_component(mesh_centers, float(mesh_size[0]),
+                                                                          obj_points, obj_radii,
+                                                                          kernel_points, kernel_radii)
         return pseudo_densities
 
 

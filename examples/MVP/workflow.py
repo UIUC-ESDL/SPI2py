@@ -2,16 +2,15 @@
 Example 1:  Simple optimization of a 3D layout
 Author:     Chad Peterson
 """
-
+import pyvista as pv
 import openmdao.api as om
 from SPI2py.API.system import System, Components, Interconnects, Component, Interconnect
 from SPI2py.API.projection import Projections, ProjectionAggregator, ProjectComponent
 from SPI2py.API.FEA import Mesh
 from SPI2py.API.objectives import BoundingBoxVolume
 from SPI2py.API.utilities import Multiplexer, read_input_file
+from SPI2py.models.utilities.visualization import plot_grid
 
-# from SPI2py.models.utilities.visualization import plot_problem
-# from SPI2py.models.utilities.inputs import read_input_file
 
 # Read the input file
 # input_file = read_input_file('input.toml')
@@ -43,7 +42,7 @@ model.add_subsystem('mesh', Mesh(x_bounds=(0, 5), y_bounds=(0, 5), z_bounds=(0, 
 model.add_subsystem('projections', Projections())
 
 # Define the individual components
-comp_1 = Component(description='Cross Head Pin',filepath='csvs/CrossHead_Pin_5k_300s.csv',n_spheres=50,ports = [[0.0, 0.415, 0.415], [2.850, 0.415, 0.415]],color='purple')
+comp_1 = Component(description='Cross Head Pin',filepath='csvs/CrossHead_Pin_5k_300s.csv',n_spheres=50,ports=[[0.0, 0.415, 0.415], [2.850, 0.415, 0.415]],color='purple')
 proj_1 = ProjectComponent()
 
 model.system.components.add_subsystem('comp_1', comp_1)
@@ -177,5 +176,12 @@ prob.run_model()
 # print('Max Pseudo Density:', prob.get_val('aggregator.max_pseudo_density'))
 # plot_problem(prob)
 
+mesh_centers = prob.get_val('mesh.mesh_centers')
+el_size = prob.get_val('mesh.element_size')
+densities = prob.get_val('projections.proj_1.pseudo_densities')
 
+# Plot the grid without the kernel
+plotter = pv.Plotter(shape=(1, 1), window_size=(1500, 500))
+plot_grid(plotter, (0, 0), mesh_centers, el_size, densities=densities)
+plotter.show()
 print('Done')
