@@ -1,5 +1,6 @@
 import numpy as np
-from jax import jacfwd
+import jax.numpy as jnp
+from jax import jacfwd, jacrev
 
 import openmdao.api as om
 from openmdao.api import ExplicitComponent, Group
@@ -37,10 +38,13 @@ class Component(ExplicitComponent):
         min_radius = 3.0e-2
         sphere_positions, sphere_radii = read_csv_file(filepath, min_radius)
 
+
         # Convert the lists to numpy arrays
         sphere_positions = np.array(sphere_positions).reshape(-1, 3)
         sphere_radii = np.array(sphere_radii).reshape(-1, 1)
         ports = np.array(ports).reshape(-1, 3)
+        self.num_spheres = sphere_positions.shape[0]
+        self.num_ports = ports.shape[0]
 
         # Define the input shapes
         self.add_input('sphere_positions', val=sphere_positions)
@@ -75,9 +79,29 @@ class Component(ExplicitComponent):
 
 
 
-    # def setup_partials(self):
-    #     self.declare_partials('transformed_ports', ['translation', 'rotation'])
-    #     self.declare_partials('pseudo_densities', ['translation', 'rotation'])
+    def setup_partials(self):
+
+        # Declare the partials for the outputs wrt the design variables
+        self.declare_partials('transformed_sphere_positions', ['translation', 'rotation'])
+        self.declare_partials('transformed_ports', ['translation', 'rotation'])
+
+        # Declare the partials for the outputs wrt the static inputs
+        # Note: The default check_partials step size of 1e-6 results in numerical errors on
+        # some off-diagonal terms, which raises an error about non-zero rows and columns. Use 1e-4.
+        I_s = jnp.eye(self.num_spheres * 3)
+        rows_s, cols_s = jnp.where(I_s)
+        self.declare_partials('transformed_sphere_positions', 'sphere_positions', rows=rows_s, cols=cols_s, val=1.0, method='exact')
+
+        I_p = jnp.eye(self.num_ports * 3)
+        rows_p, cols_p = jnp.where(I_p)
+        self.declare_partials('transformed_ports', 'ports', rows=rows_p, cols=cols_p, val=1.0,
+                              method='exact')
+
+        # 'transformed_sphere_radii' wrt 'sphere_radii'
+        #
+        I_r = jnp.eye(self.num_spheres)
+        rows_r, cols_r = jnp.where(I_r)
+        self.declare_partials('transformed_sphere_radii', 'sphere_radii', rows=rows_r, cols=cols_r, val=1.0, method='exact')
 
     def compute(self, inputs, outputs):
 
@@ -96,50 +120,44 @@ class Component(ExplicitComponent):
         outputs['transformed_sphere_radii'] = sphere_radii
         outputs['transformed_ports'] = ports_transformed
 
-    # def compute_partials(self, inputs, partials):
-    #
-    #     # Get the input variables
-    #     sphere_positions = inputs['sphere_positions']
-    #     sphere_radii = inputs['sphere_radii']
-    #     ports = inputs['ports']
-    #     translation = inputs['translation']
-    #     rotation = inputs['rotation']
-    #
-    #     # Convert the input variables to Jax arrays
-    #     sphere_positions = jnp.array(sphere_positions)
-    #     sphere_radii = jnp.array(sphere_radii)
-    #     ports = jnp.array(ports)
-    #     translation = jnp.array(translation)
-    #     rotation = jnp.array(rotation)
-    #
-    #     # Define the Jacobian matrices using PyTorch Autograd
-    #     jac_sphere_positions = jacfwd(self.compute_transformation, argnums=(1, 2))
-    #     jac_ports = jacfwd(self.compute_transformation, argnums=(1, 2))
-    #
-    #     # Evaluate the Jacobian matrices
-    #     jac_sphere_positions_val = jac_sphere_positions(sphere_positions, translation, rotation)
-    #     jac_ports_val = jac_ports(ports, translation, rotation)
-    #
-    #     # Slice the Jacobian matrices
-    #     grad_sphere_positions_translation = jac_sphere_positions_val[0]
-    #     grad_sphere_positions_rotation = jac_sphere_positions_val[1]
-    #     grad_ports_translation = jac_ports_val[0]
-    #     grad_ports_rotation = jac_ports_val[1]
-    #
-    #     # Set the outputs
-    #     partials['transformed_sphere_positions', 'translation'] = grad_sphere_positions_translation
-    #     partials['transformed_sphere_positions', 'rotation'] = grad_sphere_positions_rotation
-    #     partials['transformed_ports', 'translation'] = grad_ports_translation
-    #     partials['transformed_ports', 'rotation'] = grad_ports_rotation
+    def compute_partials(self, inputs, partials):
+
+        # Get the input variables
+        sphere_positions = inputs['sphere_positions']
+        sphere_radii = inputs['sphere_radii']
+        ports = inputs['ports']
+        translation = inputs['translation']
+        rotation = inputs['rotation']
+
+        # Convert the input variables to Jax arrays
+        sphere_positions = jnp.array(sphere_positions)
+        sphere_radii = jnp.array(sphere_radii)
+        ports = jnp.array(ports)
+        translation = jnp.array(translation)
+        rotation = jnp.array(rotation)
+
+        # Define the Jacobian matrices using PyTorch Autograd
+        jac_fun = jacfwd(self._compute_primal, argnums=(2, 3))
+        # jac_ports = jacfwd(self._compute_primal, argnums=(1, 2))
+
+        # Evaluate the Jacobian matrices
+        jac_sphere_positions_val, jac_ports_val = jac_fun(sphere_positions, ports, translation, rotation)
+        # jac_ports_val = jac_ports(ports, translation, rotation)
+
+        # Slice the Jacobian matrices
+        grad_sphere_positions_translation = jac_sphere_positions_val[0]
+        grad_sphere_positions_rotation = jac_sphere_positions_val[1]
+        grad_ports_translation = jac_ports_val[0]
+        grad_ports_rotation = jac_ports_val[1]
+
+        # Set the outputs
+        partials['transformed_sphere_positions', 'translation'] = grad_sphere_positions_translation
+        partials['transformed_sphere_positions', 'rotation'] = grad_sphere_positions_rotation
+        partials['transformed_ports', 'translation'] = grad_ports_translation
+        partials['transformed_ports', 'rotation'] = grad_ports_rotation
 
     @staticmethod
     def _compute_primal(sphere_positions, port_positions, translation, rotation):
-
-        # Assemble the transformation matrix
-        # t = assemble_transformation_matrix(translation, rotation)
-
-        # Apply the transformation matrix to the sphere positions and port positions
-        # Use the translation vector as the origin
 
         # Get the ref points
         spheres_ref_point = sphere_positions[0]
@@ -157,11 +175,7 @@ class Component(ExplicitComponent):
 
         return spheres_positions_transformed, ports_transformed
 
-    # @staticmethod
-    # def _compute_primal(sphere_positions, sphere_radii, sample_points, sample_radii, element_bounds):
-    #     pseudo_densities = project_component(sphere_positions, sphere_radii, sample_points, sample_radii,
-    #                                                   element_bounds)
-    #     return pseudo_densities
+
 
 
 class Interconnect(ExplicitComponent):

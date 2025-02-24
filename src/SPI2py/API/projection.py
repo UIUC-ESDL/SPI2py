@@ -10,28 +10,6 @@ from ..models.utilities.aggregation import kreisselmeier_steinhauser_max
 
 class Projections(Group):
     pass
-    # def initialize(self):
-    #     self.options.declare('n_comp_projections', types=int, desc='Number of component projections')
-    #     self.options.declare('n_int_projections', types=int, desc='Number of interconnect projections')
-    #
-    # def setup(self):
-    #
-    #     # Get the options
-    #     n_comp_projections = self.options['n_comp_projections']
-    #     n_int_projections = self.options['n_int_projections']
-    #
-    #     # Projection counter
-    #     i = 0
-    #
-    #     # Add the projection components
-    #     for _ in range(n_comp_projections):
-    #         self.add_subsystem(f'projection_{i}', ProjectComponent())
-    #         i += 1
-    #
-    #     # Add the interconnect projection components
-    #     for _ in range(n_int_projections):
-    #         self.add_subsystem(f'projection_{i}', ProjectInterconnect())
-    #         i += 1
 
 
 class ProjectComponent(ExplicitComponent):

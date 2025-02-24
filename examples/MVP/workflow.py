@@ -18,31 +18,27 @@ from SPI2py.models.utilities.visualization import plot_grid
 # Initialize the problem
 prob = om.Problem()
 model = prob.model
+system = System()
+components = Components()
+interconnects = Interconnects()
+projections = Projections()
 
-# Mesh Parameters
-bounds = (0, 10, -1, 10, 1, 4)
-n_elements_per_unit_length = 6.0
+# Initialize the Mesh
+x_bounds = (0, 5)
+y_bounds = (0, 5)
+z_bounds = (0, 5)
+element_size = 1.0
+mesh = Mesh(x_bounds=x_bounds, y_bounds=y_bounds, z_bounds=z_bounds, element_size=element_size)
 
-# System Parameters
-n_components = 1
-n_spheres = 50
-
-m_interconnects = 0
-m_segments = 0
-
-# Projection Parameters
-n_projections = n_components + m_interconnects
-n_points_per_object = [n_spheres for _ in range(n_components)] + [m_segments + 1 for _ in range(m_interconnects)]
-
-# Initialize the subsystems
-model.add_subsystem('system', System())
-model.system.add_subsystem('components', Components())
-model.system.add_subsystem('interconnects', Interconnects())
-model.add_subsystem('mesh', Mesh(x_bounds=(0, 5), y_bounds=(0, 5), z_bounds=(0, 5), element_size=1))
-model.add_subsystem('projections', Projections())
+# Assemble the system
+model.add_subsystem('system', system)
+model.system.add_subsystem('components', components)
+model.system.add_subsystem('interconnects', interconnects)
+model.add_subsystem('mesh', mesh)
+model.add_subsystem('projections', projections)
 
 # Define the individual components
-comp_1 = Component(description='Cross Head Pin',filepath='csvs/CrossHead_Pin_5k_300s.csv',n_spheres=50,ports=[[0.0, 0.415, 0.415], [2.850, 0.415, 0.415]],color='purple')
+comp_1 = Component(description='Cross Head Pin', filepath='csvs/CrossHead_Pin_5k_300s.csv', n_spheres=50, ports=[[0.0, 0.415, 0.415], [2.850, 0.415, 0.415]], color='purple')
 proj_1 = ProjectComponent()
 
 model.system.components.add_subsystem('comp_1', comp_1)
@@ -181,7 +177,10 @@ el_size = prob.get_val('mesh.element_size')
 densities = prob.get_val('projections.proj_1.pseudo_densities')
 
 # Plot the grid without the kernel
-plotter = pv.Plotter(shape=(1, 1), window_size=(1500, 500))
-plot_grid(plotter, (0, 0), mesh_centers, el_size, densities=densities)
-plotter.show()
+# plotter = pv.Plotter(shape=(1, 1), window_size=(1500, 500))
+# plot_grid(plotter, (0, 0), mesh_centers, el_size, densities=densities)
+# plotter.show()
+
+data = prob.check_partials(includes='system.components.comp_1', step=1e-4,show_only_incorrect=True)
+print(data['system.components.comp_1']['transformed_sphere_positions','translation'])
 print('Done')
