@@ -5,6 +5,7 @@ Geometry Project by Norato...
 import jax
 import jax.numpy as jnp
 from chex import assert_shape, assert_type
+jax.config.update("jax_debug_nans", True)
 
 
 from ..geometry.cylinders import create_cylinders
@@ -16,136 +17,40 @@ from ..geometry.spheres import get_aabb_indices
 from ..utilities.aggregation import kreisselmeier_steinhauser_max, kreisselmeier_steinhauser_min
 
 
-def project_component(grid_centers, grid_size,
-                         cyl_points, cyl_radii,
-                         kernel_points, kernel_radii):
-    """
-    Projects the points to the mesh and calculates the pseudo-densities
-
-    mesh_positions: (n_el_x, n_el_y, n_el_z, n_mesh_points, 3) tensor
-    mesh_radii: (n_el_x, n_el_y, n_el_z, n_mesh_points, 1) tensor
-
-    mesh_positions_expanded: (n_el_x, n_el_y, n_el_z, n_mesh_points, 1, 3) tensor
-
-    cylinder_starts: (n_segments, 3) tensor
-    cylinder_stops: (n_segments, 3) tensor
-    cylinder_radii: (n_segments, 1) tensor
-
-    cylinder_starts_expanded: (1, 1, 1, 1, n_segments, 3) tensor
-    cylinder_stops_expanded: (1, 1, 1, 1, n_segments, 3) tensor
-    cylinder_radii_expanded: (1, 1, 1, 1, n_segments) tensor
-
-    pseudo_densities: (n_el_x, n_el_y, n_el_z) tensor
-    """
-
-    # # Create the cylinders
-    # cyl_starts, cyl_stops, cyl_rad = create_cylinders(cyl_points, cyl_radius)
-    cyl_starts = cyl_points
-    cyl_stops = cyl_points
-
-    # Unpack the AABB indices
-    i1, i2, j1, j2, k1, k2 = get_aabb_indices(grid_centers, grid_size, cyl_points, cyl_radii)
-
-    # Extract grid dimensions
-    grid_nx, grid_ny, grid_nz, _, _ = grid_centers.shape
-    aabb_nx, aabb_ny, aabb_nz = (i2 - i1 + 1), (j2 - j1 + 1), (k2 - k1 + 1)
-    cyl_count, _ = cyl_radii.shape
-    kernel_count, _ = kernel_points.shape
-
-    # Initialize the output density array
-    all_densities = jnp.zeros((grid_nx, grid_ny, grid_nz), dtype='float64')
-
-    # Extract the active grid region within the object's AABB
-    active_grid_centers = grid_centers[i1:i2 + 1, j1:j2 + 1, k1:k2 + 1]
-
-    # Apply the kernel to active grid elements
-    kernel_points, kernel_radii = apply_kernel(active_grid_centers, grid_size, kernel_points, kernel_radii)
-
-    # # Calculate sample volumes and element volumes
-    # sample_volumes = (4 / 3) * jnp.pi * kernel_radii ** 3
-    # element_volumes = jnp.sum(sample_volumes, axis=3, keepdims=True)
-
-    # Expand the arrays to allow broadcasting
-    # Transpose object radii for broadcasting
-    kernel_points_bc = kernel_points.reshape(aabb_nx, aabb_ny, aabb_nz, kernel_count, 1, 3)
-    cyl_starts_bc = cyl_starts.reshape(1, 1, 1, 1, cyl_count, 3)
-    cyl_stops_bc = cyl_stops.reshape(1, 1, 1, 1, cyl_count, 3)
-    cyl_rad_bc = cyl_radii.T.reshape(1, 1, 1, 1, cyl_count)
-
-    # Vectorized signed distance and density calculations using your distance function
-    distances = cyl_rad_bc - minimum_distances_points_segments(kernel_points_bc, cyl_starts_bc, cyl_stops_bc)
-
-    # Fix rho for mesh_radii?
-    densities = density(distances, kernel_radii)
-
-    # Sum densities across all cylinders
-    # Combine the pseudo densities for all cylinders in each kernel sphere
-    # Collapse the last axis to get the combined density for each kernel sphere
-    densities = jnp.sum(densities, axis=4)
-
-    # Combine the pseudo densities for all kernel spheres in one grid
-    densities = jnp.sum(densities, axis=3)
-
-    # Store the densities in the output array
-    all_densities = all_densities.at[i1:i2 + 1, j1:j2 + 1, k1:k2 + 1].set(densities)
-
-    return all_densities, kernel_points, kernel_radii
-
-
 # def project_component(grid_centers, grid_size,
-#                       obj_points, obj_radii,
-#                       kernel_points, kernel_radii):
+#                          cyl_points, cyl_radii,
+#                          kernel_points, kernel_radii):
 #     """
-#     Projects object points to the grid and calculates pseudo-densities.
+#     Projects the points to the mesh and calculates the pseudo-densities
 #
-#     Parameters:
-#     ----------
-#     grid_centers : array, shape (nx, ny, nz, nk, 3)
-#         Grid element centers.
-#     grid_size : float
-#         Size of each grid element.
-#     obj_points : array, shape (no, 3)
-#         Object points in 3D space.
-#     obj_radii : array, shape (no, 1)
-#         Radii of the object points.
-#     kernel_points : array, shape (nk, 3)
-#         Points representing the mesh kernel.
-#     kernel_radii : array, shape (nk, 1)
-#         Radii of kernel points.
+#     mesh_positions: (n_el_x, n_el_y, n_el_z, n_mesh_points, 3) tensor
+#     mesh_radii: (n_el_x, n_el_y, n_el_z, n_mesh_points, 1) tensor
 #
-#     Returns:
-#     --------
-#     all_densities : array, shape (nx, ny, nz)
-#         Pseudo-densities calculated for each grid element.
-#     kernel_points : array, shape (nxs, nys, nzs, nk, 3)
-#         Kernel points in the grid's active area.
-#     kernel_radii : array, shape (nxs, nys, nzs, nk, 1)
-#         Kernel radii in the grid's active area.
+#     mesh_positions_expanded: (n_el_x, n_el_y, n_el_z, n_mesh_points, 1, 3) tensor
+#
+#     cylinder_starts: (n_segments, 3) tensor
+#     cylinder_stops: (n_segments, 3) tensor
+#     cylinder_radii: (n_segments, 1) tensor
+#
+#     cylinder_starts_expanded: (1, 1, 1, 1, n_segments, 3) tensor
+#     cylinder_stops_expanded: (1, 1, 1, 1, n_segments, 3) tensor
+#     cylinder_radii_expanded: (1, 1, 1, 1, n_segments) tensor
+#
+#     pseudo_densities: (n_el_x, n_el_y, n_el_z) tensor
 #     """
 #
-#     # Check the input shapes
-#     assert_shape(grid_centers, (None, None, None, None, 3))
-#     assert_shape(grid_size, (1,))
-#     assert_shape(obj_points, (None, 3))
-#     assert_shape(obj_radii, (None, 1))
-#     assert_shape(kernel_points, (None, 3))
-#     assert_shape(kernel_radii, (None, 1))
-#
-#     # Check the input types
-#     assert_type(grid_centers, "float64")
-#     assert_type(grid_size, "float64")
-#     assert_type(obj_points, "float64")
-#     assert_type(obj_radii, "float64")
-#     assert_type(kernel_points, "float64")
-#     assert_type(kernel_radii, "float64")
+#     # # Create the cylinders
+#     # cyl_starts, cyl_stops, cyl_rad = create_cylinders(cyl_points, cyl_radius)
+#     cyl_starts = cyl_points
+#     cyl_stops = cyl_points
 #
 #     # Unpack the AABB indices
-#     i1, i2, j1, j2, k1, k2 = get_aabb_indices(grid_centers, grid_size, obj_points, obj_radii)
+#     i1, i2, j1, j2, k1, k2 = get_aabb_indices(grid_centers, grid_size, cyl_points, cyl_radii)
 #
 #     # Extract grid dimensions
 #     grid_nx, grid_ny, grid_nz, _, _ = grid_centers.shape
 #     aabb_nx, aabb_ny, aabb_nz = (i2 - i1 + 1), (j2 - j1 + 1), (k2 - k1 + 1)
-#     obj_count, _ = obj_points.shape
+#     cyl_count, _ = cyl_radii.shape
 #     kernel_count, _ = kernel_points.shape
 #
 #     # Initialize the output density array
@@ -157,33 +62,135 @@ def project_component(grid_centers, grid_size,
 #     # Apply the kernel to active grid elements
 #     kernel_points, kernel_radii = apply_kernel(active_grid_centers, grid_size, kernel_points, kernel_radii)
 #
-#     # Calculate sample volumes and element volumes
-#     sample_volumes = (4 / 3) * jnp.pi * kernel_radii ** 3
-#     element_volumes = jnp.sum(sample_volumes, axis=3, keepdims=True)
+#     # # Calculate sample volumes and element volumes
+#     # sample_volumes = (4 / 3) * jnp.pi * kernel_radii ** 3
+#     # element_volumes = jnp.sum(sample_volumes, axis=3, keepdims=True)
 #
-#     # Expand dimensions for broadcasting
+#     # Expand the arrays to allow broadcasting
 #     # Transpose object radii for broadcasting
 #     kernel_points_bc = kernel_points.reshape(aabb_nx, aabb_ny, aabb_nz, kernel_count, 1, 3)
-#     obj_points_bc = obj_points.reshape(1, 1, 1, 1, obj_count, 3)
-#     obj_radii_bc = obj_radii.T.reshape(1, 1, 1, 1, obj_count)
+#     cyl_starts_bc = cyl_starts.reshape(1, 1, 1, 1, cyl_count, 3)
+#     cyl_stops_bc = cyl_stops.reshape(1, 1, 1, 1, cyl_count, 3)
+#     cyl_rad_bc = cyl_radii.T.reshape(1, 1, 1, 1, cyl_count)
 #
-#     # Compute distances between kernel and object points
-#     distances = minimum_distances_points_segments(kernel_points_bc, obj_points_bc, obj_points_bc)
+#     # Vectorized signed distance and density calculations using your distance function
+#     # distances = cyl_rad_bc - minimum_distances_points_segments(kernel_points_bc, cyl_starts_bc, cyl_stops_bc)
+#     # distances = jnp.linalg.norm(cyl_starts_bc - kernel_points_bc, axis=-1) - cyl_rad_bc
+#     # distances = signed_distances_spheres_spheres(cyl_starts_bc, cyl_rad_bc, kernel_points_bc, kernel_radii)
 #
-#     # Calculate volume overlaps
-#     overlaps = volume_intersection_two_spheres(obj_radii_bc, kernel_radii, distances)
-#     element_overlaps = jnp.sum(overlaps, axis=4, keepdims=True)
 #
-#     # Calculate volume fractions
-#     volume_fractions = (element_overlaps / element_volumes).reshape(aabb_nx, aabb_ny, aabb_nz, kernel_count)
+#     # Fix rho for mesh_radii?
+#     # distances = phi(kernel_points_bc, cyl_starts_bc, cyl_stops_bc, cyl_rad_bc)
+#     # densities = phi(kernel_points_bc, cyl_starts_bc, cyl_stops_bc, kernel_radii)
 #
-#     # Sum fractions to compute pseudo-densities
-#     densities = jnp.sum(volume_fractions, axis=3)
+#     # Sum densities across all cylinders
+#     # Combine the pseudo densities for all cylinders in each kernel sphere
+#     # Collapse the last axis to get the combined density for each kernel sphere
+#     densities = jnp.sum(densities, axis=4)
+#
+#     # Combine the pseudo densities for all kernel spheres in one grid
+#     densities = jnp.sum(densities, axis=3)
 #
 #     # Store the densities in the output array
 #     all_densities = all_densities.at[i1:i2 + 1, j1:j2 + 1, k1:k2 + 1].set(densities)
 #
 #     return all_densities, kernel_points, kernel_radii
+
+
+
+
+def project_component(grid_centers, grid_size,
+                      obj_points, obj_radii,
+                      kernel_points, kernel_radii):
+    """
+    Projects object points to the grid and calculates pseudo-densities.
+
+    Parameters:
+    ----------
+    grid_centers : array, shape (nx, ny, nz, nk, 3)
+        Grid element centers.
+    grid_size : float
+        Size of each grid element.
+    obj_points : array, shape (no, 3)
+        Object points in 3D space.
+    obj_radii : array, shape (no, 1)
+        Radii of the object points.
+    kernel_points : array, shape (nk, 3)
+        Points representing the mesh kernel.
+    kernel_radii : array, shape (nk, 1)
+        Radii of kernel points.
+
+    Returns:
+    --------
+    all_densities : array, shape (nx, ny, nz)
+        Pseudo-densities calculated for each grid element.
+    kernel_points : array, shape (nxs, nys, nzs, nk, 3)
+        Kernel points in the grid's active area.
+    kernel_radii : array, shape (nxs, nys, nzs, nk, 1)
+        Kernel radii in the grid's active area.
+    """
+
+    # Check the input shapes
+    assert_shape(grid_centers, (None, None, None, None, 3))
+    assert_shape(grid_size, (1,))
+    assert_shape(obj_points, (None, 3))
+    assert_shape(obj_radii, (None, 1))
+    assert_shape(kernel_points, (None, 3))
+    assert_shape(kernel_radii, (None, 1))
+
+    # Check the input types
+    assert_type(grid_centers, "float64")
+    assert_type(grid_size, "float64")
+    assert_type(obj_points, "float64")
+    assert_type(obj_radii, "float64")
+    assert_type(kernel_points, "float64")
+    assert_type(kernel_radii, "float64")
+
+    # Unpack the AABB indices
+    i1, i2, j1, j2, k1, k2 = get_aabb_indices(grid_centers, grid_size, obj_points, obj_radii)
+
+    # Extract grid dimensions
+    grid_nx, grid_ny, grid_nz, _, _ = grid_centers.shape
+    aabb_nx, aabb_ny, aabb_nz = (i2 - i1 + 1), (j2 - j1 + 1), (k2 - k1 + 1)
+    obj_count, _ = obj_points.shape
+    kernel_count, _ = kernel_points.shape
+
+    # Initialize the output density array
+    all_densities = jnp.zeros((grid_nx, grid_ny, grid_nz), dtype='float64')
+
+    # Extract the active grid region within the object's AABB
+    active_grid_centers = grid_centers[i1:i2 + 1, j1:j2 + 1, k1:k2 + 1]
+
+    # Apply the kernel to active grid elements
+    kernel_points, kernel_radii = apply_kernel(active_grid_centers, grid_size, kernel_points, kernel_radii)
+
+    # Calculate sample volumes and element volumes
+    sample_volumes = (4 / 3) * jnp.pi * kernel_radii ** 3
+    element_volumes = jnp.sum(sample_volumes, axis=3, keepdims=True)
+
+    # Expand dimensions for broadcasting
+    # Transpose object radii for broadcasting
+    kernel_points_bc = kernel_points.reshape(aabb_nx, aabb_ny, aabb_nz, kernel_count, 1, 3)
+    obj_points_bc = obj_points.reshape(1, 1, 1, 1, obj_count, 3)
+    obj_radii_bc = obj_radii.T.reshape(1, 1, 1, 1, obj_count)
+
+    # Compute distances between kernel and object points
+    distances = minimum_distances_points_segments(kernel_points_bc, obj_points_bc, obj_points_bc)
+
+    # Calculate volume overlaps
+    overlaps = volume_intersection_two_spheres(obj_radii_bc, kernel_radii, distances)
+    element_overlaps = jnp.sum(overlaps, axis=4, keepdims=True)
+
+    # Calculate volume fractions
+    volume_fractions = (element_overlaps / element_volumes).reshape(aabb_nx, aabb_ny, aabb_nz, kernel_count)
+
+    # Sum fractions to compute pseudo-densities
+    densities = jnp.sum(volume_fractions, axis=3)
+
+    # Store the densities in the output array
+    all_densities = all_densities.at[i1:i2 + 1, j1:j2 + 1, k1:k2 + 1].set(densities)
+
+    return all_densities, kernel_points, kernel_radii
 
 
 
@@ -258,9 +265,99 @@ def project_interconnect(grid_centers, grid_size,
     # Store the densities in the output array
     all_densities = all_densities.at[i1:i2 + 1, j1:j2 + 1, k1:k2 + 1].set(densities)
 
-    x = jax.debug.check_numerics(x, "x contains NaN or Inf")
-
     return all_densities, kernel_points, kernel_radii
+
+
+
+
+
+# def projected_density(self, phi, r):
+#     x = phi / r
+#     return jnp.where(x > 1, 1, jnp.where(x < -1, 0, self.H_tilde(x, self.options['dimension'])))
+
+
+# def phi(x, x1, x2, r_b):
+#
+#     x21 = x2 - x1
+#     l_b = jnp.linalg.norm(x21)
+#     a_b = x21 / l_b
+#     xe1 = x - x1
+#     l_be = jnp.dot(xe1, a_b)
+#     r_be = jnp.linalg.norm(xe1 - l_be * a_b)
+#
+#     d1 = jnp.linalg.norm(xe1)
+#     d2 = jnp.linalg.norm(x - x2)
+#
+#     d_b = jnp.where(l_be <= 0, d1,
+#                     jnp.where(l_be > l_b, d2, r_be))
+#
+#     # EQ 8 (order reversed, this is a confirmed typo in the paper)
+#     phi_b = r_b - d_b
+#
+#     return phi_b
+
+# def phi(x, x1, x2, r_b):
+#     """
+#     Compute the regularized signed distance (phi) between point(s) x and a
+#     degenerate cylinder defined by endpoints x1 and x2 with radius r_b.
+#
+#     Parameters:
+#       x: array, shape (..., 3) -- point(s) at which to evaluate phi.
+#       x1: array, shape (..., 3) -- first endpoint of the cylinder.
+#       x2: array, shape (..., 3) -- second endpoint of the cylinder.
+#       r_b: array or scalar, shape (...) -- cylinder radius.
+#
+#     Returns:
+#       phi_b: array, shape (...) -- computed signed distances.
+#     """
+#     # # Vector from x1 to x2.
+#     # x21 = x2 - x1
+#     #
+#     # # Compute the length along the last axis.
+#     # l_b = jnp.linalg.norm(x21, axis=-1, keepdims=True)  # shape (...,1)
+#     #
+#     # # Compute unit vector along the segment.
+#     # a_b = x21 / l_b  # broadcast along last axis
+#     # # Vector from x1 to x.
+#     # xe1 = x - x1
+#     #
+#     # # Instead of using jnp.dot, sum the elementwise product along the last axis.
+#     # l_be = jnp.sum(xe1 * a_b, axis=-1, keepdims=True)  # shape (...,1)
+#     # # Distance perpendicular to the segment: norm of (x - x1 - projection).
+#     # r_be = jnp.linalg.norm(xe1 - l_be * a_b, axis=-1)  # shape (...)
+#     #
+#     # # Distances from x to x1 and x2.
+#     # d1 = jnp.linalg.norm(xe1, axis=-1)  # shape (...)
+#     # d2 = jnp.linalg.norm(x - x2, axis=-1)  # shape (...)
+#     #
+#     # # Squeeze l_be and l_b so that we can compare as scalars.
+#     # l_be_squeezed = jnp.squeeze(l_be, axis=-1)  # shape (...)
+#     # l_b_squeezed = jnp.squeeze(l_b, axis=-1)  # shape (...)
+#     #
+#     # # Choose d_b based on where x projects relative to the segment.
+#     # d_b = jnp.where(l_be_squeezed <= 0, d1,
+#     #                 jnp.where(l_be_squeezed > l_b_squeezed, d2, r_be))
+#
+#     d_b = jnp.linalg.norm(x - x1, axis=-1)
+#
+#     # Equation (with order reversed):
+#     phi_b = r_b - d_b
+#     return phi_b
+
+
+# def penalized_density(rho, alpha, q):
+#     return (alpha * rho) ** q
+
+
+# def phi(x, x1, x2, r_b):
+#
+#     # Convert output from JAX.numpy to numpy
+#     d_be = jnp.array(min_dist_segment_segment(x, x, x1, x2))
+#
+#     # EQ 8 (order reversed, this is a confirmed typo in the paper)
+#     phi_b = r_b - d_be
+#
+#     return phi_b
 
 
 def regularized_Heaviside(x):

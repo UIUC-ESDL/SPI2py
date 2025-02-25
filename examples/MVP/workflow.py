@@ -190,17 +190,17 @@ sphere_radii = prob.get_val('system.components.comp_1.transformed_sphere_radii')
 densities = prob.get_val('projections.proj_1.pseudo_densities')
 
 # Plot the grid without the kernel
-# import numpy as np
-# sphere_positions = np.array(sphere_positions)
-# sphere_radii = np.array(sphere_radii)
-# plotter = pv.Plotter(shape=(1, 1), window_size=(1500, 500))
-# plot_grid(plotter, (0, 0), np.array(centers), element_size, densities=densities)
-# plot_spheres(plotter, (0, 0), sphere_positions, sphere_radii, 'purple', opacity=0.5)
-# plot_stl_file(plotter, (0, 0), 'models/CrossHead_Pin_scaled.stl', translation=(1, 0, 0), rotation=(0, 0, 0), opacity=0.25, color='purple')
-# plotter.show()
+import numpy as np
+sphere_positions = np.array(sphere_positions)
+sphere_radii = np.array(sphere_radii)
+plotter = pv.Plotter(shape=(1, 1), window_size=(1500, 500))
+plot_grid(plotter, (0, 0), np.array(centers), element_size, densities=densities)
+plot_spheres(plotter, (0, 0), sphere_positions, sphere_radii, 'purple', opacity=0.5)
+plot_stl_file(plotter, (0, 0), 'models/CrossHead_Pin_scaled.stl', translation=(1, 0, 0), rotation=(0, 0, 0), opacity=0.25, color='purple')
+plotter.show()
 
 # data = prob.check_partials(includes='system.components.comp_1', step=1e-4,show_only_incorrect=True)
-data = prob.check_partials(includes='projections.proj_1')
+# data = prob.check_partials(includes='projections.proj_1')
 # print(data['projections.proj_1']['pseudo_densities','sphere_positions'])
 # print(data['system.components.comp_1']['transformed_sphere_positions','translation'])
 print('Done')

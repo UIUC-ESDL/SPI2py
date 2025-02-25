@@ -68,6 +68,8 @@ def minimum_distances_segments_segments(start_1: jnp.ndarray,
 
     Note 2: This a vectorized implementation based on https://doi.org/10.1016/0020-0190(85)90032-8.
 
+    Note 3: A tolerance of 1e-8 is added to avoid division by zero for derivatives.
+
     Parameters:
     - start_1: The starting points of the first set of line segments.
     - stop_1: The stopping points of the first set of line segments.
@@ -110,35 +112,40 @@ def minimum_distances_segments_segments(start_1: jnp.ndarray,
     u = jnp.zeros_like(D2)
 
     # Handling cases where segments degenerate into points
-    mask_D1_zero = D1 == 0.
-    mask_D2_zero = D2 == 0.
-    mask_den_zero = den == 0.
+    tol = 1e-8
+    mask_D1_zero = D1 < tol
+    mask_D2_zero = D2 < tol
+    mask_den_zero = den < tol
 
     # Both segments are points
     mask_both_points = mask_D1_zero & mask_D2_zero
 
+    # Use a safe version of D1 to avoid division by zero.
+    safe_D1 = D1 + tol
+    safe_D2 = D2 + tol
+
     # Segment CD is a point
     mask_CD_point = ~mask_D1_zero & mask_D2_zero
-    t = jnp.where(mask_CD_point, S1 / D1, t)
+    t = jnp.where(mask_CD_point, S1 / safe_D1, t)
 
     # Segment AB is a point
     mask_AB_point = mask_D1_zero & ~mask_D2_zero
-    u = jnp.where(mask_AB_point, -S2 / D2, u)
+    u = jnp.where(mask_AB_point, -S2 / safe_D2, u)
 
     # Line segments are parallel
-    u = jnp.where(mask_den_zero, -S2 / D2, u)
+    u = jnp.where(mask_AB_point, -S2 / safe_D2, u)
     uf = clamp_bound(u)
-    t = jnp.where(mask_den_zero, (uf * R + S1) / D1, t)
+    t = jnp.where(mask_den_zero, (uf * R + S1) / safe_D1, t)
     u = jnp.where(mask_den_zero, uf, u)
 
     # General case
     mask_general = ~mask_both_points & ~mask_AB_point & ~mask_CD_point & ~mask_den_zero
     t_general = (S1 * D2 - S2 * R) / den
-    u_general = (t_general * R - S2) / D2
+    u_general = (t_general * R - S2) / safe_D2
     t = jnp.where(mask_general, clamp_bound(t_general), t)
     u = jnp.where(mask_general, clamp_bound(u_general), u)
     u = clamp_bound(u)
-    t = jnp.where(mask_general, clamp_bound((u * R + S1) / D1), t)
+    t = jnp.where(mask_general, clamp_bound((u * R + S1) / safe_D1), t)
 
     minimum_distance = jnp.linalg.norm(d1 * t - d2 * u - d12, axis=-1)
 
