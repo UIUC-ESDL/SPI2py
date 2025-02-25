@@ -111,10 +111,10 @@ class ProjectComponent(ExplicitComponent):
             # pullback returns a tuple of gradients in the order of primals.
             grads = pullback(cotangent)
 
-            d_outputs['element_size'] = grads[1]
-            d_outputs['mesh_centers'] = grads[0]
-            d_outputs['sphere_positions'] = grads[2]
-            d_outputs['sphere_radii'] = grads[3]
+            d_inputs['element_size'] = grads[1]
+            d_inputs['mesh_centers'] = grads[0]
+            d_inputs['sphere_positions'] = grads[2]
+            d_inputs['sphere_radii'] = grads[3]
             # Ignore the gradients for kernel_points and kernel_radii if they are constant.
 
 
