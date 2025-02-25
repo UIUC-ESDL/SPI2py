@@ -1,73 +1,81 @@
-import numpy as np
+import jax.numpy as jnp
 
 
-# def create_uniform_inscription_kernel(steps_per_edge):
-#     # Step size (distance between the centers of two consecutive spheres)
+# def create_uniform_kernel(steps_per_edge, mode='inscription'):
+#     """
+#     Create a uniform grid of spheres based on the given mode.
+#
+#     Parameters:
+#     - steps_per_edge (int): Number of steps per edge of the grid.
+#     - mode (str): Either 'inscription' for inscribed spheres or 'circumscription' for circumscribed spheres.
+#
+#     Returns:
+#     - positions (numpy array): Array of sphere positions.
+#     - radii (numpy array): Array of sphere radii.
+#     """
+#     # Step size (distance between centers of consecutive spheres in the grid)
 #     step_size = 1.0 / steps_per_edge
 #
 #     # Initialize arrays for sphere positions and radii
-#     positions = np.zeros((steps_per_edge, steps_per_edge, steps_per_edge, 3))  # 3 for (x, y, z) coordinates
-#     radii = np.zeros((steps_per_edge, steps_per_edge, steps_per_edge))  # Radii of spheres
+#     positions = jnp.zeros((steps_per_edge, steps_per_edge, steps_per_edge, 3))  # 3 for (x, y, z) coordinates
+#     radii = jnp.zeros((steps_per_edge, steps_per_edge, steps_per_edge))  # Radii of spheres
 #
-#     # Radius of each inscribed sphere is half of the small cube's edge length
-#     sphere_radius = 0.5 * step_size
+#     # Determine radius and center offset based on the mode
+#     if mode == 'inscription':
+#         sphere_radius = 0.5 * step_size  # Inscribed sphere radius (half the cube edge length)
+#         center_offset = 0.5 * step_size  # Center is inside the cube
+#     elif mode == 'circumscription':
+#         sphere_radius = (3 ** 0.5) * 0.5 * step_size  # Circumscribed sphere radius (half the cube diagonal)
+#         center_offset = 0.0  # Center aligned with the grid corner for circumscriptions
+#     else:
+#         raise ValueError("Invalid mode. Use 'inscription' or 'circumscription'.")
 #
 #     # Loop through the grid and compute the sphere positions and radii
 #     for i in range(steps_per_edge):
 #         for j in range(steps_per_edge):
 #             for k in range(steps_per_edge):
-#                 # The center of each inscribed sphere is at the center of each small cube
-#                 x = (i + 0.5) * step_size
-#                 y = (j + 0.5) * step_size
-#                 z = (k + 0.5) * step_size
+#                 # The center of each sphere
+#                 x = (i + center_offset) * step_size
+#                 y = (j + center_offset) * step_size
+#                 z = (k + center_offset) * step_size
 #
 #                 positions[i, j, k] = [x, y, z]
 #                 radii[i, j, k] = sphere_radius
 #
 #     return positions, radii
 
-
-
 def create_uniform_kernel(steps_per_edge, mode='inscription'):
     """
     Create a uniform grid of spheres based on the given mode.
 
     Parameters:
-    - steps_per_edge (int): Number of steps per edge of the grid.
-    - mode (str): Either 'inscription' for inscribed spheres or 'circumscription' for circumscribed spheres.
+      steps_per_edge (int): Number of steps per edge of the grid.
+      mode (str): Either 'inscription' for inscribed spheres or 'circumscription'
+                  for circumscribed spheres.
 
     Returns:
-    - positions (numpy array): Array of sphere positions.
-    - radii (numpy array): Array of sphere radii.
+      positions (jnp.array): Array of sphere positions with shape (steps_per_edge, steps_per_edge, steps_per_edge, 3).
+      radii (jnp.array): Array of sphere radii with shape (steps_per_edge, steps_per_edge, steps_per_edge).
     """
-    # Step size (distance between centers of consecutive spheres in the grid)
     step_size = 1.0 / steps_per_edge
 
-    # Initialize arrays for sphere positions and radii
-    positions = np.zeros((steps_per_edge, steps_per_edge, steps_per_edge, 3))  # 3 for (x, y, z) coordinates
-    radii = np.zeros((steps_per_edge, steps_per_edge, steps_per_edge))  # Radii of spheres
-
-    # Determine radius and center offset based on the mode
     if mode == 'inscription':
-        sphere_radius = 0.5 * step_size  # Inscribed sphere radius (half the cube edge length)
-        center_offset = 0.5 * step_size  # Center is inside the cube
+        sphere_radius = 0.5 * step_size  # Inscribed sphere: half the cube edge length.
+        center_offset = 0.5 * step_size  # Center is shifted by half an edge.
     elif mode == 'circumscription':
-        sphere_radius = (3 ** 0.5) * 0.5 * step_size  # Circumscribed sphere radius (half the cube diagonal)
-        center_offset = 0.0  # Center aligned with the grid corner for circumscriptions
+        sphere_radius = jnp.sqrt(3) * 0.5 * step_size  # Circumscribed: half the cube diagonal.
+        center_offset = 0.0
     else:
         raise ValueError("Invalid mode. Use 'inscription' or 'circumscription'.")
 
-    # Loop through the grid and compute the sphere positions and radii
-    for i in range(steps_per_edge):
-        for j in range(steps_per_edge):
-            for k in range(steps_per_edge):
-                # The center of each sphere
-                x = (i + center_offset) * step_size
-                y = (j + center_offset) * step_size
-                z = (k + center_offset) * step_size
-
-                positions[i, j, k] = [x, y, z]
-                radii[i, j, k] = sphere_radius
+    # Create 1D coordinate array for each axis.
+    coords = (jnp.arange(steps_per_edge) + center_offset) * step_size
+    # Use meshgrid to generate the full 3D grid of coordinates.
+    X, Y, Z = jnp.meshgrid(coords, coords, coords, indexing='ij')
+    # Stack the coordinates along a new last axis to get positions.
+    positions = jnp.stack([X, Y, Z], axis=-1)
+    # All spheres share the same radius.
+    radii = jnp.full((steps_per_edge, steps_per_edge, steps_per_edge), sphere_radius)
 
     return positions, radii
 
@@ -78,9 +86,9 @@ def apply_kernel(element_centers, element_size, kernel_positions, kernel_radii):
     nx, ny, nz, _, _ = element_centers.shape
     ns, _ = kernel_positions.shape
 
-    element_size_expanded = np.broadcast_to(element_size, (nx, ny, nz, ns, 1))
-    kernel_pos_expanded = np.broadcast_to(kernel_positions, (nx, ny, nz, ns, 3))
-    kernel_rad_expanded = np.broadcast_to(kernel_radii, (nx, ny, nz, ns, 1))
+    element_size_expanded = jnp.broadcast_to(element_size, (nx, ny, nz, ns, 1))
+    kernel_pos_expanded = jnp.broadcast_to(kernel_positions, (nx, ny, nz, ns, 3))
+    kernel_rad_expanded = jnp.broadcast_to(kernel_radii, (nx, ny, nz, ns, 1))
 
     # Broadcast the kernel positions and radii to the grid
     all_positions = element_centers + (element_size_expanded * kernel_pos_expanded)

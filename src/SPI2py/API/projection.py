@@ -1,5 +1,5 @@
 import jax.numpy as jnp
-from jax import jacfwd
+from jax import jacfwd, jacrev, jvp, vjp
 from openmdao.api import ExplicitComponent, Group
 
 from ..models.projection.projection import project_component
@@ -39,8 +39,14 @@ class ProjectComponent(ExplicitComponent):
         # volume_kernel = jnp.sum(4/3 * jnp.pi * kernel_radii ** 3)
         # volume_approximation_error = abs((volume_kernel - volume_element) / volume_element)
 
-    # def setup_partials(self):
-    #     self.declare_partials('pseudo_densities', 'sphere_positions')
+    def setup_partials(self):
+        # densities wrt element_size
+        self.declare_partials('pseudo_densities', 'element_size', dependent=False)
+
+        # densities wrt sphere_positions
+        # densities wrt sphere_radii
+
+        self.declare_partials('pseudo_densities', 'sphere_positions')
 
 
 
@@ -54,46 +60,71 @@ class ProjectComponent(ExplicitComponent):
 
 
         # Get the Mesh inputs
-        element_size   = jnp.array(inputs['element_size'])
+        element_size    = jnp.atleast_1d(inputs['element_size'])
         mesh_centers  = jnp.array(inputs['mesh_centers'])
         sphere_positions = jnp.array(inputs['sphere_positions'])
         sphere_radii     = jnp.array(inputs['sphere_radii'])
-        # volume           = jnp.array(inputs['volume'])
 
         # Compute the pseudo-densities
-        pseudo_densities = self._project(mesh_centers, element_size, sphere_positions, sphere_radii, kernel_points, kernel_radii)
-
-        # Compute the volume estimation error
-        # projected_volume = jnp.sum(pseudo_densities * element_size ** 3)
-        # volume_estimation_error = jnp.abs(volume - projected_volume) / volume
+        pseudo_densities = self._compute_primal(mesh_centers, element_size, sphere_positions, sphere_radii, kernel_points, kernel_radii)
 
         # Write the outputs
         outputs['pseudo_densities'] = pseudo_densities
-        # outputs['volume_estimation_error'] = volume_estimation_error
 
-    # def compute_partials(self, inputs, partials):
-    #
-    #     # Get the inputs
-    #     element_bounds = jnp.array(inputs['element_bounds'])
-    #     sample_points = jnp.array(inputs['element_sphere_positions'])
-    #     sample_radii = jnp.array(inputs['element_sphere_radii'])
-    #     sphere_positions = jnp.array(inputs['sphere_positions'])
-    #     sphere_radii     = jnp.array(inputs['sphere_radii'])
-    #
-    #     # Calculate the Jacobian of the pseudo-densities
-    #     jac_pseudo_densities = jacfwd(self._project)(sphere_positions, sphere_radii, sample_points, sample_radii, element_bounds)
-    #
-    #     # Set the partials
-    #     partials['pseudo_densities', 'sphere_positions'] = jac_pseudo_densities
+    def compute_jacvec_product(self, inputs, d_inputs, d_outputs, mode, discrete_inputs=None):
+
+        # Get the Mesh inputs
+        kernel_steps_per_unit_length = self.options['kernel_steps_per_unit_length']
+        kernel_points, kernel_radii = create_uniform_kernel(kernel_steps_per_unit_length, mode='circumscription')
+        kernel_points = kernel_points.reshape(-1, 3)
+        kernel_radii = kernel_radii.reshape(-1, 1)
+
+        # Get the Mesh inputs
+        element_size    = jnp.atleast_1d(inputs['element_size'])
+        mesh_centers = jnp.array(inputs['mesh_centers'])
+        sphere_positions = jnp.array(inputs['sphere_positions'])
+        sphere_radii = jnp.array(inputs['sphere_radii'])
+
+        # Define primals in the order expected by _compute_primal.
+        primals = (mesh_centers, element_size, sphere_positions, sphere_radii, kernel_points, kernel_radii)
+
+        if mode == 'fwd':
+            # For forward mode, supply the tangent (perturbation) for each input.
+            # Assume that kernel_points and kernel_radii are constant,
+            # so we supply zeros for them.
+            tangents = (d_inputs['mesh_centers'],
+                        d_inputs['element_size'],
+                        d_inputs['sphere_positions'],
+                        d_inputs['sphere_radii'],
+                        jnp.zeros_like(kernel_points),
+                        jnp.zeros_like(kernel_radii))
+            # jax.jvp returns (primal_out, tangent_out)
+            _, tangent_out = jvp(self._compute_primal, primals, tangents)
+            # Set the output tangent (directional derivative) for pseudo_densities.
+            d_outputs['pseudo_densities'] = tangent_out
+
+        elif mode == 'rev':
+            # In reverse mode, use vjp to get a pullback function.
+            primal_out, pullback = vjp(self._compute_primal, *primals)
+            # d_outputs['pseudo_densities'] holds the cotangent (sensitivity) for the pseudo_densities.
+            cotangent = d_outputs['pseudo_densities']
+            # pullback returns a tuple of gradients in the order of primals.
+            grads = pullback(cotangent)
+
+            d_outputs['element_size'] = grads[1]
+            d_outputs['mesh_centers'] = grads[0]
+            d_outputs['sphere_positions'] = grads[2]
+            d_outputs['sphere_radii'] = grads[3]
+            # Ignore the gradients for kernel_points and kernel_radii if they are constant.
 
 
     @staticmethod
-    def _project(mesh_centers, mesh_size,
-                 obj_points, obj_radii,
-                 kernel_points, kernel_radii):
+    def _compute_primal(mesh_centers, mesh_size,
+                        obj_points, obj_radii,
+                        kernel_points, kernel_radii):
 
-        # TODO Fix mesh size to scalar
-        pseudo_densities, kernel_points, kernel_radii = project_component(mesh_centers, float(mesh_size[0]),
+        # TODO Fix mesh size to scalar float(mesh_size[0])
+        pseudo_densities, kernel_points, kernel_radii = project_component(mesh_centers, mesh_size,
                                                                           obj_points, obj_radii,
                                                                           kernel_points, kernel_radii)
         return pseudo_densities

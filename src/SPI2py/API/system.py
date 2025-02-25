@@ -53,12 +53,6 @@ class Component(ExplicitComponent):
         self.add_input('translation', val=np.array([[0.0, 0.0, 0.0]]))
         self.add_input('rotation', val=np.array([[0.0, 0.0, 0.0]]))
 
-        # # Mesh Inputs
-        # self.add_input('element_size', val=0)
-        # self.add_input('mesh_centers', shape_by_conn=True)
-        # self.add_input('mesh_kernel_points', shape_by_conn=True)
-        # self.add_input('mesh_kernel_radii', shape_by_conn=True)
-
         # FEA Inputs
         # ...
 
@@ -97,8 +91,6 @@ class Component(ExplicitComponent):
         self.declare_partials('transformed_ports', 'ports', rows=rows_p, cols=cols_p, val=1.0,
                               method='exact')
 
-        # 'transformed_sphere_radii' wrt 'sphere_radii'
-        #
         I_r = jnp.eye(self.num_spheres)
         rows_r, cols_r = jnp.where(I_r)
         self.declare_partials('transformed_sphere_radii', 'sphere_radii', rows=rows_r, cols=cols_r, val=1.0, method='exact')

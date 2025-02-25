@@ -46,7 +46,8 @@ def project_component(grid_centers, grid_size, obj_points, obj_radii, kernel_poi
 
     # Check the input shapes
     assert_shape(grid_centers, (None, None, None, None, 3))
-    assert_shape(grid_size, ())
+    # assert_shape(grid_size, ())
+    assert_shape(grid_size, (1,))
     assert_shape(obj_points, (None, 3))
     assert_shape(obj_radii, (None, 1))
     assert_shape(kernel_points, (None, 3))

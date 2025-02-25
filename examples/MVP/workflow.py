@@ -27,7 +27,8 @@ projections = Projections()
 x_bounds = (0, 5)
 y_bounds = (0, 5)
 z_bounds = (0, 5)
-element_size = 1.0
+# element_size = 1.0
+element_size = 2.5
 mesh = Mesh(x_bounds=x_bounds, y_bounds=y_bounds, z_bounds=z_bounds, element_size=element_size)
 
 # Assemble the system
@@ -181,6 +182,8 @@ densities = prob.get_val('projections.proj_1.pseudo_densities')
 # plot_grid(plotter, (0, 0), mesh_centers, el_size, densities=densities)
 # plotter.show()
 
-data = prob.check_partials(includes='system.components.comp_1', step=1e-4,show_only_incorrect=True)
-print(data['system.components.comp_1']['transformed_sphere_positions','translation'])
+# data = prob.check_partials(includes='system.components.comp_1', step=1e-4,show_only_incorrect=True)
+data = prob.check_partials(includes='projections.proj_1',)
+# print(data['projections.proj_1']['pseudo_densities','sphere_positions'])
+# print(data['system.components.comp_1']['transformed_sphere_positions','translation'])
 print('Done')
