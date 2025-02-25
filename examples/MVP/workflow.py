@@ -2,17 +2,22 @@
 Example 1:  Simple optimization of a 3D layout
 Author:     Chad Peterson
 """
+
+import jax
+import jax.numpy as jnp
+import numpy as np
 import pyvista as pv
 import openmdao.api as om
 from SPI2py.API.system import System, Components, Interconnects, Component, Interconnect
 from SPI2py.API.projection import Projections, ProjectionAggregator, ProjectComponent
-from SPI2py.API.FEA import Mesh
+from SPI2py.API.FEA import Mesh, FEA
 from SPI2py.models.physics.distributed.mesh import generate_mesh_vec
 from SPI2py.models.projection.mesh_kernels import create_uniform_kernel
 from SPI2py.API.objectives import BoundingBoxVolume
 from SPI2py.API.utilities import Multiplexer, read_input_file
 from SPI2py.models.utilities.visualization import plot_grid, plot_spheres, plot_stl_file
-
+config.update("jax_enable_x64", True)
+jax.config.update("jax_debug_nans", True)
 
 # Read the input file
 # input_file = read_input_file('input.toml')
@@ -29,7 +34,7 @@ projections = Projections()
 x_bounds = (0, 10)
 y_bounds = (0, 5)
 z_bounds = (0, 10)
-element_size = 1.0
+element_size = 0.5 # 1.0
 kernel_steps_per_unit_length = 1
 mesh = Mesh(x_bounds=x_bounds, y_bounds=y_bounds, z_bounds=z_bounds, element_size=element_size)
 
@@ -190,7 +195,6 @@ sphere_radii = prob.get_val('system.components.comp_1.transformed_sphere_radii')
 densities = prob.get_val('projections.proj_1.pseudo_densities')
 
 # Plot the grid without the kernel
-import numpy as np
 sphere_positions = np.array(sphere_positions)
 sphere_radii = np.array(sphere_radii)
 plotter = pv.Plotter(shape=(1, 1), window_size=(1500, 500))
