@@ -119,7 +119,7 @@ class ProjectComponent(ExplicitComponent):
                         obj_points, obj_radii,
                         kernel_points, kernel_radii):
 
-        # TODO Fix mesh size to scalar float(mesh_size[0])
+
         pseudo_densities, kernel_points, kernel_radii = project_component(mesh_centers, mesh_size,
                                                                           obj_points, obj_radii,
                                                                           kernel_points, kernel_radii)

@@ -127,7 +127,7 @@ def plot_AABB(plotter, subplot_index, centers, radii, color, opacity=0.25):
 
 
 def plot_stl_file(plotter, subplot_index, stl_file_path, translation=(0, 0, 0), rotation=(0, 0, 0), scaling=1,
-                  opacity=0.5):
+                  opacity=0.5, color='lightgray'):
     """
     Plots an STL file with an optional translation.
 
@@ -166,7 +166,7 @@ def plot_stl_file(plotter, subplot_index, stl_file_path, translation=(0, 0, 0), 
             mesh.rotate_z(rz, point=center, inplace=True)
 
     # Add the mesh to the plotter
-    plotter.add_mesh(mesh, color='lightgray', opacity=opacity, lighting=False)
+    plotter.add_mesh(mesh, color=color, opacity=opacity, lighting=False)
 
 
 # def element_to_node_density(element_density, dims):

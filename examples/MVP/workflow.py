@@ -11,7 +11,7 @@ from SPI2py.models.physics.distributed.mesh import generate_mesh_vec
 from SPI2py.models.projection.mesh_kernels import create_uniform_kernel
 from SPI2py.API.objectives import BoundingBoxVolume
 from SPI2py.API.utilities import Multiplexer, read_input_file
-from SPI2py.models.utilities.visualization import plot_grid
+from SPI2py.models.utilities.visualization import plot_grid, plot_spheres, plot_stl_file
 
 
 # Read the input file
@@ -26,14 +26,14 @@ interconnects = Interconnects()
 projections = Projections()
 
 # Initialize the Mesh
-x_bounds = (0, 5)
+x_bounds = (0, 10)
 y_bounds = (0, 5)
-z_bounds = (0, 5)
-element_size = 2.5  # 1.0
+z_bounds = (0, 10)
+element_size = 1.0
 kernel_steps_per_unit_length = 1
 mesh = Mesh(x_bounds=x_bounds, y_bounds=y_bounds, z_bounds=z_bounds, element_size=element_size)
 
-nodes, elements, centers, nx, ny, nz, lx, ly, lz = generate_mesh_vec(0, 5, 0, 5, 0, 5, element_size=element_size)
+nodes, elements, centers, nx, ny, nz, lx, ly, lz = generate_mesh_vec(-1, 3, -1, 3, -1, 4, element_size=element_size)
 centers = centers.reshape(nx, ny, nz, 1, 3)
 
 kernel_points, kernel_radii = create_uniform_kernel(kernel_steps_per_unit_length, mode='circumscription')
@@ -183,17 +183,24 @@ prob.run_model()
 # print('Max Pseudo Density:', prob.get_val('aggregator.max_pseudo_density'))
 # plot_problem(prob)
 
-mesh_centers = prob.get_val('mesh.mesh_centers')
-el_size = prob.get_val('mesh.element_size')
+# mesh_centers = prob.get_val('mesh.mesh_centers')
+# el_size = prob.get_val('mesh.element_size')
+sphere_positions = prob.get_val('system.components.comp_1.transformed_sphere_positions')
+sphere_radii = prob.get_val('system.components.comp_1.transformed_sphere_radii')
 densities = prob.get_val('projections.proj_1.pseudo_densities')
 
 # Plot the grid without the kernel
+# import numpy as np
+# sphere_positions = np.array(sphere_positions)
+# sphere_radii = np.array(sphere_radii)
 # plotter = pv.Plotter(shape=(1, 1), window_size=(1500, 500))
-# plot_grid(plotter, (0, 0), mesh_centers, el_size, densities=densities)
+# plot_grid(plotter, (0, 0), np.array(centers), element_size, densities=densities)
+# plot_spheres(plotter, (0, 0), sphere_positions, sphere_radii, 'purple', opacity=0.5)
+# plot_stl_file(plotter, (0, 0), 'models/CrossHead_Pin_scaled.stl', translation=(1, 0, 0), rotation=(0, 0, 0), opacity=0.25, color='purple')
 # plotter.show()
 
 # data = prob.check_partials(includes='system.components.comp_1', step=1e-4,show_only_incorrect=True)
-data = prob.check_partials(includes='projections.proj_1',)
+data = prob.check_partials(includes='projections.proj_1')
 # print(data['projections.proj_1']['pseudo_densities','sphere_positions'])
 # print(data['system.components.comp_1']['transformed_sphere_positions','translation'])
 print('Done')
