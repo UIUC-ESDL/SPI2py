@@ -18,50 +18,48 @@ class ProjectComponent(ExplicitComponent):
     """
 
     def initialize(self):
+
+        # General parameters
         self.options.declare('color', types=str, desc='Color of the projection', default='blue')
         self.options.declare('kernel_steps_per_unit_length', types=int, desc='Number of kernel steps per unit length', default=1)
 
-    def setup(self):
+        # Mesh parameters
+        self.options.declare('element_size', types=(int, float), desc='Size of the mesh elements', default=1.0)
+        self.options.declare('mesh_centers', types=jnp.ndarray, desc='Centers of the mesh elements')
+        self.options.declare('kernel_points', types=jnp.ndarray, desc='Points representing the mesh kernel')
+        self.options.declare('kernel_radii', types=jnp.ndarray, desc='Radii of kernel points')
 
-        # Mesh Inputs
-        self.add_input('element_size', val=0)
-        self.add_input('mesh_centers', shape_by_conn=True)
+    def setup(self):
 
         # Object Inputs
         self.add_input('sphere_positions', shape_by_conn=True)
         self.add_input('sphere_radii', shape_by_conn=True)
-        # self.add_input('volume', val=0.0)
 
         # Outputs
-        self.add_output('pseudo_densities', compute_shape=lambda shapes: (shapes['mesh_centers'][0], shapes['mesh_centers'][1], shapes['mesh_centers'][2]))
-        # self.add_output('volume_estimation_error', val=0.0, desc='How accurately the projection represents the object')
+        nx, ny, nz = self.options['mesh_centers'].shape[:3]
+        self.add_output('pseudo_densities', compute_shape=lambda shapes: (nx, ny, nz))
 
+        # Archived code
+        # self.add_input('volume', val=0.0)
+        # self.add_output('volume_estimation_error', val=0.0, desc='How accurately the projection represents the object')
         # volume_kernel = jnp.sum(4/3 * jnp.pi * kernel_radii ** 3)
         # volume_approximation_error = abs((volume_kernel - volume_element) / volume_element)
 
     def setup_partials(self):
-        # densities wrt element_size
-        self.declare_partials('pseudo_densities', 'element_size', dependent=False)
-
-        # densities wrt sphere_positions
-        # densities wrt sphere_radii
-
-        self.declare_partials('pseudo_densities', 'sphere_positions')
-
+        self.declare_partials('pseudo_densities', 'sphere_positions', method='exact')
+        self.declare_partials('pseudo_densities', 'sphere_radii', method='exact')
 
 
     def compute(self, inputs, outputs):
 
         # Get the Mesh inputs
-        kernel_steps_per_unit_length = self.options['kernel_steps_per_unit_length']
-        kernel_points, kernel_radii = create_uniform_kernel(kernel_steps_per_unit_length, mode='circumscription')
-        kernel_points = kernel_points.reshape(-1, 3)
-        kernel_radii = kernel_radii.reshape(-1, 1)
-
+        element_size = jnp.atleast_1d(self.options['element_size'])
+        mesh_centers = jnp.array(self.options['mesh_centers'])
+        kernel_points = jnp.array(self.options['kernel_points'])
+        kernel_radii = jnp.array(self.options['kernel_radii'])
 
         # Get the Mesh inputs
-        element_size    = jnp.atleast_1d(inputs['element_size'])
-        mesh_centers  = jnp.array(inputs['mesh_centers'])
+        # TODO Fix atleast 1d?
         sphere_positions = jnp.array(inputs['sphere_positions'])
         sphere_radii     = jnp.array(inputs['sphere_radii'])
 
@@ -74,14 +72,12 @@ class ProjectComponent(ExplicitComponent):
     def compute_jacvec_product(self, inputs, d_inputs, d_outputs, mode, discrete_inputs=None):
 
         # Get the Mesh inputs
-        kernel_steps_per_unit_length = self.options['kernel_steps_per_unit_length']
-        kernel_points, kernel_radii = create_uniform_kernel(kernel_steps_per_unit_length, mode='circumscription')
-        kernel_points = kernel_points.reshape(-1, 3)
-        kernel_radii = kernel_radii.reshape(-1, 1)
+        element_size = jnp.atleast_1d(self.options['element_size'])
+        mesh_centers = jnp.array(self.options['mesh_centers'])
+        kernel_points = jnp.array(self.options['kernel_points'])
+        kernel_radii = jnp.array(self.options['kernel_radii'])
 
         # Get the Mesh inputs
-        element_size    = jnp.atleast_1d(inputs['element_size'])
-        mesh_centers = jnp.array(inputs['mesh_centers'])
         sphere_positions = jnp.array(inputs['sphere_positions'])
         sphere_radii = jnp.array(inputs['sphere_radii'])
 
@@ -92,8 +88,8 @@ class ProjectComponent(ExplicitComponent):
             # For forward mode, supply the tangent (perturbation) for each input.
             # Assume that kernel_points and kernel_radii are constant,
             # so we supply zeros for them.
-            tangents = (d_inputs['mesh_centers'],
-                        d_inputs['element_size'],
+            tangents = (jnp.zeros_like(mesh_centers),
+                        jnp.zeros_like(element_size),
                         d_inputs['sphere_positions'],
                         d_inputs['sphere_radii'],
                         jnp.zeros_like(kernel_points),
@@ -111,8 +107,8 @@ class ProjectComponent(ExplicitComponent):
             # pullback returns a tuple of gradients in the order of primals.
             grads = pullback(cotangent)
 
-            d_inputs['element_size'] = grads[1]
-            d_inputs['mesh_centers'] = grads[0]
+            # d_inputs['element_size'] = grads[1]
+            # d_inputs['mesh_centers'] = grads[0]
             d_inputs['sphere_positions'] = grads[2]
             d_inputs['sphere_radii'] = grads[3]
             # Ignore the gradients for kernel_points and kernel_radii if they are constant.

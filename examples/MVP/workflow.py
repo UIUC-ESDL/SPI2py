@@ -7,6 +7,8 @@ import openmdao.api as om
 from SPI2py.API.system import System, Components, Interconnects, Component, Interconnect
 from SPI2py.API.projection import Projections, ProjectionAggregator, ProjectComponent
 from SPI2py.API.FEA import Mesh
+from SPI2py.models.physics.distributed.mesh import generate_mesh_vec
+from SPI2py.models.projection.mesh_kernels import create_uniform_kernel
 from SPI2py.API.objectives import BoundingBoxVolume
 from SPI2py.API.utilities import Multiplexer, read_input_file
 from SPI2py.models.utilities.visualization import plot_grid
@@ -27,9 +29,17 @@ projections = Projections()
 x_bounds = (0, 5)
 y_bounds = (0, 5)
 z_bounds = (0, 5)
-# element_size = 1.0
-element_size = 2.5
+element_size = 2.5  # 1.0
+kernel_steps_per_unit_length = 1
 mesh = Mesh(x_bounds=x_bounds, y_bounds=y_bounds, z_bounds=z_bounds, element_size=element_size)
+
+nodes, elements, centers, nx, ny, nz, lx, ly, lz = generate_mesh_vec(0, 5, 0, 5, 0, 5, element_size=element_size)
+centers = centers.reshape(nx, ny, nz, 1, 3)
+
+kernel_points, kernel_radii = create_uniform_kernel(kernel_steps_per_unit_length, mode='circumscription')
+kernel_points = kernel_points.reshape(-1, 3)
+kernel_radii = kernel_radii.reshape(-1, 1)
+
 
 # Assemble the system
 model.add_subsystem('system', system)
@@ -40,7 +50,7 @@ model.add_subsystem('projections', projections)
 
 # Define the individual components
 comp_1 = Component(description='Cross Head Pin', filepath='csvs/CrossHead_Pin_5k_300s.csv', n_spheres=50, ports=[[0.0, 0.415, 0.415], [2.850, 0.415, 0.415]], color='purple')
-proj_1 = ProjectComponent()
+proj_1 = ProjectComponent(element_size=element_size, mesh_centers=centers, kernel_points=kernel_points, kernel_radii=kernel_radii)
 
 model.system.components.add_subsystem('comp_1', comp_1)
 model.projections.add_subsystem('proj_1', proj_1)
@@ -49,8 +59,8 @@ model.projections.add_subsystem('proj_1', proj_1)
 model.connect('system.components.comp_1.transformed_sphere_positions', 'projections.proj_1.sphere_positions')
 model.connect('system.components.comp_1.transformed_sphere_radii', 'projections.proj_1.sphere_radii')
 
-model.connect('mesh.element_size', 'projections.proj_1.element_size')
-model.connect('mesh.mesh_centers', 'projections.proj_1.mesh_centers')
+# model.connect('mesh.element_size', 'projections.proj_1.element_size')
+# model.connect('mesh.mesh_centers', 'projections.proj_1.mesh_centers')
 
 
 
