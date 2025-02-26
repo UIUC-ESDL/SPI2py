@@ -177,7 +177,7 @@ prob.setup()
 
 
 # Configure the system
-# prob.set_val('system.components.comp_1.translation', [1.5, 1.5, 0])
+prob.set_val('system.components.comp_1.translation', [1.5, 1.5, 0])
 
 
 # Set up the optimizer
@@ -190,6 +190,7 @@ prob.driver.options['maxiter'] = 25
 prob.run_model()
 
 print("BBV Before:", prob.get_val('bbv.bounding_box_volume'))
+print("Bounds Before:", prob.get_val('bbv.bounding_box_bounds'))
 sphere_positions_before = copy(prob.get_val('system.components.comp_1.transformed_sphere_positions'))
 sphere_radii_before = copy(prob.get_val('system.components.comp_1.transformed_sphere_radii'))
 bounds_before = copy(prob.get_val('bbv.bounding_box_bounds'))
@@ -198,6 +199,7 @@ bounds_before = copy(prob.get_val('bbv.bounding_box_bounds'))
 prob.run_driver()
 
 print("BBV After:", prob.get_val('bbv.bounding_box_volume'))
+print("Bounds After:", prob.get_val('bbv.bounding_box_bounds'))
 
 # Check the initial state
 # print('Max Pseudo Density:', prob.get_val('aggregator.max_pseudo_density'))
@@ -231,6 +233,13 @@ plot_stl_file(plotter, (0, 0), 'models/CrossHead_Pin_scaled.stl', translation=(0
 plot_stl_file(plotter, (0, 1), 'models/CrossHead_Pin_scaled.stl', translation=(0, 0, 0), rotation=(0, 0, 0), opacity=0.25, color='purple')
 plot_AABB(plotter, (0, 0), bounds_before, color='blue')
 plot_AABB(plotter, (0, 1), bounds_after, color='blue')
+
+# plot the origin (0,0,0)
+plotter.subplot(*(0,0))
+plotter.add_mesh(pv.Sphere(radius=0.25), color='red', show_edges=True)
+
+plotter.subplot(*(0,1))
+plotter.add_mesh(pv.Sphere(radius=0.25), color='red', show_edges=True)
 
 plotter.link_views()
 plotter.show_axes()
