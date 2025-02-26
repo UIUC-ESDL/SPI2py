@@ -2,6 +2,7 @@
 Example 1:  Simple optimization of a 3D layout
 Author:     Chad Peterson
 """
+from copy import copy
 
 import jax
 import jax.numpy as jnp
@@ -15,12 +16,10 @@ from SPI2py.models.physics.distributed.mesh import generate_mesh_vec
 from SPI2py.models.projection.mesh_kernels import create_uniform_kernel
 from SPI2py.API.objectives import BoundingBoxVolume
 from SPI2py.API.utilities import Multiplexer, read_input_file
-from SPI2py.models.utilities.visualization import plot_grid, plot_spheres, plot_stl_file
-config.update("jax_enable_x64", True)
+from SPI2py.models.utilities.visualization import plot_grid, plot_spheres, plot_stl_file, plot_AABB
+jax.config.update("jax_enable_x64", True)
 jax.config.update("jax_debug_nans", True)
 
-# Read the input file
-# input_file = read_input_file('input.toml')
 
 # Initialize the problem
 prob = om.Problem()
@@ -29,6 +28,9 @@ system = System()
 components = Components()
 interconnects = Interconnects()
 projections = Projections()
+mux = Multiplexer()
+bbv = BoundingBoxVolume()
+
 
 # Initialize the Mesh
 x_bounds = (0, 10)
@@ -36,7 +38,6 @@ y_bounds = (0, 5)
 z_bounds = (0, 10)
 element_size = 0.5 # 1.0
 kernel_steps_per_unit_length = 1
-mesh = Mesh(x_bounds=x_bounds, y_bounds=y_bounds, z_bounds=z_bounds, element_size=element_size)
 
 nodes, elements, centers, nx, ny, nz, lx, ly, lz = generate_mesh_vec(-1, 3, -1, 3, -1, 4, element_size=element_size)
 centers = centers.reshape(nx, ny, nz, 1, 3)
@@ -50,22 +51,29 @@ kernel_radii = kernel_radii.reshape(-1, 1)
 model.add_subsystem('system', system)
 model.system.add_subsystem('components', components)
 model.system.add_subsystem('interconnects', interconnects)
-model.add_subsystem('mesh', mesh)
-model.add_subsystem('projections', projections)
+# model.add_subsystem('projections', projections)
+model.add_subsystem('bbv', bbv)
 
 # Define the individual components
 comp_1 = Component(description='Cross Head Pin', filepath='csvs/CrossHead_Pin_5k_300s.csv', n_spheres=50, ports=[[0.0, 0.415, 0.415], [2.850, 0.415, 0.415]], color='purple')
-proj_1 = ProjectComponent(element_size=element_size, mesh_centers=centers, kernel_points=kernel_points, kernel_radii=kernel_radii)
+# comp_2 = Component(description='Bot Eye', filepath='csvs/Bot_Eye_5k_300s.csv', n_spheres=50, ports=[[0.0, 0.415, 0.415], [2.850, 0.415, 0.415]], color='blue')
+# proj_1 = ProjectComponent(element_size=element_size, mesh_centers=centers, kernel_points=kernel_points, kernel_radii=kernel_radii)
+# proj_2 = ProjectComponent(element_size=element_size, mesh_centers=centers, kernel_points=kernel_points, kernel_radii=kernel_radii)
 
 model.system.components.add_subsystem('comp_1', comp_1)
-model.projections.add_subsystem('proj_1', proj_1)
+# model.system.components.add_subsystem('comp_2', comp_2)
+# model.projections.add_subsystem('proj_1', proj_1)
+# model.projections.add_subsystem('proj_2', proj_2)
 
 # Connect the components to the system
-model.connect('system.components.comp_1.transformed_sphere_positions', 'projections.proj_1.sphere_positions')
-model.connect('system.components.comp_1.transformed_sphere_radii', 'projections.proj_1.sphere_radii')
+# model.connect('system.components.comp_1.transformed_sphere_positions', 'projections.proj_1.sphere_positions')
+# model.connect('system.components.comp_1.transformed_sphere_radii', 'projections.proj_1.sphere_radii')
+# model.connect('system.components.comp_2.transformed_sphere_positions', 'projections.proj_2.sphere_positions')
+# model.connect('system.components.comp_2.transformed_sphere_radii', 'projections.proj_2.sphere_radii')
 
-# model.connect('mesh.element_size', 'projections.proj_1.element_size')
-# model.connect('mesh.mesh_centers', 'projections.proj_1.mesh_centers')
+model.connect('system.components.comp_1.transformed_sphere_positions', 'bbv.sphere_positions')
+model.connect('system.components.comp_1.transformed_sphere_radii', 'bbv.sphere_radii')
+
 
 
 
@@ -155,11 +163,11 @@ model.connect('system.components.comp_1.transformed_sphere_radii', 'projections.
 #
 # # Define the objective and constraints
 # ref = bounds[1] * bounds[3] * bounds[5]  # Volume of the bounding box
-# prob.model.add_objective('bbv.bounding_box_volume', ref=ref)
+prob.model.add_objective('bbv.bounding_box_volume', ref=1)
 # prob.model.add_constraint('aggregator.max_pseudo_density', upper=1.1)
 #
 # # Define the design variables
-# prob.model.add_design_var('system.components.comp_0.translation', ref=5, lower=0, upper=10, indices=[0, 1], flat_indices=True)
+prob.model.add_design_var('system.components.comp_1.translation')
 # prob.model.add_design_var('system.components.comp_1.translation', ref=5, lower=0, upper=10, indices=[0, 1], flat_indices=True)
 
 
@@ -169,20 +177,27 @@ prob.setup()
 
 
 # Configure the system
-# prob.set_val('system.components.comp_0.translation', [1.25, 8, 2])
+# prob.set_val('system.components.comp_1.translation', [1.5, 1.5, 0])
 
 
 # Set up the optimizer
-# prob.driver = om.ScipyOptimizeDriver()
-# prob.driver.options['maxiter'] = 25
+prob.driver = om.ScipyOptimizeDriver()
+prob.driver.options['maxiter'] = 25
 # prob.driver.options['optimizer'] = 'COBYLA'
+# prob.driver.options['optimizer'] = 'SLSQP'
 
 # Run the model once
 prob.run_model()
 
-# Run the optimization
-# prob.run_driver()
+print("BBV Before:", prob.get_val('bbv.bounding_box_volume'))
+sphere_positions_before = copy(prob.get_val('system.components.comp_1.transformed_sphere_positions'))
+sphere_radii_before = copy(prob.get_val('system.components.comp_1.transformed_sphere_radii'))
+bounds_before = copy(prob.get_val('bbv.bounding_box_bounds'))
 
+# Run the optimization
+prob.run_driver()
+
+print("BBV After:", prob.get_val('bbv.bounding_box_volume'))
 
 # Check the initial state
 # print('Max Pseudo Density:', prob.get_val('aggregator.max_pseudo_density'))
@@ -190,17 +205,35 @@ prob.run_model()
 
 # mesh_centers = prob.get_val('mesh.mesh_centers')
 # el_size = prob.get_val('mesh.element_size')
-sphere_positions = prob.get_val('system.components.comp_1.transformed_sphere_positions')
-sphere_radii = prob.get_val('system.components.comp_1.transformed_sphere_radii')
-densities = prob.get_val('projections.proj_1.pseudo_densities')
+sphere_positions_after = prob.get_val('system.components.comp_1.transformed_sphere_positions')
+sphere_radii_after = prob.get_val('system.components.comp_1.transformed_sphere_radii')
+bounds_after = prob.get_val('bbv.bounding_box_bounds')
+# densities = prob.get_val('projections.proj_1.pseudo_densities')
+
+# sphere_positions2 = prob.get_val('system.components.comp_2.transformed_sphere_positions')
+# sphere_radii2 = prob.get_val('system.components.comp_2.transformed_sphere_radii')
+# densities2 = prob.get_val('projections.proj_2.pseudo_densities')
 
 # Plot the grid without the kernel
-sphere_positions = np.array(sphere_positions)
-sphere_radii = np.array(sphere_radii)
-plotter = pv.Plotter(shape=(1, 1), window_size=(1500, 500))
-plot_grid(plotter, (0, 0), np.array(centers), element_size, densities=densities)
-plot_spheres(plotter, (0, 0), sphere_positions, sphere_radii, 'purple', opacity=0.5)
-plot_stl_file(plotter, (0, 0), 'models/CrossHead_Pin_scaled.stl', translation=(1, 0, 0), rotation=(0, 0, 0), opacity=0.25, color='purple')
+sphere_positions_before = np.array(sphere_positions_before)
+sphere_radii_before = np.array(sphere_radii_before)
+sphere_positions_after = np.array(sphere_positions_after)
+sphere_radii_after = np.array(sphere_radii_after)
+# sphere_positions2 = np.array(sphere_positions2)
+# sphere_radii2 = np.array(sphere_radii2)
+plotter = pv.Plotter(shape=(1, 2), window_size=(1500, 500))
+plot_grid(plotter, (0, 0), np.array(centers), element_size, densities=None)
+plot_grid(plotter, (0, 1), np.array(centers), element_size, densities=None)
+plot_spheres(plotter, (0, 0), sphere_positions_before, sphere_radii_before, 'purple', opacity=0.5)
+plot_spheres(plotter, (0, 1), sphere_positions_after, sphere_radii_after, 'purple', opacity=0.5)
+# plot_spheres(plotter, (0, 0), sphere_positions2, sphere_radii2, 'blue', opacity=0.5)
+plot_stl_file(plotter, (0, 0), 'models/CrossHead_Pin_scaled.stl', translation=(0, 0, 0), rotation=(0, 0, 0), opacity=0.25, color='purple')
+plot_stl_file(plotter, (0, 1), 'models/CrossHead_Pin_scaled.stl', translation=(0, 0, 0), rotation=(0, 0, 0), opacity=0.25, color='purple')
+plot_AABB(plotter, (0, 0), bounds_before, color='blue')
+plot_AABB(plotter, (0, 1), bounds_after, color='blue')
+
+plotter.link_views()
+plotter.show_axes()
 plotter.show()
 
 # data = prob.check_partials(includes='system.components.comp_1', step=1e-4,show_only_incorrect=True)

@@ -50,8 +50,8 @@ class Component(ExplicitComponent):
         self.add_input('sphere_positions', val=sphere_positions)
         self.add_input('sphere_radii', val=sphere_radii)
         self.add_input('ports', val=ports)
-        self.add_input('translation', val=np.array([[0.0, 0.0, 0.0]]))
-        self.add_input('rotation', val=np.array([[0.0, 0.0, 0.0]]))
+        self.add_input('translation', val=np.array([0.0, 0.0, 0.0]))
+        self.add_input('rotation', val=np.array([0.0, 0.0, 0.0]))
 
         # FEA Inputs
         # ...

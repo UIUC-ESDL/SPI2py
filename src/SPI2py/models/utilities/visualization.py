@@ -108,13 +108,31 @@ def plot_capsules(plotter, subplot_index, cyl_control_points, cyl_radius, color,
     plotter.show_bounds(all_edges=True)
 
 
-def plot_AABB(plotter, subplot_index, centers, radii, color, opacity=0.25):
+def plot_AABB_spheres(plotter, subplot_index, centers, radii, color, opacity=0.25):
     # Create the subplot
     plotter.subplot(*subplot_index)
     plotter.render_window.SetMultiSamples(0)
 
     # Get the AABB bounds
     x_min, x_max, y_min, y_max, z_min, z_max = get_aabb_bounds(centers, radii)
+
+    # Create the AABB
+    aabb = pv.Box([x_min, x_max, y_min, y_max, z_min, z_max])
+
+    # Add the AABB to the plot
+    plotter.add_mesh(aabb, color='black', style='wireframe', lighting=False)
+
+    # Add the AABB to the plot
+    plotter.add_mesh(aabb, color=color, opacity=opacity, lighting=False)
+
+
+def plot_AABB(plotter, subplot_index, bounds, color, opacity=0.25):
+    # Create the subplot
+    plotter.subplot(*subplot_index)
+    plotter.render_window.SetMultiSamples(0)
+
+    # Get the AABB bounds
+    x_min, x_max, y_min, y_max, z_min, z_max = bounds
 
     # Create the AABB
     aabb = pv.Box([x_min, x_max, y_min, y_max, z_min, z_max])

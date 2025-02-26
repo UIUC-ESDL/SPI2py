@@ -2,6 +2,7 @@
 """
 
 import numpy as np
+import jax.numpy as jnp
 import pyvista as pv
 import vtk
 
@@ -143,8 +144,8 @@ def get_aabb_bounds(centers, radii):
     centers = centers.reshape(-1, 3)
     radii = radii.reshape(-1, 1)
 
-    x_min, y_min, z_min = np.min(centers - radii, axis=0)
-    x_max, y_max, z_max = np.max(centers + radii, axis=0)
+    x_min, y_min, z_min = jnp.min(centers - radii, axis=0)
+    x_max, y_max, z_max = jnp.max(centers + radii, axis=0)
 
     return x_min, x_max, y_min, y_max, z_min, z_max
 
@@ -176,13 +177,13 @@ def get_aabb_indices(el_centers, el_size, obj_centers, obj_radii):
     overlap = x_overlap & y_overlap & z_overlap
 
     # Get indices of overlapping elements
-    indices = np.argwhere(overlap)
+    indices = jnp.argwhere(overlap)
 
-    i1 = np.min(indices[:, 0])
-    i2 = np.max(indices[:, 0])
-    j1 = np.min(indices[:, 1])
-    j2 = np.max(indices[:, 1])
-    k1 = np.min(indices[:, 2])
-    k2 = np.max(indices[:, 2])
+    i1 = jnp.min(indices[:, 0])
+    i2 = jnp.max(indices[:, 0])
+    j1 = jnp.min(indices[:, 1])
+    j2 = jnp.max(indices[:, 1])
+    k1 = jnp.min(indices[:, 2])
+    k2 = jnp.max(indices[:, 2])
 
     return i1, i2, j1, j2, k1, k2
