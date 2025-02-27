@@ -5,7 +5,7 @@ import pyvista as pv
 # from SPI2py.models.projection.grid import create_grid
 from SPI2py.models.mechanics.transformations_rigidbody import transform_points
 from SPI2py.models.projection.projection import project_component, combine_densities
-from SPI2py.models.utilities.visualization import plot_grid, plot_spheres, plot_AABB, plot_stl_file
+from SPI2py.models.utilities.visualization import plot_grid, plot_spheres, plot_AABB_spheres, plot_stl_file
 from SPI2py.models.projection.mesh_kernels import create_uniform_kernel
 from SPI2py.models.physics.distributed.mesh import generate_mesh_vec, find_active_nodes, find_face_nodes
 from SPI2py.models.physics.distributed.assembly import DirichletBC, RobinBC
@@ -84,11 +84,11 @@ plotter = pv.Plotter(shape=(2, 3), window_size=(1500, 500))
 # Plot the grid without the kernel
 plot_grid(plotter, (0, 0), el_centers, el_size, densities=None)
 plot_stl_file(plotter, (0, 0), 'models/Bot_Eye_scaled.stl', translation=(0.625, 0.625, 0.125), rotation=(0, 0, 0))
-plot_AABB(plotter, (0, 0), pos_be, rad_be, color='blue')
+plot_AABB_spheres(plotter, (0, 0), pos_be, rad_be, color='blue')
 
 
 # Plot the grid with the kernel
-plot_AABB(plotter, (1, 1), sample_positions_be, sample_radii_be, color='black', opacity=0.0)
+plot_AABB_spheres(plotter, (1, 1), sample_positions_be, sample_radii_be, color='black', opacity=0.0)
 plot_spheres(plotter, (1, 1), sample_positions_be, sample_radii_be, 'blue', opacity=0.5)
 
 plot_spheres(plotter, (0, 1), pos_be, rad_be, 'blue', opacity=0.5)

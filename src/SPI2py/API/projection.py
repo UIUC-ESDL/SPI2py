@@ -1,10 +1,8 @@
 import jax.numpy as jnp
 from jax import jacfwd, jacrev, jvp, vjp
 from openmdao.api import ExplicitComponent, Group
-
 from ..models.projection.projection import project_component
 from ..models.projection.projection import project_interconnect
-from SPI2py.models.projection.mesh_kernels import create_uniform_kernel
 from ..models.utilities.aggregation import kreisselmeier_steinhauser_max
 
 
@@ -39,27 +37,19 @@ class ProjectComponent(ExplicitComponent):
         nx, ny, nz = self.options['mesh_centers'].shape[:3]
         self.add_output('pseudo_densities', compute_shape=lambda shapes: (nx, ny, nz))
 
-        # Archived code
-        # self.add_input('volume', val=0.0)
-        # self.add_output('volume_estimation_error', val=0.0, desc='How accurately the projection represents the object')
-        # volume_kernel = jnp.sum(4/3 * jnp.pi * kernel_radii ** 3)
-        # volume_approximation_error = abs((volume_kernel - volume_element) / volume_element)
-
     def setup_partials(self):
         self.declare_partials('pseudo_densities', 'sphere_positions', method='exact')
         self.declare_partials('pseudo_densities', 'sphere_radii', method='exact')
 
-
     def compute(self, inputs, outputs):
 
-        # Get the Mesh inputs
+        # Get the mesh parameters
         element_size = jnp.atleast_1d(self.options['element_size'])
         mesh_centers = jnp.array(self.options['mesh_centers'])
         kernel_points = jnp.array(self.options['kernel_points'])
         kernel_radii = jnp.array(self.options['kernel_radii'])
 
-        # Get the Mesh inputs
-        # TODO Fix atleast 1d?
+        # Get the inputs
         sphere_positions = jnp.array(inputs['sphere_positions'])
         sphere_radii     = jnp.array(inputs['sphere_radii'])
 
@@ -84,34 +74,42 @@ class ProjectComponent(ExplicitComponent):
         # Define primals in the order expected by _compute_primal.
         primals = (mesh_centers, element_size, sphere_positions, sphere_radii, kernel_points, kernel_radii)
 
+        # Forward mode, compute the Jacobian-vector product
         if mode == 'fwd':
-            # For forward mode, supply the tangent (perturbation) for each input.
-            # Assume that kernel_points and kernel_radii are constant,
-            # so we supply zeros for them.
-            tangents = (jnp.zeros_like(mesh_centers),
-                        jnp.zeros_like(element_size),
+
+            # Define zeros for constant terms
+            d_inputs_mesh_centers = jnp.zeros_like(mesh_centers)
+            d_inputs_element_size = jnp.zeros_like(element_size)
+            d_inputs_kernel_points = jnp.zeros_like(kernel_points)
+            d_inputs_kernel_radii = jnp.zeros_like(kernel_radii)
+
+            tangents = (d_inputs_mesh_centers,
+                        d_inputs_element_size,
                         d_inputs['sphere_positions'],
                         d_inputs['sphere_radii'],
-                        jnp.zeros_like(kernel_points),
-                        jnp.zeros_like(kernel_radii))
-            # jax.jvp returns (primal_out, tangent_out)
+                        d_inputs_kernel_points,
+                        d_inputs_kernel_radii)
+
+            # JVP returns (primal_out, tangent_out), discard primal_out
             _, tangent_out = jvp(self._compute_primal, primals, tangents)
+
             # Set the output tangent (directional derivative) for pseudo_densities.
             d_outputs['pseudo_densities'] = tangent_out
 
+        # Reverse mode, compute the vector-Jacobian product
         elif mode == 'rev':
-            # In reverse mode, use vjp to get a pullback function.
+
             primal_out, pullback = vjp(self._compute_primal, *primals)
+
             # d_outputs['pseudo_densities'] holds the cotangent (sensitivity) for the pseudo_densities.
             cotangent = d_outputs['pseudo_densities']
+
             # pullback returns a tuple of gradients in the order of primals.
             grads = pullback(cotangent)
 
-            # d_inputs['element_size'] = grads[1]
-            # d_inputs['mesh_centers'] = grads[0]
+            # Only extract the gradients for the input (non-constant) terms.
             d_inputs['sphere_positions'] = grads[2]
             d_inputs['sphere_radii'] = grads[3]
-            # Ignore the gradients for kernel_points and kernel_radii if they are constant.
 
 
     @staticmethod
@@ -173,6 +171,27 @@ class ProjectInterconnect(ExplicitComponent):
 
         # Write the outputs
         outputs['pseudo_densities'] = pseudo_densities
+
+    def compute_partials(self, inputs, partials):
+
+        # Get the Mesh parameters
+        element_size = jnp.atleast_1d(self.options['element_size'])
+        mesh_centers = jnp.array(self.options['mesh_centers'])
+        kernel_points = jnp.array(self.options['kernel_points'])
+        kernel_radii = jnp.array(self.options['kernel_radii'])
+
+        # Get the inputs
+        cyl_positions = jnp.array(inputs['cyl_positions'])
+        cyl_radius = jnp.array(inputs['cyl_radius'])
+
+        # Calculate the partial derivatives
+        jac_pseudo_densities = jacrev(self._compute_primal)(mesh_centers, element_size,
+                                                            cyl_positions, cyl_radius,
+                                                            kernel_points, kernel_radii)
+
+        # Set the partial derivatives
+        partials['pseudo_densities', 'cyl_positions'] = jac_pseudo_densities[2]
+        partials['pseudo_densities', 'cyl_radius'] = jac_pseudo_densities[3]
 
     @staticmethod
     def _compute_primal(mesh_centers, element_size,

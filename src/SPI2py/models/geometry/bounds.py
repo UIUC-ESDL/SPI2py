@@ -29,10 +29,10 @@ def bounding_box_bounds(positions, radii):
     Tensor: A tensor of shape (2, 3) representing the two opposite vertices (min and max) of the bounding box.
     """
 
-    # TODO Undo
-    # Add a point at the origin
-    positions = jnp.vstack([jnp.zeros((1, 3)), positions])
-    radii = jnp.vstack([0.1* jnp.ones((1, 1)), radii])
+    # # TODO Undo
+    # # Add a point at the origin
+    # positions = jnp.vstack([jnp.zeros((1, 3)), positions])
+    # radii = jnp.vstack([0.1* jnp.ones((1, 1)), radii])
 
     # Calculate min and max coordinates for each sphere
     min_coords = positions - radii.reshape(-1, 1)

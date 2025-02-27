@@ -88,3 +88,12 @@
 # model.connect('mux_all_sphere_positions.stacked_output', 'bbv.sphere_positions')
 # model.connect('mux_all_sphere_radii.stacked_output', 'bbv.sphere_radii')
 #
+
+
+
+
+# Archived code
+        # self.add_input('volume', val=0.0)
+        # self.add_output('volume_estimation_error', val=0.0, desc='How accurately the projection represents the object')
+        # volume_kernel = jnp.sum(4/3 * jnp.pi * kernel_radii ** 3)
+        # volume_approximation_error = abs((volume_kernel - volume_element) / volume_element)
