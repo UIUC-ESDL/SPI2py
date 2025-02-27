@@ -51,23 +51,23 @@ kernel_radii = kernel_radii.reshape(-1, 1)
 model.add_subsystem('system', system)
 model.system.add_subsystem('components', components)
 model.system.add_subsystem('interconnects', interconnects)
-# model.add_subsystem('projections', projections)
+model.add_subsystem('projections', projections)
 model.add_subsystem('bbv', bbv)
 
 # Define the individual components
 comp_1 = Component(description='Cross Head Pin', filepath='csvs/CrossHead_Pin_5k_300s.csv', n_spheres=50, ports=[[0.0, 0.415, 0.415], [2.850, 0.415, 0.415]], color='purple')
 # comp_2 = Component(description='Bot Eye', filepath='csvs/Bot_Eye_5k_300s.csv', n_spheres=50, ports=[[0.0, 0.415, 0.415], [2.850, 0.415, 0.415]], color='blue')
-# proj_1 = ProjectComponent(element_size=element_size, mesh_centers=centers, kernel_points=kernel_points, kernel_radii=kernel_radii)
+proj_1 = ProjectComponent(element_size=element_size, mesh_centers=centers, kernel_points=kernel_points, kernel_radii=kernel_radii)
 # proj_2 = ProjectComponent(element_size=element_size, mesh_centers=centers, kernel_points=kernel_points, kernel_radii=kernel_radii)
 
 model.system.components.add_subsystem('comp_1', comp_1)
 # model.system.components.add_subsystem('comp_2', comp_2)
-# model.projections.add_subsystem('proj_1', proj_1)
+model.projections.add_subsystem('proj_1', proj_1)
 # model.projections.add_subsystem('proj_2', proj_2)
 
 # Connect the components to the system
-# model.connect('system.components.comp_1.transformed_sphere_positions', 'projections.proj_1.sphere_positions')
-# model.connect('system.components.comp_1.transformed_sphere_radii', 'projections.proj_1.sphere_radii')
+model.connect('system.components.comp_1.transformed_sphere_positions', 'projections.proj_1.sphere_positions')
+model.connect('system.components.comp_1.transformed_sphere_radii', 'projections.proj_1.sphere_radii')
 # model.connect('system.components.comp_2.transformed_sphere_positions', 'projections.proj_2.sphere_positions')
 # model.connect('system.components.comp_2.transformed_sphere_radii', 'projections.proj_2.sphere_radii')
 
@@ -167,7 +167,7 @@ prob.model.add_objective('bbv.bounding_box_volume', ref=1)
 # prob.model.add_constraint('aggregator.max_pseudo_density', upper=1.1)
 #
 # # Define the design variables
-prob.model.add_design_var('system.components.comp_1.translation')
+prob.model.add_design_var('system.components.comp_1.translation', ref=1, lower=0, upper=3)
 # prob.model.add_design_var('system.components.comp_1.translation', ref=5, lower=0, upper=10, indices=[0, 1], flat_indices=True)
 
 
@@ -177,7 +177,7 @@ prob.setup()
 
 
 # Configure the system
-prob.set_val('system.components.comp_1.translation', [1.5, 1.5, 0])
+prob.set_val('system.components.comp_1.translation', [1.5, 1.5, 1])
 
 
 # Set up the optimizer
