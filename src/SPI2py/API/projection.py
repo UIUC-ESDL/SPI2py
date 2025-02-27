@@ -129,80 +129,53 @@ class ProjectComponent(ExplicitComponent):
 class ProjectInterconnect(ExplicitComponent):
 
     def initialize(self):
+
+        # General parameters
         self.options.declare('color', types=str, desc='Color of the projection', default='blue')
+        self.options.declare('kernel_steps_per_unit_length', types=int, desc='Number of kernel steps per unit length', default=1)
+
+        # Mesh parameters
+        self.options.declare('element_size', types=(int, float), desc='Size of the mesh elements', default=1.0)
+        self.options.declare('mesh_centers', types=jnp.ndarray, desc='Centers of the mesh elements')
+        self.options.declare('kernel_points', types=jnp.ndarray, desc='Points representing the mesh kernel')
+        self.options.declare('kernel_radii', types=jnp.ndarray, desc='Radii of kernel points')
 
     def setup(self):
-
-        # Mesh Inputs
-        self.add_input('element_size', val=0)
-        self.add_input('mesh_centers', shape_by_conn=True)
 
         # Object Inputs
         self.add_input('sphere_positions', shape_by_conn=True)
         self.add_input('sphere_radii', shape_by_conn=True)
-        self.add_input('volume', val=0.0)
 
         # Outputs
-        self.add_output('pseudo_densities',
-                        compute_shape=lambda shapes: (shapes['centers'][0], shapes['centers'][1], shapes['centers'][2]))
+        nx, ny, nz = self.options['mesh_centers'].shape[:3]
+        self.add_output('pseudo_densities', compute_shape=lambda shapes: (nx, ny, nz))
 
     def setup_partials(self):
-        self.declare_partials('*', '*')
+        self.declare_partials('pseudo_densities', 'sphere_positions', method='exact')
+        self.declare_partials('pseudo_densities', 'sphere_radii', method='exact')
 
     def compute(self, inputs, outputs):
 
         # Get the Mesh inputs
-        element_size   = jnp.array(inputs['element_size'])
-        element_bounds   = jnp.array(inputs['element_bounds'])
-        sample_points    = jnp.array(inputs['element_sphere_positions'])
-        sample_radii     = jnp.array(inputs['element_sphere_radii'])
+        element_size = jnp.atleast_1d(self.options['element_size'])
+        mesh_centers = jnp.array(self.options['mesh_centers'])
+        kernel_points = jnp.array(self.options['kernel_points'])
+        kernel_radii = jnp.array(self.options['kernel_radii'])
+
+        # Get the Mesh inputs
+        # TODO Fix atleast 1d?
         sphere_positions = jnp.array(inputs['sphere_positions'])
         sphere_radii     = jnp.array(inputs['sphere_radii'])
-        volume           = jnp.array(inputs['volume'])
 
         # Compute the pseudo-densities
-        pseudo_densities = self._project(sample_points, sample_radii, sphere_positions, sphere_radii)
-
-        # Compute the volume estimation error
-        # projected_volume = jnp.sum(pseudo_densities * element_size ** 3)
-        # volume_estimation_error = jnp.abs(volume - projected_volume) / volume
+        pseudo_densities = self._compute_primal(mesh_centers, element_size, sphere_positions, sphere_radii, kernel_points, kernel_radii)
 
         # Write the outputs
         outputs['pseudo_densities'] = pseudo_densities
-        # outputs['volume_estimation_error'] = volume_estimation_error
-
-    # def compute_partials(self, inputs, partials):
-    #
-    #     # Get the inputs
-    #     element_bounds = jnp.array(inputs['element_bounds'])
-    #     sample_points    = jnp.array(inputs['sample_points'])
-    #     sample_radii     = jnp.array(inputs['sample_radii'])
-    #     sphere_positions = jnp.array(inputs['sphere_positions'])
-    #     sphere_radii     = jnp.array(inputs['sphere_radii'])
-    #     aabb = jnp.array(inputs['AABB'])
-    #
-    #     # Calculate the Jacobian of the pseudo-densities
-    #     jac_pseudo_densities = jacfwd(self._project)(sphere_positions, sphere_radii, sample_points, sample_radii, aabb, element_bounds)
-    #
-    #     # Set the partials
-    #     partials['pseudo_densities', 'sphere_positions'] = jac_pseudo_densities
-
 
     @staticmethod
-    def _project(sample_points, sample_radii, sphere_positions, sphere_radii):
-
-        import numpy as np
-        def create_cylinders(points, radius):
-            x1 = np.array(points[:-1])  # Start positions (-1, 3)
-            x2 = np.array(points[1:])  # Stop positions (-1, 3)
-            r = np.full((x1.shape[0], 1), radius)
-            return x1, x2, r
-
-
-        # FIXME different radii for different int segments
-        X1, X2, R = create_cylinders(sphere_positions, sphere_radii[0])
-
-        pseudo_densities = project_interconnect(sample_points, sample_radii, X1, X2, R)
+    def _compute_primal(mesh_centers, element_size, cyl_points, cyl_radii, kernel_points, kernel_radii):
+        pseudo_densities = project_interconnect(mesh_centers, element_size, cyl_points, cyl_radii, kernel_points, kernel_radii)
         return pseudo_densities
 
 

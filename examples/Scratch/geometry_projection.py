@@ -1,5 +1,6 @@
 import numpy as np
 import jax.numpy as jnp
+from jax import jacfwd, jacrev, jvp, vjp
 import pyvista as pv
 # from SPI2py.models.projection.grid import create_grid
 from SPI2py.models.mechanics.transformations_rigidbody import transform_points

@@ -10,12 +10,12 @@ import numpy as np
 import pyvista as pv
 import openmdao.api as om
 from SPI2py.API.system import System, Components, Interconnects, Component, Interconnect
-from SPI2py.API.projection import Projections, ProjectionAggregator, ProjectComponent
+from SPI2py.API.projection import Projections, ProjectionAggregator, ProjectComponent, ProjectInterconnect
 from SPI2py.API.FEA import Mesh, FEA
 from SPI2py.models.physics.distributed.mesh import generate_mesh_vec
 from SPI2py.models.projection.mesh_kernels import create_uniform_kernel
 from SPI2py.API.objectives import BoundingBoxVolume
-from SPI2py.API.utilities import Multiplexer, read_input_file
+from SPI2py.API.utilities import Multiplexer
 from SPI2py.models.utilities.visualization import plot_grid, plot_spheres, plot_stl_file, plot_AABB
 jax.config.update("jax_enable_x64", True)
 jax.config.update("jax_debug_nans", True)
@@ -28,8 +28,8 @@ system = System()
 components = Components()
 interconnects = Interconnects()
 projections = Projections()
-mux = Multiplexer()
 bbv = BoundingBoxVolume()
+
 
 
 # Initialize the Mesh
@@ -56,23 +56,46 @@ model.add_subsystem('bbv', bbv)
 
 # Define the individual components
 comp_1 = Component(description='Cross Head Pin', filepath='csvs/CrossHead_Pin_5k_300s.csv', n_spheres=50, ports=[[0.0, 0.415, 0.415], [2.850, 0.415, 0.415]], color='purple')
-# comp_2 = Component(description='Bot Eye', filepath='csvs/Bot_Eye_5k_300s.csv', n_spheres=50, ports=[[0.0, 0.415, 0.415], [2.850, 0.415, 0.415]], color='blue')
+comp_2 = Component(description='Bot Eye', filepath='csvs/Bot_Eye_5k_300s.csv', n_spheres=50, ports=[[0.0, 0.415, 0.415], [2.850, 0.415, 0.415]], color='blue')
+int_1 = Interconnect(n_segments=3, radius=0.5, color='green')
 proj_1 = ProjectComponent(element_size=element_size, mesh_centers=centers, kernel_points=kernel_points, kernel_radii=kernel_radii)
-# proj_2 = ProjectComponent(element_size=element_size, mesh_centers=centers, kernel_points=kernel_points, kernel_radii=kernel_radii)
+proj_2 = ProjectComponent(element_size=element_size, mesh_centers=centers, kernel_points=kernel_points, kernel_radii=kernel_radii)
+proj_3 = ProjectInterconnect(element_size=element_size, mesh_centers=centers, kernel_points=kernel_points, kernel_radii=kernel_radii)
 
 model.system.components.add_subsystem('comp_1', comp_1)
-# model.system.components.add_subsystem('comp_2', comp_2)
+model.system.components.add_subsystem('comp_2', comp_2)
+model.system.interconnects.add_subsystem('int_1', int_1)
 model.projections.add_subsystem('proj_1', proj_1)
-# model.projections.add_subsystem('proj_2', proj_2)
+model.projections.add_subsystem('proj_2', proj_2)
+model.projections.add_subsystem('proj_3', proj_3)
+
 
 # Connect the components to the system
 model.connect('system.components.comp_1.transformed_sphere_positions', 'projections.proj_1.sphere_positions')
 model.connect('system.components.comp_1.transformed_sphere_radii', 'projections.proj_1.sphere_radii')
-# model.connect('system.components.comp_2.transformed_sphere_positions', 'projections.proj_2.sphere_positions')
-# model.connect('system.components.comp_2.transformed_sphere_radii', 'projections.proj_2.sphere_radii')
+model.connect('system.components.comp_2.transformed_sphere_positions', 'projections.proj_2.sphere_positions')
+model.connect('system.components.comp_2.transformed_sphere_radii', 'projections.proj_2.sphere_radii')
+model.connect('system.interconnects.int_1.transformed_sphere_positions', 'projections.proj_3.sphere_positions')
+model.connect('system.interconnects.int_1.transformed_sphere_radii', 'projections.proj_3.sphere_radii')
 
-model.connect('system.components.comp_1.transformed_sphere_positions', 'bbv.sphere_positions')
-model.connect('system.components.comp_1.transformed_sphere_radii', 'bbv.sphere_radii')
+
+model.connect('system.components.comp_1.transformed_ports','system.interconnects.int_1.start_point', src_indices=om.slicer[0, :])
+
+
+mux_spheres = Multiplexer(n_i=[27, 10], m=3)
+prob.model.add_subsystem('mux_spheres', mux_spheres)
+prob.model.connect('system.components.comp_1.transformed_sphere_positions', 'mux_spheres.input_0')
+prob.model.connect('system.components.comp_2.transformed_sphere_positions', 'mux_spheres.input_1')
+prob.model.connect('mux_spheres.stacked_output', 'bbv.sphere_positions')
+
+mux_radii = Multiplexer(n_i=[27, 10], m=1)
+prob.model.add_subsystem('mux_radii', mux_radii)
+prob.model.connect('system.components.comp_1.transformed_sphere_radii', 'mux_radii.input_0')
+prob.model.connect('system.components.comp_2.transformed_sphere_radii', 'mux_radii.input_1')
+prob.model.connect('mux_radii.stacked_output', 'bbv.sphere_radii')
+
+# model.connect('system.components.comp_1.transformed_sphere_positions', 'bbv.sphere_positions')
+# model.connect('system.components.comp_1.transformed_sphere_radii', 'bbv.sphere_radii')
 
 
 
@@ -191,12 +214,12 @@ prob.run_model()
 
 print("BBV Before:", prob.get_val('bbv.bounding_box_volume'))
 print("Bounds Before:", prob.get_val('bbv.bounding_box_bounds'))
-sphere_positions_before = copy(prob.get_val('system.components.comp_1.transformed_sphere_positions'))
-sphere_radii_before = copy(prob.get_val('system.components.comp_1.transformed_sphere_radii'))
+sphere_positions_before = copy(prob.get_val('mux_spheres.stacked_output'))
+sphere_radii_before = copy(prob.get_val('mux_radii.stacked_output'))
 bounds_before = copy(prob.get_val('bbv.bounding_box_bounds'))
 
 # Run the optimization
-prob.run_driver()
+# prob.run_driver()
 
 print("BBV After:", prob.get_val('bbv.bounding_box_volume'))
 print("Bounds After:", prob.get_val('bbv.bounding_box_bounds'))
@@ -207,8 +230,8 @@ print("Bounds After:", prob.get_val('bbv.bounding_box_bounds'))
 
 # mesh_centers = prob.get_val('mesh.mesh_centers')
 # el_size = prob.get_val('mesh.element_size')
-sphere_positions_after = prob.get_val('system.components.comp_1.transformed_sphere_positions')
-sphere_radii_after = prob.get_val('system.components.comp_1.transformed_sphere_radii')
+sphere_positions_after = prob.get_val('mux_spheres.stacked_output')
+sphere_radii_after = prob.get_val('mux_radii.stacked_output')
 bounds_after = prob.get_val('bbv.bounding_box_bounds')
 # densities = prob.get_val('projections.proj_1.pseudo_densities')
 

@@ -189,26 +189,14 @@ class Interconnect(ExplicitComponent):
         shape_radii = (n_segments + 1, 1)
 
         # Define the inputs
+        # T_in, flow rate, ... and out
         self.add_input('start_point', shape=(1, 3))
         self.add_input('control_points', shape=shape_control_points)
         self.add_input('end_point', shape=(1, 3))
 
-        # Mesh Inputs
-        self.add_input('element_length', val=0)
-        self.add_input('element_bounds', shape_by_conn=True)
-        self.add_input('centers', shape_by_conn=True)
-        self.add_input('element_sphere_positions', shape_by_conn=True)
-        self.add_input('element_sphere_radii', shape_by_conn=True)
-
-
         # Define the outputs
         self.add_output('transformed_sphere_positions', shape=shape_positions)
         self.add_output('transformed_sphere_radii', shape=shape_radii)
-        # self.add_output('volume', val=0.0)
-
-        # Outputs
-        self.add_output('pseudo_densities',
-                        compute_shape=lambda shapes: (shapes['centers'][0], shapes['centers'][1], shapes['centers'][2]))
 
     # def setup_partials(self):
     #     self.declare_partials('transformed_sphere_positions', ['start_point', 'control_points', 'end_point'])
@@ -236,31 +224,6 @@ class Interconnect(ExplicitComponent):
         outputs['transformed_sphere_positions'] = points
         outputs['transformed_sphere_radii'] = radii
 
-        # Get the Mesh inputs
-        element_length = inputs['element_length']
-        element_bounds = inputs['element_bounds']
-        sample_points = inputs['element_sphere_positions']
-        sample_radii = inputs['element_sphere_radii']
-
-        # Compute the pseudo-densities
-        pseudo_densities = self._project(sample_points, sample_radii, points, radii)
-
-        outputs['pseudo_densities'] = pseudo_densities
-
-    @staticmethod
-    def _project(sample_points, sample_radii, sphere_positions, sphere_radii):
-        import numpy as np
-        def create_cylinders(points, radius):
-            x1 = np.array(points[:-1])  # Start positions (-1, 3)
-            x2 = np.array(points[1:])  # Stop positions (-1, 3)
-            r = np.full((x1.shape[0], 1), radius)
-            return x1, x2, r
-
-        # FIXME different radii for different int segments
-        X1, X2, R = create_cylinders(sphere_positions, sphere_radii[0])
-
-        pseudo_densities = project_interconnect(sample_points, sample_radii, X1, X2, R)
-        return pseudo_densities
 
     # def compute_partials(self, inputs, partials):
     #
