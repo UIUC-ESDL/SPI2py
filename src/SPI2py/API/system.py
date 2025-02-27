@@ -186,7 +186,7 @@ class Interconnect(ExplicitComponent):
         # Define the input shapes
         shape_control_points = (n_segments - 1, 3)
         shape_positions = (n_segments + 1, 3)
-        shape_radii = (n_segments + 1, 1)
+        # shape_radii = (n_segments + 1, 1)
 
         # Define the inputs
         # T_in, flow rate, ... and out
@@ -196,7 +196,8 @@ class Interconnect(ExplicitComponent):
 
         # Define the outputs
         self.add_output('transformed_sphere_positions', shape=shape_positions)
-        self.add_output('transformed_sphere_radii', shape=shape_radii)
+        # self.add_output('transformed_sphere_radii', shape=shape_radii)
+        self.add_output('transformed_sphere_radii', val=1)
 
     # def setup_partials(self):
     #     self.declare_partials('transformed_sphere_positions', ['start_point', 'control_points', 'end_point'])
@@ -215,7 +216,8 @@ class Interconnect(ExplicitComponent):
 
         # vstack
         points = np.vstack([start_point, control_points, end_point])
-        radii = radius * np.ones((points.shape[0], 1))
+        # radii = radius * np.ones((points.shape[0], 1))
+        radii = radius
 
         # Calculate the positions
         # translated_positions = translate_linear_spline(sphere_positions, start_point, control_points, end_point)

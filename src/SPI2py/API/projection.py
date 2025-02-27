@@ -175,7 +175,7 @@ class ProjectInterconnect(ExplicitComponent):
 
     @staticmethod
     def _compute_primal(mesh_centers, element_size, cyl_points, cyl_radii, kernel_points, kernel_radii):
-        pseudo_densities = project_interconnect(mesh_centers, element_size, cyl_points, cyl_radii, kernel_points, kernel_radii)
+        pseudo_densities, _, _ = project_interconnect(mesh_centers, element_size, cyl_points, cyl_radii, kernel_points, kernel_radii)
         return pseudo_densities
 
 
