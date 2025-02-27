@@ -186,45 +186,44 @@ class Interconnect(ExplicitComponent):
         # Define the input shapes
         shape_control_points = (n_segments - 1, 3)
         shape_positions = (n_segments + 1, 3)
-        # shape_radii = (n_segments + 1, 1)
 
         # Define the inputs
         # T_in, flow rate, ... and out
         self.add_input('start_point', shape=(1, 3))
         self.add_input('control_points', shape=shape_control_points)
         self.add_input('end_point', shape=(1, 3))
+        self.add_input('radius', val=radius)
 
         # Define the outputs
-        self.add_output('transformed_sphere_positions', shape=shape_positions)
-        # self.add_output('transformed_sphere_radii', shape=shape_radii)
-        self.add_output('transformed_sphere_radii', val=1)
+        self.add_output('transformed_cyl_positions', shape=shape_positions)
+        self.add_output('transformed_cyl_radius', val=radius)
 
-    # def setup_partials(self):
-    #     self.declare_partials('transformed_sphere_positions', ['start_point', 'control_points', 'end_point'])
-    #     self.declare_partials('transformed_sphere_radii', ['start_point', 'control_points', 'end_point'])
-    #     self.declare_partials('pseudo_densities', ['start_point', 'control_points', 'end_point'])
+    def setup_partials(self):
+        self.declare_partials('transformed_cyl_positions', ['start_point', 'control_points', 'end_point'])
+        self.declare_partials('transformed_cyl_radius', ['radius'])
+
 
     def compute(self, inputs, outputs):
 
         # Unpack the inputs
-        start_point = inputs['start_point']
-        control_points = inputs['control_points']
-        end_point = inputs['end_point']
-
-        radius = self.options['radius']
-
-
-        # vstack
-        points = np.vstack([start_point, control_points, end_point])
-        # radii = radius * np.ones((points.shape[0], 1))
-        radii = radius
+        start_point = jnp.array(inputs['start_point'])
+        control_points = jnp.array(inputs['control_points'])
+        end_point =jnp.array( inputs['end_point'])
+        radius = jnp.array(inputs['radius'])
 
         # Calculate the positions
-        # translated_positions = translate_linear_spline(sphere_positions, start_point, control_points, end_point)
+        points, radius = self._compute_primal(start_point, control_points, end_point, radius)
 
         # Set the outputs
-        outputs['transformed_sphere_positions'] = points
-        outputs['transformed_sphere_radii'] = radii
+        outputs['transformed_cyl_positions'] = points
+        outputs['transformed_cyl_radius'] = radius
+
+    @staticmethod
+    def _compute_primal(start_point, control_points, end_point, radius):
+
+        points = jnp.vstack([start_point, control_points, end_point])
+
+        return points, radius
 
 
     # def compute_partials(self, inputs, partials):

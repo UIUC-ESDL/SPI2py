@@ -143,39 +143,46 @@ class ProjectInterconnect(ExplicitComponent):
     def setup(self):
 
         # Object Inputs
-        self.add_input('sphere_positions', shape_by_conn=True)
-        self.add_input('sphere_radii', shape_by_conn=True)
+        self.add_input('cyl_positions', shape_by_conn=True)
+        self.add_input('cyl_radius', shape_by_conn=True)
 
         # Outputs
         nx, ny, nz = self.options['mesh_centers'].shape[:3]
         self.add_output('pseudo_densities', compute_shape=lambda shapes: (nx, ny, nz))
 
     def setup_partials(self):
-        self.declare_partials('pseudo_densities', 'sphere_positions', method='exact')
-        self.declare_partials('pseudo_densities', 'sphere_radii', method='exact')
+        self.declare_partials('pseudo_densities', 'cyl_positions', method='exact')
+        self.declare_partials('pseudo_densities', 'cyl_radius', method='exact')
 
     def compute(self, inputs, outputs):
 
-        # Get the Mesh inputs
+        # Get the Mesh parameters
         element_size = jnp.atleast_1d(self.options['element_size'])
         mesh_centers = jnp.array(self.options['mesh_centers'])
         kernel_points = jnp.array(self.options['kernel_points'])
         kernel_radii = jnp.array(self.options['kernel_radii'])
 
-        # Get the Mesh inputs
-        # TODO Fix atleast 1d?
-        sphere_positions = jnp.array(inputs['sphere_positions'])
-        sphere_radii     = jnp.array(inputs['sphere_radii'])
+        # Get the inputs
+        cyl_positions = jnp.array(inputs['cyl_positions'])
+        cyl_radius     = jnp.array(inputs['cyl_radius'])
 
         # Compute the pseudo-densities
-        pseudo_densities = self._compute_primal(mesh_centers, element_size, sphere_positions, sphere_radii, kernel_points, kernel_radii)
+        pseudo_densities = self._compute_primal(mesh_centers, element_size,
+                                                cyl_positions, cyl_radius,
+                                                kernel_points, kernel_radii)
 
         # Write the outputs
         outputs['pseudo_densities'] = pseudo_densities
 
     @staticmethod
-    def _compute_primal(mesh_centers, element_size, cyl_points, cyl_radii, kernel_points, kernel_radii):
-        pseudo_densities, _, _ = project_interconnect(mesh_centers, element_size, cyl_points, cyl_radii, kernel_points, kernel_radii)
+    def _compute_primal(mesh_centers, element_size,
+                        cyl_points, cyl_radii,
+                        kernel_points, kernel_radii):
+
+        pseudo_densities, _, _ = project_interconnect(mesh_centers, element_size,
+                                                      cyl_points, cyl_radii,
+                                                      kernel_points, kernel_radii)
+
         return pseudo_densities
 
 

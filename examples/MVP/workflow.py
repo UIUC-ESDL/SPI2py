@@ -21,7 +21,7 @@ from SPI2py.API.utilities import Multiplexer
 
 from SPI2py.models.physics.distributed.mesh import generate_mesh_vec
 from SPI2py.models.projection.mesh_kernels import create_uniform_kernel
-from SPI2py.models.utilities.visualization import plot_grid, plot_spheres, plot_stl_file, plot_AABB
+from SPI2py.models.utilities.visualization import plot_grid, plot_spheres, plot_capsules, plot_stl_file, plot_AABB
 
 # Set up the JAX backend
 jax.config.update("jax_enable_x64", True)
@@ -78,13 +78,14 @@ model.projections.add_subsystem('proj_2', proj_2)
 model.projections.add_subsystem('proj_3', proj_3)
 
 
+
 # Connect the system elements to the projections
 model.connect('system.components.comp_1.transformed_sphere_positions', 'projections.proj_1.sphere_positions')
 model.connect('system.components.comp_1.transformed_sphere_radii', 'projections.proj_1.sphere_radii')
 model.connect('system.components.comp_2.transformed_sphere_positions', 'projections.proj_2.sphere_positions')
 model.connect('system.components.comp_2.transformed_sphere_radii', 'projections.proj_2.sphere_radii')
-model.connect('system.interconnects.int_1.transformed_sphere_positions', 'projections.proj_3.sphere_positions')
-model.connect('system.interconnects.int_1.transformed_sphere_radii', 'projections.proj_3.sphere_radii')
+model.connect('system.interconnects.int_1.transformed_cyl_positions', 'projections.proj_3.cyl_positions')
+model.connect('system.interconnects.int_1.transformed_cyl_radius', 'projections.proj_3.cyl_radius')
 
 
 # Aggregate the spheres of each component
@@ -107,6 +108,7 @@ model.projections.add_subsystem('aggregator', projection_aggregator)
 model.connect('projections.proj_1.pseudo_densities', 'projections.aggregator.pseudo_densities_0')
 model.connect('projections.proj_2.pseudo_densities', 'projections.aggregator.pseudo_densities_1')
 model.connect('projections.proj_3.pseudo_densities', 'projections.aggregator.pseudo_densities_2')
+
 
 # # Connect the system to the projections
 # i = 0
@@ -167,6 +169,10 @@ prob.setup()
 
 # Configure the system
 prob.set_val('system.components.comp_1.translation', [1.5, 1.5, 1])
+prob.set_val('system.components.comp_1.rotation', [0, 0, 0])
+prob.set_val('system.components.comp_2.translation', [0, 0, 1])
+prob.set_val('system.components.comp_2.rotation', [0, 0, 0])
+prob.set_val('system.interconnects.int_1.control_points', [[1.75, 1, 0], [1, 1, 0]])
 
 
 # Set up the optimizer
@@ -180,10 +186,12 @@ prob.run_model()
 
 
 # Check the initial state
+print("BBV Before:", prob.get_val('bbv.bounding_box_volume'))
 comp_1_translation_before = copy(prob.get_val('system.components.comp_1.translation'))
 comp_1_rotation_before = copy(prob.get_val('system.components.comp_1.rotation'))
 comp_2_translation_before = copy(prob.get_val('system.components.comp_2.translation'))
 comp_2_rotation_before = copy(prob.get_val('system.components.comp_2.rotation'))
+int_1_points_before = copy(prob.get_val('system.interconnects.int_1.transformed_cyl_positions'))
 sphere_positions_before = copy(prob.get_val('mux_spheres.stacked_output'))
 sphere_radii_before = copy(prob.get_val('mux_radii.stacked_output'))
 bounds_before = copy(prob.get_val('bbv.bounding_box_bounds'))
@@ -193,14 +201,15 @@ densities_before = copy(prob.get_val('projections.aggregator.pseudo_densities'))
 # Run the optimization
 # prob.run_driver()
 
-print("BBV After:", prob.get_val('bbv.bounding_box_volume'))
-print("Bounds After:", prob.get_val('bbv.bounding_box_bounds'))
+
 
 # Check the final state
+print("BBV After:", prob.get_val('bbv.bounding_box_volume'))
 comp_1_translation_after = prob.get_val('system.components.comp_1.translation')
 comp_1_rotation_after = prob.get_val('system.components.comp_1.rotation')
 comp_2_translation_after = prob.get_val('system.components.comp_2.translation')
 comp_2_rotation_after = prob.get_val('system.components.comp_2.rotation')
+int_1_points_after = prob.get_val('system.interconnects.int_1.transformed_cyl_positions')
 sphere_positions_after = prob.get_val('mux_spheres.stacked_output')
 sphere_radii_after = prob.get_val('mux_radii.stacked_output')
 bounds_after = prob.get_val('bbv.bounding_box_bounds')
@@ -225,6 +234,8 @@ sphere_positions_before = np.array(sphere_positions_before)
 sphere_radii_before = np.array(sphere_radii_before)
 sphere_positions_after = np.array(sphere_positions_after)
 sphere_radii_after = np.array(sphere_radii_after)
+int_1_points_before = np.array(int_1_points_before)
+int_1_points_after = np.array(int_1_points_after)
 
 
 # Plot the results
@@ -237,6 +248,7 @@ plot_grid(plotter, (0, 0), centers, element_size, densities=None)
 plot_stl_file(plotter, (0, 0), 'models/CrossHead_Pin_scaled.stl', translation=comp_1_translation_before, rotation=comp_1_rotation_before, opacity=0.25, color='purple')
 plot_stl_file(plotter, (0, 0), 'models/Bot_Eye_scaled.stl', translation=comp_2_translation_before, rotation=comp_2_rotation_before, opacity=0.25, color='blue')
 plot_spheres(plotter, (0, 0), sphere_positions_before, sphere_radii_before, 'purple', opacity=0.5)
+plot_capsules(plotter, (0, 0), int_1_points_before, 0.25, color='green', opacity=0.5)
 plot_AABB(plotter, (0, 0), bounds_before, color='blue')
 
 # Plot the pseudo-densities before optimization
@@ -250,6 +262,7 @@ plot_grid(plotter, (0, 1), centers, element_size, densities=None)
 plot_stl_file(plotter, (0, 1), 'models/CrossHead_Pin_scaled.stl', translation=comp_1_translation_after, rotation=comp_1_rotation_after, opacity=0.25, color='purple')
 plot_stl_file(plotter, (0, 1), 'models/Bot_Eye_scaled.stl', translation=comp_2_translation_after, rotation=comp_2_rotation_after, opacity=0.25, color='blue')
 plot_spheres(plotter, (0, 1), sphere_positions_after, sphere_radii_after, 'purple', opacity=0.5)
+plot_capsules(plotter, (0, 1), int_1_points_after, 0.25, color='green', opacity=0.5)
 plot_AABB(plotter, (0, 1), bounds_after, color='blue')
 
 # Plot the pseudo-densities after optimization
