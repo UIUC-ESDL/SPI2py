@@ -246,11 +246,10 @@ class ProjectionAggregator(ExplicitComponent):
         rho_min = self.options['rho_min']
 
         # Get the inputs
-        element_length = jnp.array(inputs['element_length'])
         pseudo_densities = [jnp.array(inputs[f'pseudo_densities_{i}']) for i in range(n_projections)]
 
         # Calculate the values
-        aggregate_pseudo_densities, max_pseudo_density = self._aggregate_pseudo_densities(pseudo_densities, element_length, rho_min)
+        aggregate_pseudo_densities, max_pseudo_density = self._compute_primal(pseudo_densities, rho_min)
 
 
         # Write the outputs
@@ -259,16 +258,17 @@ class ProjectionAggregator(ExplicitComponent):
 
     def compute_partials(self, inputs, partials):
 
+        # TODO Implement as jacvec product
+
         # Get the options
         n_projections = self.options['n_projections']
         rho_min = self.options['rho_min']
 
         # Get the inputs
-        element_length = jnp.array(inputs['element_length'])
         pseudo_densities = [jnp.array(inputs[f'pseudo_densities_{i}']) for i in range(n_projections)]
 
         # Calculate the partial derivatives
-        jac_pseudo_densities, jac_max_pseudo_density = jacfwd(self._aggregate_pseudo_densities)(pseudo_densities, element_length, rho_min)
+        jac_pseudo_densities, jac_max_pseudo_density = jacfwd(self._compute_primal)(pseudo_densities, rho_min)
 
         # Set the partial derivatives
         jacs = zip(jac_pseudo_densities, jac_max_pseudo_density)
@@ -277,7 +277,7 @@ class ProjectionAggregator(ExplicitComponent):
             partials['max_pseudo_density', f'pseudo_densities_{i}'] = jac_max_pseudo_density_i
 
     @staticmethod
-    def _aggregate_pseudo_densities(pseudo_densities, element_length, rho_min):
+    def _compute_primal(pseudo_densities, rho_min):
 
         # Aggregate the pseudo-densities
         aggregate_pseudo_densities = jnp.zeros_like(pseudo_densities[0])
@@ -287,12 +287,8 @@ class ProjectionAggregator(ExplicitComponent):
         # Ensure that no pseudo-density is below the minimum value
         aggregate_pseudo_densities = jnp.maximum(aggregate_pseudo_densities, rho_min)
 
-        # TODO rethink max if we need to overlap interconnects and components
-
         # Calculate the maximum pseudo-density
         max_pseudo_density = kreisselmeier_steinhauser_max(aggregate_pseudo_densities)
 
         return aggregate_pseudo_densities, max_pseudo_density
-
-#####
 

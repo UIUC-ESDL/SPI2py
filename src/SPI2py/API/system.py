@@ -1,14 +1,12 @@
+# Standard imports
 import numpy as np
 import jax.numpy as jnp
 from jax import jacfwd, jacrev
-
-import openmdao.api as om
 from openmdao.api import ExplicitComponent, Group
 
-from ..models.mechanics.transformations_rigidbody import transform_points
-from ..models.projection.projection import project_component, project_interconnect
+# Custom imports
+from ..models.mechanics.homogenous_transformation import transform_points
 from ..models.utilities.input_and_output import read_xyzr_file, read_csv_file
-from ..models.utilities.aggregation import kreisselmeier_steinhauser_max
 
 
 class Components(Group):
@@ -38,7 +36,6 @@ class Component(ExplicitComponent):
         min_radius = 1.0e-1  # 3.0e-2
         sphere_positions, sphere_radii = read_csv_file(filepath, min_radius)
 
-
         # Convert the lists to numpy arrays
         sphere_positions = np.array(sphere_positions).reshape(-1, 3)
         sphere_radii = np.array(sphere_radii).reshape(-1, 1)
@@ -60,18 +57,6 @@ class Component(ExplicitComponent):
         self.add_output('transformed_sphere_positions', val=sphere_positions)
         self.add_output('transformed_sphere_radii', val=sphere_radii)
         self.add_output('transformed_ports', val=ports)
-
-        # Outputs: Projections
-        # Define the outputs
-
-        # self.add_output('pseudo_densities',
-        #                 compute_shape=lambda shapes: (shapes['centers'][0], shapes['centers'][1], shapes['centers'][2]))
-
-        # Define diagnostic outputs
-        # self.add_output('mesh_kernel_volume_error', val=0.0, desc="How accurately the mesh kernel represents the element volume")
-        # self.add_output('projection_volume_error', val=0.0, desc='How accurately the projection represents the object')
-
-
 
     def setup_partials(self):
 
@@ -226,36 +211,56 @@ class Interconnect(ExplicitComponent):
         return points, radius
 
 
-    # def compute_partials(self, inputs, partials):
-    #
-    #     # Unpack the inputs
-    #     start_point = inputs['start_point']
-    #     control_points = inputs['control_points']
-    #     end_point = inputs['end_point']
-    #
-    #     # Unpack the options
-    #     radius = self.options['radius']
-    #
-    #     # Convert the inputs to Jax arrays
-    #     start_point = jnp.array(start_point)
-    #     control_points = jnp.array(control_points)
-    #     end_point = jnp.array(end_point)
-    #     positions = jnp.array(positions)
-    #     radii = jnp.array(radii)
-    #
-    #     # Calculate the partial derivatives
-    #     jac_translated_positions = jacfwd(translate_linear_spline, argnums=(1, 2, 3))
-    #     jac_translated_positions_val = jac_translated_positions(positions, start_point, control_points, end_point)
-    #
-    #     # Slice the Jacobian
-    #     jac_translated_positions_start_point = jac_translated_positions_val[0]
-    #     jac_translated_positions_control_points = jac_translated_positions_val[1]
-    #     jac_translated_positions_end_point = jac_translated_positions_val[2]
-    #
-    #     # Set the outputs
-    #     partials['transformed_sphere_positions', 'start_point'] = jac_translated_positions_start_point
-    #     partials['transformed_sphere_positions', 'control_points'] = jac_translated_positions_control_points
-    #     partials['transformed_sphere_positions', 'end_point'] = jac_translated_positions_end_point
+    def compute_partials(self, inputs, partials):
+
+        # Unpack the inputs
+        start_point = jnp.array(inputs['start_point'])
+        control_points = jnp.array(inputs['control_points'])
+        end_point = jnp.array(inputs['end_point'])
+        radius = jnp.array(inputs['radius'])
+
+        # Calculate the partial derivatives
+        jac_translated_positions = jacfwd(self._compute_primal, argnums=(0, 1, 2))
+        jac_radius = jacfwd(self._compute_primal, argnums=(3))
+
+        jac_translated_positions_val, _ = jac_translated_positions(start_point, control_points, end_point, radius)
+        _, jac_radius_val = jac_radius(start_point, control_points, end_point, radius)
+
+        # Slice the Jacobian
+        jac_translated_positions_start_point = jac_translated_positions_val[0]
+        jac_translated_positions_control_points = jac_translated_positions_val[1]
+        jac_translated_positions_end_point = jac_translated_positions_val[2]
+        jac_translated_positions_radius = jac_radius_val
+
+        # Set the outputs
+        partials['transformed_cyl_positions', 'start_point'] = jac_translated_positions_start_point
+        partials['transformed_cyl_positions', 'control_points'] = jac_translated_positions_control_points
+        partials['transformed_cyl_positions', 'end_point'] = jac_translated_positions_end_point
+        partials['transformed_cyl_radius', 'radius'] = jac_translated_positions_radius
+
+
+        # # Calculate the positions
+        # points, radius = self._compute_primal(start_point, control_points, end_point, radius)
+
+
+
+        # # Set the outputs
+        # outputs['transformed_cyl_positions'] = points
+        # outputs['transformed_cyl_radius'] = radius
+        #
+        # # Calculate the partial derivatives
+        # jac_translated_positions = jacfwd(translate_linear_spline, argnums=(1, 2, 3))
+        # jac_translated_positions_val = jac_translated_positions(positions, start_point, control_points, end_point)
+        #
+        # # Slice the Jacobian
+        # jac_translated_positions_start_point = jac_translated_positions_val[0]
+        # jac_translated_positions_control_points = jac_translated_positions_val[1]
+        # jac_translated_positions_end_point = jac_translated_positions_val[2]
+
+        # Set the outputs
+        # partials['transformed_sphere_positions', 'start_point'] = jac_translated_positions_start_point
+        # partials['transformed_sphere_positions', 'control_points'] = jac_translated_positions_control_points
+        # partials['transformed_sphere_positions', 'end_point'] = jac_translated_positions_end_point
 
 
 class System(Group):

@@ -30,16 +30,16 @@ jax.config.update("jax_debug_nans", True)
 # Initialize the main problem elements/groups
 prob = om.Problem()
 model = prob.model
+
 system = System()
 components = Components()
 interconnects = Interconnects()
 projections = Projections()
-bbv = BoundingBoxVolume()
+
 model.add_subsystem('system', system)
 model.system.add_subsystem('components', components)
 model.system.add_subsystem('interconnects', interconnects)
 model.add_subsystem('projections', projections)
-model.add_subsystem('bbv', bbv)
 
 
 # Initialize the Mesh
@@ -65,8 +65,8 @@ model.system.interconnects.add_subsystem('int_1', int_1)
 
 
 # Interconnect system elements
-model.connect('system.components.comp_1.transformed_ports','system.interconnects.int_1.start_point', src_indices=om.slicer[0, :])
-model.connect('system.components.comp_2.transformed_ports','system.interconnects.int_1.end_point', src_indices=om.slicer[0, :])
+model.connect('system.components.comp_1.transformed_ports', 'system.interconnects.int_1.start_point', src_indices=om.slicer[0, :])
+model.connect('system.components.comp_2.transformed_ports', 'system.interconnects.int_1.end_point', src_indices=om.slicer[0, :])
 
 
 # Define the projections
@@ -91,18 +91,23 @@ model.connect('system.interconnects.int_1.transformed_cyl_radius', 'projections.
 # Aggregate the spheres of each component
 mux_spheres = Multiplexer(n_i=[27, 10], m=3)
 prob.model.add_subsystem('mux_spheres', mux_spheres)
+mux_radii = Multiplexer(n_i=[27, 10], m=1)
+prob.model.add_subsystem('mux_radii', mux_radii)
+
+bbv = BoundingBoxVolume()
+model.add_subsystem('bbv', bbv)
+
 prob.model.connect('system.components.comp_1.transformed_sphere_positions', 'mux_spheres.input_0')
 prob.model.connect('system.components.comp_2.transformed_sphere_positions', 'mux_spheres.input_1')
 prob.model.connect('mux_spheres.stacked_output', 'bbv.sphere_positions')
 
-mux_radii = Multiplexer(n_i=[27, 10], m=1)
-prob.model.add_subsystem('mux_radii', mux_radii)
+
 prob.model.connect('system.components.comp_1.transformed_sphere_radii', 'mux_radii.input_0')
 prob.model.connect('system.components.comp_2.transformed_sphere_radii', 'mux_radii.input_1')
 prob.model.connect('mux_radii.stacked_output', 'bbv.sphere_radii')
 
 # Aggregate the pseudo-densities
-projection_aggregator = ProjectionAggregator(n_projections=3)
+projection_aggregator = ProjectionAggregator(n_projections=3, rho_min=3e-3)
 model.projections.add_subsystem('aggregator', projection_aggregator)
 
 model.connect('projections.proj_1.pseudo_densities', 'projections.aggregator.pseudo_densities_0')
@@ -146,18 +151,14 @@ model.connect('projections.proj_3.pseudo_densities', 'projections.aggregator.pse
 #     model.connect(f'system.interconnects.int_{j}.transformed_sphere_positions', f'mux_all_sphere_positions.input_{i}')
 #     model.connect(f'system.interconnects.int_{j}.transformed_sphere_radii', f'mux_all_sphere_radii.input_{i}')
 #     i += 1
-#
-# model.connect('mux_all_sphere_positions.stacked_output', 'bbv.sphere_positions')
-# model.connect('mux_all_sphere_radii.stacked_output', 'bbv.sphere_radii')
 
 
 # Define the design variables
 prob.model.add_design_var('system.components.comp_1.translation', ref=1, lower=0, upper=3)
-# prob.model.add_design_var('system.components.comp_2.translation', ref=5, lower=0, upper=10, indices=[0, 1], flat_indices=True)
+prob.model.add_design_var('system.components.comp_2.translation', ref=1, lower=0, upper=3)
 
 
 # Define the objective and constraints
-# ref = bounds[1] * bounds[3] * bounds[5]  # Volume of the bounding box
 prob.model.add_objective('bbv.bounding_box_volume', ref=1)
 # prob.model.add_constraint('aggregator.max_pseudo_density', upper=1.1)
 
@@ -187,6 +188,7 @@ prob.run_model()
 
 # Check the initial state
 print("BBV Before:", prob.get_val('bbv.bounding_box_volume'))
+print("BBV Bounds:", prob.get_val('bbv.bounding_box_bounds'))
 comp_1_translation_before = copy(prob.get_val('system.components.comp_1.translation'))
 comp_1_rotation_before = copy(prob.get_val('system.components.comp_1.rotation'))
 comp_2_translation_before = copy(prob.get_val('system.components.comp_2.translation'))
@@ -205,6 +207,7 @@ densities_before = copy(prob.get_val('projections.aggregator.pseudo_densities'))
 
 # Check the final state
 print("BBV After:", prob.get_val('bbv.bounding_box_volume'))
+print("BBV Bounds:", prob.get_val('bbv.bounding_box_bounds'))
 comp_1_translation_after = prob.get_val('system.components.comp_1.translation')
 comp_1_rotation_after = prob.get_val('system.components.comp_1.rotation')
 comp_2_translation_after = prob.get_val('system.components.comp_2.translation')
@@ -279,6 +282,8 @@ plotter.add_mesh(pv.Sphere(radius=0.25), color='red', show_edges=True)
 plotter.link_views()
 plotter.show_axes()
 plotter.show()
+
+# prob.check_partials(includes='system.interconnects.int_1')
 
 # data = prob.check_partials(includes='system.components.comp_1', step=1e-4,show_only_incorrect=True)
 # data = prob.check_partials(includes='projections.proj_1')

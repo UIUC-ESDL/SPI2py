@@ -3,7 +3,7 @@ import jax.numpy as jnp
 from jax import jacfwd, jacrev, jvp, vjp
 import pyvista as pv
 # from SPI2py.models.projection.grid import create_grid
-from SPI2py.models.mechanics.transformations_rigidbody import transform_points
+from SPI2py.models.mechanics.homogenous_transformation import transform_points
 from SPI2py.models.projection.projection import project_component, combine_densities
 from SPI2py.models.utilities.visualization import plot_grid, plot_spheres, plot_AABB_spheres, plot_stl_file
 from SPI2py.models.projection.mesh_kernels import create_uniform_kernel
@@ -14,8 +14,8 @@ from SPI2py.models.physics.distributed.solver import solve_system
 from SPI2py.models.utilities.visualization import plot_temperature_distribution
 
 # Create grid
-# el_size = 0.5
 el_size = 0.5
+# el_size = 0.125
 nodes, elements, el_centers, nx, ny, nz, lx, ly, lz = generate_mesh_vec(0, 2, 0, 4, 0,  2, element_size=el_size)
 el_centers = el_centers.reshape(nx, ny, nz, 1, 3)
 

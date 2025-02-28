@@ -1,3 +1,4 @@
+import jax
 import jax.numpy as jnp
 from .assembly import assemble_global_stiffness_matrix, apply_boundary_conditions
 
@@ -32,6 +33,7 @@ def solve_system(nodes,
     K_ff, K_fp, K_pf, K_pp, f_f, f_p, u_p, idx_f, idx_p = apply_boundary_conditions(K, f, boundary_conditions)
 
     # Solve the partitioned system for the unknown displacements.
+    # TODO Does sparse solver work with autograd VJP?
     # K_ff @ u_f + K_fp @ u_p = f_f
     # K_ff @ u_f = f_f - K_fp @ u_p
     # u_f = K_ff^-1 @ (f_f - K_fp @ u_p)
