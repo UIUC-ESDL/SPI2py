@@ -35,15 +35,19 @@ class ProjectComponent(ExplicitComponent):
 
         # Outputs
         nx, ny, nz = self.options['mesh_centers'].shape[:3]
-        self.add_output('pseudo_densities', compute_shape=lambda shapes: (nx, ny, nz))
-        self.add_output('penalized_pseudo_densities', compute_shape=lambda shapes: (nx, ny, nz))
+        self.add_output('densities', compute_shape=lambda shapes: (nx, ny, nz))
+        self.add_output('penalized_densities', compute_shape=lambda shapes: (nx, ny, nz))
         self.add_output('penalized_heat_loads', compute_shape=lambda shapes: (nx, ny, nz))
 
     def setup_partials(self):
-        self.declare_partials('pseudo_densities', 'sphere_positions', method='exact')
-        self.declare_partials('pseudo_densities', 'sphere_radii', method='exact')
-        self.declare_partials('penalized_pseudo_densities', 'sphere_positions', method='exact')
-        self.declare_partials('penalized_pseudo_densities', 'sphere_radii', method='exact')
+        self.declare_partials('densities', 'sphere_positions', method='exact')
+        self.declare_partials('densities', 'sphere_radii', method='exact')
+        self.declare_partials('penalized_densities', 'sphere_positions', method='exact')
+        self.declare_partials('penalized_densities', 'sphere_radii', method='exact')
+        self.declare_partials('penalized_heat_loads', 'heat_load', method='exact')
+        self.declare_partials('penalized_heat_loads', 'sphere_positions', method='exact')
+        self.declare_partials('penalized_heat_loads', 'sphere_radii', method='exact')
+
 
     def compute(self, inputs, outputs):
 
@@ -58,10 +62,10 @@ class ProjectComponent(ExplicitComponent):
         sphere_radii     = jnp.array(inputs['sphere_radii'])
 
         # Compute the pseudo-densities
-        pseudo_densities = self._compute_primal(mesh_centers, element_size, sphere_positions, sphere_radii, kernel_points, kernel_radii)
+        densities, densities_penalized, heat_load_mod = self._compute_primal(mesh_centers, element_size, sphere_positions, sphere_radii, kernel_points, kernel_radii)
 
         # Write the outputs
-        outputs['pseudo_densities'] = pseudo_densities
+        outputs['densities'] = densities
 
     def compute_jacvec_product(self, inputs, d_inputs, d_outputs, mode, discrete_inputs=None):
 
@@ -97,16 +101,16 @@ class ProjectComponent(ExplicitComponent):
             # JVP returns (primal_out, tangent_out), discard primal_out
             _, tangent_out = jvp(self._compute_primal, primals, tangents)
 
-            # Set the output tangent (directional derivative) for pseudo_densities.
-            d_outputs['pseudo_densities'] = tangent_out
+            # Set the output tangent (directional derivative) for densities.
+            d_outputs['densities'] = tangent_out
 
         # Reverse mode, compute the vector-Jacobian product
         elif mode == 'rev':
 
             primal_out, pullback = vjp(self._compute_primal, *primals)
 
-            # d_outputs['pseudo_densities'] holds the cotangent (sensitivity) for the pseudo_densities.
-            cotangent = d_outputs['pseudo_densities']
+            # d_outputs['densities'] holds the cotangent (sensitivity) for the densities.
+            cotangent = d_outputs['densities']
 
 
             # pullback returns a tuple of gradients in the order of primals.
@@ -124,14 +128,14 @@ class ProjectComponent(ExplicitComponent):
                         heat_load=0.0):
 
         # Calculate the pseudo-densities
-        densities, densities_penalized = project_component(mesh_centers, mesh_size,
+        densities, penalized_densities = project_component(mesh_centers, mesh_size,
                                                            obj_points, obj_radii,
                                                            kernel_points, kernel_radii)
 
         # Heat load
-        heat_load_mod = heat_load * densities_penalized
+        penalized_heat_loads = heat_load * penalized_densities
 
-        return densities, densities_penalized, heat_load_mod
+        return densities, penalized_densities, penalized_heat_loads
 
 
 class ProjectInterconnect(ExplicitComponent):
@@ -155,11 +159,11 @@ class ProjectInterconnect(ExplicitComponent):
 
         # Outputs
         nx, ny, nz = self.options['mesh_centers'].shape[:3]
-        self.add_output('pseudo_densities', compute_shape=lambda shapes: (nx, ny, nz))
+        self.add_output('densities', compute_shape=lambda shapes: (nx, ny, nz))
 
     def setup_partials(self):
-        self.declare_partials('pseudo_densities', 'cyl_positions', method='exact')
-        self.declare_partials('pseudo_densities', 'cyl_radius', method='exact')
+        self.declare_partials('densities', 'cyl_positions', method='exact')
+        self.declare_partials('densities', 'cyl_radius', method='exact')
 
     def compute(self, inputs, outputs):
 
@@ -174,12 +178,12 @@ class ProjectInterconnect(ExplicitComponent):
         cyl_radius     = jnp.array(inputs['cyl_radius'])
 
         # Compute the pseudo-densities
-        pseudo_densities = self._compute_primal(mesh_centers, element_size,
+        densities = self._compute_primal(mesh_centers, element_size,
                                                 cyl_positions, cyl_radius,
                                                 kernel_points, kernel_radii)
 
         # Write the outputs
-        outputs['pseudo_densities'] = pseudo_densities
+        outputs['densities'] = densities
 
     def compute_partials(self, inputs, partials):
 
@@ -194,24 +198,24 @@ class ProjectInterconnect(ExplicitComponent):
         cyl_radius = jnp.array(inputs['cyl_radius'])
 
         # Calculate the partial derivatives
-        jac_pseudo_densities = jacrev(self._compute_primal)(mesh_centers, element_size,
+        jac_densities = jacrev(self._compute_primal)(mesh_centers, element_size,
                                                             cyl_positions, cyl_radius,
                                                             kernel_points, kernel_radii)
 
         # Set the partial derivatives
-        partials['pseudo_densities', 'cyl_positions'] = jac_pseudo_densities[2]
-        partials['pseudo_densities', 'cyl_radius'] = jac_pseudo_densities[3]
+        partials['densities', 'cyl_positions'] = jac_densities[2]
+        partials['densities', 'cyl_radius'] = jac_densities[3]
 
     @staticmethod
     def _compute_primal(mesh_centers, element_size,
                         cyl_points, cyl_radii,
                         kernel_points, kernel_radii):
 
-        pseudo_densities, _, _ = project_interconnect(mesh_centers, element_size,
+        densities, _, _ = project_interconnect(mesh_centers, element_size,
                                                       cyl_points, cyl_radii,
                                                       kernel_points, kernel_radii)
 
-        return pseudo_densities
+        return densities
 
 
 
@@ -230,12 +234,12 @@ class ProjectionAggregator(ExplicitComponent):
         self.add_input('element_length', val=0)
 
         for i in range(n_projections):
-            self.add_input(f'pseudo_densities_{i}', shape_by_conn=True)
+            self.add_input(f'densities_{i}', shape_by_conn=True)
 
 
         # Set the outputs
-        self.add_output('pseudo_densities', copy_shape='pseudo_densities_0')
-        self.add_output('max_pseudo_density', val=0.0, desc='How much of each object overlaps/is out of bounds')
+        self.add_output('aggregated_densities', copy_shape='densities_0')
+        self.add_output('max_density', val=0.0)
 
     def setup_partials(self):
 
@@ -244,8 +248,8 @@ class ProjectionAggregator(ExplicitComponent):
 
         # Set the partials
         for i in range(n_projections):
-            self.declare_partials('pseudo_densities', f'pseudo_densities_{i}')
-            self.declare_partials('max_pseudo_density', f'pseudo_densities_{i}')
+            self.declare_partials('aggregated_densities', f'densities_{i}')
+            self.declare_partials('max_density', f'densities_{i}')
 
 
     def compute(self, inputs, outputs):
@@ -255,15 +259,15 @@ class ProjectionAggregator(ExplicitComponent):
         rho_min = self.options['rho_min']
 
         # Get the inputs
-        pseudo_densities = [jnp.array(inputs[f'pseudo_densities_{i}']) for i in range(n_projections)]
+        densities = [jnp.array(inputs[f'densities_{i}']) for i in range(n_projections)]
 
         # Calculate the values
-        aggregate_pseudo_densities, max_pseudo_density = self._compute_primal(pseudo_densities, rho_min)
+        aggregated_densities, max_density = self._compute_primal(densities, rho_min)
 
 
         # Write the outputs
-        outputs['pseudo_densities'] = aggregate_pseudo_densities
-        outputs['max_pseudo_density'] = max_pseudo_density
+        outputs['aggregated_densities'] = aggregated_densities
+        outputs['max_density'] = max_density
 
     def compute_partials(self, inputs, partials):
 
@@ -274,30 +278,30 @@ class ProjectionAggregator(ExplicitComponent):
         rho_min = self.options['rho_min']
 
         # Get the inputs
-        pseudo_densities = [jnp.array(inputs[f'pseudo_densities_{i}']) for i in range(n_projections)]
+        densities = [jnp.array(inputs[f'densities_{i}']) for i in range(n_projections)]
 
         # Calculate the partial derivatives
-        jac_pseudo_densities, jac_max_pseudo_density = jacfwd(self._compute_primal)(pseudo_densities, rho_min)
+        jac_densities, jac_max_density = jacfwd(self._compute_primal)(densities, rho_min)
 
         # Set the partial derivatives
-        jacs = zip(jac_pseudo_densities, jac_max_pseudo_density)
-        for i, (jac_pseudo_densities_i, jac_max_pseudo_density_i) in enumerate(jacs):
-            partials['pseudo_densities', f'pseudo_densities_{i}'] = jac_pseudo_densities_i
-            partials['max_pseudo_density', f'pseudo_densities_{i}'] = jac_max_pseudo_density_i
+        jacs = zip(jac_densities, jac_max_density)
+        for i, (jac_densities_i, jac_max_density_i) in enumerate(jacs):
+            partials['aggregated_densities', f'densities_{i}'] = jac_densities_i
+            partials['max_density', f'densities_{i}'] = jac_max_density_i
 
     @staticmethod
-    def _compute_primal(pseudo_densities, rho_min):
+    def _compute_primal(densities, rho_min):
 
         # Aggregate the pseudo-densities
-        aggregate_pseudo_densities = jnp.zeros_like(pseudo_densities[0])
-        for pseudo_density in pseudo_densities:
-            aggregate_pseudo_densities += pseudo_density
+        aggregate_densities = jnp.zeros_like(densities[0])
+        for density in densities:
+            aggregate_densities += density
 
         # Ensure that no pseudo-density is below the minimum value
-        aggregate_pseudo_densities = jnp.maximum(aggregate_pseudo_densities, rho_min)
+        aggregated_densities = jnp.maximum(aggregate_densities, rho_min)
 
         # Calculate the maximum pseudo-density
-        max_pseudo_density = kreisselmeier_steinhauser_max(aggregate_pseudo_densities)
+        max_density = kreisselmeier_steinhauser_max(aggregated_densities)
 
-        return aggregate_pseudo_densities, max_pseudo_density
+        return aggregated_densities, max_density
 
