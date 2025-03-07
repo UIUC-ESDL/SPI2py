@@ -37,7 +37,7 @@ pos_be_center = jnp.mean(pos_be, axis=0, keepdims=True)
 pos_be = transform_points(pos_be, pos_be_center.reshape(-1), translation=jnp.array([0.625, 0.625, 0.125]), rotation=jnp.array([0, 0, 0]))
 
 # Calculate the pseudo-densities
-densities_be, sample_positions_be, sample_radii_be = project_component(el_centers, jnp.array([el_size]), pos_be, rad_be, kernel_pos, kernel_rad)
+densities_be, densities_pen_be = project_component(el_centers, jnp.array([el_size]), pos_be, rad_be, kernel_pos, kernel_rad)
 densities_combined = combine_densities(densities_be, min_density=2e-2, penalty_factor=1)
 
 # FEA
@@ -88,8 +88,8 @@ plot_AABB_spheres(plotter, (0, 0), pos_be, rad_be, color='blue')
 
 
 # Plot the grid with the kernel
-plot_AABB_spheres(plotter, (1, 1), sample_positions_be, sample_radii_be, color='black', opacity=0.0)
-plot_spheres(plotter, (1, 1), sample_positions_be, sample_radii_be, 'blue', opacity=0.5)
+# plot_AABB_spheres(plotter, (1, 1), sample_positions_be, sample_radii_be, color='black', opacity=0.0)
+# plot_spheres(plotter, (1, 1), sample_positions_be, sample_radii_be, 'blue', opacity=0.5)
 
 plot_spheres(plotter, (0, 1), pos_be, rad_be, 'blue', opacity=0.5)
 plot_stl_file(plotter, (0, 1), 'models/Bot_Eye_scaled.stl', translation=(0.625, 0.625, 0.125), rotation=(0, 0, 0), opacity=0.5)

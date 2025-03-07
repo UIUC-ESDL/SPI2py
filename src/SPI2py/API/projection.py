@@ -19,7 +19,6 @@ class ProjectComponent(ExplicitComponent):
 
         # General parameters
         self.options.declare('color', types=str, desc='Color of the projection', default='blue')
-        self.options.declare('kernel_steps_per_unit_length', types=int, desc='Number of kernel steps per unit length', default=1)
 
         # Mesh parameters
         self.options.declare('element_size', types=(int, float), desc='Size of the mesh elements', default=1.0)
@@ -32,14 +31,19 @@ class ProjectComponent(ExplicitComponent):
         # Object Inputs
         self.add_input('sphere_positions', shape_by_conn=True)
         self.add_input('sphere_radii', shape_by_conn=True)
+        self.add_input('heat_load', val=0.0)
 
         # Outputs
         nx, ny, nz = self.options['mesh_centers'].shape[:3]
         self.add_output('pseudo_densities', compute_shape=lambda shapes: (nx, ny, nz))
+        self.add_output('penalized_pseudo_densities', compute_shape=lambda shapes: (nx, ny, nz))
+        self.add_output('penalized_heat_loads', compute_shape=lambda shapes: (nx, ny, nz))
 
     def setup_partials(self):
         self.declare_partials('pseudo_densities', 'sphere_positions', method='exact')
         self.declare_partials('pseudo_densities', 'sphere_radii', method='exact')
+        self.declare_partials('penalized_pseudo_densities', 'sphere_positions', method='exact')
+        self.declare_partials('penalized_pseudo_densities', 'sphere_radii', method='exact')
 
     def compute(self, inputs, outputs):
 
@@ -104,6 +108,7 @@ class ProjectComponent(ExplicitComponent):
             # d_outputs['pseudo_densities'] holds the cotangent (sensitivity) for the pseudo_densities.
             cotangent = d_outputs['pseudo_densities']
 
+
             # pullback returns a tuple of gradients in the order of primals.
             grads = pullback(cotangent)
 
@@ -115,13 +120,18 @@ class ProjectComponent(ExplicitComponent):
     @staticmethod
     def _compute_primal(mesh_centers, mesh_size,
                         obj_points, obj_radii,
-                        kernel_points, kernel_radii):
+                        kernel_points, kernel_radii,
+                        heat_load=0.0):
 
+        # Calculate the pseudo-densities
+        densities, densities_penalized = project_component(mesh_centers, mesh_size,
+                                                           obj_points, obj_radii,
+                                                           kernel_points, kernel_radii)
 
-        pseudo_densities, kernel_points, kernel_radii = project_component(mesh_centers, mesh_size,
-                                                                          obj_points, obj_radii,
-                                                                          kernel_points, kernel_radii)
-        return pseudo_densities
+        # Heat load
+        heat_load_mod = heat_load * densities_penalized
+
+        return densities, densities_penalized, heat_load_mod
 
 
 class ProjectInterconnect(ExplicitComponent):
@@ -130,7 +140,6 @@ class ProjectInterconnect(ExplicitComponent):
 
         # General parameters
         self.options.declare('color', types=str, desc='Color of the projection', default='blue')
-        self.options.declare('kernel_steps_per_unit_length', types=int, desc='Number of kernel steps per unit length', default=1)
 
         # Mesh parameters
         self.options.declare('element_size', types=(int, float), desc='Size of the mesh elements', default=1.0)
