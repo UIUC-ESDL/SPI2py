@@ -3,10 +3,11 @@ import jax.numpy as jnp
 from .assembly import assemble_global_stiffness_matrix, apply_boundary_conditions
 
 
-def solve_system(nodes,
+def solve_system(density,
+                 heat_load_per_element,
+                 nodes,
                  elements,
                  base_k,
-                 density,
                  boundary_conditions):
     """
     Given a global stiffness matrix K and load vector f, modify them for Robin BCs,
@@ -28,6 +29,19 @@ def solve_system(nodes,
 
     # Assemble the global stiffness matrix and load vector.
     K, f = assemble_global_stiffness_matrix(nodes, elements, density, base_k)
+
+    # 2. Assemble heat generation contributions
+    #    For each element, assume the heat load is distributed evenly among its nodes.
+    n_nodes = nodes.shape[0]
+    n_elem = elements.shape[0]
+    nodes_per_elem = elements.shape[1]
+
+    # For each element, add (heat_load/number_of_nodes) to each of its nodes.
+    # We use jnp.add.at so that nodes shared among elements sum the contributions.
+    # (Assume elements is an integer array of shape (n_elem, nodes_per_elem)).
+    f = f.at[elements.flatten()].add(
+        jnp.repeat(heat_load_per_element / nodes_per_elem, elements.size)
+    )
 
     # Apply the boundary conditions and partition the system.
     K_ff, K_fp, K_pf, K_pp, f_f, f_p, u_p, idx_f, idx_p = apply_boundary_conditions(K, f, boundary_conditions)

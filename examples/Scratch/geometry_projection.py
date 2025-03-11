@@ -43,7 +43,14 @@ densities_combined = combine_densities(densities_be, min_density=2e-2, penalty_f
 # FEA
 density = jnp.ones(nx * ny * nz)
 
-
+# Heat-generating component
+# TODO Change
+# comp_nodes = find_active_nodes(densities_combined, threshold=3e-2)
+# dirichlet_bc_2 = DirichletBC(comp_nodes, T=150.0)
+# heat_nodes = find_active_nodes(densities_combined, threshold=3e-2)
+# heat_load = 1
+# heat_loads = heat_load * densities_combined
+heat_load_per_element = 0.5
 
 
 # Define boundary conditions
@@ -51,11 +58,6 @@ density = jnp.ones(nx * ny * nz)
 # Fixed-temperature surface
 fixed_temp_surface_nodes = find_face_nodes(nodes, jnp.array([0.0, 0.0, -1.0]))
 dirichlet_bc_1 = DirichletBC(fixed_temp_surface_nodes, T=200)
-
-# Heat-generating component
-# TODO Change
-comp_nodes = find_active_nodes(densities_combined, threshold=3e-2)
-dirichlet_bc_2 = DirichletBC(comp_nodes, T=150.0)
 
 # Convection surface
 conv_surface_area = el_size**2
@@ -65,11 +67,12 @@ robin_bc_1 = RobinBC(convection_nodes, h=10.0, T_inf=200, area=conv_surface_area
 
 
 # Run the FEA pipeline.
-nodes, elements, T = solve_system(nodes,
+nodes, elements, T = solve_system(densities_combined.flatten(),
+                                  heat_load_per_element,
+                                  nodes,
                                   elements,
                                   base_k=1.0,
-                                  density=densities_combined.flatten(),
-                                  boundary_conditions=[dirichlet_bc_1, dirichlet_bc_2, robin_bc_1],)
+                                  boundary_conditions=[dirichlet_bc_1, robin_bc_1],)
 
 
 T_np = np.array(T)
@@ -97,7 +100,7 @@ plot_stl_file(plotter, (0, 1), 'models/Bot_Eye_scaled.stl', translation=(0.625, 
 # Plot the grid without the kernel
 plot_grid(plotter, (0, 2), el_centers, el_size, densities=densities_combined)
 
-dirichlet_nodes = jnp.concatenate([dirichlet_bc_1.nodes, dirichlet_bc_2.nodes])
+dirichlet_nodes = jnp.concatenate([dirichlet_bc_1.nodes])
 plot_temperature_distribution(plotter,
                               (0, 2),
                               nodes_plot,
