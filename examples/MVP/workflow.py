@@ -70,9 +70,9 @@ model.connect('system.components.comp_2.transformed_ports', 'system.interconnect
 
 
 # Define the projections
-proj_1 = ProjectComponent(element_size=element_size, mesh_centers=centers, kernel_points=kernel_points, kernel_radii=kernel_radii)
-proj_2 = ProjectComponent(element_size=element_size, mesh_centers=centers, kernel_points=kernel_points, kernel_radii=kernel_radii)
-proj_3 = ProjectInterconnect(element_size=element_size, mesh_centers=centers, kernel_points=kernel_points, kernel_radii=kernel_radii)
+proj_1 = ProjectComponent(mesh_size=element_size, mesh_centers=centers, kernel_centers=kernel_points, kernel_radii=kernel_radii)
+proj_2 = ProjectComponent(mesh_size=element_size, mesh_centers=centers, kernel_centers=kernel_points, kernel_radii=kernel_radii)
+proj_3 = ProjectInterconnect(mesh_size=element_size, mesh_centers=centers, kernel_centers=kernel_points, kernel_radii=kernel_radii)
 model.projections.add_subsystem('proj_1', proj_1)
 model.projections.add_subsystem('proj_2', proj_2)
 model.projections.add_subsystem('proj_3', proj_3)
@@ -80,10 +80,10 @@ model.projections.add_subsystem('proj_3', proj_3)
 
 
 # Connect the system elements to the projections
-model.connect('system.components.comp_1.transformed_sphere_positions', 'projections.proj_1.sphere_positions')
-model.connect('system.components.comp_1.transformed_sphere_radii', 'projections.proj_1.sphere_radii')
-model.connect('system.components.comp_2.transformed_sphere_positions', 'projections.proj_2.sphere_positions')
-model.connect('system.components.comp_2.transformed_sphere_radii', 'projections.proj_2.sphere_radii')
+model.connect('system.components.comp_1.transformed_sphere_positions', 'projections.proj_1.centers')
+model.connect('system.components.comp_1.transformed_sphere_radii', 'projections.proj_1.radii')
+model.connect('system.components.comp_2.transformed_sphere_positions', 'projections.proj_2.centers')
+model.connect('system.components.comp_2.transformed_sphere_radii', 'projections.proj_2.radii')
 model.connect('system.interconnects.int_1.transformed_cyl_positions', 'projections.proj_3.cyl_positions')
 model.connect('system.interconnects.int_1.transformed_cyl_radius', 'projections.proj_3.cyl_radius')
 
@@ -201,7 +201,7 @@ densities_before = copy(prob.get_val('projections.aggregator.aggregated_densitie
 
 
 # Run the optimization
-# prob.run_driver()
+prob.run_driver()
 
 
 
@@ -241,47 +241,47 @@ int_1_points_before = np.array(int_1_points_before)
 int_1_points_after = np.array(int_1_points_after)
 
 
-# # Plot the results
-# plotter = pv.Plotter(shape=(2, 2), window_size=(1500, 500))
-#
-# # Plot the geometries before optimization
-# plotter.subplot(0, 0)
-# plotter.add_title("Before Optimization")
-# plot_grid(plotter, (0, 0), centers, element_size, densities=None)
-# plot_stl_file(plotter, (0, 0), 'models/CrossHead_Pin_scaled.stl', translation=comp_1_translation_before, rotation=comp_1_rotation_before, opacity=0.25, color='purple')
-# plot_stl_file(plotter, (0, 0), 'models/Bot_Eye_scaled.stl', translation=comp_2_translation_before, rotation=comp_2_rotation_before, opacity=0.25, color='blue')
-# plot_spheres(plotter, (0, 0), sphere_positions_before, sphere_radii_before, 'purple', opacity=0.5)
-# plot_capsules(plotter, (0, 0), int_1_points_before, 0.25, color='green', opacity=0.5)
-# plot_AABB(plotter, (0, 0), bounds_before, color='blue')
-#
-# # Plot the pseudo-densities before optimization
-# plot_grid(plotter, (1, 0), centers, element_size, densities=None)
-# plot_grid(plotter, (1, 0), centers, element_size, densities=densities_before)
-#
-# # Plot the geometries after optimization
-# plotter.subplot(0, 1)
-# plotter.add_title("After Optimization")
-# plot_grid(plotter, (0, 1), centers, element_size, densities=None)
-# plot_stl_file(plotter, (0, 1), 'models/CrossHead_Pin_scaled.stl', translation=comp_1_translation_after, rotation=comp_1_rotation_after, opacity=0.25, color='purple')
-# plot_stl_file(plotter, (0, 1), 'models/Bot_Eye_scaled.stl', translation=comp_2_translation_after, rotation=comp_2_rotation_after, opacity=0.25, color='blue')
-# plot_spheres(plotter, (0, 1), sphere_positions_after, sphere_radii_after, 'purple', opacity=0.5)
-# plot_capsules(plotter, (0, 1), int_1_points_after, 0.25, color='green', opacity=0.5)
-# plot_AABB(plotter, (0, 1), bounds_after, color='blue')
-#
-# # Plot the pseudo-densities after optimization
-# plot_grid(plotter, (1, 1), centers, element_size, densities=densities_after)
-#
-#
-# # plot the origin (0,0,0)
-# plotter.subplot(*(0, 0))
-# plotter.add_mesh(pv.Sphere(radius=0.25), color='red', show_edges=True)
-#
-# plotter.subplot(*(0, 1))
-# plotter.add_mesh(pv.Sphere(radius=0.25), color='red', show_edges=True)
-#
-# plotter.link_views()
-# plotter.show_axes()
-# plotter.show()
+# Plot the results
+plotter = pv.Plotter(shape=(2, 2), window_size=(1500, 500))
+
+# Plot the geometries before optimization
+plotter.subplot(0, 0)
+plotter.add_title("Before Optimization")
+plot_grid(plotter, (0, 0), centers, element_size, densities=None)
+plot_stl_file(plotter, (0, 0), 'models/CrossHead_Pin_scaled.stl', translation=comp_1_translation_before, rotation=comp_1_rotation_before, opacity=0.25, color='purple')
+plot_stl_file(plotter, (0, 0), 'models/Bot_Eye_scaled.stl', translation=comp_2_translation_before, rotation=comp_2_rotation_before, opacity=0.25, color='blue')
+plot_spheres(plotter, (0, 0), sphere_positions_before, sphere_radii_before, 'purple', opacity=0.5)
+plot_capsules(plotter, (0, 0), int_1_points_before, 0.25, color='green', opacity=0.5)
+plot_AABB(plotter, (0, 0), bounds_before, color='blue')
+
+# Plot the pseudo-densities before optimization
+plot_grid(plotter, (1, 0), centers, element_size, densities=None)
+plot_grid(plotter, (1, 0), centers, element_size, densities=densities_before)
+
+# Plot the geometries after optimization
+plotter.subplot(0, 1)
+plotter.add_title("After Optimization")
+plot_grid(plotter, (0, 1), centers, element_size, densities=None)
+plot_stl_file(plotter, (0, 1), 'models/CrossHead_Pin_scaled.stl', translation=comp_1_translation_after, rotation=comp_1_rotation_after, opacity=0.25, color='purple')
+plot_stl_file(plotter, (0, 1), 'models/Bot_Eye_scaled.stl', translation=comp_2_translation_after, rotation=comp_2_rotation_after, opacity=0.25, color='blue')
+plot_spheres(plotter, (0, 1), sphere_positions_after, sphere_radii_after, 'purple', opacity=0.5)
+plot_capsules(plotter, (0, 1), int_1_points_after, 0.25, color='green', opacity=0.5)
+plot_AABB(plotter, (0, 1), bounds_after, color='blue')
+
+# Plot the pseudo-densities after optimization
+plot_grid(plotter, (1, 1), centers, element_size, densities=densities_after)
+
+
+# plot the origin (0,0,0)
+plotter.subplot(*(0, 0))
+plotter.add_mesh(pv.Sphere(radius=0.25), color='red', show_edges=True)
+
+plotter.subplot(*(0, 1))
+plotter.add_mesh(pv.Sphere(radius=0.25), color='red', show_edges=True)
+
+plotter.link_views()
+plotter.show_axes()
+plotter.show()
 
 # prob.check_partials(includes='system.interconnects.int_1')
 
