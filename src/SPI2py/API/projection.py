@@ -159,16 +159,18 @@ class ProjectInterconnect(ExplicitComponent):
     def setup(self):
 
         # Object Inputs
-        self.add_input('cyl_positions', shape_by_conn=True)
-        self.add_input('cyl_radius', shape_by_conn=True)
+        self.add_input('control_points', shape_by_conn=True)
+        self.add_input('radius', shape_by_conn=True)
 
         # Outputs
         nx, ny, nz = self.options['mesh_centers'].shape[:3]
         self.add_output('densities', compute_shape=lambda shapes: (nx, ny, nz))
+        self.add_output('penalized_densities', compute_shape=lambda shapes: (nx, ny, nz))
+        self.add_output('penalized_heat_loads', compute_shape=lambda shapes: (nx, ny, nz))
 
     def setup_partials(self):
-        self.declare_partials('densities', 'cyl_positions', method='exact')
-        self.declare_partials('densities', 'cyl_radius', method='exact')
+        self.declare_partials('densities', 'control_points', method='exact')
+        self.declare_partials('densities', 'radius', method='exact')
 
     def compute(self, inputs, outputs):
 
@@ -179,12 +181,12 @@ class ProjectInterconnect(ExplicitComponent):
         kernel_radii = jnp.array(self.options['kernel_radii'])
 
         # Get the inputs
-        cyl_positions = jnp.array(inputs['cyl_positions'])
-        cyl_radius     = jnp.array(inputs['cyl_radius'])
+        control_points = jnp.array(inputs['control_points'])
+        radius     = jnp.array(inputs['radius'])
 
         # Compute the pseudo-densities
         densities = self._compute_primal(mesh_centers, mesh_size,
-                                                cyl_positions, cyl_radius,
+                                                control_points, radius,
                                                 kernel_centers, kernel_radii)
 
         # Write the outputs
@@ -199,17 +201,17 @@ class ProjectInterconnect(ExplicitComponent):
         kernel_radii = jnp.array(self.options['kernel_radii'])
 
         # Get the inputs
-        cyl_positions = jnp.array(inputs['cyl_positions'])
-        cyl_radius = jnp.array(inputs['cyl_radius'])
+        control_points = jnp.array(inputs['control_points'])
+        radius = jnp.array(inputs['radius'])
 
         # Calculate the partial derivatives
         jac_densities = jacrev(self._compute_primal)(mesh_centers, mesh_size,
-                                                            cyl_positions, cyl_radius,
+                                                            control_points, radius,
                                                             kernel_centers, kernel_radii)
 
         # Set the partial derivatives
-        partials['densities', 'cyl_positions'] = jac_densities[2]
-        partials['densities', 'cyl_radius'] = jac_densities[3]
+        partials['densities', 'control_points'] = jac_densities[2]
+        partials['densities', 'radius'] = jac_densities[3]
 
     @staticmethod
     def _compute_primal(mesh_centers, mesh_size,
