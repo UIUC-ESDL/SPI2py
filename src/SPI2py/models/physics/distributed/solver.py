@@ -30,18 +30,12 @@ def solve_system(density,
     # Assemble the global stiffness matrix and load vector.
     K, f = assemble_global_stiffness_matrix(nodes, elements, density, base_k)
 
-    # 2. Assemble heat generation contributions
-    #    For each element, assume the heat load is distributed evenly among its nodes.
-    n_nodes = nodes.shape[0]
-    n_elem = elements.shape[0]
-    nodes_per_elem = elements.shape[1]
-
-    # For each element, add (heat_load/number_of_nodes) to each of its nodes.
-    # We use jnp.add.at so that nodes shared among elements sum the contributions.
-    # (Assume elements is an integer array of shape (n_elem, nodes_per_elem)).
-    f = f.at[elements.flatten()].add(
-        jnp.repeat(heat_load_per_element / nodes_per_elem, elements.size)
-    )
+    # For each element, add (heat_load/number_of_nodes) to each of its 8 nodes.
+    nodes_per_elem = 8
+    element_contrib = (heat_load_per_element * density) / nodes_per_elem
+    elem_contrib_flat = element_contrib.flatten()
+    node_contrib = jnp.repeat(elem_contrib_flat, nodes_per_elem)
+    f = f.at[elements.flatten()].add(node_contrib)
 
     # Apply the boundary conditions and partition the system.
     K_ff, K_fp, K_pf, K_pp, f_f, f_p, u_p, idx_f, idx_p = apply_boundary_conditions(K, f, boundary_conditions)

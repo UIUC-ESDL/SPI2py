@@ -72,7 +72,21 @@ nodes, elements, T = solve_system(densities_combined.flatten(),
                                   nodes,
                                   elements,
                                   base_k=1.0,
-                                  boundary_conditions=[dirichlet_bc_1, robin_bc_1],)
+                                  boundary_conditions=[dirichlet_bc_1, robin_bc_1])
+
+
+from jax import jacfwd, jacrev
+
+# jr = jacrev(solve_system)
+
+jf = jacfwd(solve_system, argnums=1)
+jf(densities_combined.flatten(),
+                                  heat_load_per_element,
+                                  nodes,
+                                  elements,
+                                  base_k=1.0,
+                                  boundary_conditions=[dirichlet_bc_1, robin_bc_1])
+
 
 
 T_np = np.array(T)
@@ -81,6 +95,7 @@ nodes_plot = np.array(nodes)
 T_plot = np.array(T)
 
 el_centers = np.array(el_centers)
+
 # Plot
 plotter = pv.Plotter(shape=(2, 3), window_size=(1500, 500))
 
