@@ -89,22 +89,22 @@ model.connect('system.interconnects.int_1.transformed_cyl_radius', 'projections.
 
 
 # Aggregate the spheres of each component
-mux_points = Multiplexer(n_i=[27, 10], m=3)
-prob.model.add_subsystem('mux_points', mux_points)
+mux_centers = Multiplexer(n_i=[27, 10], m=3)
+prob.model.add_subsystem('mux_centers', mux_centers)
 mux_radii = Multiplexer(n_i=[27, 10], m=1)
 prob.model.add_subsystem('mux_radii', mux_radii)
 
 bbv = BoundingBoxVolume()
 model.add_subsystem('bbv', bbv)
 
-prob.model.connect('system.components.comp_1.transformed_sphere_positions', 'mux_points.input_0')
-prob.model.connect('system.components.comp_2.transformed_sphere_positions', 'mux_points.input_1')
-prob.model.connect('mux_points.stacked_output', 'bbv.sphere_positions')
+prob.model.connect('system.components.comp_1.transformed_sphere_positions', 'mux_centers.input_0')
+prob.model.connect('system.components.comp_2.transformed_sphere_positions', 'mux_centers.input_1')
+prob.model.connect('mux_centers.stacked_output', 'bbv.centers')
 
 
 prob.model.connect('system.components.comp_1.transformed_sphere_radii', 'mux_radii.input_0')
 prob.model.connect('system.components.comp_2.transformed_sphere_radii', 'mux_radii.input_1')
-prob.model.connect('mux_radii.stacked_output', 'bbv.sphere_radii')
+prob.model.connect('mux_radii.stacked_output', 'bbv.radii')
 
 # Aggregate the pseudo-densities
 projection_aggregator = ProjectionAggregator(n_projections=3, rho_min=3e-3)
@@ -159,7 +159,7 @@ prob.model.add_design_var('system.components.comp_2.translation', ref=1, lower=0
 
 
 # Define the objective and constraints
-prob.model.add_objective('bbv.bounding_box_volume', ref=1)
+prob.model.add_objective('bbv.volume', ref=1)
 # prob.model.add_constraint('aggregator.max_pseudo_density', upper=1.1)
 
 
@@ -187,16 +187,16 @@ prob.run_model()
 
 
 # Check the initial state
-print("BBV Before:", prob.get_val('bbv.bounding_box_volume'))
-print("BBV Bounds:", prob.get_val('bbv.bounding_box_bounds'))
+print("BBV Before:", prob.get_val('bbv.volume'))
+print("BBV Bounds:", prob.get_val('bbv.bounds'))
 comp_1_translation_before = copy(prob.get_val('system.components.comp_1.translation'))
 comp_1_rotation_before = copy(prob.get_val('system.components.comp_1.rotation'))
 comp_2_translation_before = copy(prob.get_val('system.components.comp_2.translation'))
 comp_2_rotation_before = copy(prob.get_val('system.components.comp_2.rotation'))
 int_1_points_before = copy(prob.get_val('system.interconnects.int_1.transformed_cyl_positions'))
-sphere_positions_before = copy(prob.get_val('mux_points.stacked_output'))
+sphere_positions_before = copy(prob.get_val('mux_centers.stacked_output'))
 sphere_radii_before = copy(prob.get_val('mux_radii.stacked_output'))
-bounds_before = copy(prob.get_val('bbv.bounding_box_bounds'))
+bounds_before = copy(prob.get_val('bbv.bounds'))
 densities_before = copy(prob.get_val('projections.aggregator.aggregated_densities'))
 
 
@@ -206,16 +206,16 @@ densities_before = copy(prob.get_val('projections.aggregator.aggregated_densitie
 
 
 # Check the final state
-print("BBV After:", prob.get_val('bbv.bounding_box_volume'))
-print("BBV Bounds:", prob.get_val('bbv.bounding_box_bounds'))
+print("BBV After:", prob.get_val('bbv.volume'))
+print("BBV Bounds:", prob.get_val('bbv.bounds'))
 comp_1_translation_after = prob.get_val('system.components.comp_1.translation')
 comp_1_rotation_after = prob.get_val('system.components.comp_1.rotation')
 comp_2_translation_after = prob.get_val('system.components.comp_2.translation')
 comp_2_rotation_after = prob.get_val('system.components.comp_2.rotation')
 int_1_points_after = prob.get_val('system.interconnects.int_1.transformed_cyl_positions')
-sphere_positions_after = prob.get_val('mux_points.stacked_output')
+sphere_positions_after = prob.get_val('mux_centers.stacked_output')
 sphere_radii_after = prob.get_val('mux_radii.stacked_output')
-bounds_after = prob.get_val('bbv.bounding_box_bounds')
+bounds_after = prob.get_val('bbv.bounds')
 densities_after = prob.get_val('projections.aggregator.aggregated_densities')
 
 

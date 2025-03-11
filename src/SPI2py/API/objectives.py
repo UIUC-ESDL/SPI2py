@@ -1,48 +1,55 @@
 import jax.numpy as jnp
 from jax import jacrev
 from openmdao.api import ExplicitComponent
-from SPI2py.models.geometry.bounds import bounding_box_volume, bounding_box_bounds
+from SPI2py.models.geometry.bounds import bounding_box_bounds, bounding_box_volume
 
 
 class BoundingBoxVolume(ExplicitComponent):
 
     def setup(self):
-        self.add_input('sphere_positions', shape_by_conn=True)
-        self.add_input('sphere_radii', shape_by_conn=True)
+        self.add_input('centers', shape_by_conn=True)
+        self.add_input('radii', shape_by_conn=True)
 
-        self.add_output('bounding_box_volume', shape=(1,))
-        self.add_output('bounding_box_bounds', shape=(6,))
+        self.add_output('volume', shape=(1,))
+        self.add_output('bounds', shape=(6,))
 
     def setup_partials(self):
-        self.declare_partials('bounding_box_volume', 'sphere_positions', method='exact')
+        self.declare_partials('bounds', 'centers', method='exact')
+        self.declare_partials('volume', 'centers', method='exact')
+        self.declare_partials('bounds', 'radii', method='exact')
+        self.declare_partials('volume', 'radii', method='exact')
 
     def compute(self, inputs, outputs):
 
         # Get the input variables
-        positions = jnp.array(inputs['sphere_positions'])
-        radii = jnp.array(inputs['sphere_radii'])
+        positions = jnp.array(inputs['centers'])
+        radii = jnp.array(inputs['radii'])
 
         # Calculate the bounding box bounds and volume
-        bb_volume, bb_bounds = self._compute_primal(positions, radii)
+        volume, bounds = self._compute_primal(positions, radii)
 
         # Set the outputs
-        outputs['bounding_box_bounds'] = bb_bounds
-        outputs['bounding_box_volume'] = bb_volume
+        outputs['bounds'] = bounds
+        outputs['volume'] = volume
 
     def compute_partials(self, inputs, partials):
 
         # Get the input variables
-        positions = jnp.array(inputs['sphere_positions'])
-        radii = jnp.array(inputs['sphere_radii'])
+        positions = jnp.array(inputs['centers'])
+        radii = jnp.array(inputs['radii'])
 
         # Calculate the jacobian of the bounding box volume
-        jac_bb_volume, _ = jacrev(self._compute_primal)(positions, radii)
+        jac_volume, jac_bounds = jacrev(self._compute_primal, argnums=(0, 1))(positions, radii)
 
         # Set the outputs
-        partials['bounding_box_volume', 'sphere_positions'] = jac_bb_volume
+        partials['volume', 'centers'] = jac_volume[0]
+        partials['volume', 'radii'] = jac_volume[1]
+        partials['bounds', 'centers'] = jac_bounds[0]
+        partials['bounds', 'radii'] = jac_bounds[1]
+
 
     @staticmethod
     def _compute_primal(positions, radii):
-        bb_bounds = bounding_box_bounds(positions, radii)
-        bb_volume = bounding_box_volume(bb_bounds)
-        return bb_volume, bb_bounds
+        bounds = bounding_box_bounds(positions, radii)
+        volume = bounding_box_volume(bounds)
+        return volume, bounds
