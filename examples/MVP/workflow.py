@@ -89,17 +89,17 @@ model.connect('system.interconnects.int_1.transformed_cyl_radius', 'projections.
 
 
 # Aggregate the spheres of each component
-mux_spheres = Multiplexer(n_i=[27, 10], m=3)
-prob.model.add_subsystem('mux_spheres', mux_spheres)
+mux_points = Multiplexer(n_i=[27, 10], m=3)
+prob.model.add_subsystem('mux_points', mux_points)
 mux_radii = Multiplexer(n_i=[27, 10], m=1)
 prob.model.add_subsystem('mux_radii', mux_radii)
 
 bbv = BoundingBoxVolume()
 model.add_subsystem('bbv', bbv)
 
-prob.model.connect('system.components.comp_1.transformed_sphere_positions', 'mux_spheres.input_0')
-prob.model.connect('system.components.comp_2.transformed_sphere_positions', 'mux_spheres.input_1')
-prob.model.connect('mux_spheres.stacked_output', 'bbv.sphere_positions')
+prob.model.connect('system.components.comp_1.transformed_sphere_positions', 'mux_points.input_0')
+prob.model.connect('system.components.comp_2.transformed_sphere_positions', 'mux_points.input_1')
+prob.model.connect('mux_points.stacked_output', 'bbv.sphere_positions')
 
 
 prob.model.connect('system.components.comp_1.transformed_sphere_radii', 'mux_radii.input_0')
@@ -194,7 +194,7 @@ comp_1_rotation_before = copy(prob.get_val('system.components.comp_1.rotation'))
 comp_2_translation_before = copy(prob.get_val('system.components.comp_2.translation'))
 comp_2_rotation_before = copy(prob.get_val('system.components.comp_2.rotation'))
 int_1_points_before = copy(prob.get_val('system.interconnects.int_1.transformed_cyl_positions'))
-sphere_positions_before = copy(prob.get_val('mux_spheres.stacked_output'))
+sphere_positions_before = copy(prob.get_val('mux_points.stacked_output'))
 sphere_radii_before = copy(prob.get_val('mux_radii.stacked_output'))
 bounds_before = copy(prob.get_val('bbv.bounding_box_bounds'))
 densities_before = copy(prob.get_val('projections.aggregator.aggregated_densities'))
@@ -213,7 +213,7 @@ comp_1_rotation_after = prob.get_val('system.components.comp_1.rotation')
 comp_2_translation_after = prob.get_val('system.components.comp_2.translation')
 comp_2_rotation_after = prob.get_val('system.components.comp_2.rotation')
 int_1_points_after = prob.get_val('system.interconnects.int_1.transformed_cyl_positions')
-sphere_positions_after = prob.get_val('mux_spheres.stacked_output')
+sphere_positions_after = prob.get_val('mux_points.stacked_output')
 sphere_radii_after = prob.get_val('mux_radii.stacked_output')
 bounds_after = prob.get_val('bbv.bounding_box_bounds')
 densities_after = prob.get_val('projections.aggregator.aggregated_densities')

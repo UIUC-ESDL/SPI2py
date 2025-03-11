@@ -14,7 +14,7 @@ class BoundingBoxVolume(ExplicitComponent):
         self.add_output('bounding_box_bounds', shape=(6,))
 
     def setup_partials(self):
-        self.declare_partials('bounding_box_volume', 'sphere_positions')
+        self.declare_partials('bounding_box_volume', 'sphere_positions', method='exact')
 
     def compute(self, inputs, outputs):
 
