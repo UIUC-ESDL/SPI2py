@@ -8,7 +8,7 @@ from chex import assert_shape, assert_type
 
 from ..geometry.cylinders import create_cylinders
 from ..geometry.intersection import volume_intersection_two_spheres
-from ..mechanics.distance import minimum_distances_points_segments, minimum_distances_segments_segments
+from ..mechanics.distance import minimum_distances_points_segments, minimum_distances_segments_segments, distances_points_points
 from ..projection.mesh_kernels import apply_kernel
 from ..geometry.spheres import get_aabb_indices
 from ..utilities.aggregation import kreisselmeier_steinhauser_max, kreisselmeier_steinhauser_min
@@ -90,7 +90,9 @@ def project_component(grid_centers, grid_size,
     obj_radii_bc = obj_radii.T.reshape(1, 1, 1, 1, obj_count)
 
     # Compute distances between kernel and object points
-    distances = minimum_distances_points_segments(kernel_points_bc, obj_points_bc, obj_points_bc)
+    # distances = minimum_distances_points_segments(kernel_points_bc, obj_points_bc, obj_points_bc)
+    distances = distances_points_points(kernel_points_bc, obj_points_bc)
+
 
     # Calculate volume overlaps
     overlaps = volume_intersection_two_spheres(obj_radii_bc, kernel_radii, distances)

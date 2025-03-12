@@ -45,7 +45,7 @@ model.add_subsystem('projections', projections)
 
 # Initialize the Mesh
 x_bounds = (0, 10)
-y_bounds = (0, 5)
+y_bounds = (0, 10)
 z_bounds = (0, 10)
 element_size = 0.125
 kernel_steps_per_unit_length = 1

@@ -9,22 +9,41 @@ from chex import assert_shape, assert_type
 
 def distances_points_points(a: jnp.ndarray,
                             b: jnp.ndarray) -> jnp.ndarray:
+    # a: shape (..., n, 3)
+    # b: shape (..., m, 3)
 
-    # Validate the inputs
-    assert_shape(a, (None, 3))
-    assert_shape(b, (None, 3))
-    assert_type(a, 'float64')
-    assert_type(b, 'float64')
+    # Expand the dimensions to enable broadcasting:
+    # a_expanded: shape (..., n, 1, 3)
+    # b_expanded: shape (..., 1, m, 3)
+    aa = a[..., :, None, :]
+    bb = b[..., None, :, :]
 
-    # Reshape the arrays for broadcasting
-    aa = a.reshape(-1, 1, 3)
-    bb = b.reshape(1, -1, 3)
-    cc = aa - bb
+    # Compute the pairwise differences:
+    diff = aa - bb  # shape (..., n, m, 3)
 
-    # Calculate the distances
-    c = jnp.linalg.norm(cc, axis=2)
+    # Compute the norm over the last axis (the 3D coordinates):
+    distances = jnp.linalg.norm(diff, axis=-1).squeeze(4)  # shape (..., n, m)
 
-    return c
+    return distances
+
+# def distances_points_points(a: jnp.ndarray,
+#                             b: jnp.ndarray) -> jnp.ndarray:
+#
+#     # Validate the inputs
+#     # assert_shape(a, (None, 3))
+#     # assert_shape(b, (None, 3))
+#     # assert_type(a, 'float64')
+#     # assert_type(b, 'float64')
+#
+#     # Reshape the arrays for broadcasting
+#     aa = a.reshape(-1, 1, 3)
+#     bb = b.reshape(1, -1, 3)
+#     cc = aa - bb
+#
+#     # Calculate the distances
+#     c = jnp.linalg.norm(cc, axis=2)
+#
+#     return c
 
 
 def distances_radii_radii(radii_1: jnp.ndarray,
