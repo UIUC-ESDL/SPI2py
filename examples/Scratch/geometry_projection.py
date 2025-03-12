@@ -38,10 +38,10 @@ pos_be = transform_points(pos_be, pos_be_center.reshape(-1), translation=jnp.arr
 
 # Calculate the pseudo-densities
 densities_be, densities_pen_be = project_component(el_centers, jnp.array([el_size]), pos_be, rad_be, kernel_pos, kernel_rad)
-densities_combined = combine_densities(densities_be, min_density=2e-2, penalty_factor=1)
+densities_combined = combine_densities(densities_be, min_density=1e-2, penalty_factor=3)
 
 # Heat-generating component
-heat_load_nodes = find_active_nodes(densities_combined, elements, threshold=3e-2)
+heat_load_nodes = find_active_nodes(densities_be, elements, threshold=1e-3)
 heat_load_per_element = 0.5
 
 
@@ -67,14 +67,14 @@ nodes, elements, T = solve_system(densities_combined.flatten(),
                                   boundary_conditions=[dirichlet_bc_1, robin_bc_1])
 
 
-# from jax import jacfwd, jacrev
-# jf = jacfwd(solve_system, argnums=1)
-# jf(densities_combined.flatten(),
-#                                   heat_load_per_element,
-#                                   nodes,
-#                                   elements,
-#                                   base_k=1.0,
-#                                   boundary_conditions=[dirichlet_bc_1, robin_bc_1])
+from jax import jacfwd, jacrev
+jf = jacfwd(solve_system, argnums=1)
+jf_val = jf(densities_combined.flatten(),
+                                  heat_load_per_element,
+                                  nodes,
+                                  elements,
+                                  base_k=1.0,
+                                  boundary_conditions=[dirichlet_bc_1, robin_bc_1])
 
 
 
@@ -105,7 +105,9 @@ plot_stl_file(plotter, (0, 1), 'models/Bot_Eye_scaled.stl', translation=(0.625, 
 
 # Plot the grid without the kernel
 plot_grid(plotter, (0, 2), el_centers, el_size, densities=densities_combined)
-plot_grid(plotter, (1, 2), el_centers, el_size, densities=densities_be)
+plot_grid(plotter, (1, 1), el_centers, el_size, densities=densities_be)
+plot_grid(plotter, (1, 2), el_centers, el_size, densities=densities_combined)
+
 
 # plot_nodes(plotter, (0, 2), np.array(nodes), np.array(heat_load_nodes), label='Heat Load', color='red', point_size=20)
 
@@ -121,5 +123,5 @@ plot_temperature_distribution(plotter,
 
 # plotter.show_axes()
 # plotter.link_views()
-plotter.show()
+# plotter.show()
 

@@ -78,7 +78,6 @@ class ProjectComponent(ExplicitComponent):
         mesh_centers = jnp.array(self.options['mesh_centers'])
         kernel_centers = jnp.array(self.options['kernel_centers'])
         kernel_radii  = jnp.array(self.options['kernel_radii'])
-        p = self.options['penalization_exponent']
 
         # Get design inputs.
         centers = jnp.array(inputs['centers'])
@@ -161,6 +160,7 @@ class ProjectInterconnect(ExplicitComponent):
         # Object Inputs
         self.add_input('control_points', shape_by_conn=True)
         self.add_input('radius', shape_by_conn=True)
+        self.add_input('heat_load', val=0.0)
 
         # Outputs
         nx, ny, nz = self.options['mesh_centers'].shape[:3]
@@ -171,6 +171,11 @@ class ProjectInterconnect(ExplicitComponent):
     def setup_partials(self):
         self.declare_partials('densities', 'control_points', method='exact')
         self.declare_partials('densities', 'radius', method='exact')
+        self.declare_partials('penalized_densities', 'control_points', method='exact')
+        self.declare_partials('penalized_densities', 'radius', method='exact')
+        self.declare_partials('penalized_heat_loads', 'control_points', method='exact')
+        self.declare_partials('penalized_heat_loads', 'radius', method='exact')
+        self.declare_partials('penalized_heat_loads', 'heat_load', method='exact')
 
     def compute(self, inputs, outputs):
 
@@ -183,46 +188,81 @@ class ProjectInterconnect(ExplicitComponent):
         # Get the inputs
         control_points = jnp.array(inputs['control_points'])
         radius     = jnp.array(inputs['radius'])
+        heat_load = jnp.array(inputs['heat_load'])
 
         # Compute the pseudo-densities
-        densities = self._compute_primal(mesh_centers, mesh_size,
+        densities, penalized_densities, penalized_heat_loads = self._compute_primal(mesh_centers, mesh_size,
                                                 control_points, radius,
-                                                kernel_centers, kernel_radii)
+                                                kernel_centers, kernel_radii, heat_load)
 
         # Write the outputs
         outputs['densities'] = densities
+        outputs['penalized_densities'] = penalized_densities
+        outputs['penalized_heat_loads'] = penalized_heat_loads
 
-    def compute_partials(self, inputs, partials):
-
-        # Get the Mesh parameters
+    def compute_jacvec_product(self, inputs, d_inputs, d_outputs, mode, discrete_inputs=None):
+        # Get constant mesh parameters.
         mesh_size = jnp.atleast_1d(self.options['mesh_size'])
         mesh_centers = jnp.array(self.options['mesh_centers'])
         kernel_centers = jnp.array(self.options['kernel_centers'])
         kernel_radii = jnp.array(self.options['kernel_radii'])
-
-        # Get the inputs
+        # Get design inputs.
         control_points = jnp.array(inputs['control_points'])
         radius = jnp.array(inputs['radius'])
+        heat_load = jnp.array(inputs['heat_load'])
+        # Pack all inputs in the order expected by _compute_primal.
+        primals = (mesh_centers, mesh_size, control_points, radius, kernel_centers, kernel_radii, heat_load)
 
-        # Calculate the partial derivatives
-        jac_densities = jacrev(self._compute_primal)(mesh_centers, mesh_size,
-                                                            control_points, radius,
-                                                            kernel_centers, kernel_radii)
+        if mode == 'fwd':
+            # In forward mode, we build a tangent tuple.
+            t_mesh_centers = jnp.zeros_like(mesh_centers)
+            t_mesh_size = jnp.zeros_like(mesh_size)
+            t_kernel_centers = jnp.zeros_like(kernel_centers)
+            t_kernel_radii = jnp.zeros_like(kernel_radii)
+            # The design-dependent inputs use the provided directional derivatives.
+            tangents = (t_mesh_centers,
+                        t_mesh_size,
+                        d_inputs['control_points'],
+                        d_inputs['radius'],
+                        t_kernel_centers,
+                        t_kernel_radii,
+                        d_inputs['heat_load'])
+            # jvp returns (primal_out, tangent_out)
+            _, tangent_out = jvp(self._compute_primal, primals, tangents)
+            # tangent_out is a tuple: (densities_t, penalized_densities_t, penalized_heat_loads_t)
+            d_outputs['densities'] = tangent_out[0]
+            d_outputs['penalized_densities'] = tangent_out[1]
+            d_outputs['penalized_heat_loads'] = tangent_out[2]
 
-        # Set the partial derivatives
-        partials['densities', 'control_points'] = jac_densities[2]
-        partials['densities', 'radius'] = jac_densities[3]
+        elif mode == 'rev':
+            # In reverse mode, use vjp to get the pullback.
+            primal_out, pullback = vjp(self._compute_primal, *primals)
+            # The cotangent for outputs is provided as a tuple.
+            cotangent = (d_outputs['densities'],
+                         d_outputs['penalized_densities'],
+                         d_outputs['penalized_heat_loads'])
+            grads = pullback(cotangent)
+            # grads is a tuple with the same order as primals:
+            # (mesh_centers, mesh_size, control_points, radius, kernel_centers, kernel_radii, heat_load)
+            # Only assign derivatives to design inputs.
+            d_inputs['control_points'] = grads[2]
+            d_inputs['radius'] = grads[3]
+            d_inputs['heat_load'] = grads[6]
 
     @staticmethod
     def _compute_primal(mesh_centers, mesh_size,
                         cyl_points, cyl_radii,
-                        kernel_centers, kernel_radii):
+                        kernel_centers, kernel_radii,
+                        heat_load):
 
-        densities, _, _ = project_interconnect(mesh_centers, mesh_size,
+        densities, penalized_densities = project_interconnect(mesh_centers, mesh_size,
                                                       cyl_points, cyl_radii,
                                                       kernel_centers, kernel_radii)
 
-        return densities
+        # Heat load
+        penalized_heat_loads = heat_load * penalized_densities
+
+        return densities, penalized_densities, penalized_heat_loads
 
 
 
@@ -242,10 +282,12 @@ class ProjectionAggregator(ExplicitComponent):
 
         for i in range(n_projections):
             self.add_input(f'densities_{i}', shape_by_conn=True)
+            self.add_input(f'heat_loads_{i}', shape_by_conn=True)
 
 
         # Set the outputs
         self.add_output('aggregated_densities', copy_shape='densities_0')
+        self.add_output('aggregated_heat_loads', copy_shape='heat_loads_0')
         self.add_output('max_density', val=0.0)
 
     def setup_partials(self):
@@ -256,6 +298,7 @@ class ProjectionAggregator(ExplicitComponent):
         # Set the partials
         for i in range(n_projections):
             self.declare_partials('aggregated_densities', f'densities_{i}')
+            self.declare_partials('aggregated_heat_loads', f'heat_loads_{i}')
             self.declare_partials('max_density', f'densities_{i}')
 
 
@@ -267,48 +310,88 @@ class ProjectionAggregator(ExplicitComponent):
 
         # Get the inputs
         densities = [jnp.array(inputs[f'densities_{i}']) for i in range(n_projections)]
+        heat_loads = [jnp.array(inputs[f'heat_loads_{i}']) for i in range(n_projections)]
 
         # Calculate the values
-        aggregated_densities, max_density = self._compute_primal(densities, rho_min)
-
+        aggregated_densities, aggregated_heat_loads, max_density = self._compute_primal(densities, heat_loads, rho_min)
 
         # Write the outputs
         outputs['aggregated_densities'] = aggregated_densities
+        outputs['aggregated_heat_loads'] = aggregated_heat_loads
         outputs['max_density'] = max_density
 
-    def compute_partials(self, inputs, partials):
-
-        # TODO Implement as jacvec product
-
-        # Get the options
+    def compute_jacvec_product(self, inputs, d_inputs, d_outputs, mode, discrete_inputs=None):
+        """
+        Compute the Jacobian-vector product (forward mode) or the
+        vector-Jacobian product (reverse mode) for the aggregator.
+        The primals are:
+            densities_list, heat_loads_list, rho_min
+        and the outputs are:
+            aggregated_densities, aggregated_heat_loads, max_density.
+        """
         n_projections = self.options['n_projections']
         rho_min = self.options['rho_min']
 
-        # Get the inputs
+        # Assemble the list inputs from the OpenMDAO inputs dictionary.
         densities = [jnp.array(inputs[f'densities_{i}']) for i in range(n_projections)]
+        heat_loads = [jnp.array(inputs[f'heat_loads_{i}']) for i in range(n_projections)]
 
-        # Calculate the partial derivatives
-        jac_densities, jac_max_density = jacfwd(self._compute_primal)(densities, rho_min)
+        # Our _compute_primal function takes a tuple: (densities, heat_loads, rho_min)
+        primals = (densities, heat_loads, rho_min)
 
-        # Set the partial derivatives
-        jacs = zip(jac_densities, jac_max_density)
-        for i, (jac_densities_i, jac_max_density_i) in enumerate(jacs):
-            partials['aggregated_densities', f'densities_{i}'] = jac_densities_i
-            partials['max_density', f'densities_{i}'] = jac_max_density_i
+        if mode == 'fwd':
+            # In forward mode, build the corresponding tangent tuple.
+            # For each densities input, the tangent is provided in d_inputs.
+            tan_densities = [jnp.array(d_inputs[f'densities_{i}']) for i in range(n_projections)]
+            tan_heat_loads = [jnp.array(d_inputs[f'heat_loads_{i}']) for i in range(n_projections)]
+            tan_rho_min = jnp.zeros_like(rho_min)  # assume rho_min is constant
+            tangents = (tan_densities, tan_heat_loads, tan_rho_min)
+
+            # Compute the forward Jacobian-vector product.
+            _, tangent_out = jvp(self._compute_primal, primals, tangents)
+
+            # tangent_out is a tuple with three entries.
+            d_outputs['aggregated_densities'] = tangent_out[0]
+            d_outputs['aggregated_heat_loads'] = tangent_out[1]
+            d_outputs['max_density'] = tangent_out[2]
+
+        elif mode == 'rev':
+            # In reverse mode, use the VJP (vector-Jacobian product).
+            primal_out, pullback = vjp(self._compute_primal, *primals)
+            # d_outputs contains cotangents for each output.
+            cotan_agg_dens = d_outputs['aggregated_densities']
+            cotan_agg_heat = d_outputs['aggregated_heat_loads']
+            cotan_max = d_outputs['max_density']
+            # Call pullback with a tuple of cotangents.
+            grads = pullback((cotan_agg_dens, cotan_agg_heat, cotan_max))
+            # grads is a tuple with three entries corresponding to:
+            # 0: gradient with respect to densities (which is a list of arrays)
+            # 1: gradient with respect to heat_loads (list of arrays)
+            # 2: gradient with respect to rho_min (scalar)
+            grad_densities, grad_heat_loads, grad_max_density = grads
+            for i in range(n_projections):
+                d_inputs[f'densities_{i}'] = grad_densities[i]
+                d_inputs[f'heat_loads_{i}'] = grad_heat_loads[i]
+
+            # If there are other inputs (e.g., element_length) that are not varied, assign zeros as needed.
 
     @staticmethod
-    def _compute_primal(densities, rho_min):
+    def _compute_primal(densities, heat_loads, rho_min):
 
         # Aggregate the pseudo-densities
-        aggregate_densities = jnp.zeros_like(densities[0])
+        aggregated_densities = jnp.zeros_like(densities[0])
+        aggregated_heat_loads = jnp.zeros_like(heat_loads[0])
         for density in densities:
-            aggregate_densities += density
+            aggregated_densities += density
+
+        for heat_load in heat_loads:
+            aggregated_heat_loads += heat_load
 
         # Ensure that no pseudo-density is below the minimum value
-        aggregated_densities = jnp.maximum(aggregate_densities, rho_min)
+        aggregated_densities = jnp.maximum(aggregated_densities, rho_min)
 
         # Calculate the maximum pseudo-density
-        max_density = kreisselmeier_steinhauser_max(aggregated_densities)
+        max_density = kreisselmeier_steinhauser_max(aggregated_densities.flatten())
 
-        return aggregated_densities, max_density
+        return aggregated_densities, aggregated_heat_loads, max_density
 

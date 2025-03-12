@@ -183,7 +183,10 @@ def project_interconnect(grid_centers, grid_size,
     # Store the densities in the output array
     all_densities = all_densities.at[i1:i2 + 1, j1:j2 + 1, k1:k2 + 1].set(densities)
 
-    return all_densities, kernel_points, kernel_radii
+    # Penalize the densities
+    all_densities_penalized = penalize_densities(all_densities)
+
+    return all_densities, all_densities_penalized
 
 
 
