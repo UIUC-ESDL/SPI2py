@@ -7,6 +7,7 @@ Author:     Chad Peterson
 import numpy as np
 from copy import copy
 import pyvista as pv
+from time import time_ns
 
 import jax
 import jax.numpy as jnp
@@ -118,52 +119,15 @@ model.connect('projections.proj_1.penalized_heat_loads', 'projections.aggregator
 model.connect('projections.proj_2.penalized_heat_loads', 'projections.aggregator.heat_loads_1')
 # model.connect('projections.proj_3.penalized_heat_loads', 'projections.aggregator.heat_loads_2')
 
-# # Connect the system to the projections
-# i = 0
-# for j in range(n_components):
-#     model.connect(f'system.components.comp_{j}.transformed_sphere_positions', f'projections.projection_{i}.sphere_positions')
-#     model.connect(f'system.components.comp_{j}.transformed_sphere_radii', f'projections.projection_{i}.sphere_radii')
-#     model.connect(f'system.components.comp_{j}.volume', f'projections.projection_{i}.volume')
-#     model.connect(f'projections.projection_{i}.pseudo_densities', f'aggregator.pseudo_densities_{i}')
-#     i += 1
-#
-# for j in range(m_interconnects):
-#     model.connect(f'system.interconnects.int_{j}.transformed_sphere_positions', f'projections.projection_{i}.sphere_positions')
-#     model.connect(f'system.interconnects.int_{j}.transformed_sphere_radii', f'projections.projection_{i}.sphere_radii')
-#     # model.connect(f'system.interconnects.int_{j}.volume', f'projections.projection_{i}.volume')
-#     model.connect(f'projections.projection_{i}.pseudo_densities', f'aggregator.pseudo_densities_{i}')
-#     i += 1
-#
-# # Connect the mesh to the projections
-# model.connect('mesh.element_length', 'aggregator.element_length')
-# for i in range(n_projections):
-#     model.connect('mesh.element_length', f'projections.projection_{i}.element_length')
-#     model.connect('mesh.centers', f'projections.projection_{i}.centers')
-#     model.connect('mesh.element_bounds', f'projections.projection_{i}.element_bounds')
-#     model.connect('mesh.sample_points', f'projections.projection_{i}.element_sphere_positions')
-#     model.connect('mesh.sample_radii', f'projections.projection_{i}.element_sphere_radii')
-#
-# # Connect the system to the bounding box
-# i = 0
-# for j in range(n_components):
-#     model.connect(f'system.components.comp_{j}.transformed_sphere_positions', f'mux_all_sphere_positions.input_{i}')
-#     model.connect(f'system.components.comp_{j}.transformed_sphere_radii', f'mux_all_sphere_radii.input_{i}')
-#     i += 1
-#
-# for j in range(m_interconnects):
-#     model.connect(f'system.interconnects.int_{j}.transformed_sphere_positions', f'mux_all_sphere_positions.input_{i}')
-#     model.connect(f'system.interconnects.int_{j}.transformed_sphere_radii', f'mux_all_sphere_radii.input_{i}')
-#     i += 1
-
 
 # Define the design variables
 prob.model.add_design_var('system.components.comp_1.translation', ref=1, lower=0, upper=3)
-prob.model.add_design_var('system.components.comp_2.translation', ref=1, lower=0, upper=3)
+# prob.model.add_design_var('system.components.comp_2.translation', ref=1, lower=0, upper=3)
 
 
 # Define the objective and constraints
 prob.model.add_objective('bbv.volume', ref=1)
-prob.model.add_constraint('projections.aggregator.max_density', upper=1.1)
+prob.model.add_constraint('projections.aggregator.max_density', upper=1.3)
 
 
 
@@ -186,7 +150,11 @@ prob.driver.options['maxiter'] = 10
 # prob.driver.options['optimizer'] = 'SLSQP'
 
 # Run the model once
+t1 = time_ns()
 prob.run_model()
+t2 = time_ns()
+
+print(f"Elapsed time: {(t2 - t1) / 1e9} seconds")
 
 
 # Check the initial state
@@ -205,7 +173,7 @@ densities_before = copy(prob.get_val('projections.aggregator.aggregated_densitie
 
 
 # Run the optimization
-prob.run_driver()
+# prob.run_driver()
 
 
 
@@ -246,47 +214,47 @@ sphere_radii_after = np.array(sphere_radii_after)
 # int_1_points_after = np.array(int_1_points_after)
 
 
-# Plot the results
-plotter = pv.Plotter(shape=(2, 2), window_size=(1500, 500))
-
-# Plot the geometries before optimization
-plotter.subplot(0, 0)
-plotter.add_title("Before Optimization")
-plot_grid(plotter, (0, 0), centers, element_size, densities=None)
-plot_stl_file(plotter, (0, 0), 'models/CrossHead_Pin_scaled.stl', translation=comp_1_translation_before, rotation=comp_1_rotation_before, opacity=0.25, color='purple')
-plot_stl_file(plotter, (0, 0), 'models/Bot_Eye_scaled.stl', translation=comp_2_translation_before, rotation=comp_2_rotation_before, opacity=0.25, color='blue')
-plot_spheres(plotter, (0, 0), sphere_positions_before, sphere_radii_before, 'purple', opacity=0.5)
-# plot_capsules(plotter, (0, 0), int_1_points_before, 0.25, color='green', opacity=0.5)
-plot_AABB(plotter, (0, 0), bounds_before, color='blue')
-
-# Plot the pseudo-densities before optimization
-plot_grid(plotter, (1, 0), centers, element_size, densities=None)
-plot_grid(plotter, (1, 0), centers, element_size, densities=densities_before)
-
-# Plot the geometries after optimization
-plotter.subplot(0, 1)
-plotter.add_title("After Optimization")
-plot_grid(plotter, (0, 1), centers, element_size, densities=None)
-plot_stl_file(plotter, (0, 1), 'models/CrossHead_Pin_scaled.stl', translation=comp_1_translation_after, rotation=comp_1_rotation_after, opacity=0.25, color='purple')
-plot_stl_file(plotter, (0, 1), 'models/Bot_Eye_scaled.stl', translation=comp_2_translation_after, rotation=comp_2_rotation_after, opacity=0.25, color='blue')
-plot_spheres(plotter, (0, 1), sphere_positions_after, sphere_radii_after, 'purple', opacity=0.5)
-# plot_capsules(plotter, (0, 1), int_1_points_after, 0.25, color='green', opacity=0.5)
-plot_AABB(plotter, (0, 1), bounds_after, color='blue')
-
-# Plot the pseudo-densities after optimization
-plot_grid(plotter, (1, 1), centers, element_size, densities=densities_after)
-
-
-# plot the origin (0,0,0)
-plotter.subplot(*(0, 0))
-plotter.add_mesh(pv.Sphere(radius=0.25), color='red', show_edges=True)
-
-plotter.subplot(*(0, 1))
-plotter.add_mesh(pv.Sphere(radius=0.25), color='red', show_edges=True)
-
-plotter.link_views()
-plotter.show_axes()
-# plotter.show()
+# # Plot the results
+# plotter = pv.Plotter(shape=(2, 2), window_size=(1500, 500))
+#
+# # Plot the geometries before optimization
+# plotter.subplot(0, 0)
+# plotter.add_title("Before Optimization")
+# plot_grid(plotter, (0, 0), centers, element_size, densities=None)
+# plot_stl_file(plotter, (0, 0), 'models/CrossHead_Pin_scaled.stl', translation=comp_1_translation_before, rotation=comp_1_rotation_before, opacity=0.25, color='purple')
+# plot_stl_file(plotter, (0, 0), 'models/Bot_Eye_scaled.stl', translation=comp_2_translation_before, rotation=comp_2_rotation_before, opacity=0.25, color='blue')
+# plot_spheres(plotter, (0, 0), sphere_positions_before, sphere_radii_before, 'purple', opacity=0.5)
+# # plot_capsules(plotter, (0, 0), int_1_points_before, 0.25, color='green', opacity=0.5)
+# plot_AABB(plotter, (0, 0), bounds_before, color='blue')
+#
+# # Plot the pseudo-densities before optimization
+# plot_grid(plotter, (1, 0), centers, element_size, densities=None)
+# plot_grid(plotter, (1, 0), centers, element_size, densities=densities_before)
+#
+# # Plot the geometries after optimization
+# plotter.subplot(0, 1)
+# plotter.add_title("After Optimization")
+# plot_grid(plotter, (0, 1), centers, element_size, densities=None)
+# plot_stl_file(plotter, (0, 1), 'models/CrossHead_Pin_scaled.stl', translation=comp_1_translation_after, rotation=comp_1_rotation_after, opacity=0.25, color='purple')
+# plot_stl_file(plotter, (0, 1), 'models/Bot_Eye_scaled.stl', translation=comp_2_translation_after, rotation=comp_2_rotation_after, opacity=0.25, color='blue')
+# plot_spheres(plotter, (0, 1), sphere_positions_after, sphere_radii_after, 'purple', opacity=0.5)
+# # plot_capsules(plotter, (0, 1), int_1_points_after, 0.25, color='green', opacity=0.5)
+# plot_AABB(plotter, (0, 1), bounds_after, color='blue')
+#
+# # Plot the pseudo-densities after optimization
+# plot_grid(plotter, (1, 1), centers, element_size, densities=densities_after)
+#
+#
+# # plot the origin (0,0,0)
+# plotter.subplot(*(0, 0))
+# plotter.add_mesh(pv.Sphere(radius=0.25), color='red', show_edges=True)
+#
+# plotter.subplot(*(0, 1))
+# plotter.add_mesh(pv.Sphere(radius=0.25), color='red', show_edges=True)
+#
+# plotter.link_views()
+# plotter.show_axes()
+# # plotter.show()
 
 # prob.check_partials(includes='system.interconnects.int_1')
 
