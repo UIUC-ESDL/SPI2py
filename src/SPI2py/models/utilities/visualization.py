@@ -190,9 +190,9 @@ def plot_temperature_distribution(plotter,
                                   subplot_index,
                                   nodes,
                                   T,
+                                  heat_load_nodes,
                                   robin_nodes,
                                   dirichlet_nodes,
-                                  source_nodes,
                                   dims=None,
                                   cmap="rainbow",
                                   opacity=0.25,
@@ -236,19 +236,27 @@ def plot_temperature_distribution(plotter,
     grid.dimensions = dims
     grid["Temperature"] = T
 
-    # Create PolyData for convection boundary and fixed (Dirichlet) nodes.
-    robin_points = nodes[robin_nodes]
-    dirichlet_points = nodes[dirichlet_nodes]
-    robin_poly = pv.PolyData(robin_points)
-    dirichlet_poly = pv.PolyData(dirichlet_points)
-
     # Setup PyVista plotter.
     vol = plotter.add_volume(grid, scalars="Temperature", cmap=cmap, clim=climits, opacity=opacity, show_scalar_bar=True, scalar_bar_args={'title': 'Temperature'})
-    plotter.add_mesh(robin_poly, color="blue", point_size=10, render_points_as_spheres=True, label="Robin BC")
-    plotter.add_mesh(dirichlet_poly, color="red", point_size=10, render_points_as_spheres=True, label="Dirichlet BC")
+    plot_nodes(plotter, (0, 2), nodes, heat_load_nodes, label='Heat Load', color='red', point_size=20)
+    plot_nodes(plotter, (0, 2), nodes, robin_nodes, label='Robin BC', color='green')
+    plot_nodes(plotter, (0, 2), nodes, dirichlet_nodes, label='Dirichlet BC', color='blue')
     plotter.add_legend()
 
     # Force the scalar range on the volume mapper
     vol.mapper.scalar_range = climits
 
     vol.prop.interpolation_type = 'linear'
+
+
+def plot_nodes(plotter, subplot_index, nodes, selected_nodes, label, color="blue",point_size=10):
+
+    plotter.subplot(*subplot_index)
+
+    # Create PolyData for convection boundary and fixed (Dirichlet) nodes.
+    node_points = nodes[selected_nodes]
+    nodes_poly = pv.PolyData(node_points)
+
+
+    # Setup PyVista plotter.
+    plotter.add_mesh(nodes_poly, color=color, point_size=point_size, render_points_as_spheres=True, label=label)

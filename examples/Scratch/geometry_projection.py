@@ -5,7 +5,7 @@ import pyvista as pv
 # from SPI2py.models.projection.grid import create_grid
 from SPI2py.models.mechanics.homogenous_transformation import transform_points
 from SPI2py.models.projection.projection import project_component, combine_densities
-from SPI2py.models.utilities.visualization import plot_grid, plot_spheres, plot_AABB_spheres, plot_stl_file
+from SPI2py.models.utilities.visualization import plot_grid, plot_spheres, plot_AABB_spheres, plot_stl_file, plot_nodes
 from SPI2py.models.projection.mesh_kernels import create_uniform_kernel
 from SPI2py.models.physics.distributed.mesh import generate_mesh_vec, find_active_nodes, find_face_nodes
 from SPI2py.models.physics.distributed.assembly import DirichletBC, RobinBC
@@ -14,8 +14,8 @@ from SPI2py.models.physics.distributed.solver import solve_system
 from SPI2py.models.utilities.visualization import plot_temperature_distribution
 
 # Create grid
-el_size = 0.5
-# el_size = 0.125
+# el_size = 0.5
+el_size = 0.25
 nodes, elements, el_centers, nx, ny, nz, lx, ly, lz = generate_mesh_vec(0, 2, 0, 4, 0,  2, element_size=el_size)
 el_centers = el_centers.reshape(nx, ny, nz, 1, 3)
 
@@ -40,29 +40,21 @@ pos_be = transform_points(pos_be, pos_be_center.reshape(-1), translation=jnp.arr
 densities_be, densities_pen_be = project_component(el_centers, jnp.array([el_size]), pos_be, rad_be, kernel_pos, kernel_rad)
 densities_combined = combine_densities(densities_be, min_density=2e-2, penalty_factor=1)
 
-# FEA
-density = jnp.ones(nx * ny * nz)
-
 # Heat-generating component
-# TODO Change
-# comp_nodes = find_active_nodes(densities_combined, threshold=3e-2)
-# dirichlet_bc_2 = DirichletBC(comp_nodes, T=150.0)
-# heat_nodes = find_active_nodes(densities_combined, threshold=3e-2)
-# heat_load = 1
-# heat_loads = heat_load * densities_combined
+heat_load_nodes = find_active_nodes(densities_combined, elements, threshold=3e-2)
 heat_load_per_element = 0.5
 
 
 # Define boundary conditions
 
 # Fixed-temperature surface
-fixed_temp_surface_nodes = find_face_nodes(nodes, jnp.array([0.0, 0.0, -1.0]))
-dirichlet_bc_1 = DirichletBC(fixed_temp_surface_nodes, T=200)
+dirichlet_nodes = find_face_nodes(nodes, jnp.array([0.0, 0.0, -1.0]))
+dirichlet_bc_1 = DirichletBC(dirichlet_nodes, T=200)
 
 # Convection surface
 conv_surface_area = el_size**2
-convection_nodes = find_face_nodes(nodes, jnp.array([0.0, 0.0, 1.0]))
-robin_bc_1 = RobinBC(convection_nodes, h=10.0, T_inf=200, area=conv_surface_area)
+robin_nodes = find_face_nodes(nodes, jnp.array([0.0, 0.0, 1.0]))
+robin_bc_1 = RobinBC(robin_nodes, h=10.0, T_inf=200, area=conv_surface_area)
 
 
 
@@ -75,17 +67,14 @@ nodes, elements, T = solve_system(densities_combined.flatten(),
                                   boundary_conditions=[dirichlet_bc_1, robin_bc_1])
 
 
-from jax import jacfwd, jacrev
-
-# jr = jacrev(solve_system)
-
-jf = jacfwd(solve_system, argnums=1)
-jf(densities_combined.flatten(),
-                                  heat_load_per_element,
-                                  nodes,
-                                  elements,
-                                  base_k=1.0,
-                                  boundary_conditions=[dirichlet_bc_1, robin_bc_1])
+# from jax import jacfwd, jacrev
+# jf = jacfwd(solve_system, argnums=1)
+# jf(densities_combined.flatten(),
+#                                   heat_load_per_element,
+#                                   nodes,
+#                                   elements,
+#                                   base_k=1.0,
+#                                   boundary_conditions=[dirichlet_bc_1, robin_bc_1])
 
 
 
@@ -112,17 +101,22 @@ plot_AABB_spheres(plotter, (0, 0), pos_be, rad_be, color='blue')
 plot_spheres(plotter, (0, 1), pos_be, rad_be, 'blue', opacity=0.5)
 plot_stl_file(plotter, (0, 1), 'models/Bot_Eye_scaled.stl', translation=(0.625, 0.625, 0.125), rotation=(0, 0, 0), opacity=0.5)
 
+
+
 # Plot the grid without the kernel
 plot_grid(plotter, (0, 2), el_centers, el_size, densities=densities_combined)
+plot_grid(plotter, (1, 2), el_centers, el_size, densities=densities_be)
 
-dirichlet_nodes = jnp.concatenate([dirichlet_bc_1.nodes])
+# plot_nodes(plotter, (0, 2), np.array(nodes), np.array(heat_load_nodes), label='Heat Load', color='red', point_size=20)
+
 plot_temperature_distribution(plotter,
                               (0, 2),
                               nodes_plot,
                               T_plot,
-                              convection_nodes,
+                              heat_load_nodes,
+                              robin_nodes,
                               dirichlet_nodes,
-                              (nx + 1, ny + 1, nz + 1),
+                              dims=(nx + 1, ny + 1, nz + 1),
                               cmap='jet')
 
 # plotter.show_axes()

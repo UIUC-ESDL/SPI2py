@@ -84,11 +84,57 @@ def generate_mesh_vec(x_min, x_max, y_min, y_max, z_min, z_max, element_size=1.0
     return nodes, elements, centers, nx, ny, nz, lx, ly, lz
 
 
-def find_active_nodes(density, threshold=1e-3):
+# def find_active_nodes(densities, elements, threshold=1e-3):
+#     """
+#     Given a density array (per node), return the indices of nodes with density above the threshold.
+#     """
+#     return jnp.where(density.flatten() > threshold)[0]
+#     # active_nodes = jnp.argwhere(density > threshold)
+#     # return nodes[active_nodes]
+
+def find_active_nodes(element_densities, elements, threshold=1e-3):
     """
-    Given a density array (per node), return the indices of nodes with density above the threshold.
+    Given an array of element densities (one value per element) and an
+    elements connectivity array of shape (n_elem, 8) (with each row containing the
+    8 node indices for that element), returns a 1D array of unique node indices
+    for all elements with density above the threshold.
+
+    Parameters
+    ----------
+    element_densities : jnp.ndarray, shape (n_elem,)
+        The density value for each element.
+    elements : jnp.ndarray, shape (n_elem, 8)
+        Connectivity information (node indices) for each element.
+    threshold : float, optional
+        The density threshold. Default is 1e-3.
+
+    Returns
+    -------
+    active_node_indices : jnp.ndarray, shape (n_active_nodes,)
+        A sorted 1D array of node indices that belong to elements
+        with density above the threshold.
     """
-    return jnp.where(density > threshold)[0]
+
+    # Flatten densities to match elements
+    densities_flat = element_densities.flatten()
+
+    # Identify the indices of elements whose density is above the threshold.
+    active_elem_idx = jnp.where(densities_flat > threshold)[0]
+
+    # Use these element indices to get the corresponding node indices.
+    # This will produce an array of shape (n_active_elems, 8)
+    active_nodes = elements[active_elem_idx]
+
+    # Flatten the array to a 1D list of node indices.
+    active_nodes_flat = active_nodes.flatten()
+
+    # Get the unique node indices.
+    active_node_indices = jnp.unique(active_nodes_flat)
+
+    return active_node_indices
+
+
+
 
 
 def find_face_nodes(nodes: jnp.ndarray, face_normal: jnp.ndarray, tol: float = 1e-6) -> jnp.ndarray:
