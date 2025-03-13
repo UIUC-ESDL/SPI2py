@@ -2,11 +2,13 @@
 
 Provides functions to calculate the distance between classes in various ways.
 """
-
+import jax
+from jax import jit
 import jax.numpy as jnp
 from chex import assert_shape, assert_type
 
 
+@jit
 def distances_points_points(a: jnp.ndarray,
                             b: jnp.ndarray) -> jnp.ndarray:
     # a: shape (..., n, 3)

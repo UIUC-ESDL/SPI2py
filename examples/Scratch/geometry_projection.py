@@ -14,10 +14,18 @@ from SPI2py.models.physics.distributed.mesh import generate_mesh_vec
 from SPI2py.models.physics.distributed.solver import solve_system
 from SPI2py.models.utilities.visualization import plot_temperature_distribution
 
+import jax
+jax.config.update("jax_enable_x64", True)
+
+jax.config.update("jax_compilation_cache_dir", "/tmp/jax_cache")
+# jax.config.update("jax_persistent_cache_min_entry_size_bytes", -1)
+# jax.config.update("jax_persistent_cache_min_compile_time_secs", 0)
+# jax.config.update("jax_persistent_cache_enable_xla_caches", "xla_gpu_per_fusion_autotune_cache_dir")
+
 # Create grid
 # el_size = 0.5
 el_size = 0.25
-bounds = (0, 4, 0, 4, 0, 4)
+bounds = (0, 7.5, 0, 5, 0, 7.5)
 
 x_min, x_max, y_min, y_max, z_min, z_max = bounds
 nodes, elements, el_centers, nx, ny, nz, lx, ly, lz = generate_mesh_vec(x_min, x_max, y_min, y_max, z_min, z_max, element_size=el_size)

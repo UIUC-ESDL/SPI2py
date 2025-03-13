@@ -1,5 +1,6 @@
 import math
 import jax.numpy as jnp
+from jax import jit
 
 
 def generate_mesh_vec(x_min, x_max, y_min, y_max, z_min, z_max, element_size=1.0):

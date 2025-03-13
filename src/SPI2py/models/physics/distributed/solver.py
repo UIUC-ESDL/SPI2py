@@ -2,9 +2,12 @@ import jax
 import jax.numpy as jnp
 from .assembly import assemble_global_stiffness_matrix, apply_boundary_conditions
 
+from jax.scipy.linalg import solve
 from jax.scipy.sparse.linalg import cg
-from jax.experimental.sparse import BCOO, BCSR
-from scipy.sparse import coo_matrix
+from jax.experimental.sparse import BCOO, BCSR, CSR
+from jax.experimental.sparse.linalg import spsolve
+# from scipy.sparse import coo_matrix
+from jax.experimental.sparse import coo_fromdense
 
 
 def solve_system(density,
@@ -35,6 +38,7 @@ def solve_system(density,
     K, f = assemble_global_stiffness_matrix(nodes, elements, density, base_k)
 
     # For each element, add (heat_load/number_of_nodes) to each of its 8 nodes.
+    # TODO speedup...
     nodes_per_elem = 8
     element_contrib = (heat_load_per_element * density) / nodes_per_elem
     elem_contrib_flat = element_contrib.flatten()
@@ -45,7 +49,6 @@ def solve_system(density,
     K_ff, K_fp, K_pf, K_pp, f_f, f_p, u_p, idx_f, idx_p = apply_boundary_conditions(K, f, boundary_conditions)
 
     # Solve the partitioned system for the unknown displacements.
-    # TODO Does sparse solver work with autograd VJP?
     # K_ff @ u_f + K_fp @ u_p = f_f
     # K_ff @ u_f = f_f - K_fp @ u_p
     # u_f = K_ff^-1 @ (f_f - K_fp @ u_p)
@@ -53,14 +56,15 @@ def solve_system(density,
 
     # Convert K_ff to a sparse format for efficient solving
     # K_ff = BCOO.from_scipy_sparse(coo_matrix(K_ff))
-    K_ff = BCOO.fromdense(K_ff)
+    K_ff = coo_fromdense(K_ff)
+    # K_ff = BCOO.fromdense(K_ff)
 
     # Solve the partitioned system for the unknown displacements using Conjugate Gradient (CG)
     def fea_solve(rhs):
         u_f, _ = cg(K_ff, rhs, tol=1e-8, maxiter=500)
         return u_f
-
     u_f = fea_solve(f_f - K_fp @ u_p)  # Solving K_ff @ u_f = (f_f - K_fp @ u_p)
+
 
     # Reassemble the full solution.
     n_nodes = K.shape[0]

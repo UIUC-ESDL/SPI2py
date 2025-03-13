@@ -1,11 +1,13 @@
 from jax import vmap
 import jax.numpy as jnp
+from jax import jit
 from dataclasses import dataclass, field
 from chex import assert_shape, assert_type
 from .element import assemble_local_stiffness_matrix
 from .quadrature import gauss_quad
 
 
+@jit
 def assemble_global_stiffness_matrix(nodes, elements, density, base_k):
     """
     Assemble the global stiffness matrix K in a sparse format.
@@ -30,7 +32,7 @@ def assemble_global_stiffness_matrix(nodes, elements, density, base_k):
     element_nodes_all = nodes[elements]
 
     # Get Gauss quadrature points and weights
-    gauss_pts, gauss_wts = gauss_quad(n_qp=2)
+    gauss_pts, gauss_wts = gauss_quad()
 
     # Compute the local stiffness matrix for each element
     Ke_all = vmap(lambda el_nodes, k_eff: assemble_local_stiffness_matrix(el_nodes, k_eff, gauss_pts, gauss_wts))(element_nodes_all, k_eff_all)
@@ -53,6 +55,7 @@ def assemble_global_stiffness_matrix(nodes, elements, density, base_k):
     return K_global, f_global
 
 
+# @jit
 def apply_boundary_conditions(K, f, boundary_conditions):
     """
     A central function to apply boundary conditions to the global stiffness matrix and load vector.
@@ -62,17 +65,10 @@ def apply_boundary_conditions(K, f, boundary_conditions):
     layout of two pipes with fixed but different temperatures, we can see how selecting one Dirichlet
     condition over the other, averaging those conditions, reformulating them as high heat loads rather than
     fixed temperature, etc., impact the optimization process.
-    TODO Vectorize?
     """
-    dirichlet_bcs = []
-    robin_bcs = []
-    for bc in boundary_conditions:
-        if bc.bc_type == "dirichlet":
-            dirichlet_bcs.append(bc)
-        elif bc.bc_type == "robin":
-            robin_bcs.append(bc)
-        else:
-            raise ValueError(f"Unknown boundary condition type: {bc.bc_type}")
+    # Extract Dirichlet & Robin BCs
+    dirichlet_bcs = [bc for bc in boundary_conditions if bc.bc_type == "dirichlet"]
+    robin_bcs = [bc for bc in boundary_conditions if bc.bc_type == "robin"]
 
     # Apply Robin boundary conditions.
     r_nodes = [bc.nodes for bc in robin_bcs][0]
@@ -129,35 +125,49 @@ def append_global_system(K, f, append_indices, K_add, f_add):
 
 
 def partition_global_system(K, f, idx_f, idx_p):
-    """
-    Set the values of the global stiffness matrix K and load vector f at specified nodes.
+    """Optimized partitioning using JAX advanced indexing."""
 
-    Parameters:
-      K: Global stiffness matrix (n_nodes x n_nodes).
-      f: Global load vector (n_nodes,).
-      idx_f: 1D array of free node indices.
-      idx_p: 1D array of prescribed node indices.
+    idx = jnp.concatenate([idx_f, idx_p])  # Concatenate once to avoid multiple re-indexing
+    K_sub = K[idx][:, idx]  # One slicing operation
 
-    Returns:
-        K_ff: Reduced stiffness matrix for free DOFs.
-        K_fp: Stiffness matrix coupling free and prescribed DOFs.
-        K_pf: Stiffness matrix coupling prescribed and free DOFs.
-        K_pp: Reduced stiffness matrix for prescribed DOFs.
-        f_f: Modified load vector for free DOFs.
-        f_p: Modified load vector for prescribed DOFs.
-    """
+    n_f = len(idx_f)  # Number of free DOFs
+    K_ff, K_fp = K_sub[:n_f, :n_f], K_sub[:n_f, n_f:]
+    K_pf, K_pp = K_sub[n_f:, :n_f], K_sub[n_f:, n_f:]
 
-    # Partition the stiffness matrix and load vector.
-    # [K_ff K_fp] {u_f} = {f_f}
-    # [K_pf K_pp] {u_p} = {f_p}
-    K_ff = K[idx_f][:, idx_f]
-    K_fp = K[idx_f][:, idx_p]
-    K_pf = K[idx_p][:, idx_f]
-    K_pp = K[idx_p][:, idx_p]
-    f_f = f[idx_f]
-    f_p = f[idx_p]
+    f_f, f_p = f[idx_f], f[idx_p]
 
     return K_ff, K_fp, K_pf, K_pp, f_f, f_p
+
+# def partition_global_system(K, f, idx_f, idx_p):
+#     """
+#     Set the values of the global stiffness matrix K and load vector f at specified nodes.
+#
+#     Parameters:
+#       K: Global stiffness matrix (n_nodes x n_nodes).
+#       f: Global load vector (n_nodes,).
+#       idx_f: 1D array of free node indices.
+#       idx_p: 1D array of prescribed node indices.
+#
+#     Returns:
+#         K_ff: Reduced stiffness matrix for free DOFs.
+#         K_fp: Stiffness matrix coupling free and prescribed DOFs.
+#         K_pf: Stiffness matrix coupling prescribed and free DOFs.
+#         K_pp: Reduced stiffness matrix for prescribed DOFs.
+#         f_f: Modified load vector for free DOFs.
+#         f_p: Modified load vector for prescribed DOFs.
+#     """
+#
+#     # Partition the stiffness matrix and load vector.
+#     # [K_ff K_fp] {u_f} = {f_f}
+#     # [K_pf K_pp] {u_p} = {f_p}
+#     K_ff = K[idx_f][:, idx_f]
+#     K_fp = K[idx_f][:, idx_p]
+#     K_pf = K[idx_p][:, idx_f]
+#     K_pp = K[idx_p][:, idx_p]
+#     f_f = f[idx_f]
+#     f_p = f[idx_p]
+#
+#     return K_ff, K_fp, K_pf, K_pp, f_f, f_p
 
 
 def combine_fixed_conditions(idx_p, D_p):

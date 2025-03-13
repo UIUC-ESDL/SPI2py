@@ -1,6 +1,7 @@
 import jax.numpy as jnp
+from jax import jit
 
-
+@jit
 def shape_functions(xi, eta, zeta):
     """
     Vectorized evaluation of the trilinear shape functions and their derivatives.
@@ -49,7 +50,8 @@ def shape_functions(xi, eta, zeta):
     return N, dN_dxi
 
 
-def gauss_quad(n_qp=2):
+@jit
+def gauss_quad():
     """
     Return the Gauss quadrature points and weights for a 3D hexahedron.
 
@@ -61,11 +63,8 @@ def gauss_quad(n_qp=2):
       gauss_wts: Array of quadrature weights of shape (n_qp,).
     """
 
-    if n_qp == 2:
-        # Define Gauss quadrature points (2-point rule in each direction)
-        gauss_pts = jnp.array([-1.0 / jnp.sqrt(3.0), 1.0 / jnp.sqrt(3.0)])
-        gauss_wts = jnp.array([1.0, 1.0])
-    else:
-        raise NotImplementedError("Only 2-point Gauss quadrature is supported for now.")
+    # Define Gauss quadrature points (2-point rule in each direction)
+    gauss_pts = jnp.array([-1.0 / jnp.sqrt(3.0), 1.0 / jnp.sqrt(3.0)])
+    gauss_wts = jnp.array([1.0, 1.0])
 
     return gauss_pts, gauss_wts
