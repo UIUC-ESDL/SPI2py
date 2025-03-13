@@ -52,11 +52,12 @@ def solve_system(density,
     # u_f = jnp.linalg.solve(K_ff, f_f - K_fp @ u_p)
 
     # Convert K_ff to a sparse format for efficient solving
-    K_ff_sparse = BCOO.from_scipy_sparse(coo_matrix(K_ff))
+    # K_ff = BCOO.from_scipy_sparse(coo_matrix(K_ff))
+    # K_ff = BCOO.fromdense(K_ff)
 
     # Solve the partitioned system for the unknown displacements using Conjugate Gradient (CG)
     def fea_solve(rhs):
-        u_f, _ = cg(K_ff_sparse, rhs, tol=1e-8, maxiter=500)
+        u_f, _ = cg(K_ff, rhs, tol=1e-8, maxiter=500)
         return u_f
 
     u_f = fea_solve(f_f - K_fp @ u_p)  # Solving K_ff @ u_f = (f_f - K_fp @ u_p)

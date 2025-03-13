@@ -15,9 +15,9 @@ from SPI2py.models.physics.distributed.solver import solve_system
 from SPI2py.models.utilities.visualization import plot_temperature_distribution
 
 # Create grid
-# el_size = 0.5
-el_size = 0.125
-bounds = (0, 2, 0, 4, 0, 2)
+el_size = 0.5
+# el_size = 0.25
+bounds = (0, 4, 0, 4, 0, 4)
 
 x_min, x_max, y_min, y_max, z_min, z_max = bounds
 nodes, elements, el_centers, nx, ny, nz, lx, ly, lz = generate_mesh_vec(x_min, x_max, y_min, y_max, z_min, z_max, element_size=el_size)
@@ -75,19 +75,19 @@ t2 = time_ns()
 print("Time taken:", (t2 - t1) / 1e9, "s")
 
 
-from jax import jacfwd, jacrev
-
-t3 = time_ns()
-jf = jacfwd(solve_system, argnums=1)
-jf_val = jf(densities_combined.flatten(),
-                                  heat_load_per_element,
-                                  nodes,
-                                  elements,
-                                  base_k=1.0,
-                                  boundary_conditions=[dirichlet_bc_1, robin_bc_1])
-t4 = time_ns()
-
-print("Time taken for forward Jacobian:", (t4 - t3) / 1e9, "s")
+# from jax import jacfwd, jacrev
+#
+# t3 = time_ns()
+# jf = jacfwd(solve_system, argnums=1)
+# jf_val = jf(densities_combined.flatten(),
+#                                   heat_load_per_element,
+#                                   nodes,
+#                                   elements,
+#                                   base_k=1.0,
+#                                   boundary_conditions=[dirichlet_bc_1, robin_bc_1])
+# t4 = time_ns()
+#
+# print("Time taken for forward Jacobian:", (t4 - t3) / 1e9, "s")
 
 
 T_np = np.array(T)
@@ -97,41 +97,41 @@ T_plot = np.array(T)
 
 el_centers = np.array(el_centers)
 
-# Plot
-plotter = pv.Plotter(shape=(2, 3), window_size=(1500, 500))
-
-# Plot the grid without the kernel
-plot_grid(plotter, (0, 0), el_centers, el_size, densities=None)
-plot_stl_file(plotter, (0, 0), 'models/Bot_Eye_scaled.stl', translation=(0.625, 0.625, 0.125), rotation=(0, 0, 0))
-plot_AABB_spheres(plotter, (0, 0), pos_be, rad_be, color='blue')
-
-
-# Plot the grid with the kernel
-# plot_AABB_spheres(plotter, (1, 1), sample_positions_be, sample_radii_be, color='black', opacity=0.0)
-# plot_spheres(plotter, (1, 1), sample_positions_be, sample_radii_be, 'blue', opacity=0.5)
-
-plot_spheres(plotter, (0, 1), pos_be, rad_be, 'blue', opacity=0.5)
-plot_stl_file(plotter, (0, 1), 'models/Bot_Eye_scaled.stl', translation=(0.625, 0.625, 0.125), rotation=(0, 0, 0), opacity=0.5)
-
-
-
-# Plot the grid without the kernel
-plot_grid(plotter, (0, 2), el_centers, el_size, densities=densities_combined)
-plot_grid(plotter, (1, 1), el_centers, el_size, densities=densities_be)
-plot_grid(plotter, (1, 2), el_centers, el_size, densities=densities_combined)
-
-
-# plot_nodes(plotter, (0, 2), np.array(nodes), np.array(heat_load_nodes), label='Heat Load', color='red', point_size=20)
-
-plot_temperature_distribution(plotter,
-                              (0, 2),
-                              nodes_plot,
-                              T_plot,
-                              heat_load_nodes,
-                              robin_nodes,
-                              dirichlet_nodes,
-                              dims=(nx + 1, ny + 1, nz + 1),
-                              cmap='jet')
+# # Plot
+# plotter = pv.Plotter(shape=(2, 3), window_size=(1500, 500))
+#
+# # Plot the grid without the kernel
+# plot_grid(plotter, (0, 0), el_centers, el_size, densities=None)
+# plot_stl_file(plotter, (0, 0), 'models/Bot_Eye_scaled.stl', translation=(0.625, 0.625, 0.125), rotation=(0, 0, 0))
+# plot_AABB_spheres(plotter, (0, 0), pos_be, rad_be, color='blue')
+#
+#
+# # Plot the grid with the kernel
+# # plot_AABB_spheres(plotter, (1, 1), sample_positions_be, sample_radii_be, color='black', opacity=0.0)
+# # plot_spheres(plotter, (1, 1), sample_positions_be, sample_radii_be, 'blue', opacity=0.5)
+#
+# plot_spheres(plotter, (0, 1), pos_be, rad_be, 'blue', opacity=0.5)
+# plot_stl_file(plotter, (0, 1), 'models/Bot_Eye_scaled.stl', translation=(0.625, 0.625, 0.125), rotation=(0, 0, 0), opacity=0.5)
+#
+#
+#
+# # Plot the grid without the kernel
+# plot_grid(plotter, (0, 2), el_centers, el_size, densities=densities_combined)
+# plot_grid(plotter, (1, 1), el_centers, el_size, densities=densities_be)
+# plot_grid(plotter, (1, 2), el_centers, el_size, densities=densities_combined)
+#
+#
+# # plot_nodes(plotter, (0, 2), np.array(nodes), np.array(heat_load_nodes), label='Heat Load', color='red', point_size=20)
+#
+# plot_temperature_distribution(plotter,
+#                               (0, 2),
+#                               nodes_plot,
+#                               T_plot,
+#                               heat_load_nodes,
+#                               robin_nodes,
+#                               dirichlet_nodes,
+#                               dims=(nx + 1, ny + 1, nz + 1),
+#                               cmap='jet')
 
 # plotter.show_axes()
 # plotter.link_views()
