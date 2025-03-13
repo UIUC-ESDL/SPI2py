@@ -2,6 +2,10 @@ import jax
 import jax.numpy as jnp
 from .assembly import assemble_global_stiffness_matrix, apply_boundary_conditions
 
+from jax.scipy.sparse.linalg import cg
+from jax.experimental.sparse import BCOO
+from scipy.sparse import coo_matrix
+
 
 def solve_system(density,
                  heat_load_per_element,
@@ -45,7 +49,17 @@ def solve_system(density,
     # K_ff @ u_f + K_fp @ u_p = f_f
     # K_ff @ u_f = f_f - K_fp @ u_p
     # u_f = K_ff^-1 @ (f_f - K_fp @ u_p)
-    u_f = jnp.linalg.solve(K_ff, f_f - K_fp @ u_p)
+    # u_f = jnp.linalg.solve(K_ff, f_f - K_fp @ u_p)
+
+    # Convert K_ff to a sparse format for efficient solving
+    K_ff_sparse = BCOO.from_scipy_sparse(coo_matrix(K_ff))
+
+    # Solve the partitioned system for the unknown displacements using Conjugate Gradient (CG)
+    def fea_solve(rhs):
+        u_f, _ = cg(K_ff_sparse, rhs, tol=1e-8, maxiter=500)
+        return u_f
+
+    u_f = fea_solve(f_f - K_fp @ u_p)  # Solving K_ff @ u_f = (f_f - K_fp @ u_p)
 
     # Reassemble the full solution.
     n_nodes = K.shape[0]

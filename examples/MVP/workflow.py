@@ -45,8 +45,9 @@ model.add_subsystem('projections', projections)
 
 # Initialize the Mesh
 x_bounds = (0, 10)
-y_bounds = (0, 10)
+y_bounds = (0, 5)
 z_bounds = (0, 10)
+# element_size = 0.125
 element_size = 0.125
 kernel_steps_per_unit_length = 1
 nodes, elements, centers, nx, ny, nz, lx, ly, lz = generate_mesh_vec(-1, 3, -1, 3, -1, 4, element_size=element_size)
@@ -121,13 +122,14 @@ model.connect('projections.proj_2.penalized_heat_loads', 'projections.aggregator
 
 
 # Define the design variables
-prob.model.add_design_var('system.components.comp_1.translation', ref=1, lower=0, upper=3)
-# prob.model.add_design_var('system.components.comp_2.translation', ref=1, lower=0, upper=3)
+prob.model.add_design_var('system.components.comp_1.translation', ref=0.5, lower=0, upper=3)
+# prob.model.add_design_var('system.components.comp_1.rotation', ref=0.5, lower=0, upper=1)
+prob.model.add_design_var('system.components.comp_2.translation', ref=0.5, lower=0, upper=3)
 
 
 # Define the objective and constraints
 prob.model.add_objective('bbv.volume', ref=1)
-prob.model.add_constraint('projections.aggregator.max_density', upper=1.3)
+prob.model.add_constraint('projections.aggregator.max_density', upper=1.15)
 
 
 
@@ -146,6 +148,7 @@ prob.set_val('system.components.comp_2.rotation', [0, 0, 0])
 # Set up the optimizer
 prob.driver = om.ScipyOptimizeDriver()
 prob.driver.options['maxiter'] = 10
+# prob.driver.options['optimizer'] = 'trust-constr'
 # prob.driver.options['optimizer'] = 'COBYLA'
 # prob.driver.options['optimizer'] = 'SLSQP'
 
@@ -173,7 +176,7 @@ densities_before = copy(prob.get_val('projections.aggregator.aggregated_densitie
 
 
 # Run the optimization
-# prob.run_driver()
+prob.run_driver()
 
 
 
@@ -262,4 +265,8 @@ sphere_radii_after = np.array(sphere_radii_after)
 # data = prob.check_partials(includes='projections.proj_1')
 # print(data['projections.proj_1']['pseudo_densities','sphere_positions'])
 # print(data['system.components.comp_1']['transformed_sphere_positions','translation'])
+t3 = time_ns()
+total_time = (t3 - t1) / 1e9
+print(f"Total time: {total_time} seconds")
+
 print('Done')

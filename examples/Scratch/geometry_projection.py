@@ -1,3 +1,4 @@
+from time import time_ns
 import numpy as np
 import jax.numpy as jnp
 from jax import jacfwd, jacrev, jvp, vjp
@@ -15,8 +16,11 @@ from SPI2py.models.utilities.visualization import plot_temperature_distribution
 
 # Create grid
 # el_size = 0.5
-el_size = 0.25
-nodes, elements, el_centers, nx, ny, nz, lx, ly, lz = generate_mesh_vec(0, 2, 0, 4, 0,  2, element_size=el_size)
+el_size = 0.125
+bounds = (0, 2, 0, 4, 0, 2)
+
+x_min, x_max, y_min, y_max, z_min, z_max = bounds
+nodes, elements, el_centers, nx, ny, nz, lx, ly, lz = generate_mesh_vec(x_min, x_max, y_min, y_max, z_min, z_max, element_size=el_size)
 el_centers = el_centers.reshape(nx, ny, nz, 1, 3)
 
 # Read the mesh kernel
@@ -59,15 +63,21 @@ robin_bc_1 = RobinBC(robin_nodes, h=10.0, T_inf=200, area=conv_surface_area)
 
 
 # Run the FEA pipeline.
+t1 = time_ns()
 nodes, elements, T = solve_system(densities_combined.flatten(),
                                   heat_load_per_element,
                                   nodes,
                                   elements,
                                   base_k=1.0,
                                   boundary_conditions=[dirichlet_bc_1, robin_bc_1])
+t2 = time_ns()
+
+print("Time taken:", (t2 - t1) / 1e9, "s")
 
 
 from jax import jacfwd, jacrev
+
+t3 = time_ns()
 jf = jacfwd(solve_system, argnums=1)
 jf_val = jf(densities_combined.flatten(),
                                   heat_load_per_element,
@@ -75,7 +85,9 @@ jf_val = jf(densities_combined.flatten(),
                                   elements,
                                   base_k=1.0,
                                   boundary_conditions=[dirichlet_bc_1, robin_bc_1])
+t4 = time_ns()
 
+print("Time taken for forward Jacobian:", (t4 - t3) / 1e9, "s")
 
 
 T_np = np.array(T)
