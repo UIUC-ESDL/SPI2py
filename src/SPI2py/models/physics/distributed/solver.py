@@ -3,7 +3,7 @@ import jax.numpy as jnp
 from .assembly import assemble_global_stiffness_matrix, apply_boundary_conditions
 
 from jax.scipy.sparse.linalg import cg
-from jax.experimental.sparse import BCOO
+from jax.experimental.sparse import BCOO, BCSR
 from scipy.sparse import coo_matrix
 
 
@@ -53,7 +53,7 @@ def solve_system(density,
 
     # Convert K_ff to a sparse format for efficient solving
     # K_ff = BCOO.from_scipy_sparse(coo_matrix(K_ff))
-    # K_ff = BCOO.fromdense(K_ff)
+    K_ff = BCOO.fromdense(K_ff)
 
     # Solve the partitioned system for the unknown displacements using Conjugate Gradient (CG)
     def fea_solve(rhs):
