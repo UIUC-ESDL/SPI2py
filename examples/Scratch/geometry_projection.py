@@ -15,8 +15,8 @@ from SPI2py.models.physics.distributed.solver import solve_system
 from SPI2py.models.utilities.visualization import plot_temperature_distribution
 
 # Create grid
-el_size = 0.5
-# el_size = 0.25
+# el_size = 0.5
+el_size = 0.25
 bounds = (0, 4, 0, 4, 0, 4)
 
 x_min, x_max, y_min, y_max, z_min, z_max = bounds

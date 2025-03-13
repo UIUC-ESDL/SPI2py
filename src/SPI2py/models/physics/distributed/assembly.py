@@ -123,7 +123,7 @@ def apply_boundary_conditions(K, f, boundary_conditions):
     idx_f = jnp.setdiff1d(idx, idx_p)
 
     # Convert to dense
-    # K = K.todense()
+    K = K.todense()
     # K = BCOO.fromdense(K)
 
     # Partition the stiffness matrix and load vector.
@@ -132,10 +132,10 @@ def apply_boundary_conditions(K, f, boundary_conditions):
     # Convert to dense
     # K = K.todense()
     # K = BCOO.fromdense(K)
-    # K_ff = BCOO.fromdense(K_ff)
-    # K_fp = BCOO.fromdense(K_fp)
-    # K_pf = BCOO.fromdense(K_pf)
-    # K_pp = BCOO.fromdense(K_pp)
+    K_ff = BCOO.fromdense(K_ff)
+    K_fp = BCOO.fromdense(K_fp)
+    K_pf = BCOO.fromdense(K_pf)
+    K_pp = BCOO.fromdense(K_pp)
     # K_ff = K_ff.todense()
     # K_fp = K_fp.todense()
     # K_pf = K_pf.todense()
@@ -221,24 +221,21 @@ def append_global_system(K, f, append_indices, K_add, f_add):
     return K_new, f_new
 
 
-# def partition_global_system(K, f, idx_f, idx_p):
-#     """
-#     Partition the global stiffness matrix and load vector into free and prescribed components efficiently.
-#     Uses sparse matrix slicing to maintain sparsity.
-#     """
-#
-#     # Use sparse slicing for faster access, without converting to dense
-#     K_ff = K[idx_f][:, idx_f]  # Stays sparse
-#     K_fp = K[idx_f][:, idx_p]  # Stays sparse
-#     K_pf = K[idx_p][:, idx_f]  # Stays sparse
-#     K_pp = K[idx_p][:, idx_p]  # Stays sparse
-#     f_f = f[idx_f]
-#     f_p = f[idx_p]
-#
-#     print(f"K_ff min: {K_ff.min()}, max: {K_ff.max()}")
-#     print(f"f_f min: {f_f.min()}, max: {f_f.max()}")
-#
-#     return K_ff, K_fp, K_pf, K_pp, f_f, f_p
+def partition_global_system(K, f, idx_f, idx_p):
+    """
+    Partition the global stiffness matrix and load vector into free and prescribed components efficiently.
+    Uses sparse matrix slicing to maintain sparsity.
+    """
+
+    # Use sparse slicing for faster access, without converting to dense
+    K_ff = K[idx_f][:, idx_f]  # Stays sparse
+    K_fp = K[idx_f][:, idx_p]  # Stays sparse
+    K_pf = K[idx_p][:, idx_f]  # Stays sparse
+    K_pp = K[idx_p][:, idx_p]  # Stays sparse
+    f_f = f[idx_f]
+    f_p = f[idx_p]
+
+    return K_ff, K_fp, K_pf, K_pp, f_f, f_p
 
 def extract_submatrix(K, row_idx, col_idx):
     """
@@ -283,35 +280,35 @@ def extract_submatrix(K, row_idx, col_idx):
     return K_sub
 
 
-def partition_global_system(K, f, idx_f, idx_p):
-    """
-    Partitions the global stiffness matrix and load vector into free and prescribed components.
-
-    Parameters:
-        K (BCOO): Global stiffness matrix (sparse).
-        f (jnp.ndarray): Global load vector.
-        idx_f (jnp.ndarray): Indices of free nodes.
-        idx_p (jnp.ndarray): Indices of prescribed nodes.
-
-    Returns:
-        K_ff (BCOO): Submatrix for free DOFs.
-        K_fp (BCOO): Submatrix for free-prescribed coupling.
-        K_pf (BCOO): Submatrix for prescribed-free coupling.
-        K_pp (BCOO): Submatrix for prescribed DOFs.
-        f_f (jnp.ndarray): Load vector for free DOFs.
-        f_p (jnp.ndarray): Load vector for prescribed DOFs.
-    """
-    # Extract submatrices using sparse slicing
-    K_ff = extract_submatrix(K, idx_f, idx_f)
-    K_fp = extract_submatrix(K, idx_f, idx_p)
-    K_pf = extract_submatrix(K, idx_p, idx_f)
-    K_pp = extract_submatrix(K, idx_p, idx_p)
-
-    # Extract sub-load vectors
-    f_f = f[idx_f]
-    f_p = f[idx_p]
-
-    return K_ff, K_fp, K_pf, K_pp, f_f, f_p
+# def partition_global_system(K, f, idx_f, idx_p):
+#     """
+#     Partitions the global stiffness matrix and load vector into free and prescribed components.
+#
+#     Parameters:
+#         K (BCOO): Global stiffness matrix (sparse).
+#         f (jnp.ndarray): Global load vector.
+#         idx_f (jnp.ndarray): Indices of free nodes.
+#         idx_p (jnp.ndarray): Indices of prescribed nodes.
+#
+#     Returns:
+#         K_ff (BCOO): Submatrix for free DOFs.
+#         K_fp (BCOO): Submatrix for free-prescribed coupling.
+#         K_pf (BCOO): Submatrix for prescribed-free coupling.
+#         K_pp (BCOO): Submatrix for prescribed DOFs.
+#         f_f (jnp.ndarray): Load vector for free DOFs.
+#         f_p (jnp.ndarray): Load vector for prescribed DOFs.
+#     """
+#     # Extract submatrices using sparse slicing
+#     K_ff = extract_submatrix(K, idx_f, idx_f)
+#     K_fp = extract_submatrix(K, idx_f, idx_p)
+#     K_pf = extract_submatrix(K, idx_p, idx_f)
+#     K_pp = extract_submatrix(K, idx_p, idx_p)
+#
+#     # Extract sub-load vectors
+#     f_f = f[idx_f]
+#     f_p = f[idx_p]
+#
+#     return K_ff, K_fp, K_pf, K_pp, f_f, f_p
 
 
 # def partition_global_system(K, f, idx_f, idx_p):
