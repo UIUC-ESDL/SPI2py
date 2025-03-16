@@ -73,53 +73,52 @@ class ProjectComponent(ExplicitComponent):
         outputs['penalized_heat_loads'] = np.asarray(penalized_heat_loads)
 
     def compute_jacvec_product(self, inputs, d_inputs, d_outputs, mode, discrete_inputs=None):
-        # Get constants.
+        """
+        Compute the Jacobian-vector product (JVP) for forward mode and the vector-Jacobian product (VJP) for reverse mode.
+        We assume that 'centers' is a constant input so that its tangent is set to zeros.
+        """
+        # Get mesh and kernel parameters.
         mesh_size = jnp.atleast_1d(self.options['mesh_size'])
         mesh_centers = jnp.array(self.options['mesh_centers'])
         kernel_centers = jnp.array(self.options['kernel_centers'])
-        kernel_radii  = jnp.array(self.options['kernel_radii'])
-
-        # Get design inputs.
+        kernel_radii = jnp.array(self.options['kernel_radii'])
+        # Get input variables.
         centers = jnp.array(inputs['centers'])
-        radii   = jnp.array(inputs['radii'])
-        heat_load = jnp.array(inputs['heat_load'])  # shape (1,)
-
-        # Define primals: note that we include heat_load as the 7th argument.
+        radii = jnp.array(inputs['radii'])
+        heat_load = jnp.array(inputs['heat_load'])
+        # Pack the primals in the order expected by _compute_primal.
         primals = (mesh_centers, mesh_size, centers, radii, kernel_centers, kernel_radii, heat_load)
 
         if mode == 'fwd':
-            # For forward mode, define tangents.
+            # For forward mode, define the tangent seeds.
             t_mesh_centers = jnp.zeros_like(mesh_centers)
             t_mesh_size = jnp.zeros_like(mesh_size)
             t_kernel_centers = jnp.zeros_like(kernel_centers)
             t_kernel_radii = jnp.zeros_like(kernel_radii)
-            t_centers = d_inputs.get('centers', jnp.zeros_like(centers))
-            t_radii = d_inputs.get('radii', jnp.zeros_like(radii))
-            t_heat_load = d_inputs.get('heat_load', jnp.zeros_like(heat_load))
-            tangents = (t_mesh_centers,
-                        t_mesh_size,
-                        t_centers,
-                        t_radii,
-                        t_kernel_centers,
-                        t_kernel_radii,
-                        t_heat_load)
-            # Compute JVP.
+
+
+            t_centers = d_inputs['centers'] if 'centers' in d_inputs else jnp.zeros_like(centers)
+            # For 'radii' and 'heat_load', use the provided tangent if available; otherwise, use zeros.
+            t_radii = d_inputs['radii'] if 'radii' in d_inputs else jnp.zeros_like(radii)
+            t_heat_load = d_inputs['heat_load'] if 'heat_load' in d_inputs else jnp.zeros_like(heat_load)
+            tangents = (t_mesh_centers, t_mesh_size, t_centers, t_radii, t_kernel_centers, t_kernel_radii, t_heat_load)
+            # Compute the Jacobian-vector product (JVP) using JAX.
             _, tangent_out = jvp(self._compute_primal, primals, tangents)
-            # tangent_out is a tuple with three arrays.
+            # Unpack and set the outputs.
             d_outputs['densities'] = np.asarray(tangent_out[0])
             d_outputs['penalized_densities'] = np.asarray(tangent_out[1])
             d_outputs['penalized_heat_loads'] = np.asarray(tangent_out[2])
-
         elif mode == 'rev':
-            # Reverse mode: compute VJP.
+            # Reverse mode: compute the vector-Jacobian product (VJP).
             primal_out, pullback = vjp(self._compute_primal, *primals)
-            # d_outputs are the cotangents for the outputs.
+            # The cotangent for outputs is provided in d_outputs.
             cotangent = (d_outputs['densities'],
                          d_outputs['penalized_densities'],
                          d_outputs['penalized_heat_loads'])
+            # Compute the pullback (adjoint).
             grads = pullback(cotangent)
-            # grads is a tuple with derivatives for each input in the order of primals.
-            # We only differentiate with respect to the design inputs (centers, radii, heat_load)
+            # grads is a tuple corresponding to the derivatives with respect to each input in primals.
+            # We only set derivatives for the design inputs.
             d_inputs['centers'] = np.asarray(grads[2])
             d_inputs['radii'] = np.asarray(grads[3])
             d_inputs['heat_load'] = np.asarray(grads[6])
@@ -379,19 +378,22 @@ class ProjectionAggregator(ExplicitComponent):
     def _compute_primal(densities, heat_loads, rho_min):
 
         # Aggregate the pseudo-densities
-        aggregated_densities = jnp.zeros_like(densities[0])
+        # aggregated_densities = jnp.zeros_like(densities[0])
         aggregated_heat_loads = jnp.zeros_like(heat_loads[0])
-        for density in densities:
-            aggregated_densities += density
+        # for density in densities:
+        #     aggregated_densities += density
 
-        for heat_load in heat_loads:
-            aggregated_heat_loads += heat_load
+        aggregated_densities = jnp.sum(jnp.stack(densities, axis=0), axis=0)
+        aggregated_heat_loads = jnp.sum(jnp.stack(heat_loads, axis=0), axis=0)
 
         # Ensure that no pseudo-density is below the minimum value
-        aggregated_densities = jnp.maximum(aggregated_densities, rho_min)
+        # aggregated_densities = jnp.maximum(aggregated_densities, rho_min)
 
         # Calculate the maximum pseudo-density
-        max_density = kreisselmeier_steinhauser_max(aggregated_densities.flatten())
+        # max_density = kreisselmeier_steinhauser_max(aggregated_densities.flatten(), rho=100)
+        # Manual TODO Change
+        max_density = aggregated_densities.flatten()[132:133]
+
 
         return aggregated_densities, aggregated_heat_loads, max_density
 

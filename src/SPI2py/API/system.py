@@ -33,7 +33,9 @@ class Component(ExplicitComponent):
         filepath = self.options['filepath']
         n_spheres = self.options['n_spheres']
 
-        min_radius = 1.0e-1  # 3.0e-2
+        # min_radius = 1.0e-1
+        # min_radius = 3.0e-2
+        min_radius = 2.0e-2
         sphere_positions, sphere_radii = read_csv_file(filepath, min_radius)
 
         # Convert the lists to numpy arrays
