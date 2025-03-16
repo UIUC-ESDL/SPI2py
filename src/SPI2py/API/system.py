@@ -155,6 +155,124 @@ class Component(ExplicitComponent):
         return spheres_positions_transformed, ports_transformed
 
 
+class LinearSplineComponent(ExplicitComponent):
+
+    def initialize(self):
+        self.options.declare('start_points', types=list)
+        self.options.declare('end_points', types=list)
+        self.options.declare('radii', types=list)
+        self.options.declare('ports', types=list)
+        self.options.declare('color', types=str)
+
+    def setup(self):
+
+        # Unpack the options
+        start_points = self.options['start_points']
+        end_points = self.options['end_points']
+        radii = self.options['radii']
+        ports = self.options['ports']
+
+        # Convert the lists to JAX numpy arrays
+        start_points = jnp.array(start_points).reshape(-1, 3)
+        end_points = jnp.array(end_points).reshape(-1, 3)
+        radii = jnp.array(radii).reshape(-1, 1)
+        ports = jnp.array(ports).reshape(-1, 3)
+
+        # Define the input shapes
+        self.add_input('start_points', val=start_points)
+        self.add_input('end_points', val=end_points)
+        self.add_input('radii', val=radii)
+        self.add_input('ports', val=ports)
+        self.add_input('translation', val=np.array([0.0, 0.0, 0.0]))
+        self.add_input('rotation', val=np.array([0.0, 0.0, 0.0]))
+
+        # Outputs:
+        self.add_output('updated_start_points', val=start_points)
+        self.add_output('updated_end_points', val=end_points)
+        self.add_output('updated_radii', val=radii)
+        self.add_output('updated_ports', val=ports)
+
+    def setup_partials(self):
+
+        # Declare the partials for the outputs wrt the design variables
+        self.declare_partials('updated_start_points', ['translation', 'rotation'])
+        self.declare_partials('updated_end_points', ['translation', 'rotation'])
+        self.declare_partials('updated_radii', ['translation', 'rotation'])
+        self.declare_partials('updated_ports', ['translation', 'rotation'])
+
+    def compute(self, inputs, outputs):
+
+        # Get the input variables
+        start_points = inputs['start_points']
+        end_points = inputs['end_points']
+        radii = inputs['radii']
+        ports = inputs['ports']
+
+        translation = inputs['translation']
+        rotation = inputs['rotation']
+
+        # Calculate the transformed sphere positions and port positions
+        updated_values = self._compute_primal(start_points, end_points, radii, ports, translation, rotation)
+
+        updated_start_points = updated_values[0]
+        updated_end_points = updated_values[1]
+        updated_radii = updated_values[2]
+        updated_ports = updated_values[3]
+
+        # Set the outputs
+        outputs['updated_start_points'] = updated_start_points
+        outputs['updated_end_points'] = updated_end_points
+        outputs['updated_radii'] = updated_radii
+        outputs['updated_ports'] = updated_ports
+
+    def compute_partials(self, inputs, partials):
+        # Get the input variables
+        start_points = inputs['start_points']
+        end_points = inputs['end_points']
+        radii = inputs['radii']
+        ports = inputs['ports']
+
+        translation = inputs['translation']
+        rotation = inputs['rotation']
+
+        # Define the Jacobian matrices
+        jac_fun = jacfwd(self._compute_primal, argnums=(4, 5))
+
+        # Evaluate the Jacobian matrices
+        jac_translation, jac_rotation = jac_fun(start_points, end_points, radii, ports, translation, rotation)
+
+        # Set the outputs
+        partials['updated_start_points', 'translation'] = jac_translation[0]
+        partials['updated_start_points', 'rotation'] = jac_rotation[0]
+        partials['updated_end_points', 'translation'] = jac_translation[1]
+        partials['updated_end_points', 'rotation'] = jac_rotation[1]
+        partials['updated_radii', 'translation'] = jac_translation[2]
+        partials['updated_radii', 'rotation'] = jac_rotation[2]
+        partials['updated_ports', 'translation'] = jac_translation[3]
+        partials['updated_ports', 'rotation'] = jac_rotation[3]
+
+    @staticmethod
+    def _compute_primal(start_points, end_points, radii, ports, translation, rotation):
+
+        # Identify the reference point
+        reference_point = start_points[0]
+
+        updated_start_points = transform_points(start_points,
+                                                reference_point,
+                                                translation.flatten(),
+                                                rotation.flatten())
+
+        updated_end_points = transform_points(end_points,
+                                                reference_point,
+                                                translation.flatten(),
+                                                rotation.flatten())
+
+        updated_ports = transform_points(ports,
+                                                reference_point,
+                                                translation.flatten(),
+                                                rotation.flatten())
+
+        return updated_start_points, updated_end_points, radii, updated_ports
 
 
 class Interconnect(ExplicitComponent):

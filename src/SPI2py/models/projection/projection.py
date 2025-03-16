@@ -114,6 +114,78 @@ def project_component(grid_centers, grid_size,
 
     return all_densities, all_densities_penalized
 
+def project_capsules(grid_centers, grid_size,
+                     kernel_points, kernel_radii,
+                     start_points, end_points, radii):
+    """
+    Projects the points to the mesh and calculates the pseudo-densities
+
+    mesh_positions: (n_el_x, n_el_y, n_el_z, n_mesh_points, 3) tensor
+    mesh_radii: (n_el_x, n_el_y, n_el_z, n_mesh_points, 1) tensor
+
+    mesh_positions_expanded: (n_el_x, n_el_y, n_el_z, n_mesh_points, 1, 3) tensor
+
+    cylinder_starts: (n_segments, 3) tensor
+    cylinder_stops: (n_segments, 3) tensor
+    cylinder_radii: (n_segments, 1) tensor
+
+    cylinder_starts_expanded: (1, 1, 1, 1, n_segments, 3) tensor
+    cylinder_stops_expanded: (1, 1, 1, 1, n_segments, 3) tensor
+    cylinder_radii_expanded: (1, 1, 1, 1, n_segments) tensor
+
+    pseudo_densities: (n_el_x, n_el_y, n_el_z) tensor
+    """
+
+    # Combine
+    capsule_points = jnp.concatenate([start_points, end_points], axis=0)
+    capsule_radii = jnp.concatenate([radii, radii], axis=0)
+
+    # Unpack the AABB indices
+    i1, i2, j1, j2, k1, k2 = get_aabb_indices(grid_centers, grid_size, capsule_points, capsule_radii)
+
+    # Extract grid dimensions
+    grid_nx, grid_ny, grid_nz, _, _ = grid_centers.shape
+    aabb_nx, aabb_ny, aabb_nz = (i2 - i1 + 1), (j2 - j1 + 1), (k2 - k1 + 1)
+    capsule_count, _ = start_points.shape
+    kernel_count, _ = kernel_points.shape
+
+    # Initialize the output density array
+    all_densities = jnp.zeros((grid_nx, grid_ny, grid_nz), dtype='float64')
+
+    # Extract the active grid region within the object's AABB
+    active_grid_centers = grid_centers[i1:i2 + 1, j1:j2 + 1, k1:k2 + 1]
+
+    # Apply the kernel to active grid elements
+    kernel_points, kernel_radii = apply_kernel(active_grid_centers, grid_size, kernel_points, kernel_radii)
+
+    # Expand the arrays to allow broadcasting
+    # Transpose object radii for broadcasting
+    kernel_points_bc = kernel_points.reshape(aabb_nx, aabb_ny, aabb_nz, kernel_count, 1, 3)
+    start_points_bc = start_points.reshape(1, 1, 1, 1, capsule_count, 3)
+    end_points_bc = end_points.reshape(1, 1, 1, 1, capsule_count, 3)
+    radii_bc = radii.T.reshape(1, 1, 1, 1, capsule_count)
+
+    # Vectorized signed distance and density calculations using your distance function
+    distances = radii_bc - minimum_distances_points_segments(kernel_points_bc, start_points_bc, end_points_bc)
+
+    # Fix rho for mesh_radii?
+    densities = density(distances, kernel_radii)
+
+    # Sum densities across all cylinders
+    # Combine the pseudo densities for all cylinders in each kernel sphere
+    # Collapse the last axis to get the combined density for each kernel sphere
+    densities = jnp.sum(densities, axis=4)
+
+    # Combine the pseudo densities for all kernel spheres in one grid
+    densities = jnp.sum(densities, axis=3)
+
+    # Store the densities in the output array
+    all_densities = all_densities.at[i1:i2 + 1, j1:j2 + 1, k1:k2 + 1].set(densities)
+
+    # Penalize the densities
+    all_densities_penalized = penalize_densities(all_densities)
+
+    return all_densities_penalized
 
 
 def project_interconnect(grid_centers, grid_size,
