@@ -47,15 +47,23 @@ model.add_subsystem('projections', projections)
 x_min, x_max = (-2, 2)
 y_min, y_max = (0, 2.5)
 z_min, z_max = (0, 2.5)
+# x_min, x_max = (-5, 5)
+# y_min, y_max = (-5, 5)
+# z_min, z_max = (-5, 5)
 
 # element_size = 0.0675
 # element_size = 0.125
 # element_size = 0.25
 element_size = 0.5
 
-kernel_steps_per_unit_length = 1
+
 nodes, elements, centers, nx, ny, nz, lx, ly, lz = generate_mesh_vec(x_min, x_max, y_min, y_max, z_min, z_max, element_size=element_size)
 centers = centers.reshape(nx, ny, nz, 1, 3)
+
+
+
+
+kernel_steps_per_unit_length = 1
 kernel_points, kernel_radii = create_uniform_kernel(kernel_steps_per_unit_length, mode='circumscription')
 kernel_points = kernel_points.reshape(-1, 3)
 kernel_radii = kernel_radii.reshape(-1, 1)
@@ -126,18 +134,15 @@ model.connect('projections.proj_2.penalized_heat_loads', 'projections.aggregator
 
 
 # Define the design variables
-prob.model.add_design_var('system.components.comp_1.translation', ref=0.25, lower=0, upper=3)
+# prob.model.add_design_var('system.components.comp_1.translation', ref=0.25, lower=-3, upper=3)
 # prob.model.add_design_var('system.components.comp_1.rotation', ref=0.5, lower=0, upper=1)
-prob.model.add_design_var('system.components.comp_2.translation', ref=0.25, lower=0, upper=3, indices=[0], flat_indices=True)
+prob.model.add_design_var('system.components.comp_2.translation', ref=0.25, lower=-3, upper=3, indices=[0], flat_indices=True)
 # prob.model.add_design_var('system.components.comp_2.translation', ref=0.25, lower=0, upper=3, indices=[1], flat_indices=True)
 # prob.model.add_design_var('system.components.comp_2.translation', ref=0.25, lower=0, upper=3, indices=[2], flat_indices=True)
 
 # Define the objective and constraints
 prob.model.add_objective('bbv.volume', ref=1)
 prob.model.add_constraint('projections.aggregator.max_density', upper=1.1)
-
-# prob.model.add_subsystem('md', om.KSComp())
-# model.connect('projections.proj_1')
 
 
 # Set the initial state
@@ -184,80 +189,80 @@ densities_before = copy(prob.get_val('projections.aggregator.aggregated_densitie
 
 
 # Run the optimization
-# prob.run_driver()
+prob.run_driver()
 
 
-# Sweep component and plot derivatives
-import matplotlib.pyplot as plt
-
-# prob.set_val('system.components.comp_2.translation', [-1, 0.75, 0.5])
-x_values = np.linspace(-1.0, 1.0, 30)
-f_vals = []
-df_dx = []
-c_vals = []
-dc_dx = []
-for xi in x_values:
-    prob.set_val('system.components.comp_2.translation', [xi, 0.75, 0.5])
-    # prob.set_val('system.components.comp_2.translation', [0, xi, 1])
-    # prob.set_val('system.components.comp_2.translation', [0, 0, xi])
-    prob.run_model()
-    fval = copy(prob.get_val('bbv.volume'))
-    cval = copy(prob.get_val('projections.aggregator.max_density'))
-    f_vals.append(fval)
-    c_vals.append(cval)
-    totalsf = prob.compute_totals(of=['bbv.volume'], wrt=['system.components.comp_2.translation'])
-    totalsc = prob.compute_totals(of=['projections.aggregator.max_density'], wrt=['system.components.comp_2.translation'])
-
-    # Extract the scalar derivative
-    derivf = copy(totalsf[('bbv.volume', 'system.components.comp_2.translation')][0][0])
-    derivc = copy(totalsc[('projections.aggregator.max_density', 'system.components.comp_2.translation')][0][0])
-    df_dx.append(derivf)
-    dc_dx.append(derivc)
-
-# Apply finite difference
-prob.model.approx_totals(method='fd')  # Use finite differencing
-df_dx_approx = []
-dc_dx_approx = []
-for xi in x_values:
-    prob.set_val('system.components.comp_2.translation', [xi, 0.75, 0.50])
-    # prob.set_val('system.components.comp_2.translation', [0, xi, 1])
-    # prob.set_val('system.components.comp_2.translation', [0, 0, xi])
-    prob.run_model()
-
-    totalsf = prob.compute_totals(of=['bbv.volume'], wrt=['system.components.comp_2.translation'])
-    totalsc = prob.compute_totals(of=['projections.aggregator.max_density'], wrt=['system.components.comp_2.translation'])
-
-    # Extract the scalar derivative
-    derivf = copy(totalsf[('bbv.volume', 'system.components.comp_2.translation')][0][0])
-    derivc = copy(totalsc[('projections.aggregator.max_density', 'system.components.comp_2.translation')][0][0])
-    df_dx_approx.append(derivf)
-    dc_dx_approx.append(derivc)
-
-
-# Plot results
-plt.figure(figsize=(8, 6))
-plt.plot(x_values, f_vals, label='BBV', color='blue', linestyle='-')
-plt.plot(x_values, df_dx, label='Computed Derivative', color='red', linestyle='--')
-plt.plot(x_values, df_dx_approx, label='FD Derivative', color='green', linestyle='-.')
-plt.xlabel('Translation (x)')
-plt.ylabel('Value')
-plt.title('BBV Objective & Its Derivatives')
-plt.legend()
-plt.grid(True)
-plt.show()
-
-
-# Plot results
-plt.figure(figsize=(8, 6))
-plt.plot(x_values, c_vals, label='Max Density Constraint', color='blue', linestyle='-')
-plt.plot(x_values, dc_dx, label='Computed Derivative', color='red', linestyle='--')
-plt.plot(x_values, dc_dx_approx, label='FD Derivative', color='green', linestyle='-.')
-plt.xlabel('Translation (x)')
-plt.ylabel('Value')
-plt.title('Max Density Constraint & Its Derivatives')
-plt.legend()
-plt.grid(True)
-plt.show()
+# # Sweep component and plot derivatives
+# import matplotlib.pyplot as plt
+#
+# # prob.set_val('system.components.comp_2.translation', [-1, 0.75, 0.5])
+# x_values = np.linspace(-0.5, 2.0, 100)
+# f_vals = []
+# df_dx = []
+# c_vals = []
+# dc_dx = []
+# for xi in x_values:
+#     prob.set_val('system.components.comp_2.translation', [xi, 0.75, 0.5])
+#     # prob.set_val('system.components.comp_2.translation', [0, xi, 1])
+#     # prob.set_val('system.components.comp_2.translation', [0, 0, xi])
+#     prob.run_model()
+#     fval = copy(prob.get_val('bbv.volume'))
+#     cval = copy(prob.get_val('projections.aggregator.max_density'))
+#     f_vals.append(fval)
+#     c_vals.append(cval)
+#     totalsf = prob.compute_totals(of=['bbv.volume'], wrt=['system.components.comp_2.translation'])
+#     totalsc = prob.compute_totals(of=['projections.aggregator.max_density'], wrt=['system.components.comp_2.translation'])
+#
+#     # Extract the scalar derivative
+#     derivf = copy(totalsf[('bbv.volume', 'system.components.comp_2.translation')][0][0])
+#     derivc = copy(totalsc[('projections.aggregator.max_density', 'system.components.comp_2.translation')][0][0])
+#     df_dx.append(derivf)
+#     dc_dx.append(derivc)
+#
+# # Apply finite difference
+# prob.model.approx_totals(method='fd')  # Use finite differencing
+# df_dx_approx = []
+# dc_dx_approx = []
+# for xi in x_values:
+#     prob.set_val('system.components.comp_2.translation', [xi, 0.75, 0.50])
+#     # prob.set_val('system.components.comp_2.translation', [0, xi, 1])
+#     # prob.set_val('system.components.comp_2.translation', [0, 0, xi])
+#     prob.run_model()
+#
+#     totalsf = prob.compute_totals(of=['bbv.volume'], wrt=['system.components.comp_2.translation'])
+#     totalsc = prob.compute_totals(of=['projections.aggregator.max_density'], wrt=['system.components.comp_2.translation'])
+#
+#     # Extract the scalar derivative
+#     derivf = copy(totalsf[('bbv.volume', 'system.components.comp_2.translation')][0][0])
+#     derivc = copy(totalsc[('projections.aggregator.max_density', 'system.components.comp_2.translation')][0][0])
+#     df_dx_approx.append(derivf)
+#     dc_dx_approx.append(derivc)
+#
+#
+# # Plot results
+# plt.figure(figsize=(8, 6))
+# plt.plot(x_values, f_vals, label='BBV', color='blue', linestyle='-')
+# plt.plot(x_values, df_dx, label='Computed Derivative', color='red', linestyle='--')
+# plt.plot(x_values, df_dx_approx, label='FD Derivative', color='green', linestyle='-.')
+# plt.xlabel('Translation (x)')
+# plt.ylabel('Value')
+# plt.title('BBV Objective & Its Derivatives')
+# plt.legend()
+# plt.grid(True)
+# plt.show()
+#
+#
+# # Plot results
+# plt.figure(figsize=(8, 6))
+# plt.plot(x_values, c_vals, label='Max Density Constraint', color='blue', linestyle='-')
+# plt.plot(x_values, dc_dx, label='Computed Derivative', color='red', linestyle='--')
+# plt.plot(x_values, dc_dx_approx, label='FD Derivative', color='green', linestyle='-.')
+# plt.xlabel('Translation (x)')
+# plt.ylabel('Value')
+# plt.title('Max Density Constraint & Its Derivatives')
+# plt.legend()
+# plt.grid(True)
+# plt.show()
 
 # prob.set_val('system.components.comp_2.translation', [1, 1, 1])
 # prob.run_model()
@@ -302,56 +307,56 @@ sphere_radii_after = np.array(sphere_radii_after)
 # int_1_points_after = np.array(int_1_points_after)
 
 
-# # Plot the results
-# plotter = pv.Plotter(shape=(2, 2), window_size=(1500, 500))
-#
-# # Plot the geometries before optimization
-# plotter.subplot(0, 0)
-# plotter.add_title("Before Optimization")
-# plot_grid(plotter, (0, 0), centers, element_size, densities=None)
-# plot_stl_file(plotter, (0, 0), 'models/CrossHead_Pin_scaled.stl', translation=comp_1_translation_before, rotation=comp_1_rotation_before, opacity=0.25, color='purple')
-# plot_stl_file(plotter, (0, 0), 'models/Bot_Eye_scaled.stl', translation=comp_2_translation_before, rotation=comp_2_rotation_before, opacity=0.25, color='blue')
-# plot_spheres(plotter, (0, 0), sphere_positions_before, sphere_radii_before, 'purple', opacity=0.5)
-# # plot_capsules(plotter, (0, 0), int_1_points_before, 0.25, color='green', opacity=0.5)
-# plot_AABB(plotter, (0, 0), bounds_before, color='blue')
-#
-# # Plot the pseudo-densities before optimization
-# plot_grid(plotter, (1, 0), centers, element_size, densities=None)
-# plot_grid(plotter, (1, 0), centers, element_size, densities=densities_before)
-#
-# # Plot the geometries after optimization
-# plotter.subplot(0, 1)
-# plotter.add_title("After Optimization")
-# plot_grid(plotter, (0, 1), centers, element_size, densities=None)
-# plot_stl_file(plotter, (0, 1), 'models/CrossHead_Pin_scaled.stl', translation=comp_1_translation_after, rotation=comp_1_rotation_after, opacity=0.25, color='purple')
-# plot_stl_file(plotter, (0, 1), 'models/Bot_Eye_scaled.stl', translation=comp_2_translation_after, rotation=comp_2_rotation_after, opacity=0.25, color='blue')
-# plot_spheres(plotter, (0, 1), sphere_positions_after, sphere_radii_after, 'purple', opacity=0.5)
-# # plot_capsules(plotter, (0, 1), int_1_points_after, 0.25, color='green', opacity=0.5)
-# plot_AABB(plotter, (0, 1), bounds_after, color='blue')
-#
-# # Plot the pseudo-densities after optimization
-# plot_grid(plotter, (1, 1), centers, element_size, densities=densities_after)
-#
-#
-# # plot the origin (0,0,0)
-# plotter.subplot(*(0, 0))
-# plotter.add_mesh(pv.Sphere(radius=0.25), color='red', show_edges=True)
-#
-# plotter.subplot(*(0, 1))
-# plotter.add_mesh(pv.Sphere(radius=0.25), color='red', show_edges=True)
-#
-# plotter.link_views()
-# plotter.show_axes()
-# plotter.show()
+# Plot the results
+plotter = pv.Plotter(shape=(2, 2), window_size=(1500, 500))
+
+# Plot the geometries before optimization
+plotter.subplot(0, 0)
+plotter.add_title("Before Optimization")
+plot_grid(plotter, (0, 0), centers, element_size, densities=None)
+plot_stl_file(plotter, (0, 0), 'models/CrossHead_Pin_scaled.stl', translation=comp_1_translation_before, rotation=comp_1_rotation_before, opacity=0.25, color='purple')
+plot_stl_file(plotter, (0, 0), 'models/Bot_Eye_scaled.stl', translation=comp_2_translation_before, rotation=comp_2_rotation_before, opacity=0.25, color='blue')
+plot_spheres(plotter, (0, 0), sphere_positions_before, sphere_radii_before, 'purple', opacity=0.5)
+# plot_capsules(plotter, (0, 0), int_1_points_before, 0.25, color='green', opacity=0.5)
+plot_AABB(plotter, (0, 0), bounds_before, color='blue')
+
+# Plot the pseudo-densities before optimization
+plot_grid(plotter, (1, 0), centers, element_size, densities=None)
+plot_grid(plotter, (1, 0), centers, element_size, densities=densities_before)
+
+# Plot the geometries after optimization
+plotter.subplot(0, 1)
+plotter.add_title("After Optimization")
+plot_grid(plotter, (0, 1), centers, element_size, densities=None)
+plot_stl_file(plotter, (0, 1), 'models/CrossHead_Pin_scaled.stl', translation=comp_1_translation_after, rotation=comp_1_rotation_after, opacity=0.25, color='purple')
+plot_stl_file(plotter, (0, 1), 'models/Bot_Eye_scaled.stl', translation=comp_2_translation_after, rotation=comp_2_rotation_after, opacity=0.25, color='blue')
+plot_spheres(plotter, (0, 1), sphere_positions_after, sphere_radii_after, 'purple', opacity=0.5)
+# plot_capsules(plotter, (0, 1), int_1_points_after, 0.25, color='green', opacity=0.5)
+plot_AABB(plotter, (0, 1), bounds_after, color='blue')
+
+# Plot the pseudo-densities after optimization
+plot_grid(plotter, (1, 1), centers, element_size, densities=densities_after)
+
+
+# plot the origin (0,0,0)
+plotter.subplot(*(0, 0))
+plotter.add_mesh(pv.Sphere(radius=0.25), color='red', show_edges=True)
+
+plotter.subplot(*(0, 1))
+plotter.add_mesh(pv.Sphere(radius=0.25), color='red', show_edges=True)
+
+plotter.link_views()
+plotter.show_axes()
+plotter.show()
 
 # prob.check_partials(includes='system.interconnects.int_1')
 
 
 # prob.model.approx_totals(method='exact')
-totals_c = copy(prob.compute_totals(of=['projections.aggregator.max_density'], wrt=['system.components.comp_2.translation']))
+# totals_c = copy(prob.compute_totals(of=['projections.aggregator.max_density'], wrt=['system.components.comp_2.translation']))
 # totals_c[('projections.aggregator.max_density', 'system.components.comp_2.translation')][0][0]
-prob.model.approx_totals(method='fd')
-totals_c_approx = copy(prob.compute_totals(of=['projections.aggregator.max_density'], wrt=['system.components.comp_2.translation']))
+# prob.model.approx_totals(method='fd')
+# totals_c_approx = copy(prob.compute_totals(of=['projections.aggregator.max_density'], wrt=['system.components.comp_2.translation']))
 
 # Check totals
 # # TODO MAke grid smaller...

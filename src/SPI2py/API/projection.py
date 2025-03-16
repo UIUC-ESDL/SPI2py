@@ -390,9 +390,9 @@ class ProjectionAggregator(ExplicitComponent):
         # aggregated_densities = jnp.maximum(aggregated_densities, rho_min)
 
         # Calculate the maximum pseudo-density
-        # max_density = kreisselmeier_steinhauser_max(aggregated_densities.flatten(), rho=100)
+        max_density = kreisselmeier_steinhauser_max(aggregated_densities.flatten(), rho=100)
         # Manual TODO Change
-        max_density = aggregated_densities.flatten()[132:133]
+        # max_density = aggregated_densities.flatten()[132:133]
 
 
         return aggregated_densities, aggregated_heat_loads, max_density
