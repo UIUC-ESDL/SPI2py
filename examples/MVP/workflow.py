@@ -23,7 +23,7 @@ from SPI2py.API.utilities import Multiplexer
 
 from SPI2py.models.physics.distributed.mesh import generate_mesh_vec
 from SPI2py.models.projection.mesh_kernels import create_uniform_kernel
-from SPI2py.models.utilities.visualization import plot_grid, plot_spheres, plot_capsules, plot_stl_file, plot_AABB
+from SPI2py.models.utilities.visualization import plot_grid, plot_spheres, plot_capsules, plot_stl_file, plot_AABB, plot_capsules2
 
 # Set up the JAX backend
 jax.config.update("jax_enable_x64", True)
@@ -72,7 +72,7 @@ kernel_radii = kernel_radii.reshape(-1, 1)
 
 # Define the system elements
 comp_1 = Component(description='Cross Head Pin', filepath='csvs/CrossHead_Pin_5k_300s.csv', n_spheres=50, ports=[[0.0, 0.415, 0.415], [2.850, 0.415, 0.415]], color='purple')
-comp_2 = LinearSplineComponent(start_points=[[0, 0, 0], [1, 1, 1]], end_points=[[1, 1, 1], [2, 2, 2]], radii=[1, 1], ports=[[0.5, 0.5, 0.5]], color='blue')
+comp_2 = LinearSplineComponent(start_points=[[0, 0, 0], [0, 2, 0]], end_points=[[0, 2, 0], [0, 2, 1]], radii=[0.125, 0.25], ports=[[0.5, 0.5, 0.5]], color='blue')
 # int_1 = Interconnect(n_segments=3, radius=0.25, color='green')
 model.system.components.add_subsystem('comp_1', comp_1)
 model.system.components.add_subsystem('comp_2', comp_2)
@@ -183,6 +183,9 @@ comp_1_translation_before = copy(prob.get_val('system.components.comp_1.translat
 comp_1_rotation_before = copy(prob.get_val('system.components.comp_1.rotation'))
 comp_2_translation_before = copy(prob.get_val('system.components.comp_2.translation'))
 comp_2_rotation_before = copy(prob.get_val('system.components.comp_2.rotation'))
+comp_2_start_points_before = copy(prob.get_val('system.components.comp_2.updated_start_points'))
+comp_2_end_points_before = copy(prob.get_val('system.components.comp_2.updated_end_points'))
+comp_2_radii_before = copy(prob.get_val('system.components.comp_2.updated_radii'))
 # int_1_points_before = copy(prob.get_val('system.interconnects.int_1.transformed_cyl_positions'))
 # sphere_positions_before = copy(prob.get_val('mux_centers.stacked_output'))
 # sphere_radii_before = copy(prob.get_val('mux_radii.stacked_output'))
@@ -293,6 +296,9 @@ comp_1_translation_before = tuple(np.array(comp_1_translation_before).tolist())
 comp_1_rotation_before = tuple(np.array(comp_1_rotation_before).tolist())
 comp_2_translation_before = tuple(np.array(comp_2_translation_before).tolist())
 comp_2_rotation_before = tuple(np.array(comp_2_rotation_before).tolist())
+comp_2_start_points_before = np.array(comp_2_start_points_before)
+comp_2_end_points_before = np.array(comp_2_end_points_before)
+comp_2_radii_before = np.array(comp_2_radii_before)
 # comp_1_translation_after = tuple(np.array(comp_1_translation_after).tolist())
 # comp_1_rotation_after = tuple(np.array(comp_1_rotation_after).tolist())
 # comp_2_translation_after = tuple(np.array(comp_2_translation_after).tolist())
@@ -318,6 +324,7 @@ plotter.add_title("Before Optimization")
 plot_grid(plotter, (0, 0), centers, element_size, densities=None)
 plot_stl_file(plotter, (0, 0), 'models/CrossHead_Pin_scaled.stl', translation=comp_1_translation_before, rotation=comp_1_rotation_before, opacity=0.25, color='purple')
 plot_stl_file(plotter, (0, 0), 'models/Bot_Eye_scaled.stl', translation=comp_2_translation_before, rotation=comp_2_rotation_before, opacity=0.25, color='blue')
+plot_capsules2(plotter, (0, 0), comp_2_start_points_before, comp_2_end_points_before, comp_2_radii_before, color='blue', opacity=0.5)
 # plot_spheres(plotter, (0, 0), sphere_positions_before, sphere_radii_before, 'purple', opacity=0.5)
 # plot_capsules(plotter, (0, 0), int_1_points_before, 0.25, color='green', opacity=0.5)
 # plot_AABB(plotter, (0, 0), bounds_before, color='blue')

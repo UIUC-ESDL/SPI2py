@@ -107,6 +107,28 @@ def plot_capsules(plotter, subplot_index, cyl_control_points, cyl_radius, color,
     plotter.show_bounds(all_edges=True)
 
 
+def plot_capsules2(plotter, subplot_index, start_points, end_points, radii, color, opacity=0.875):
+
+    # Create the subplot
+    plotter.subplot(*subplot_index)
+    plotter.render_window.SetMultiSamples(0)
+
+    for cyl_start, cyl_stop, cyl_radius in zip(start_points, end_points, radii):
+        # Plot the spheres
+        plot_spheres(plotter, subplot_index, cyl_start, cyl_radius, color, opacity)
+        plot_spheres(plotter, subplot_index, cyl_stop, cyl_radius, color, opacity)
+
+        # Plot the cylinders
+        length = np.linalg.norm(cyl_stop - cyl_start)
+        direction = (cyl_stop - cyl_start) / length
+        center = (cyl_start + cyl_stop) / 2
+        cylinder = pv.Cylinder(center=center, direction=direction, radius=cyl_radius, height=length)
+        plotter.add_mesh(cylinder, color=color, opacity=opacity, lighting=False)
+
+    # plotter.add_text("Pipe Segments", position='upper_edge', font_size=14)
+    plotter.show_bounds(all_edges=True)
+
+
 def plot_AABB_spheres(plotter, subplot_index, centers, radii, color, opacity=0.25):
     # Create the subplot
     plotter.subplot(*subplot_index)
