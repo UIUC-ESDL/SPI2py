@@ -203,21 +203,17 @@ class LinearSplineComponent(ExplicitComponent):
     def compute(self, inputs, outputs):
 
         # Get the input variables
-        start_points = inputs['start_points']
-        end_points = inputs['end_points']
-        radii = inputs['radii']
-        ports = inputs['ports']
+        start_points = jnp.array(inputs['start_points'])
+        end_points = jnp.array(inputs['end_points'])
+        radii = jnp.array(inputs['radii'])
+        ports = jnp.array(inputs['ports'])
 
-        translation = inputs['translation']
-        rotation = inputs['rotation']
+        translation = jnp.array(inputs['translation'])
+        rotation = jnp.array(inputs['rotation'])
 
         # Calculate the transformed sphere positions and port positions
-        updated_values = self._compute_primal(start_points, end_points, radii, ports, translation, rotation)
+        updated_start_points, updated_end_points, updated_radii, updated_ports = self._compute_primal(start_points, end_points, radii, ports, translation, rotation)
 
-        updated_start_points = updated_values[0]
-        updated_end_points = updated_values[1]
-        updated_radii = updated_values[2]
-        updated_ports = updated_values[3]
 
         # Set the outputs
         outputs['updated_start_points'] = updated_start_points
@@ -226,30 +222,34 @@ class LinearSplineComponent(ExplicitComponent):
         outputs['updated_ports'] = updated_ports
 
     def compute_partials(self, inputs, partials):
-        # Get the input variables
-        start_points = inputs['start_points']
-        end_points = inputs['end_points']
-        radii = inputs['radii']
-        ports = inputs['ports']
+        # Get the input variables.
+        start_points = jnp.array(inputs['start_points'])
+        end_points = jnp.array(inputs['end_points'])
+        radii = jnp.array(inputs['radii'])
+        ports = jnp.array(inputs['ports'])
+        translation = jnp.array(inputs['translation'])
+        rotation = jnp.array(inputs['rotation'])
 
-        translation = inputs['translation']
-        rotation = inputs['rotation']
+        # Compute the Jacobian with respect to translation (argnum 4)
+        jac_translation = jacfwd(self._compute_primal, argnums=4)(
+            start_points, end_points, radii, ports, translation, rotation
+        )
+        # Compute the Jacobian with respect to rotation (argnum 5)
+        jac_rotation = jacfwd(self._compute_primal, argnums=5)(
+            start_points, end_points, radii, ports, translation, rotation
+        )
 
-        # Define the Jacobian matrices
-        jac_fun = jacfwd(self._compute_primal, argnums=(4, 5))
-
-        # Evaluate the Jacobian matrices
-        jac_translation, jac_rotation = jac_fun(start_points, end_points, radii, ports, translation, rotation)
-
-        # Set the outputs
-        partials['updated_start_points', 'translation'] = jac_translation[0]
-        partials['updated_start_points', 'rotation'] = jac_rotation[0]
-        partials['updated_end_points', 'translation'] = jac_translation[1]
-        partials['updated_end_points', 'rotation'] = jac_rotation[1]
-        partials['updated_radii', 'translation'] = jac_translation[2]
-        partials['updated_radii', 'rotation'] = jac_rotation[2]
-        partials['updated_ports', 'translation'] = jac_translation[3]
-        partials['updated_ports', 'rotation'] = jac_rotation[3]
+        # Each jacobian is a tuple of four arrays corresponding to the outputs:
+        # (updated_start_points, updated_end_points, radii, updated_ports).
+        # Set the partials for each output.
+        partials['updated_start_points', 'translation'] = np.asarray(jac_translation[0])
+        partials['updated_start_points', 'rotation'] = np.asarray(jac_rotation[0])
+        partials['updated_end_points', 'translation'] = np.asarray(jac_translation[1])
+        partials['updated_end_points', 'rotation'] = np.asarray(jac_rotation[1])
+        partials['updated_radii', 'translation'] = np.asarray(jac_translation[2])
+        partials['updated_radii', 'rotation'] = np.asarray(jac_rotation[2])
+        partials['updated_ports', 'translation'] = np.asarray(jac_translation[3])
+        partials['updated_ports', 'rotation'] = np.asarray(jac_rotation[3])
 
     @staticmethod
     def _compute_primal(start_points, end_points, radii, ports, translation, rotation):

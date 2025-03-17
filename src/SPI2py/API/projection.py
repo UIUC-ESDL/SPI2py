@@ -1,6 +1,7 @@
 import numpy as np
+from functools import partial
 import jax.numpy as jnp
-from jax import jvp, vjp
+from jax import jacfwd, jvp, vjp
 from openmdao.api import ExplicitComponent, Group
 from ..models.projection.projection import project_component, project_interconnect, project_capsules
 from ..models.utilities.aggregation import kreisselmeier_steinhauser_max
@@ -64,64 +65,86 @@ class ProjectLinearSplineComponent(ExplicitComponent):
         outputs['penalized_densities'] = penalized_densities
         outputs['penalized_heat_loads'] = penalized_heat_loads
 
-    def compute_jacvec_prod(self, inputs, d_inputs, d_outputs, mode):
-        import jax
-        import jax.numpy as jnp
-
-        # Constant mesh and kernel parameters.
-        mesh_size = self.options['mesh_size']
+    def compute_partials(self, inputs, partials):
+        # Get the Mesh parameters
+        mesh_size = jnp.atleast_1d(self.options['mesh_size'])
         mesh_centers = jnp.array(self.options['mesh_centers'])
         kernel_centers = jnp.array(self.options['kernel_centers'])
         kernel_radii = jnp.array(self.options['kernel_radii'])
 
-        # Active design inputs.
-        sp = jnp.array(inputs['start_points'])
-        ep = jnp.array(inputs['end_points'])
-        rads = jnp.array(inputs['radii'])
-        hl = jnp.array(inputs['heat_load'])
+        # Get the inputs
+        start_points = jnp.array(inputs['start_points'])
+        end_points = jnp.array(inputs['end_points'])
+        radii = jnp.array(inputs['radii'])
+        heat_load = jnp.array(inputs['heat_load'])
 
-        if mode == 'fwd':
-            # Perturbations for the active design variables.
-            dsp = jnp.array(d_inputs.get('start_points', jnp.zeros_like(sp)))
-            dep = jnp.array(d_inputs.get('end_points', jnp.zeros_like(ep)))
-            drads = jnp.array(d_inputs.get('radii', jnp.zeros_like(rads)))
-            dhl = jnp.array(d_inputs.get('heat_load', 0.0))
-            # Zero perturbations for the constant parameters.
-            zeros_mc = jnp.zeros_like(mesh_centers)
-            zeros_ms = jnp.zeros_like(jnp.array(mesh_size))
-            zeros_kc = jnp.zeros_like(kernel_centers)
-            zeros_kr = jnp.zeros_like(kernel_radii)
+        # Compute the pseudo-densities
+        # penalized_densities, penalized_heat_loads = self._compute_primal(mesh_centers, mesh_size,
+        #                                                                  kernel_centers, kernel_radii,
+        #                                                                  start_points, end_points, radii,
+        #                                                                  heat_load)
 
-            # Compute the directional derivative (Jacobian-vector product)
-            (pen_dens, pen_hl), (d_pen_dens, d_pen_hl) = jax.jvp(
-                self._compute_primal,
-                (mesh_centers, mesh_size, kernel_centers, kernel_radii, sp, ep, rads, hl),
-                (zeros_mc, zeros_ms, zeros_kc, zeros_kr, dsp, dep, drads, dhl)
-            )
-            d_outputs['penalized_densities'] = d_pen_dens
-            d_outputs['penalized_heat_loads'] = d_pen_hl
+        jac_pd, jac_phl = jacfwd(self._compute_primal, argnums=(4, 5, 6, 7))(mesh_centers, mesh_size,
+                                                                            kernel_centers, kernel_radii,
+                                                                            start_points, end_points, radii,
+                                                                            heat_load)
 
-        elif mode == 'rev':
-            # Evaluate the primal function.
-            pen_dens, pen_hl = self._compute_primal(
-                mesh_centers, mesh_size, kernel_centers, kernel_radii, sp, ep, rads, hl
-            )
-            # Get the output seeds.
-            seed_dens = jnp.array(d_outputs.get('penalized_densities', jnp.zeros_like(pen_dens)))
-            seed_hl = jnp.array(d_outputs.get('penalized_heat_loads', jnp.zeros_like(pen_hl)))
 
-            # Compute the vector-Jacobian product via vjp.
-            _, vjp_fun = jax.vjp(
-                self._compute_primal,
-                mesh_centers, mesh_size, kernel_centers, kernel_radii, sp, ep, rads, hl
-            )
-            # The gradients are returned in the same order as the inputs.
-            grads = vjp_fun((seed_dens, seed_hl))
-            # Only the gradients for the active design variables are used.
-            d_inputs['start_points'] = grads[4]
-            d_inputs['end_points'] = grads[5]
-            d_inputs['radii'] = grads[6]
-            d_inputs['heat_load'] = grads[7]
+        # Write the outputs
+        partials['penalized_densities', 'start_points'] = jac_pd[0]
+        partials['penalized_densities', 'end_points'] = jac_pd[1]
+        partials['penalized_densities', 'radii'] = jac_pd[2]
+        partials['penalized_heat_loads', 'start_points'] = jac_phl[0]
+        partials['penalized_heat_loads', 'end_points'] = jac_phl[1]
+        partials['penalized_heat_loads', 'radii'] = jac_phl[2]
+        partials['penalized_heat_loads', 'heat_load'] = jac_phl[3]
+
+
+    # def compute_jacvec_prod(self, inputs, d_inputs, d_outputs, mode):
+    #     # Get constant parameters
+    #     mesh_size = self.options['mesh_size']
+    #     mesh_centers = jnp.array(self.options['mesh_centers'])
+    #     kernel_centers = jnp.array(self.options['kernel_centers'])
+    #     kernel_radii = jnp.array(self.options['kernel_radii'])
+    #
+    #     # Active inputs.
+    #     sp = jnp.array(inputs['start_points'])
+    #     ep = jnp.array(inputs['end_points'])
+    #     rads = jnp.array(inputs['radii'])
+    #     hl = jnp.array(inputs['heat_load'])
+    #
+    #     # Bind the constant parameters so that differentiation is only with respect to the active ones.
+    #     primal_active = partial(
+    #         self._compute_primal,
+    #         mesh_centers, mesh_size, kernel_centers, kernel_radii
+    #     )
+    #
+    #     if mode == 'fwd':
+    #         dsp = jnp.array(d_inputs.get('start_points', jnp.zeros_like(sp)))
+    #         dep = jnp.array(d_inputs.get('end_points', jnp.zeros_like(ep)))
+    #         drads = jnp.array(d_inputs.get('radii', jnp.zeros_like(rads)))
+    #         dhl = jnp.array(d_inputs.get('heat_load', 0.0))
+    #
+    #         # Compute forward-mode derivative for the active inputs only.
+    #         (pen_dens, pen_hl), (d_pen_dens, d_pen_hl) = jax.jvp(
+    #             primal_active,
+    #             (sp, ep, rads, hl),
+    #             (dsp, dep, drads, dhl)
+    #         )
+    #         d_outputs['penalized_densities'] = d_pen_dens
+    #         d_outputs['penalized_heat_loads'] = d_pen_hl
+    #
+    #     elif mode == 'rev':
+    #         pen_dens, pen_hl = primal_active(sp, ep, rads, hl)
+    #         seed_dens = jnp.array(d_outputs.get('penalized_densities', jnp.zeros_like(pen_dens)))
+    #         seed_hl = jnp.array(d_outputs.get('penalized_heat_loads', jnp.zeros_like(pen_hl)))
+    #
+    #         _, vjp_fun = vjp(primal_active, sp, ep, rads, hl)
+    #         grad_sp, grad_ep, grad_rads, grad_hl = vjp_fun((seed_dens, seed_hl))
+    #         d_inputs['start_points'] = grad_sp
+    #         d_inputs['end_points'] = grad_ep
+    #         d_inputs['radii'] = grad_rads
+    #         d_inputs['heat_load'] = grad_hl
 
     @staticmethod
     def _compute_primal(mesh_centers, mesh_size,
