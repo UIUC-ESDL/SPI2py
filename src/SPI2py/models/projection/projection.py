@@ -183,7 +183,8 @@ def project_capsules(grid_centers, grid_size,
     all_densities = all_densities.at[i1:i2 + 1, j1:j2 + 1, k1:k2 + 1].set(densities)
 
     # Penalize the densities
-    all_densities_penalized = penalize_densities(all_densities)
+    # TODO Change pen
+    all_densities_penalized = penalize_densities(all_densities, penalty_factor=3)
 
     return all_densities_penalized
 

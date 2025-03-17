@@ -53,9 +53,9 @@ y_min, y_max = (-5, 5)
 z_min, z_max = (-5, 5)
 
 # element_size = 0.0675
-# element_size = 0.125
+element_size = 0.125
 # element_size = 0.25
-element_size = 0.5
+# element_size = 0.5
 
 
 nodes, elements, centers, nx, ny, nz, lx, ly, lz = generate_mesh_vec(x_min, x_max, y_min, y_max, z_min, z_max, element_size=element_size)
@@ -63,7 +63,7 @@ centers = centers.reshape(nx, ny, nz, 1, 3)
 
 
 
-
+# Mult kernels cause error
 kernel_steps_per_unit_length = 1
 kernel_points, kernel_radii = create_uniform_kernel(kernel_steps_per_unit_length, mode='circumscription')
 kernel_points = kernel_points.reshape(-1, 3)
@@ -73,8 +73,8 @@ kernel_radii = kernel_radii.reshape(-1, 1)
 # Define the system elements
 # comp_1 = Component(description='Cross Head Pin', filepath='csvs/CrossHead_Pin_5k_300s.csv', n_spheres=50, ports=[[0.0, 0.415, 0.415], [2.850, 0.415, 0.415]], color='blue')
 # comp_2 = LinearSplineComponent(start_points=[[0, 0, 0], [0, 2, 0]], end_points=[[0, 2, 0], [0, 2, 1]], radii=[0.25, 0.5], ports=[[0, 0, 0]], color='red')
-comp_1 = LinearSplineComponent(start_points=[[0, 0, 0]], end_points=[[0, 2, 0]], radii=[0.5], ports=[[0, 0, 0]], color='blue')
-comp_2 = LinearSplineComponent(start_points=[[0, 0, 0]], end_points=[[0, 2, 0]], radii=[0.5], ports=[[0, 0, 0]], color='red')
+comp_1 = LinearSplineComponent(start_points=[[0, 0, 0], [0, 2, 0]], end_points=[[0, 2, 0], [0, 2, 1]], radii=[0.5, 0.25], ports=[[0, 0, 0]], color='blue')
+comp_2 = LinearSplineComponent(start_points=[[0, 0, 0], [-1, 0, 0]], end_points=[[0, 2, 0], [1, 0, 0]], radii=[0.5, 0.75], ports=[[0, 0, 0]], color='red')
 # int_1 = Interconnect(n_segments=3, radius=0.25, color='green')
 model.system.components.add_subsystem('comp_1', comp_1)
 model.system.components.add_subsystem('comp_2', comp_2)
@@ -109,23 +109,35 @@ model.connect('system.components.comp_2.updated_radii', 'projections.proj_2.radi
 # model.connect('system.interconnects.int_1.transformed_cyl_radius', 'projections.proj_3.radius')
 
 
-# # Aggregate the spheres of each component
-# mux_centers = Multiplexer(n_i=[939, 623], m=3)
-# prob.model.add_subsystem('mux_centers', mux_centers)
-# mux_radii = Multiplexer(n_i=[939, 623], m=1)
-# prob.model.add_subsystem('mux_radii', mux_radii)
+# Aggregate the spheres of each component
+mux_centers = Multiplexer(n_i=[2, 2, 2, 2], m=3)
+prob.model.add_subsystem('mux_centers', mux_centers)
+mux_radii = Multiplexer(n_i=[2, 2, 2, 2], m=1)
+prob.model.add_subsystem('mux_radii', mux_radii)
 
-# bbv = BoundingBoxVolume()
-# model.add_subsystem('bbv', bbv)
+bbv = BoundingBoxVolume()
+model.add_subsystem('bbv', bbv)
 
 # prob.model.connect('system.components.comp_1.transformed_sphere_positions', 'mux_centers.input_0')
 # prob.model.connect('system.components.comp_2.transformed_sphere_positions', 'mux_centers.input_1')
 # prob.model.connect('mux_centers.stacked_output', 'bbv.centers')
 
-
 # prob.model.connect('system.components.comp_1.transformed_sphere_radii', 'mux_radii.input_0')
 # prob.model.connect('system.components.comp_2.transformed_sphere_radii', 'mux_radii.input_1')
 # prob.model.connect('mux_radii.stacked_output', 'bbv.radii')
+
+prob.model.connect('system.components.comp_1.updated_start_points', 'mux_centers.input_0')
+prob.model.connect('system.components.comp_1.updated_end_points', 'mux_centers.input_1')
+prob.model.connect('system.components.comp_2.updated_start_points', 'mux_centers.input_2')
+prob.model.connect('system.components.comp_2.updated_end_points', 'mux_centers.input_3')
+prob.model.connect('mux_centers.stacked_output', 'bbv.centers')
+
+prob.model.connect('system.components.comp_1.updated_radii', 'mux_radii.input_0')
+prob.model.connect('system.components.comp_1.updated_radii', 'mux_radii.input_1')
+prob.model.connect('system.components.comp_2.updated_radii', 'mux_radii.input_2')
+prob.model.connect('system.components.comp_2.updated_radii', 'mux_radii.input_3')
+prob.model.connect('mux_radii.stacked_output', 'bbv.radii')
+
 
 # Aggregate the pseudo-densities
 projection_aggregator = ProjectionAggregator(n_projections=2, rho_min=3e-3)
@@ -143,13 +155,15 @@ model.connect('projections.proj_2.penalized_heat_loads', 'projections.aggregator
 # Define the design variables
 # prob.model.add_design_var('system.components.comp_1.translation', ref=0.25, lower=-3, upper=3)
 # prob.model.add_design_var('system.components.comp_1.rotation', ref=0.5, lower=0, upper=1)
+prob.model.add_design_var('system.components.comp_2.translation', ref=0.25, lower=-5, upper=5)
+prob.model.add_design_var('system.components.comp_2.rotation', ref=(np.pi/2)/4, lower=-np.pi, upper=np.pi)
 # prob.model.add_design_var('system.components.comp_2.translation', ref=0.25, lower=-3, upper=3, indices=[0], flat_indices=True)
 # prob.model.add_design_var('system.components.comp_2.translation', ref=0.25, lower=0, upper=3, indices=[1], flat_indices=True)
 # prob.model.add_design_var('system.components.comp_2.translation', ref=0.25, lower=0, upper=3, indices=[2], flat_indices=True)
 
 # Define the objective and constraints
-# prob.model.add_objective('bbv.volume', ref=1)
-# prob.model.add_constraint('projections.aggregator.max_density', upper=1.1)
+prob.model.add_objective('bbv.volume', ref=1)
+prob.model.add_constraint('projections.aggregator.max_density', upper=1.1)
 
 
 # Set the initial state
@@ -157,16 +171,18 @@ prob.setup()
 
 
 # # Configure the system
+# TODO Rotation?
 # prob.set_val('system.components.comp_1.translation', [0, 0, 0])
 # prob.set_val('system.components.comp_1.rotation', [0, 0, 0])
-prob.set_val('system.components.comp_2.translation', [1.5, 0, 0])
-# prob.set_val('system.components.comp_2.translation', [-1, 0.75, 0.5])
-# prob.set_val('system.components.comp_2.rotation', [0, 0, 0])
+# prob.set_val('system.components.comp_2.translation', [1.5, 0, 0])
+prob.set_val('system.components.comp_2.translation', [3, 0, 0])
+prob.set_val('system.components.comp_2.rotation', [np.pi/3, 0, 0])
 # prob.set_val('system.interconnects.int_1.control_points', [[1.75, 1, 0], [1, 1, 0]])
 
 
 # Set up the optimizer
-# prob.driver = om.ScipyOptimizeDriver()
+prob.driver = om.ScipyOptimizeDriver()
+prob.driver.options['maxiter'] = 30
 # prob.driver.options['maxiter'] = 10
 # prob.driver.options['optimizer'] = 'trust-constr'
 # prob.driver.options['optimizer'] = 'COBYLA'
@@ -181,7 +197,7 @@ print(f"Elapsed time: {(t2 - t1) / 1e9} seconds")
 
 
 # Check the initial state
-# print("BBV Before:", prob.get_val('bbv.volume'))
+print("BBV Before:", prob.get_val('bbv.volume'))
 # print("BBV Bounds:", prob.get_val('bbv.bounds'))
 print("Max Density:", prob.get_val('projections.aggregator.max_density'))
 comp_1_translation_before = copy(prob.get_val('system.components.comp_1.translation'))
@@ -199,92 +215,92 @@ comp_2_radii_before = copy(prob.get_val('system.components.comp_2.updated_radii'
 # sphere_radii_before = copy(prob.get_val('mux_radii.stacked_output'))
 # bounds_before = copy(prob.get_val('bbv.bounds'))
 densities_before = copy(prob.get_val('projections.aggregator.aggregated_densities'))
-
+# TODO Why above 1-2?
 
 # Run the optimization
-# prob.run_driver()
+prob.run_driver()
 
 
-# Sweep component and plot derivatives
-import matplotlib.pyplot as plt
-
-# prob.set_val('system.components.comp_2.translation', [-1.5, 0.75, 0.5])
-x_values = np.linspace(-1.5, 1.5, 100)
-# f_vals = []
-# df_dx = []
-c_vals = []
-dc_dx = []
-for xi in x_values:
-    prob.set_val('system.components.comp_2.translation', [xi, 0, 0])
-    # prob.set_val('system.components.comp_2.translation', [0, xi, 1])
-    # prob.set_val('system.components.comp_2.translation', [0, 0, xi])
-    prob.run_model()
-    # fval = copy(prob.get_val('bbv.volume'))
-    cval = copy(prob.get_val('projections.aggregator.max_density'))
-    # f_vals.append(fval)
-    c_vals.append(cval)
-    # totalsf = prob.compute_totals(of=['bbv.volume'], wrt=['system.components.comp_2.translation'])
-    totalsc = prob.compute_totals(of=['projections.aggregator.max_density'], wrt=['system.components.comp_2.translation'])
-
-    # Extract the scalar derivative
-    # derivf = copy(totalsf[('bbv.volume', 'system.components.comp_2.translation')][0][0])
-    derivc = copy(totalsc[('projections.aggregator.max_density', 'system.components.comp_2.translation')][0][0])
-    # df_dx.append(derivf)
-    dc_dx.append(derivc)
-
-# Apply finite difference
-prob.model.approx_totals(method='fd')  # Use finite differencing
-df_dx_approx = []
-dc_dx_approx = []
-for xi in x_values:
-    prob.set_val('system.components.comp_2.translation', [xi, 0, 0])
-    # prob.set_val('system.components.comp_2.translation', [0, xi, 1])
-    # prob.set_val('system.components.comp_2.translation', [0, 0, xi])
-    prob.run_model()
-
-    # totalsf = prob.compute_totals(of=['bbv.volume'], wrt=['system.components.comp_2.translation'])
-    totalsc = prob.compute_totals(of=['projections.aggregator.max_density'], wrt=['system.components.comp_2.translation'])
-
-    # Extract the scalar derivative
-    # derivf = copy(totalsf[('bbv.volume', 'system.components.comp_2.translation')][0][0])
-    derivc = copy(totalsc[('projections.aggregator.max_density', 'system.components.comp_2.translation')][0][0])
-    # df_dx_approx.append(derivf)
-    dc_dx_approx.append(derivc)
-
-
+# # Sweep component and plot derivatives
+# import matplotlib.pyplot as plt
+#
+# # prob.set_val('system.components.comp_2.translation', [-1.5, 0.75, 0.5])
+# x_values = np.linspace(-1.5, 1.5, 100)
+# # f_vals = []
+# # df_dx = []
+# c_vals = []
+# dc_dx = []
+# for xi in x_values:
+#     prob.set_val('system.components.comp_2.translation', [xi, 0, 0])
+#     # prob.set_val('system.components.comp_2.translation', [0, xi, 1])
+#     # prob.set_val('system.components.comp_2.translation', [0, 0, xi])
+#     prob.run_model()
+#     # fval = copy(prob.get_val('bbv.volume'))
+#     cval = copy(prob.get_val('projections.aggregator.max_density'))
+#     # f_vals.append(fval)
+#     c_vals.append(cval)
+#     # totalsf = prob.compute_totals(of=['bbv.volume'], wrt=['system.components.comp_2.translation'])
+#     totalsc = prob.compute_totals(of=['projections.aggregator.max_density'], wrt=['system.components.comp_2.translation'])
+#
+#     # Extract the scalar derivative
+#     # derivf = copy(totalsf[('bbv.volume', 'system.components.comp_2.translation')][0][0])
+#     derivc = copy(totalsc[('projections.aggregator.max_density', 'system.components.comp_2.translation')][0][0])
+#     # df_dx.append(derivf)
+#     dc_dx.append(derivc)
+#
+# # Apply finite difference
+# prob.model.approx_totals(method='fd')  # Use finite differencing
+# df_dx_approx = []
+# dc_dx_approx = []
+# for xi in x_values:
+#     prob.set_val('system.components.comp_2.translation', [xi, 0, 0])
+#     # prob.set_val('system.components.comp_2.translation', [0, xi, 1])
+#     # prob.set_val('system.components.comp_2.translation', [0, 0, xi])
+#     prob.run_model()
+#
+#     # totalsf = prob.compute_totals(of=['bbv.volume'], wrt=['system.components.comp_2.translation'])
+#     totalsc = prob.compute_totals(of=['projections.aggregator.max_density'], wrt=['system.components.comp_2.translation'])
+#
+#     # Extract the scalar derivative
+#     # derivf = copy(totalsf[('bbv.volume', 'system.components.comp_2.translation')][0][0])
+#     derivc = copy(totalsc[('projections.aggregator.max_density', 'system.components.comp_2.translation')][0][0])
+#     # df_dx_approx.append(derivf)
+#     dc_dx_approx.append(derivc)
+#
+#
+# # # Plot results
+# # plt.figure(figsize=(8, 6))
+# # plt.plot(x_values, f_vals, label='BBV', color='blue', linestyle='-')
+# # plt.plot(x_values, df_dx, label='Computed Derivative', color='red', linestyle='--')
+# # plt.plot(x_values, df_dx_approx, label='FD Derivative', color='green', linestyle='-.')
+# # plt.xlabel('Translation (x)')
+# # plt.ylabel('Value')
+# # plt.title('BBV Objective & Its Derivatives')
+# # plt.legend()
+# # plt.grid(True)
+# # plt.show()
+#
+#
 # # Plot results
 # plt.figure(figsize=(8, 6))
-# plt.plot(x_values, f_vals, label='BBV', color='blue', linestyle='-')
-# plt.plot(x_values, df_dx, label='Computed Derivative', color='red', linestyle='--')
-# plt.plot(x_values, df_dx_approx, label='FD Derivative', color='green', linestyle='-.')
+# plt.plot(x_values, c_vals, label='Max Density Constraint', color='blue', linestyle='-')
+# plt.plot(x_values, dc_dx, label='Computed Derivative', color='red', linestyle='--')
+# plt.plot(x_values, dc_dx_approx, label='FD Derivative', color='green', linestyle='-.')
 # plt.xlabel('Translation (x)')
 # plt.ylabel('Value')
-# plt.title('BBV Objective & Its Derivatives')
+# plt.title('Max Density Constraint & Its Derivatives')
 # plt.legend()
 # plt.grid(True)
 # plt.show()
-
-
-# Plot results
-plt.figure(figsize=(8, 6))
-plt.plot(x_values, c_vals, label='Max Density Constraint', color='blue', linestyle='-')
-plt.plot(x_values, dc_dx, label='Computed Derivative', color='red', linestyle='--')
-plt.plot(x_values, dc_dx_approx, label='FD Derivative', color='green', linestyle='-.')
-plt.xlabel('Translation (x)')
-plt.ylabel('Value')
-plt.title('Max Density Constraint & Its Derivatives')
-plt.legend()
-plt.grid(True)
-plt.show()
-
-# prob.set_val('system.components.comp_2.translation', [1, 1, 1])
+#
+# # prob.set_val('system.components.comp_2.translation', [1, 1, 1])
+# # prob.run_model()
+#
+# prob.set_val('system.components.comp_2.translation', [2, 0.75, 0.5])
 # prob.run_model()
 
-prob.set_val('system.components.comp_2.translation', [2, 0.75, 0.5])
-prob.run_model()
-
 # # Check the final state
-# print("BBV After:", prob.get_val('bbv.volume'))
+print("BBV After:", prob.get_val('bbv.volume'))
 # print("BBV Bounds:", prob.get_val('bbv.bounds'))
 print("Max Density:", prob.get_val('projections.aggregator.max_density'))
 comp_1_translation_after = prob.get_val('system.components.comp_1.translation')
