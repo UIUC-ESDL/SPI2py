@@ -17,7 +17,7 @@ import openmdao.api as om
 from SPI2py.API.system import System, Components, LinearSplineComponent, Interconnects, Component, Interconnect
 from SPI2py.API.projection import Projections, ProjectionAggregator, ProjectComponent, ProjectInterconnect, \
     ProjectLinearSplineComponent
-from SPI2py.API.FEA import Mesh #, FEA
+from SPI2py.API.FEA import Mesh, ExplicitFEA
 from SPI2py.API.objectives import BoundingBoxVolume
 from SPI2py.API.utilities import Multiplexer
 
@@ -38,6 +38,7 @@ components = Components()
 # interconnects = Interconnects()
 projections = Projections()
 
+
 model.add_subsystem('system', system)
 model.system.add_subsystem('components', components)
 # model.system.add_subsystem('interconnects', interconnects)
@@ -45,16 +46,16 @@ model.add_subsystem('projections', projections)
 
 
 # Initialize the Mesh
-# x_min, x_max = (-2, 2)
-# y_min, y_max = (0, 2.5)
-# z_min, z_max = (0, 2.5)
-x_min, x_max = (-5, 5)
-y_min, y_max = (-5, 5)
-z_min, z_max = (-5, 5)
+x_min, x_max = (-2, 2)
+y_min, y_max = (0, 2.5)
+z_min, z_max = (0, 2.5)
+# x_min, x_max = (-5, 5)
+# y_min, y_max = (-5, 5)
+# z_min, z_max = (-5, 5)
 
 # element_size = 0.0675
-element_size = 0.125
-# element_size = 0.25
+# element_size = 0.125
+element_size = 0.25
 # element_size = 0.5
 
 
@@ -151,6 +152,21 @@ model.connect('projections.proj_1.penalized_heat_loads', 'projections.aggregator
 model.connect('projections.proj_2.penalized_heat_loads', 'projections.aggregator.heat_loads_1')
 # model.connect('projections.proj_3.penalized_heat_loads', 'projections.aggregator.heat_loads_2')
 
+# FEA
+FEA = ExplicitFEA(nodes=nodes,
+                  elements=elements,
+                  el_size=element_size,
+                  el_centers=centers,
+                  dirichlet_nodes=jnp.array([0, 1, 2, 3, 4, 5, 6, 7]),
+                  dirichlet_values=jnp.array([0, 0, 0, 0, 0, 0, 0, 0]),
+                  robin_nodes=jnp.array([8, 9, 10, 11, 12, 13, 14, 15]),
+                  robin_h=10.0,
+                  robin_T_inf=200.0,
+                  robin_area=0.25)
+model.add_subsystem('FEA', FEA)
+model.connect('projections.aggregator.aggregated_densities', 'FEA.density')
+model.connect('projections.aggregator.aggregated_heat_loads', 'FEA.heat_loads')
+
 
 # Define the design variables
 # prob.model.add_design_var('system.components.comp_1.translation', ref=0.25, lower=-3, upper=3)
@@ -182,6 +198,7 @@ prob.set_val('system.components.comp_2.rotation', [np.pi/3, 0, 0])
 
 # Set up the optimizer
 prob.driver = om.ScipyOptimizeDriver()
+# prob.driver = om.pyOptSparseDriver(optimizer='mma')
 prob.driver.options['maxiter'] = 30
 # prob.driver.options['maxiter'] = 10
 # prob.driver.options['optimizer'] = 'trust-constr'
@@ -218,7 +235,7 @@ densities_before = copy(prob.get_val('projections.aggregator.aggregated_densitie
 # TODO Why above 1-2?
 
 # Run the optimization
-prob.run_driver()
+# prob.run_driver()
 
 
 # # Sweep component and plot derivatives
