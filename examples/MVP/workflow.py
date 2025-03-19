@@ -24,6 +24,8 @@ from SPI2py.API.utilities import Multiplexer
 from SPI2py.models.physics.distributed.mesh import generate_mesh_vec
 from SPI2py.models.projection.mesh_kernels import create_uniform_kernel
 from SPI2py.models.utilities.visualization import plot_grid, plot_spheres, plot_capsules, plot_stl_file, plot_AABB, plot_capsules2
+from SPI2py.models.utilities.visualization import plot_temperature_distribution
+
 
 # Set up the JAX backend
 jax.config.update("jax_enable_x64", True)
@@ -370,10 +372,25 @@ densities_after = np.array(densities_after)
 # int_1_points_before = np.array(int_1_points_before)
 # int_1_points_after = np.array(int_1_points_after)
 
+T = prob.get_val('FEA.temperature')
+T_np = np.array(T)
 
-# # Plot the results
-# plotter = pv.Plotter(shape=(2, 2), window_size=(1500, 500))
-#
+# Plot the results
+plotter = pv.Plotter(shape=(2, 2), window_size=(1500, 500))
+
+
+plot_temperature_distribution(plotter,
+                              (0, 0),
+                              np.array(nodes),
+                              T_np,
+                              np.array([[0, 0, 0]]),
+                              np.array([0, 1, 2, 3, 4, 5, 6, 7]),
+                              np.array([8, 9, 10, 11, 12, 13, 14, 15]),
+                              dims=(nx + 1, ny + 1, nz + 1),
+                              cmap='jet')
+
+
+
 # # Plot the geometries before optimization
 # plotter.subplot(0, 0)
 # plotter.add_title("Before Optimization")

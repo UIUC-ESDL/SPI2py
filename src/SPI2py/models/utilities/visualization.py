@@ -260,9 +260,9 @@ def plot_temperature_distribution(plotter,
 
     # Setup PyVista plotter.
     vol = plotter.add_volume(grid, scalars="Temperature", cmap=cmap, clim=climits, opacity=opacity, show_scalar_bar=True, scalar_bar_args={'title': 'Temperature'})
-    plot_nodes(plotter, (0, 2), nodes, heat_load_nodes, label='Heat Load', color='red', point_size=20)
-    plot_nodes(plotter, (0, 2), nodes, robin_nodes, label='Robin BC', color='green')
-    plot_nodes(plotter, (0, 2), nodes, dirichlet_nodes, label='Dirichlet BC', color='blue')
+    plot_nodes(plotter, subplot_index, nodes, heat_load_nodes, label='Heat Load', color='red', point_size=20)
+    plot_nodes(plotter, subplot_index, nodes, robin_nodes, label='Robin BC', color='green')
+    plot_nodes(plotter, subplot_index, nodes, dirichlet_nodes, label='Dirichlet BC', color='blue')
     plotter.add_legend()
 
     # Force the scalar range on the volume mapper
@@ -277,7 +277,7 @@ def plot_nodes(plotter, subplot_index, nodes, selected_nodes, label, color="blue
 
     # Create PolyData for convection boundary and fixed (Dirichlet) nodes.
     node_points = nodes[selected_nodes]
-    nodes_poly = pv.PolyData(node_points)
+    nodes_poly = pv.PolyData(node_points.reshape(-1, 3))
 
 
     # Setup PyVista plotter.

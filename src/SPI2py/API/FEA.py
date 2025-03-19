@@ -92,7 +92,7 @@ class ExplicitFEA(ExplicitComponent):
         density = jnp.array(inputs["density"])
         heat_loads = jnp.array(inputs["heat_loads"])
 
-        T = self._compute_primal(density, heat_loads, nodes, elements, dirichlet_nodes, robin_nodes)
+        T = self._compute_primal(density, heat_loads, nodes, elements, dirichlet_nodes, robin_nodes, el_size)
 
         outputs["temperature"] = T
 
@@ -109,27 +109,40 @@ class ExplicitFEA(ExplicitComponent):
     #             d_inputs["density"] += self.vjp_fea(density, d_outputs["temperature"])
 
     @staticmethod
-    def _compute_primal(density, heat_loads, nodes, elements, dirichlet_nodes, robin_nodes):
+    def _compute_primal(density, heat_loads, nodes, elements, dirichlet_nodes, robin_nodes, el_size):
 
         density = density.flatten()
-        # heat_loads = heat_loads.flatten()
+
         base_k = 1.0
 
+
+
         dirichlet_bc_1 = DirichletBC(dirichlet_nodes, T=200)
-        robin_bc_1 = RobinBC(robin_nodes, h=10.0, T_inf=200, area=1)
+        robin_bc_1 = RobinBC(robin_nodes, h=10.0, T_inf=200, area=el_size**2)
         boundary_conditions = [dirichlet_bc_1, robin_bc_1]
 
         # Assemble the global stiffness matrix and load vector.
         K, f = assemble_global_stiffness_matrix(nodes, elements, density, base_k)
 
-        # For each element, add (heat_load/number_of_nodes) to each of its 8 nodes.
+        # # Convert heat loads from element-wise to node-wise
+        # # For each element, add (heat_load/number_of_nodes) to each of its 8 nodes.
+        # # heat_loads = heat_loads.flatten()
+        # nodes_per_elem = 8
+        # heat_load_per_element = 1.0
+        # element_contrib = (heat_load_per_element * density) / nodes_per_elem
+        # elem_contrib_flat = element_contrib.flatten()
+        # node_contrib = jnp.repeat(elem_contrib_flat, nodes_per_elem)
+        # f = f.at[elements.flatten()].add(node_contrib)
+        # f = heat_loads
+
+        # Assume 'heat_loads' is an array of shape (n_el,) with the heat load for each element.
         nodes_per_elem = 8
-        heat_load_per_element=1.0
-        element_contrib = (heat_load_per_element * density) / nodes_per_elem
+        heat_loads = heat_loads.flatten()
+        # 'density' is assumed to be an array of shape (n_el,) or broadcastable to it.
+        element_contrib = (heat_loads * density) / nodes_per_elem
         elem_contrib_flat = element_contrib.flatten()
         node_contrib = jnp.repeat(elem_contrib_flat, nodes_per_elem)
         f = f.at[elements.flatten()].add(node_contrib)
-        # f = heat_loads
 
         # Apply the boundary conditions and partition the system.
         K_ff, K_fp, K_pf, K_pp, f_f, f_p, u_p, idx_f, idx_p = apply_boundary_conditions(K, f, boundary_conditions)
