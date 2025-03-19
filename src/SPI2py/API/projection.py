@@ -78,11 +78,6 @@ class ProjectLinearSplineComponent(ExplicitComponent):
         radii = jnp.array(inputs['radii'])
         heat_load = jnp.array(inputs['heat_load'])
 
-        # Compute the pseudo-densities
-        # penalized_densities, penalized_heat_loads = self._compute_primal(mesh_centers, mesh_size,
-        #                                                                  kernel_centers, kernel_radii,
-        #                                                                  start_points, end_points, radii,
-        #                                                                  heat_load)
 
         jac_pd, jac_phl = jacfwd(self._compute_primal, argnums=(4, 5, 6, 7))(mesh_centers, mesh_size,
                                                                             kernel_centers, kernel_radii,
@@ -99,52 +94,6 @@ class ProjectLinearSplineComponent(ExplicitComponent):
         partials['penalized_heat_loads', 'radii'] = jac_phl[2]
         partials['penalized_heat_loads', 'heat_load'] = jac_phl[3]
 
-
-    # def compute_jacvec_prod(self, inputs, d_inputs, d_outputs, mode):
-    #     # Get constant parameters
-    #     mesh_size = self.options['mesh_size']
-    #     mesh_centers = jnp.array(self.options['mesh_centers'])
-    #     kernel_centers = jnp.array(self.options['kernel_centers'])
-    #     kernel_radii = jnp.array(self.options['kernel_radii'])
-    #
-    #     # Active inputs.
-    #     sp = jnp.array(inputs['start_points'])
-    #     ep = jnp.array(inputs['end_points'])
-    #     rads = jnp.array(inputs['radii'])
-    #     hl = jnp.array(inputs['heat_load'])
-    #
-    #     # Bind the constant parameters so that differentiation is only with respect to the active ones.
-    #     primal_active = partial(
-    #         self._compute_primal,
-    #         mesh_centers, mesh_size, kernel_centers, kernel_radii
-    #     )
-    #
-    #     if mode == 'fwd':
-    #         dsp = jnp.array(d_inputs.get('start_points', jnp.zeros_like(sp)))
-    #         dep = jnp.array(d_inputs.get('end_points', jnp.zeros_like(ep)))
-    #         drads = jnp.array(d_inputs.get('radii', jnp.zeros_like(rads)))
-    #         dhl = jnp.array(d_inputs.get('heat_load', 0.0))
-    #
-    #         # Compute forward-mode derivative for the active inputs only.
-    #         (pen_dens, pen_hl), (d_pen_dens, d_pen_hl) = jax.jvp(
-    #             primal_active,
-    #             (sp, ep, rads, hl),
-    #             (dsp, dep, drads, dhl)
-    #         )
-    #         d_outputs['penalized_densities'] = d_pen_dens
-    #         d_outputs['penalized_heat_loads'] = d_pen_hl
-    #
-    #     elif mode == 'rev':
-    #         pen_dens, pen_hl = primal_active(sp, ep, rads, hl)
-    #         seed_dens = jnp.array(d_outputs.get('penalized_densities', jnp.zeros_like(pen_dens)))
-    #         seed_hl = jnp.array(d_outputs.get('penalized_heat_loads', jnp.zeros_like(pen_hl)))
-    #
-    #         _, vjp_fun = vjp(primal_active, sp, ep, rads, hl)
-    #         grad_sp, grad_ep, grad_rads, grad_hl = vjp_fun((seed_dens, seed_hl))
-    #         d_inputs['start_points'] = grad_sp
-    #         d_inputs['end_points'] = grad_ep
-    #         d_inputs['radii'] = grad_rads
-    #         d_inputs['heat_load'] = grad_hl
 
     @staticmethod
     def _compute_primal(mesh_centers, mesh_size,
@@ -531,7 +480,7 @@ class ProjectionAggregator(ExplicitComponent):
 
         # Aggregate the pseudo-densities
         # aggregated_densities = jnp.zeros_like(densities[0])
-        aggregated_heat_loads = jnp.zeros_like(heat_loads[0])
+        # aggregated_heat_loads = jnp.zeros_like(heat_loads[0])
         # for density in densities:
         #     aggregated_densities += density
 
@@ -546,6 +495,8 @@ class ProjectionAggregator(ExplicitComponent):
         # Manual TODO Change
         # max_density = aggregated_densities.flatten()[132:133]
 
+        # TODO Min
+        # TODO Max above 1?
 
         return aggregated_densities, aggregated_heat_loads, max_density
 

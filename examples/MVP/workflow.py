@@ -48,17 +48,17 @@ model.add_subsystem('projections', projections)
 
 
 # Initialize the Mesh
-x_min, x_max = (-2, 2)
-y_min, y_max = (0, 2.5)
-z_min, z_max = (0, 2.5)
-# x_min, x_max = (-5, 5)
-# y_min, y_max = (-5, 5)
-# z_min, z_max = (-5, 5)
+# x_min, x_max = (-2, 2)
+# y_min, y_max = (0, 2.5)
+# z_min, z_max = (0, 2.5)
+x_min, x_max = (-5, 5)
+y_min, y_max = (-5, 5)
+z_min, z_max = (-5, 5)
 
 # element_size = 0.0675
 # element_size = 0.125
-element_size = 0.25
-# element_size = 0.5
+# element_size = 0.25
+element_size = 0.5
 
 
 nodes, elements, centers, nx, ny, nz, lx, ly, lz = generate_mesh_vec(x_min, x_max, y_min, y_max, z_min, z_max, element_size=element_size)
@@ -143,7 +143,8 @@ prob.model.connect('mux_radii.stacked_output', 'bbv.radii')
 
 
 # Aggregate the pseudo-densities
-projection_aggregator = ProjectionAggregator(n_projections=2, rho_min=3e-3)
+# projection_aggregator = ProjectionAggregator(n_projections=2, rho_min=3e-3)
+projection_aggregator = ProjectionAggregator(n_projections=2, rho_min=1e-1)
 model.projections.add_subsystem('aggregator', projection_aggregator)
 
 model.connect('projections.proj_1.penalized_densities', 'projections.aggregator.densities_0')
@@ -156,17 +157,17 @@ model.connect('projections.proj_2.penalized_heat_loads', 'projections.aggregator
 
 # FEA
 dirichlet_nodes = find_face_nodes(nodes, jnp.array([0.0, 0.0, -1.0]))
+dirichlet_T = 300.0 * jnp.ones(len(dirichlet_nodes))
 robin_nodes = find_face_nodes(nodes, jnp.array([0.0, 0.0, 1.0]))
 FEA = ExplicitFEA(nodes=nodes,
                   elements=elements,
                   el_size=element_size,
                   el_centers=centers,
                   dirichlet_nodes=dirichlet_nodes,
-                  dirichlet_values=jnp.array([0, 0, 0, 0, 0, 0, 0, 0]),
+                  dirichlet_values=dirichlet_T,
                   robin_nodes=robin_nodes,
-                  robin_h=10.0,
-                  robin_T_inf=200.0,
-                  robin_area=0.25)
+                  robin_h=1.0, #10.0,
+                  robin_T_inf=200.0)
 model.add_subsystem('FEA', FEA)
 model.connect('projections.aggregator.aggregated_densities', 'FEA.density')
 model.connect('projections.aggregator.aggregated_heat_loads', 'FEA.heat_loads')
@@ -377,15 +378,23 @@ densities_after = np.array(densities_after)
 T = prob.get_val('FEA.temperature')
 T_np = np.array(T)
 
+print('Min Temp:', np.min(T_np))
+print('Max Temp:', np.max(T_np))
+print('Mean Temp:', np.mean(T_np))
+
 # Plot the results
 plotter = pv.Plotter(shape=(2, 2), window_size=(1500, 500))
 
+
+
+densities_combined = prob.get_val('projections.aggregator.aggregated_densities')
+heat_load_nodes = find_active_nodes(densities_combined, elements, threshold=1e-3)
 
 plot_temperature_distribution(plotter,
                               (0, 0),
                               np.array(nodes),
                               T_np,
-                              heat_load_nodes=np.array([[0, 0, 0]]),
+                              heat_load_nodes=np.array(heat_load_nodes),
                               robin_nodes=robin_nodes,
                               dirichlet_nodes=dirichlet_nodes,
                               dims=(nx + 1, ny + 1, nz + 1),
@@ -435,7 +444,7 @@ plot_grid(plotter, (0, 0), centers, element_size, densities=densities_before)
 #
 # plotter.link_views()
 # plotter.show_axes()
-plotter.show()
+# plotter.show()
 
 # prob.check_partials(includes='system.interconnects.int_1')
 

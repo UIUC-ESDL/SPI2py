@@ -56,7 +56,54 @@ def assemble_global_stiffness_matrix(nodes, elements, density, base_k):
 
 
 # @jit
-def apply_boundary_conditions(K, f, boundary_conditions):
+# def apply_boundary_conditions(K, f, boundary_conditions):
+#     """
+#     A central function to apply boundary conditions to the global stiffness matrix and load vector.
+#
+#     This includes modifying and partitioning the system. This also provides a means to control and
+#     investigate the superimposition of boundary conditions. For example, if we are optimizing the
+#     layout of two pipes with fixed but different temperatures, we can see how selecting one Dirichlet
+#     condition over the other, averaging those conditions, reformulating them as high heat loads rather than
+#     fixed temperature, etc., impact the optimization process.
+#     """
+#     # Extract Dirichlet & Robin BCs
+#     dirichlet_bcs = [bc for bc in boundary_conditions if bc.bc_type == "dirichlet"]
+#     robin_bcs = [bc for bc in boundary_conditions if bc.bc_type == "robin"]
+#
+#     # Apply Robin boundary conditions.
+#     r_nodes = [bc.nodes for bc in robin_bcs][0]
+#     r_h = [bc.h for bc in robin_bcs][0]
+#     r_T_inf = [bc.T_inf for bc in robin_bcs][0]
+#     r_area = [bc.area for bc in robin_bcs][0]
+#
+#     # Add the Robin (convective) contribution to the diagonal entries.
+#     K_add = (r_h * r_area)
+#     K = K.at[r_nodes, r_nodes].add(K_add)
+#
+#     # Add the corresponding contribution to the load vector.
+#     f_add = (r_h * r_area * r_T_inf)
+#     f = f.at[r_nodes].add(f_add)
+#
+#     # Combine and apply the Dirichlet BCs.
+#     d_nodes = [bc.nodes for bc in dirichlet_bcs]
+#     d_T = [bc.T for bc in dirichlet_bcs]
+#
+#     idx_p, u_p = combine_fixed_conditions(d_nodes, d_T)
+#
+#     # Obtain the number of nodes and all node indices.
+#     n_nodes = K.shape[0]
+#     idx = jnp.arange(n_nodes)
+#
+#     # Find the free indices by subtracting the fixed indices from all indices.
+#     idx_f = jnp.setdiff1d(idx, idx_p)
+#
+#     # Partition the stiffness matrix and load vector.
+#     K_ff, K_fp, K_pf, K_pp, f_f, f_p = partition_global_system(K, f, idx_f, idx_p)
+#
+#     return K_ff, K_fp, K_pf, K_pp, f_f, f_p, u_p, idx_f, idx_p
+
+def apply_boundary_conditions(K, f, r_nodes, r_h, r_T_inf, r_area,
+                              d_nodes, d_T):
     """
     A central function to apply boundary conditions to the global stiffness matrix and load vector.
 
@@ -66,15 +113,6 @@ def apply_boundary_conditions(K, f, boundary_conditions):
     condition over the other, averaging those conditions, reformulating them as high heat loads rather than
     fixed temperature, etc., impact the optimization process.
     """
-    # Extract Dirichlet & Robin BCs
-    dirichlet_bcs = [bc for bc in boundary_conditions if bc.bc_type == "dirichlet"]
-    robin_bcs = [bc for bc in boundary_conditions if bc.bc_type == "robin"]
-
-    # Apply Robin boundary conditions.
-    r_nodes = [bc.nodes for bc in robin_bcs][0]
-    r_h = [bc.h for bc in robin_bcs][0]
-    r_T_inf = [bc.T_inf for bc in robin_bcs][0]
-    r_area = [bc.area for bc in robin_bcs][0]
 
     # Add the Robin (convective) contribution to the diagonal entries.
     K_add = (r_h * r_area)
@@ -84,11 +122,8 @@ def apply_boundary_conditions(K, f, boundary_conditions):
     f_add = (r_h * r_area * r_T_inf)
     f = f.at[r_nodes].add(f_add)
 
-    # Combine and apply the Dirichlet BCs.
-    d_nodes = [bc.nodes for bc in dirichlet_bcs]
-    d_T = [bc.T for bc in dirichlet_bcs]
-
-    idx_p, u_p = combine_fixed_conditions(d_nodes, d_T)
+    idx_p, u_p = d_nodes, d_T
+    # idx_p, u_p = combine_fixed_conditions(d_nodes, d_T)
 
     # Obtain the number of nodes and all node indices.
     n_nodes = K.shape[0]
@@ -101,7 +136,6 @@ def apply_boundary_conditions(K, f, boundary_conditions):
     K_ff, K_fp, K_pf, K_pp, f_f, f_p = partition_global_system(K, f, idx_f, idx_p)
 
     return K_ff, K_fp, K_pf, K_pp, f_f, f_p, u_p, idx_f, idx_p
-
 
 
 def append_global_system(K, f, append_indices, K_add, f_add):
@@ -170,30 +204,30 @@ def partition_global_system(K, f, idx_f, idx_p):
 #     return K_ff, K_fp, K_pf, K_pp, f_f, f_p
 
 
-def combine_fixed_conditions(idx_p, D_p):
-    """
-    Combine multiple sets of fixed nodes and their prescribed values into single arrays.
-
-    Parameters:
-      idx_p: a list (or tuple) of 1D arrays of prescribed node indices.
-      D_p: a list (or tuple) of 1D arrays (or scalars) of prescribed values,
-                         corresponding to each set of fixed nodes.
-
-    Returns:
-      combined_fixed_nodes: a 1D array containing all fixed node indices.
-      combined_fixed_values: a 1D array containing the prescribed value for each fixed node.
-    """
-    combined_nodes = []
-    combined_values = []
-    for nodes_i, values_i in zip(idx_p, D_p):
-        # Ensure values_i is a 1D array broadcasted to the same length as nodes_i.
-        values_i = jnp.broadcast_to(jnp.atleast_1d(values_i), (nodes_i.shape[0],))
-        combined_nodes.append(nodes_i)
-        combined_values.append(values_i)
-
-    combined_fixed_nodes = jnp.concatenate(combined_nodes)
-    combined_fixed_values = jnp.concatenate(combined_values)
-    return combined_fixed_nodes, combined_fixed_values
+# def combine_fixed_conditions(idx_p, D_p):
+#     """
+#     Combine multiple sets of fixed nodes and their prescribed values into single arrays.
+#
+#     Parameters:
+#       idx_p: a list (or tuple) of 1D arrays of prescribed node indices.
+#       D_p: a list (or tuple) of 1D arrays (or scalars) of prescribed values,
+#                          corresponding to each set of fixed nodes.
+#
+#     Returns:
+#       combined_fixed_nodes: a 1D array containing all fixed node indices.
+#       combined_fixed_values: a 1D array containing the prescribed value for each fixed node.
+#     """
+#     combined_nodes = []
+#     combined_values = []
+#     for nodes_i, values_i in zip(idx_p, D_p):
+#         # Ensure values_i is a 1D array broadcasted to the same length as nodes_i.
+#         values_i = jnp.broadcast_to(jnp.atleast_1d(values_i), (nodes_i.shape[0],))
+#         combined_nodes.append(nodes_i)
+#         combined_values.append(values_i)
+#
+#     combined_fixed_nodes = jnp.concatenate(combined_nodes)
+#     combined_fixed_values = jnp.concatenate(combined_values)
+#     return combined_fixed_nodes, combined_fixed_values
 
 
 

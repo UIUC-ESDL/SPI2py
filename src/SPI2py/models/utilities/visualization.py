@@ -271,7 +271,7 @@ def plot_temperature_distribution(plotter,
     # vol.prop.interpolation_type = 'linear'
 
 
-def plot_nodes(plotter, subplot_index, nodes, selected_nodes, label, color="blue",point_size=10):
+def plot_nodes(plotter, subplot_index, nodes, selected_nodes, label, color="blue",point_size=5):
 
     plotter.subplot(*subplot_index)
 

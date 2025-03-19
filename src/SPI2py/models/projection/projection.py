@@ -173,20 +173,27 @@ def project_capsules(grid_centers, grid_size,
 
     # Sum densities across all cylinders
     # Combine the pseudo densities for all cylinders in each kernel sphere
-    # Collapse the last axis to get the combined density for each kernel sphere
-    densities = jnp.sum(densities, axis=4)
 
     # Combine the pseudo densities for all kernel spheres in one grid
     densities = jnp.sum(densities, axis=3)
 
-    # Store the densities in the output array
-    all_densities = all_densities.at[i1:i2 + 1, j1:j2 + 1, k1:k2 + 1].set(densities)
-
     # Penalize the densities
-    # TODO Change pen
-    all_densities_penalized = penalize_densities(all_densities, penalty_factor=3)
+    densities_penalized = penalize_densities(densities, penalty_factor=3)
 
-    return all_densities_penalized
+    # Collapse the last axis to get the combined density for each kernel sphere
+    # densities = jnp.sum(densities, axis=4)
+    # Combine the densities of each bar
+    densities_combined = kreisselmeier_steinhauser_max(densities_penalized, axis=3)
+
+    # Store the densities in the output array
+    all_densities = all_densities.at[i1:i2 + 1, j1:j2 + 1, k1:k2 + 1].set(densities_combined)
+
+
+
+    # combined_densities = kreisselmeier_steinhauser_max()
+
+
+    return all_densities
 
 
 def project_interconnect(grid_centers, grid_size,

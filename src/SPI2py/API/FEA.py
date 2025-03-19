@@ -2,6 +2,7 @@ import jax.numpy as jnp
 import jax
 from jax import jvp, vjp
 from jax.scipy.sparse.linalg import cg
+from jax.experimental.sparse import BCOO
 from jax.experimental.sparse import coo_fromdense
 from openmdao.api import ExplicitComponent, IndepVarComp
 
@@ -58,10 +59,8 @@ class ExplicitFEA(ExplicitComponent):
         self.options.declare('robin_nodes', types=jnp.ndarray)
         self.options.declare('robin_h', types=float)
         self.options.declare('robin_T_inf', types=float)
-        self.options.declare('robin_area', types=float)
 
     def setup(self):
-
 
         self.add_input("density", shape_by_conn=True, desc="Material density")
         self.add_input("heat_loads", shape_by_conn=True)
@@ -69,10 +68,10 @@ class ExplicitFEA(ExplicitComponent):
         n_el = self.options['nodes'].shape[0]
         self.add_output("temperature", shape=(n_el,), desc="Computed temperature field")
 
-    # def setup_partials(self):
-    #     # Declare that we are using matrix-free derivatives
-    #     self.declare_partials(of="temperature", wrt="density", method="exact")
-    #     self.declare_partials(of="temperature", wrt="heat_loads", method="exact")
+    def setup_partials(self):
+        # Declare that we are using matrix-free derivatives
+        self.declare_partials(of="temperature", wrt="density", method="exact")
+        self.declare_partials(of="temperature", wrt="heat_loads", method="exact")
 
     def compute(self, inputs, outputs):
 
@@ -81,20 +80,23 @@ class ExplicitFEA(ExplicitComponent):
         elements = self.options['elements']
         el_size = self.options['el_size']
         el_centers = self.options['el_centers']
-        dirichlet_nodes = self.options['dirichlet_nodes']
-        dirichlet_values = self.options['dirichlet_values']
         robin_nodes = self.options['robin_nodes']
         robin_h = self.options['robin_h']
         robin_T_inf = self.options['robin_T_inf']
-        robin_area = self.options['robin_area']
+        dirichlet_nodes = self.options['dirichlet_nodes']
+        dirichlet_values = self.options['dirichlet_values']
+
+        robin_area = el_size ** 2
 
         # Unpack the inputs
         density = jnp.array(inputs["density"])
         heat_loads = jnp.array(inputs["heat_loads"])
 
-        T = self._compute_primal(density, heat_loads, nodes, elements, dirichlet_nodes, robin_nodes, el_size)
+        temp = self._compute_primal(density, heat_loads, nodes, elements,
+                                    robin_nodes, robin_h, robin_T_inf, robin_area,
+                                    dirichlet_nodes, dirichlet_values)
 
-        outputs["temperature"] = T
+        outputs["temperature"] = temp
 
     # def compute_jacvec_prod(self, inputs, d_inputs, d_outputs, mode):
     #     """ Computes matrix-free vector-Jacobian products (VJP). """
@@ -109,43 +111,33 @@ class ExplicitFEA(ExplicitComponent):
     #             d_inputs["density"] += self.vjp_fea(density, d_outputs["temperature"])
 
     @staticmethod
-    def _compute_primal(density, heat_loads, nodes, elements, dirichlet_nodes, robin_nodes, el_size):
+    def _compute_primal(density, heat_loads, nodes, elements,
+                        r_nodes, r_h, r_T_inf, r_area,
+                        d_nodes, d_T):
 
+        # Flatten the inputs
         density = density.flatten()
+        heat_loads = heat_loads.flatten()
 
+        # Set the base thermal conductivity
+        # TODO What?
         base_k = 1.0
 
-
-
-        dirichlet_bc_1 = DirichletBC(dirichlet_nodes, T=200)
-        robin_bc_1 = RobinBC(robin_nodes, h=10.0, T_inf=200, area=el_size**2)
-        boundary_conditions = [dirichlet_bc_1, robin_bc_1]
 
         # Assemble the global stiffness matrix and load vector.
         K, f = assemble_global_stiffness_matrix(nodes, elements, density, base_k)
 
-        # # Convert heat loads from element-wise to node-wise
-        # # For each element, add (heat_load/number_of_nodes) to each of its 8 nodes.
-        # # heat_loads = heat_loads.flatten()
-        # nodes_per_elem = 8
-        # heat_load_per_element = 1.0
-        # element_contrib = (heat_load_per_element * density) / nodes_per_elem
-        # elem_contrib_flat = element_contrib.flatten()
-        # node_contrib = jnp.repeat(elem_contrib_flat, nodes_per_elem)
-        # f = f.at[elements.flatten()].add(node_contrib)
-        # f = heat_loads
-
-        # Assume 'heat_loads' is an array of shape (n_el,) with the heat load for each element.
+        # Apply the heat loads to the system.
         nodes_per_elem = 8
-        heat_loads = heat_loads.flatten()
-        # 'density' is assumed to be an array of shape (n_el,) or broadcastable to it.
         element_contrib = (heat_loads * density) / nodes_per_elem
         elem_contrib_flat = element_contrib.flatten()
         node_contrib = jnp.repeat(elem_contrib_flat, nodes_per_elem)
         f = f.at[elements.flatten()].add(node_contrib)
 
         # Apply the boundary conditions and partition the system.
-        K_ff, K_fp, K_pf, K_pp, f_f, f_p, u_p, idx_f, idx_p = apply_boundary_conditions(K, f, boundary_conditions)
+        K_ff, K_fp, K_pf, K_pp, f_f, f_p, u_p, idx_f, idx_p = apply_boundary_conditions(K, f,
+                                                                                        r_nodes, r_h, r_T_inf, r_area,
+                                                                                        d_nodes, d_T)
 
         # Solve the partitioned system for the unknown displacements.
         # K_ff @ u_f + K_fp @ u_p = f_f
@@ -155,9 +147,8 @@ class ExplicitFEA(ExplicitComponent):
 
         # Convert K_ff to a sparse format for efficient solving
         # K_ff = BCOO.from_scipy_sparse(coo_matrix(K_ff))
-        K_ff = coo_fromdense(K_ff)
-
-        # K_ff = BCOO.fromdense(K_ff)
+        # K_ff = coo_fromdense(K_ff)
+        K_ff = BCOO.fromdense(K_ff)
 
         # Solve the partitioned system for the unknown displacements using Conjugate Gradient (CG)
         def fea_solve(rhs):
