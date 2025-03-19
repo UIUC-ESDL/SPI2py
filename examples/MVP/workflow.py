@@ -25,7 +25,7 @@ from SPI2py.models.physics.distributed.mesh import generate_mesh_vec
 from SPI2py.models.projection.mesh_kernels import create_uniform_kernel
 from SPI2py.models.utilities.visualization import plot_grid, plot_spheres, plot_capsules, plot_stl_file, plot_AABB, plot_capsules2
 from SPI2py.models.utilities.visualization import plot_temperature_distribution
-
+from SPI2py.models.physics.distributed.mesh import generate_mesh_vec, find_active_nodes, find_face_nodes
 
 # Set up the JAX backend
 jax.config.update("jax_enable_x64", True)
@@ -155,13 +155,15 @@ model.connect('projections.proj_2.penalized_heat_loads', 'projections.aggregator
 # model.connect('projections.proj_3.penalized_heat_loads', 'projections.aggregator.heat_loads_2')
 
 # FEA
+dirichlet_nodes = find_face_nodes(nodes, jnp.array([0.0, 0.0, -1.0]))
+robin_nodes = find_face_nodes(nodes, jnp.array([0.0, 0.0, 1.0]))
 FEA = ExplicitFEA(nodes=nodes,
                   elements=elements,
                   el_size=element_size,
                   el_centers=centers,
-                  dirichlet_nodes=jnp.array([0, 1, 2, 3, 4, 5, 6, 7]),
+                  dirichlet_nodes=dirichlet_nodes,
                   dirichlet_values=jnp.array([0, 0, 0, 0, 0, 0, 0, 0]),
-                  robin_nodes=jnp.array([8, 9, 10, 11, 12, 13, 14, 15]),
+                  robin_nodes=robin_nodes,
                   robin_h=10.0,
                   robin_T_inf=200.0,
                   robin_area=0.25)
@@ -383,12 +385,13 @@ plot_temperature_distribution(plotter,
                               (0, 0),
                               np.array(nodes),
                               T_np,
-                              np.array([[0, 0, 0]]),
-                              np.array([0, 1, 2, 3, 4, 5, 6, 7]),
-                              np.array([8, 9, 10, 11, 12, 13, 14, 15]),
+                              heat_load_nodes=np.array([[0, 0, 0]]),
+                              robin_nodes=robin_nodes,
+                              dirichlet_nodes=dirichlet_nodes,
                               dims=(nx + 1, ny + 1, nz + 1),
                               cmap='jet')
 
+plot_grid(plotter, (0, 0), centers, element_size, densities=densities_before)
 
 
 # # Plot the geometries before optimization
@@ -432,7 +435,7 @@ plot_temperature_distribution(plotter,
 #
 # plotter.link_views()
 # plotter.show_axes()
-# plotter.show()
+plotter.show()
 
 # prob.check_partials(includes='system.interconnects.int_1')
 

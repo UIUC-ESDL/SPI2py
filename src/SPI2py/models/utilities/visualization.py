@@ -12,7 +12,7 @@ def plot_grid(plotter,
 
     # Create the subplot
     plotter.subplot(*subplot_index)
-    plotter.render_window.SetMultiSamples(0)
+    # plotter.render_window.SetMultiSamples(0)
 
     # Plot the bounding box (unchanged)
     flat_centers = centers.reshape(-1, 3)
@@ -237,7 +237,7 @@ def plot_temperature_distribution(plotter,
 
     # Create the subplot
     plotter.subplot(*subplot_index)
-    plotter.render_window.SetMultiSamples(0)
+    # plotter.render_window.SetMultiSamples(0)
 
     # Infer grid dimensions if not provided.
     if dims is None:
@@ -268,7 +268,7 @@ def plot_temperature_distribution(plotter,
     # Force the scalar range on the volume mapper
     vol.mapper.scalar_range = climits
 
-    vol.prop.interpolation_type = 'linear'
+    # vol.prop.interpolation_type = 'linear'
 
 
 def plot_nodes(plotter, subplot_index, nodes, selected_nodes, label, color="blue",point_size=10):
