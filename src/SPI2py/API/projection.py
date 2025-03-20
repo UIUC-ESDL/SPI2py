@@ -185,10 +185,12 @@ class ProjectComponent(ExplicitComponent):
         mesh_centers = jnp.array(self.options['mesh_centers'])
         kernel_centers = jnp.array(self.options['kernel_centers'])
         kernel_radii = jnp.array(self.options['kernel_radii'])
+
         # Get input variables.
         centers = jnp.array(inputs['centers'])
         radii = jnp.array(inputs['radii'])
         heat_load = jnp.array(inputs['heat_load'])
+
         # Pack the primals in the order expected by _compute_primal.
         primals = (mesh_centers, mesh_size, centers, radii, kernel_centers, kernel_radii, heat_load)
 
@@ -199,32 +201,39 @@ class ProjectComponent(ExplicitComponent):
             t_kernel_centers = jnp.zeros_like(kernel_centers)
             t_kernel_radii = jnp.zeros_like(kernel_radii)
 
-
             t_centers = d_inputs['centers'] if 'centers' in d_inputs else jnp.zeros_like(centers)
-            # For 'radii' and 'heat_load', use the provided tangent if available; otherwise, use zeros.
             t_radii = d_inputs['radii'] if 'radii' in d_inputs else jnp.zeros_like(radii)
             t_heat_load = d_inputs['heat_load'] if 'heat_load' in d_inputs else jnp.zeros_like(heat_load)
+
             tangents = (t_mesh_centers, t_mesh_size, t_centers, t_radii, t_kernel_centers, t_kernel_radii, t_heat_load)
+
             # Compute the Jacobian-vector product (JVP) using JAX.
             _, tangent_out = jvp(self._compute_primal, primals, tangents)
+
             # Unpack and set the outputs.
-            d_outputs['densities'] = np.asarray(tangent_out[0])
-            d_outputs['penalized_densities'] = np.asarray(tangent_out[1])
-            d_outputs['penalized_heat_loads'] = np.asarray(tangent_out[2])
+            d_outputs['densities'] = tangent_out[0]
+            d_outputs['penalized_densities'] = tangent_out[1]
+            d_outputs['penalized_heat_loads'] = tangent_out[2]
+
         elif mode == 'rev':
-            # Reverse mode: compute the vector-Jacobian product (VJP).
             primal_out, pullback = vjp(self._compute_primal, *primals)
+
             # The cotangent for outputs is provided in d_outputs.
             cotangent = (d_outputs['densities'],
                          d_outputs['penalized_densities'],
                          d_outputs['penalized_heat_loads'])
+
             # Compute the pullback (adjoint).
             grads = pullback(cotangent)
-            # grads is a tuple corresponding to the derivatives with respect to each input in primals.
-            # We only set derivatives for the design inputs.
-            d_inputs['centers'] = np.asarray(grads[2])
-            d_inputs['radii'] = np.asarray(grads[3])
-            d_inputs['heat_load'] = np.asarray(grads[6])
+
+            # Only assign derivatives to design inputs.
+            # 0 = mesh_centers, 1 = mesh_size,
+            # 2 = centers, 3 = radii,
+            # 4 = kernel_centers, 5 = kernel_radii,
+            # 6 = heat_load
+            d_inputs['centers'] = grads[2]
+            d_inputs['radii'] = grads[3]
+            d_inputs['heat_load'] = grads[6]
 
 
     @staticmethod
@@ -445,41 +454,33 @@ class ProjectionAggregator(ExplicitComponent):
         primals = (densities, heat_loads, rho_min)
 
         if mode == 'fwd':
-            # In forward mode, build the corresponding tangent tuple.
-            # For each densities input, the tangent is provided in d_inputs.
             tan_densities = [jnp.array(d_inputs[f'densities_{i}']) for i in range(n_projections)]
             tan_heat_loads = [jnp.array(d_inputs[f'heat_loads_{i}']) for i in range(n_projections)]
-            tan_rho_min = jnp.zeros_like(rho_min)  # assume rho_min is constant
+            tan_rho_min = jnp.zeros_like(rho_min)
             tangents = (tan_densities, tan_heat_loads, tan_rho_min)
 
             # Compute the forward Jacobian-vector product.
             _, tangent_out = jvp(self._compute_primal, primals, tangents)
 
-            # tangent_out is a tuple with three entries.
-            d_outputs['aggregated_densities'] = tangent_out[0]
-            d_outputs['aggregated_heat_loads'] = tangent_out[1]
-            d_outputs['max_density'] = tangent_out[2]
+            d_outputs['aggregated_densities'] += tangent_out[0]
+            d_outputs['aggregated_heat_loads'] += tangent_out[1]
+            d_outputs['max_density'] += tangent_out[2]
 
         elif mode == 'rev':
-            # In reverse mode, use the VJP (vector-Jacobian product).
+
             primal_out, pullback = vjp(self._compute_primal, *primals)
-            # d_outputs contains cotangents for each output.
+
             cotan_agg_dens = d_outputs['aggregated_densities']
             cotan_agg_heat = d_outputs['aggregated_heat_loads']
             cotan_max = d_outputs['max_density']
-            # Call pullback with a tuple of cotangents.
-            grads = pullback((cotan_agg_dens, cotan_agg_heat, cotan_max))
-            # grads is a tuple with three entries corresponding to:
-            # 0: gradient with respect to densities (which is a list of arrays)
-            # 1: gradient with respect to heat_loads (list of arrays)
-            # 2: gradient with respect to rho_min (scalar)
-            grad_densities, grad_heat_loads, grad_max_density = grads
-            # TODO Remove for-loops
-            for i in range(n_projections):
-                d_inputs[f'densities_{i}'] = grad_densities[i]
-                d_inputs[f'heat_loads_{i}'] = grad_heat_loads[i]
 
-            # If there are other inputs (e.g., element_length) that are not varied, assign zeros as needed.
+            # Evaluate the pullback (adjoint) for the cotangents.
+            grads = pullback((cotan_agg_dens, cotan_agg_heat, cotan_max))
+
+            for i in range(n_projections):
+                d_inputs[f'densities_{i}'] += grads[0][i]
+                d_inputs[f'heat_loads_{i}'] += grads[1][i]
+
 
     @staticmethod
     def _compute_primal(densities, heat_loads, rho_min):
