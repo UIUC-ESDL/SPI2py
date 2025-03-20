@@ -202,45 +202,43 @@ class ExplicitFEA(ExplicitComponent):
                    dirichlet_nodes, dirichlet_values)
 
         if mode == "fwd":
-            # Build tangent (directional) inputs only for the active variables.
-            tan_density = jnp.array(d_inputs["density"]) if "density" in d_inputs and d_inputs[
-                "density"] is not None else jnp.zeros_like(density)
-            tan_heat_loads = jnp.array(d_inputs["heat_loads"]) if "heat_loads" in d_inputs and d_inputs[
-                "heat_loads"] is not None else jnp.zeros_like(heat_loads)
-            # For all other parameters, the directional derivative is zero.
+
+            # Build tangent
+            tan_density = jnp.array(d_inputs["density"]) if "density" in d_inputs and d_inputs["density"] is not None else jnp.zeros_like(density)
+            tan_heat_loads = jnp.array(d_inputs["heat_loads"]) if "heat_loads" in d_inputs and d_inputs["heat_loads"] is not None else jnp.zeros_like(heat_loads)
             tan_nodes = jnp.zeros_like(nodes)
             tan_elements = jnp.zeros_like(elements)
             tan_robin_nodes = jnp.zeros_like(robin_nodes)
-            tan_robin_h = 0.0
-            tan_robin_T_inf = 0.0
-            tan_robin_area = 0.0  # since robin_area is computed from el_size
+            tan_robin_h = jnp.zeros_like(robin_h)
+            tan_robin_T_inf = jnp.zeros_like(robin_T_inf)
+            tan_robin_area = jnp.zeros_like(robin_area)
             tan_dirichlet_nodes = jnp.zeros_like(dirichlet_nodes)
             tan_dirichlet_values = jnp.zeros_like(dirichlet_values)
+
             tangents = (tan_density, tan_heat_loads, tan_nodes, tan_elements,
                         tan_robin_nodes, tan_robin_h, tan_robin_T_inf, tan_robin_area,
                         tan_dirichlet_nodes, tan_dirichlet_values)
-            # Compute forward-mode JVP. Since _compute_primal returns a tuple (u, u_max),
-            # tangent_out will be a tuple with the corresponding directional derivatives.
+
+            # Compute forward-mode JVP
             _, tangent_out = jvp(self._compute_primal, primals, tangents)
+
             d_outputs["temperature"] = tangent_out[0]
             d_outputs["max_temperature"] = tangent_out[1]
 
         elif mode == "rev":
-            # Compute the reverse-mode VJP.
-            # _compute_primal returns a tuple (u, u_max)
-            primal_out, pullback = vjp(self._compute_primal, *primals)
-            cotan_temperature = d_outputs["temperature"] if "temperature" in d_outputs and d_outputs[
-                "temperature"] is not None else jnp.zeros_like(primal_out[0])
-            cotan_max_temperature = d_outputs["max_temperature"] if "max_temperature" in d_outputs and d_outputs[
-                "max_temperature"] is not None else 0.0
-            # The pullback now expects a tuple of cotangents.
-            grads = pullback((cotan_temperature, cotan_max_temperature))
-            # grads is a tuple with gradients for each input argument;
-            # we only need to accumulate contributions for our optimization variables:
-            # d_inputs["density"] = grads[0]
-            # d_inputs["heat_loads"] = grads[1]
-            d_inputs["density"] = d_inputs.get("density", 0) + grads[0]
-            d_inputs["heat_loads"] = d_inputs.get("heat_loads", 0) + grads[1]
+
+            _, pullback = vjp(self._compute_primal, *primals)
+
+            cotangent = (d_outputs["temperature"],
+                         d_outputs["max_temperature"])
+
+            grads = pullback(cotangent)
+
+            # Only assign the non-None gradients
+            # 0 = density, 1 = heat_loads
+            # 2, 3, ... are constants
+            d_inputs["density"] += grads[0]
+            d_inputs["heat_loads"] += grads[1]
 
 
 class BoundaryConditionAggregator(ExplicitComponent):

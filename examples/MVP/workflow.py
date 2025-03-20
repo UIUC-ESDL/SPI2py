@@ -476,6 +476,6 @@ t3 = time_ns()
 total_time = (t3 - t1) / 1e9
 print(f"Total time: {total_time} seconds")
 
-pf = prob.check_partials(includes='projections.proj_1')
+pf = prob.check_partials(includes='FEA')
 
 print('Done')
