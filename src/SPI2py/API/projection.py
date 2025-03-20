@@ -3,6 +3,8 @@ from functools import partial
 import jax.numpy as jnp
 from jax import jacfwd, jvp, vjp
 from openmdao.api import ExplicitComponent, Group
+
+from ..models.geometry.cylinders import create_cylinders
 from ..models.projection.projection import project_component, project_interconnect, project_capsules
 from ..models.utilities.aggregation import kreisselmeier_steinhauser_max
 
@@ -101,7 +103,7 @@ class ProjectLinearSplineComponent(ExplicitComponent):
                         start_points, end_points, radii,
                         heat_load):
 
-        penalized_densities = project_capsules(mesh_centers, mesh_size,
+        _, penalized_densities = project_capsules(mesh_centers, mesh_size,
                                                kernel_centers, kernel_radii,
                                                start_points, end_points, radii)
 
@@ -355,6 +357,9 @@ class ProjectInterconnect(ExplicitComponent):
                         kernel_centers, kernel_radii,
                         heat_load):
 
+        # Decompose control points into start and end points
+        start_points, end_points, radii = create_cylinders(cyl_points, cyl_radii)
+
         densities, penalized_densities = project_interconnect(mesh_centers, mesh_size,
                                                       cyl_points, cyl_radii,
                                                       kernel_centers, kernel_radii)
@@ -469,6 +474,7 @@ class ProjectionAggregator(ExplicitComponent):
             # 1: gradient with respect to heat_loads (list of arrays)
             # 2: gradient with respect to rho_min (scalar)
             grad_densities, grad_heat_loads, grad_max_density = grads
+            # TODO Remove for-loops
             for i in range(n_projections):
                 d_inputs[f'densities_{i}'] = grad_densities[i]
                 d_inputs[f'heat_loads_{i}'] = grad_heat_loads[i]
@@ -489,6 +495,7 @@ class ProjectionAggregator(ExplicitComponent):
 
         # Ensure that no pseudo-density is below the minimum value
         # aggregated_densities = jnp.maximum(aggregated_densities, rho_min)
+        aggregated_densities = jnp.where(aggregated_densities < rho_min, rho_min, aggregated_densities)
 
         # Calculate the maximum pseudo-density
         max_density = kreisselmeier_steinhauser_max(aggregated_densities.flatten(), rho=100)

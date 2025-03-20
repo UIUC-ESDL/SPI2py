@@ -10,6 +10,8 @@ from SPI2py.models.physics.distributed.mesh import generate_mesh_vec
 from SPI2py.models.projection.mesh_kernels import create_uniform_kernel
 from SPI2py.models.physics.distributed.assembly import assemble_global_stiffness_matrix, apply_boundary_conditions
 from SPI2py.models.physics.distributed.assembly import DirichletBC, RobinBC
+from SPI2py.models.utilities.aggregation import kreisselmeier_steinhauser_max, kreisselmeier_steinhauser_min
+
 
 class Mesh(IndepVarComp):
     def initialize(self):
@@ -67,11 +69,14 @@ class ExplicitFEA(ExplicitComponent):
 
         n_el = self.options['nodes'].shape[0]
         self.add_output("temperature", shape=(n_el,), desc="Computed temperature field")
+        self.add_output("max_temperature", val=0.0, desc="Computed maximum temperature")
 
     def setup_partials(self):
         # Declare that we are using matrix-free derivatives
         self.declare_partials(of="temperature", wrt="density", method="exact")
         self.declare_partials(of="temperature", wrt="heat_loads", method="exact")
+        self.declare_partials(of="max_temperature", wrt="density", method="exact")
+        self.declare_partials(of="max_temperature", wrt="heat_loads", method="exact")
 
     def compute(self, inputs, outputs):
 
@@ -92,23 +97,24 @@ class ExplicitFEA(ExplicitComponent):
         density = jnp.array(inputs["density"])
         heat_loads = jnp.array(inputs["heat_loads"])
 
-        temp = self._compute_primal(density, heat_loads, nodes, elements,
+        temp, max_temp = self._compute_primal(density, heat_loads, nodes, elements,
                                     robin_nodes, robin_h, robin_T_inf, robin_area,
                                     dirichlet_nodes, dirichlet_values)
 
+        # def f(density, heat_loads, nodes, elements,
+        #       robin_nodes, robin_h, robin_T_inf, robin_area,
+        #       dirichlet_nodes, dirichlet_values):
+        #     temp, max_temp = self._compute_primal(density, heat_loads, nodes, elements,
+        #                                           robin_nodes, robin_h, robin_T_inf, robin_area,
+        #                                           dirichlet_nodes, dirichlet_values)
+        #     return max_temp
+        # from jax import jacrev
+        # j = jacrev(f, argnums=(0, 1))
+        # j(density, heat_loads, nodes, elements,
+        #   robin_nodes, robin_h, robin_T_inf, robin_area,
+        #   dirichlet_nodes, dirichlet_values)
         outputs["temperature"] = temp
-
-    # def compute_jacvec_prod(self, inputs, d_inputs, d_outputs, mode):
-    #     """ Computes matrix-free vector-Jacobian products (VJP). """
-    #     density = inputs["density"]
-    #
-    #     if mode == "fwd":
-    #         if "density" in d_inputs:
-    #             d_outputs["temperature"] += self.jvp_fea(density, d_inputs["density"])
-    #
-    #     elif mode == "rev":
-    #         if "temperature" in d_outputs:
-    #             d_inputs["density"] += self.vjp_fea(density, d_outputs["temperature"])
+        outputs["max_temperature"] = max_temp
 
     @staticmethod
     def _compute_primal(density, heat_loads, nodes, elements,
@@ -130,8 +136,7 @@ class ExplicitFEA(ExplicitComponent):
         # Apply the heat loads to the system.
         nodes_per_elem = 8
         element_contrib = (heat_loads * density) / nodes_per_elem
-        elem_contrib_flat = element_contrib.flatten()
-        node_contrib = jnp.repeat(elem_contrib_flat, nodes_per_elem)
+        node_contrib = jnp.repeat(element_contrib, nodes_per_elem)
         f = f.at[elements.flatten()].add(node_contrib)
 
         # Apply the boundary conditions and partition the system.
@@ -163,17 +168,79 @@ class ExplicitFEA(ExplicitComponent):
         u = u.at[idx_f].set(u_f)
         u = u.at[idx_p].set(u_p)
 
-        return u
+        # Calculate the max temp
+        # u_max = kreisselmeier_steinhauser_max(u)
+        # TODO Reset
+        u_max = kreisselmeier_steinhauser_min(u)
 
-    # def jvp_fea(self, density, d_density):
-    #     """ Computes forward-mode JVP for FEA. """
-    #     jvp_fn = jvp(self.fea_solve, (density,), (d_density,))
-    #     return jvp_fn[1]  # Extracts the JVP result
-    #
-    # def vjp_fea(self, density, d_temperature):
-    #     """ Computes reverse-mode VJP for FEA. """
-    #     vjp_fn = vjp(self.fea_solve, density)[1]
-    #     return vjp_fn(d_temperature)[0]  # Extracts the VJP result
+        return u, u_max
+
+    def compute_jacvec_prod(self, inputs, d_inputs, d_outputs, mode):
+        """
+        Compute the matrix-free Jacobian-vector product for both outputs:
+          - "temperature" (full field) and
+          - "max_temperature" (a scalar, e.g., from a Kreisselmeier–Steinhauser function).
+        """
+        # Get current input values.
+        density = jnp.array(inputs["density"])
+        heat_loads = jnp.array(inputs["heat_loads"])
+
+        # Unpack options.
+        nodes = self.options['nodes']
+        elements = self.options['elements']
+        el_size = self.options['el_size']
+        robin_nodes = self.options['robin_nodes']
+        robin_h = self.options['robin_h']
+        robin_T_inf = self.options['robin_T_inf']
+        dirichlet_nodes = self.options['dirichlet_nodes']
+        dirichlet_values = self.options['dirichlet_values']
+        robin_area = el_size ** 2
+
+        # Prepare the full set of "primal" arguments.
+        primals = (density, heat_loads, nodes, elements,
+                   robin_nodes, robin_h, robin_T_inf, robin_area,
+                   dirichlet_nodes, dirichlet_values)
+
+        if mode == "fwd":
+            # Build tangent (directional) inputs only for the active variables.
+            tan_density = jnp.array(d_inputs["density"]) if "density" in d_inputs and d_inputs[
+                "density"] is not None else jnp.zeros_like(density)
+            tan_heat_loads = jnp.array(d_inputs["heat_loads"]) if "heat_loads" in d_inputs and d_inputs[
+                "heat_loads"] is not None else jnp.zeros_like(heat_loads)
+            # For all other parameters, the directional derivative is zero.
+            tan_nodes = jnp.zeros_like(nodes)
+            tan_elements = jnp.zeros_like(elements)
+            tan_robin_nodes = jnp.zeros_like(robin_nodes)
+            tan_robin_h = 0.0
+            tan_robin_T_inf = 0.0
+            tan_robin_area = 0.0  # since robin_area is computed from el_size
+            tan_dirichlet_nodes = jnp.zeros_like(dirichlet_nodes)
+            tan_dirichlet_values = jnp.zeros_like(dirichlet_values)
+            tangents = (tan_density, tan_heat_loads, tan_nodes, tan_elements,
+                        tan_robin_nodes, tan_robin_h, tan_robin_T_inf, tan_robin_area,
+                        tan_dirichlet_nodes, tan_dirichlet_values)
+            # Compute forward-mode JVP. Since _compute_primal returns a tuple (u, u_max),
+            # tangent_out will be a tuple with the corresponding directional derivatives.
+            _, tangent_out = jvp(self._compute_primal, primals, tangents)
+            d_outputs["temperature"] = tangent_out[0]
+            d_outputs["max_temperature"] = tangent_out[1]
+
+        elif mode == "rev":
+            # Compute the reverse-mode VJP.
+            # _compute_primal returns a tuple (u, u_max)
+            primal_out, pullback = vjp(self._compute_primal, *primals)
+            cotan_temperature = d_outputs["temperature"] if "temperature" in d_outputs and d_outputs[
+                "temperature"] is not None else jnp.zeros_like(primal_out[0])
+            cotan_max_temperature = d_outputs["max_temperature"] if "max_temperature" in d_outputs and d_outputs[
+                "max_temperature"] is not None else 0.0
+            # The pullback now expects a tuple of cotangents.
+            grads = pullback((cotan_temperature, cotan_max_temperature))
+            # grads is a tuple with gradients for each input argument;
+            # we only need to accumulate contributions for our optimization variables:
+            # d_inputs["density"] = grads[0]
+            # d_inputs["heat_loads"] = grads[1]
+            d_inputs["density"] = d_inputs.get("density", 0) + grads[0]
+            d_inputs["heat_loads"] = d_inputs.get("heat_loads", 0) + grads[1]
 
 
 class BoundaryConditionAggregator(ExplicitComponent):

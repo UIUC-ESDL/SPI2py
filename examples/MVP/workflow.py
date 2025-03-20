@@ -51,14 +51,18 @@ model.add_subsystem('projections', projections)
 # x_min, x_max = (-2, 2)
 # y_min, y_max = (0, 2.5)
 # z_min, z_max = (0, 2.5)
-x_min, x_max = (-5, 5)
-y_min, y_max = (-5, 5)
-z_min, z_max = (-5, 5)
+# x_min, x_max = (-5, 5)
+# y_min, y_max = (-5, 5)
+# z_min, z_max = (-5, 5)
+x_min, x_max = (-3, 3)
+y_min, y_max = (-3, 3)
+z_min, z_max = (-3, 3)
 
 # element_size = 0.0675
 # element_size = 0.125
 # element_size = 0.25
-element_size = 0.5
+# element_size = 0.5
+element_size = 1.0
 
 
 nodes, elements, centers, nx, ny, nz, lx, ly, lz = generate_mesh_vec(x_min, x_max, y_min, y_max, z_min, z_max, element_size=element_size)
@@ -144,7 +148,7 @@ prob.model.connect('mux_radii.stacked_output', 'bbv.radii')
 
 # Aggregate the pseudo-densities
 # projection_aggregator = ProjectionAggregator(n_projections=2, rho_min=3e-3)
-projection_aggregator = ProjectionAggregator(n_projections=2, rho_min=1e-1)
+projection_aggregator = ProjectionAggregator(n_projections=2, rho_min=1e-3)
 model.projections.add_subsystem('aggregator', projection_aggregator)
 
 model.connect('projections.proj_1.penalized_densities', 'projections.aggregator.densities_0')

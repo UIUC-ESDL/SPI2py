@@ -5,7 +5,7 @@ import numpy as np
 import jax
 from jax import lax
 import jax.numpy as jnp
-from chex import assert_shape, assert_type
+from chex import assert_shape, assert_type, assert_equal
 
 from ..geometry.cylinders import create_cylinders
 from ..geometry.intersection import volume_intersection_two_spheres
@@ -110,9 +110,15 @@ def project_component(grid_centers, grid_size,
     all_densities = all_densities.at[i1:i2 + 1, j1:j2 + 1, k1:k2 + 1].set(densities)
 
     # Penalize the densities
-    all_densities_penalized = penalize_densities(all_densities)
+    all_penalized_densities = penalize_densities(all_densities)
 
-    return all_densities, all_densities_penalized
+    # Check the output values
+    assert_equal(jnp.all(0 <= all_densities), True)
+    assert_equal(jnp.all(all_densities <= 1), True)
+    assert_equal(jnp.all(0 <= all_penalized_densities), True)
+    assert_equal(jnp.all(all_penalized_densities <= 1), True)
+
+    return all_densities, all_penalized_densities
 
 def project_capsules(grid_centers, grid_size,
                      kernel_points, kernel_radii,
@@ -151,6 +157,7 @@ def project_capsules(grid_centers, grid_size,
 
     # Initialize the output density array
     all_densities = jnp.zeros((grid_nx, grid_ny, grid_nz), dtype='float64')
+    all_penalized_densities = jnp.zeros((grid_nx, grid_ny, grid_nz), dtype='float64')
 
     # Extract the active grid region within the object's AABB
     active_grid_centers = grid_centers[i1:i2 + 1, j1:j2 + 1, k1:k2 + 1]
@@ -168,32 +175,32 @@ def project_capsules(grid_centers, grid_size,
     # Vectorized signed distance and density calculations using your distance function
     distances = radii_bc - minimum_distances_points_segments(kernel_points_bc, start_points_bc, end_points_bc)
 
-    # Fix rho for mesh_radii?
+    # Calculate the pseudo-densities
     densities = density(distances, kernel_radii)
 
-    # Sum densities across all cylinders
-    # Combine the pseudo densities for all cylinders in each kernel sphere
-
-    # Combine the pseudo densities for all kernel spheres in one grid
+    # For mesh elements that are sub-sampled,
+    # Add up the individual density contributions of each kernel point
     densities = jnp.sum(densities, axis=3)
 
-    # Penalize the densities
+    # Penalize the density of each element, for each capsule
     densities_penalized = penalize_densities(densities, penalty_factor=3)
 
+    # Now, combine the densities of each capsule
     # Collapse the last axis to get the combined density for each kernel sphere
-    # densities = jnp.sum(densities, axis=4)
-    # Combine the densities of each bar
-    densities_combined = kreisselmeier_steinhauser_max(densities_penalized, axis=3)
+    densities_combined = kreisselmeier_steinhauser_max(densities, axis=3)
+    penalized_densities_combined = kreisselmeier_steinhauser_max(densities_penalized, axis=3)
 
     # Store the densities in the output array
     all_densities = all_densities.at[i1:i2 + 1, j1:j2 + 1, k1:k2 + 1].set(densities_combined)
+    all_penalized_densities = all_penalized_densities.at[i1:i2 + 1, j1:j2 + 1, k1:k2 + 1].set(penalized_densities_combined)
 
+    # Check the output values
+    assert_equal(jnp.all(0 <= all_densities), True)
+    assert_equal(jnp.all(all_densities <= 1), True)
+    assert_equal(jnp.all(0 <= all_penalized_densities), True)
+    assert_equal(jnp.all(all_penalized_densities <= 1), True)
 
-
-    # combined_densities = kreisselmeier_steinhauser_max()
-
-
-    return all_densities
+    return all_densities, all_penalized_densities
 
 
 def project_interconnect(grid_centers, grid_size,
@@ -256,21 +263,30 @@ def project_interconnect(grid_centers, grid_size,
     # Fix rho for mesh_radii?
     densities = density(distances, kernel_radii)
 
-    # Sum densities across all cylinders
-    # Combine the pseudo densities for all cylinders in each kernel sphere
-    # Collapse the last axis to get the combined density for each kernel sphere
-    densities = jnp.sum(densities, axis=4)
-
-    # Combine the pseudo densities for all kernel spheres in one grid
+    # For mesh elements that are sub-sampled,
+    # Add up the individual density contributions of each kernel point
     densities = jnp.sum(densities, axis=3)
 
+    # Penalize the density of each element, for each capsule
+    densities_penalized = penalize_densities(densities, penalty_factor=3)
+
+    # Now, combine the densities of each capsule
+    # Collapse the last axis to get the combined density for each kernel sphere
+    densities_combined = kreisselmeier_steinhauser_max(densities, axis=3)
+    penalized_densities_combined = kreisselmeier_steinhauser_max(densities_penalized, axis=3)
+
     # Store the densities in the output array
-    all_densities = all_densities.at[i1:i2 + 1, j1:j2 + 1, k1:k2 + 1].set(densities)
+    all_densities = all_densities.at[i1:i2 + 1, j1:j2 + 1, k1:k2 + 1].set(densities_combined)
+    all_penalized_densities = all_penalized_densities.at[i1:i2 + 1, j1:j2 + 1, k1:k2 + 1].set(
+        penalized_densities_combined)
 
-    # Penalize the densities
-    all_densities_penalized = penalize_densities(all_densities)
+    # Check the output values
+    assert_equal(jnp.all(0 <= all_densities), True)
+    assert_equal(jnp.all(all_densities <= 1), True)
+    assert_equal(jnp.all(0 <= all_penalized_densities), True)
+    assert_equal(jnp.all(all_penalized_densities <= 1), True)
 
-    return all_densities, all_densities_penalized
+    return all_densities, all_penalized_densities
 
 
 
