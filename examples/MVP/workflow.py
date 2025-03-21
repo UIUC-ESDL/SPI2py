@@ -60,9 +60,9 @@ z_min, z_max = (-5, 5)
 
 # element_size = 0.0675
 # element_size = 0.125
-element_size = 0.25
+# element_size = 0.25
 # element_size = 0.5
-# element_size = 1.0
+element_size = 1.0
 
 
 nodes, elements, centers, nx, ny, nz, lx, ly, lz = generate_mesh_vec(x_min, x_max, y_min, y_max, z_min, z_max, element_size=element_size)
@@ -163,13 +163,22 @@ model.connect('projections.proj_2.penalized_heat_loads', 'projections.aggregator
 dirichlet_nodes = find_face_nodes(nodes, jnp.array([0.0, 0.0, -1.0]))
 dirichlet_T = 300.0 * jnp.ones(len(dirichlet_nodes))
 robin_nodes = find_face_nodes(nodes, jnp.array([0.0, 0.0, 1.0]))
-FEA = ExplicitFEA(nodes=nodes,
-                  elements=elements,
+# FEA = ExplicitFEA(nodes=nodes,
+#                   elements=elements,
+#                   el_size=element_size,
+#                   el_centers=centers,
+#                   dirichlet_nodes=dirichlet_nodes,
+#                   dirichlet_values=dirichlet_T,
+#                   robin_nodes=robin_nodes,
+#                   robin_h=1.0, #10.0,
+#                   robin_T_inf=200.0)
+FEA = ExplicitFEA(nodes=np.array(nodes),
+                  elements=np.array(elements),
                   el_size=element_size,
-                  el_centers=centers,
-                  dirichlet_nodes=dirichlet_nodes,
-                  dirichlet_values=dirichlet_T,
-                  robin_nodes=robin_nodes,
+                  el_centers=np.array(centers),
+                  dirichlet_nodes=np.array(dirichlet_nodes),
+                  dirichlet_values=np.array(dirichlet_T),
+                  robin_nodes=np.array(robin_nodes),
                   robin_h=1.0, #10.0,
                   robin_T_inf=200.0)
 model.add_subsystem('FEA', FEA)
