@@ -476,14 +476,14 @@ t3 = time_ns()
 total_time = (t3 - t1) / 1e9
 print(f"Total time: {total_time} seconds")
 
-# pf = prob.check_partials(includes='FEA')
+pf = prob.check_partials(includes='FEA')
 # tot = prob.compute_totals(of=['FEA.max_temperature'], wrt=['system.components.comp_2.translation'])
 # tot = tot[('FEA.max_temperature', 'system.components.comp_2.translation')][0]
 # print("total", tot)
-d_inputs = {'density': jnp.ones_like(densities_combined), 'heat_loads': jnp.ones_like(densities_combined)}
-d_outputs = {'temperature': jnp.ones_like(T), 'max_temperature': jnp.array(1)}
+# d_inputs = {'density': jnp.ones_like(densities_combined), 'heat_loads': jnp.ones_like(densities_combined)}
+# d_outputs = {'temperature': jnp.ones_like(T), 'max_temperature': jnp.array(1)}
 
-jvp_vals = prob.model.FEA.compute_jacvec_prod(prob.model.FEA._inputs, d_inputs, d_outputs, mode='fwd')
+# jvp_vals = prob.model.FEA.compute_jacvec_prod(prob.model.FEA._inputs, d_inputs, d_outputs, mode='fwd')
 # vjp_vals = prob.model.FEA.compute_jacvec_prod(prob.model.FEA._inputs, d_inputs, d_outputs, mode='rev')
 
 

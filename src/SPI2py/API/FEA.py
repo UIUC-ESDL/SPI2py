@@ -176,7 +176,7 @@ class ExplicitFEA(ExplicitComponent):
 
         return u, u_max
 
-    def compute_jacvec_prod(self, inputs, d_inputs, d_outputs, mode):
+    def compute_jacvec_product(self, inputs, d_inputs, d_outputs, mode):
 
         # Unpack dynamic (differentiable) inputs.
         density = jnp.array(inputs["density"])
@@ -205,6 +205,7 @@ class ExplicitFEA(ExplicitComponent):
             d_nodes=dirichlet_nodes,
             d_T=dirichlet_values
         )
+
 
         if mode == "fwd":
             # Build tangents only for differentiable inputs.
