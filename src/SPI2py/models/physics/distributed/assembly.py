@@ -57,6 +57,86 @@ from scipy.sparse import coo_matrix, csr_matrix, diags
 #
 #     return K_global, f_global
 
+@jit
+def assemble_base_global_stiffness(nodes, elements, base_k):
+    """
+    Assemble the global base stiffness matrix (with density=1) and an auxiliary mapping,
+    using vmap to call the local stiffness function.
+
+    Parameters:
+      nodes:    (n_nodes, 3) array of coordinates.
+      elements: (n_elem, 8) connectivity array (indices into nodes).
+      base_k:   Base thermal conductivity.
+
+    Returns:
+      K_base:      Sparse global stiffness matrix in BCOO format (for density = 1).
+      elem_indices: (nnz,) integer array mapping each nonzero entry in K_base to its element index.
+    """
+    n_elem = elements.shape[0]
+    n_nodes = nodes.shape[0]
+
+    # For the base case, use density=1 for every element.
+    k_eff_all = base_k * jnp.ones((n_elem,))
+
+    # Gather nodal coordinates for each element.
+    element_nodes_all = nodes[elements]  # shape: (n_elem, 8, 3)
+
+    # Get quadrature points and weights.
+    gauss_pts, gauss_wts = gauss_quad()  # Assumed to return 1D arrays
+
+    # Use vmap to compute the 8x8 local stiffness matrix for each element.
+    Ke_all = vmap(lambda el_nodes, k_eff: assemble_local_stiffness_matrix(el_nodes, k_eff, gauss_pts, gauss_wts))(
+        element_nodes_all, k_eff_all
+    )  # shape: (n_elem, 8, 8)
+
+    # Build global index arrays for scatter-add:
+    # For each element, generate its 8x8 block of indices.
+    # rows: shape (n_elem, 64)
+    rows = jnp.repeat(elements, repeats=8, axis=1)
+    # cols: shape (n_elem, 64)
+    cols = jnp.tile(elements, reps=(1, 8))
+    rows_flat = rows.reshape(-1)
+    cols_flat = cols.reshape(-1)
+    Ke_flat = Ke_all.reshape(-1)  # shape: (n_elem*64,)
+
+    # Build auxiliary mapping: for each element, its index repeats 64 times.
+    elem_indices = jnp.repeat(jnp.arange(n_elem), 64)  # shape: (n_elem*64,)
+
+    # Stack rows and cols to form an index array of shape (n_elem*64, 2).
+    indices = jnp.stack([rows_flat, cols_flat], axis=-1)
+
+    # Create the sparse matrix in BCOO format.
+    K_base = BCOO((Ke_flat, indices), shape=(n_nodes, n_nodes))
+    return K_base, elem_indices
+
+
+@jit
+def update_global_stiffness(K_base, elem_indices, density, penal=1.0):
+    """
+    Update the base global stiffness matrix using the current densities.
+
+    Parameters:
+      K_base:      Sparse base stiffness matrix (for density = 1) in BCOO format.
+      elem_indices: (nnz,) array mapping each nonzero entry in K_base to its element index.
+      density:     (n_elem,) array of current element densities (or broadcastable to that shape).
+      penal:       Penalization exponent.
+
+    Returns:
+      K_updated:   Updated global stiffness matrix in BCOO format.
+    """
+    # Ensure density is a 1D vector.
+    density = density.flatten()  # now shape is (n_elem,)
+
+    # Compute scaling factors for each element (e.g., density**penal).
+    scaling_factors = density ** penal  # shape: (n_elem,)
+
+    # Use the element mapping to broadcast the scaling to each nonzero.
+    scaling = scaling_factors[elem_indices]  # Expected shape: (nnz,)
+
+    # Multiply the data in the base matrix by the scaling factors.
+    new_data = K_base.data * scaling
+    K_updated = BCOO((new_data, K_base.indices), shape=K_base.shape)
+    return K_updated
 
 # @jit
 # def assemble_global_stiffness_matrix(nodes, elements, density, base_k):

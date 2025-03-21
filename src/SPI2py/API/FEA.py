@@ -11,7 +11,7 @@ from openmdao.api import ExplicitComponent, IndepVarComp
 
 from SPI2py.models.physics.distributed.mesh import generate_mesh_vec
 from SPI2py.models.projection.mesh_kernels import create_uniform_kernel
-from SPI2py.models.physics.distributed.assembly import assemble_global_stiffness_matrix, apply_boundary_conditions #, assemble_global_load_vector
+from SPI2py.models.physics.distributed.assembly import assemble_base_global_stiffness, apply_boundary_conditions, update_global_stiffness #, assemble_global_load_vector
 from SPI2py.models.utilities.aggregation import kreisselmeier_steinhauser_max, kreisselmeier_steinhauser_min
 
 
@@ -165,6 +165,9 @@ class ExplicitFEA(ExplicitComponent):
         self.options.declare('robin_nodes', types=jnp.ndarray)
         self.options.declare('robin_h', types=float)
         self.options.declare('robin_T_inf', types=float)
+        self.options.declare('base_k', types=float, desc='Base thermal conductivity', default=1.0)
+
+
 
     def setup(self):
 
@@ -174,6 +177,13 @@ class ExplicitFEA(ExplicitComponent):
         n_el = self.options['nodes'].shape[0]
         self.add_output("temperature", shape=(n_el,), desc="Computed temperature field")
         self.add_output("max_temperature", val=0.0, desc="Computed maximum temperature")
+
+        # Preassemble the base global stiffness matrix once (for density=1).
+        nodes = jnp.array(self.options['nodes'])
+        elements = jnp.array(self.options['elements'])
+        base_k = self.options['base_k']
+        # assemble_base_global_stiffness returns a sparse matrix in BCOO format and an auxiliary mapping.
+        self._K_base, self._elem_indices = assemble_base_global_stiffness(nodes, elements, base_k)
 
     def setup_partials(self):
         # Declare that we are using matrix-free derivatives
@@ -201,29 +211,22 @@ class ExplicitFEA(ExplicitComponent):
         density = jnp.array(inputs["density"])
         heat_loads = jnp.array(inputs["heat_loads"])
 
+        # Retrieve the preassembled base stiffness matrix and mapping.
+        K_base = self._K_base
+        elem_indices = self._elem_indices
+        # penal = self.options['penal']
+
         temp, max_temp = self._compute_primal(density, heat_loads, nodes, elements,
                                     robin_nodes, robin_h, robin_T_inf, robin_area,
-                                    dirichlet_nodes, dirichlet_values)
+                                    dirichlet_nodes, dirichlet_values, K_base, elem_indices)
 
-        # def f(density, heat_loads, nodes, elements,
-        #       robin_nodes, robin_h, robin_T_inf, robin_area,
-        #       dirichlet_nodes, dirichlet_values):
-        #     temp, max_temp = self._compute_primal(density, heat_loads, nodes, elements,
-        #                                           robin_nodes, robin_h, robin_T_inf, robin_area,
-        #                                           dirichlet_nodes, dirichlet_values)
-        #     return max_temp
-        # from jax import jacrev
-        # j = jacrev(f, argnums=(0, 1))
-        # j(density, heat_loads, nodes, elements,
-        #   robin_nodes, robin_h, robin_T_inf, robin_area,
-        #   dirichlet_nodes, dirichlet_values)
         outputs["temperature"] = temp
         outputs["max_temperature"] = max_temp
 
     @staticmethod
     def _compute_primal(density, heat_loads, nodes, elements,
                         r_nodes, r_h, r_T_inf, r_area,
-                        d_nodes, d_T):
+                        d_nodes, d_T, K_base, elem_indices):
         """
         Compute the primal (temperature) solution and a measure of the maximum
         temperature using a sparse solver. This function assembles the global system,
@@ -244,43 +247,64 @@ class ExplicitFEA(ExplicitComponent):
           u    : computed temperature (or displacement) field (dense vector)
           u_max: a scalar computed via a Kreisselmeier–Steinhauser (KS) function (here using a min-version)
         """
-        # Flatten the inputs if needed.
-        density = density.flatten()
-        heat_loads = heat_loads.flatten()
+        # Update the global stiffness matrix using current densities.
+        K_updated = update_global_stiffness(K_base, elem_indices, density)
 
-        # Set the base thermal conductivity (or other base material property)
-        base_k = 1.0
-
-        # Assemble the global stiffness matrix and load vector.
-        # This routine should return K in a sparse format (e.g., BCOO) and f as a dense jnp.array.
-        # TODO Assembly Kf in setup to avoid re-meshing!
-        K, f = assemble_global_stiffness_matrix(nodes, elements, density, base_k)
-
-        # Apply the heat loads.
-        # For an 8-node hexahedral element, distribute each element's heat load evenly to its nodes.
+        # Assemble the global load vector from heat loads.
         nodes_per_elem = 8
+        # Distribute each element's heat load to its nodes (simple lumping).
         element_contrib = (heat_loads * density) / nodes_per_elem
-        # Repeat each element's contribution for each of its nodes.
-        node_contrib = jnp.repeat(element_contrib, nodes_per_elem)
-        # Assume 'elements' is an array of shape (n_elements, nodes_per_elem).
-        f = f.at[elements.flatten()].add(node_contrib)
+        f = jnp.zeros(nodes.shape[0])
+        f = f.at[elements.flatten()].add(jnp.repeat(element_contrib, nodes_per_elem))
 
-        # Instead of partitioning the system, apply boundary conditions as sparse additions.
-        K, f = apply_boundary_conditions(K, f, r_nodes, r_h, r_T_inf, r_area,
-                                                d_nodes, d_T, beta=1e3)
+        # Apply boundary conditions (both Robin and Dirichlet).
+        K_updated, f = apply_boundary_conditions(K_updated, f,
+                                                 r_nodes, r_h, r_T_inf, r_area,
+                                                 d_nodes, d_T, beta=1e3)
 
-        # Solve the full sparse system: K * u = f.
-        # We assume K is now in BCOO format. Define a function for the iterative solver.
-        def fea_solve(rhs):
-            # Use an iterative solver (e.g., Conjugate Gradient) suitable for symmetric positive-definite systems.
-            u_sol, _ = cg(K, rhs, tol=1e-8, maxiter=500)
-            return u_sol
+        # Solve the global system using a sparse solver (e.g., conjugate gradient).
+        u, _ = cg(K_updated, f, tol=1e-8, maxiter=500)
 
-        u = fea_solve(f)
+        # Compute a scalar measure of the maximum temperature (e.g., using a KS function).
+        u_max = kreisselmeier_steinhauser_max(u)
 
-        # For post-processing, compute a scalar measure of the solution.
-        # For example, use a Kreisselmeier–Steinhauser function (here using a min-version as a placeholder).
-        u_max = kreisselmeier_steinhauser_min(u)
+        # # Flatten the inputs if needed.
+        # density = density.flatten()
+        # heat_loads = heat_loads.flatten()
+        #
+        # # Set the base thermal conductivity (or other base material property)
+        # # base_k = 1.0
+        #
+        # # Assemble the global stiffness matrix and load vector.
+        # # This routine should return K in a sparse format (e.g., BCOO) and f as a dense jnp.array.
+        # # TODO Assembly Kf in setup to avoid re-meshing!
+        # # K, f = assemble_global_stiffness_matrix(nodes, elements, density, base_k)
+        #
+        # # Apply the heat loads.
+        # # For an 8-node hexahedral element, distribute each element's heat load evenly to its nodes.
+        # nodes_per_elem = 8
+        # element_contrib = (heat_loads * density) / nodes_per_elem
+        # # Repeat each element's contribution for each of its nodes.
+        # node_contrib = jnp.repeat(element_contrib, nodes_per_elem)
+        # # Assume 'elements' is an array of shape (n_elements, nodes_per_elem).
+        # f = f.at[elements.flatten()].add(node_contrib)
+        #
+        # # Instead of partitioning the system, apply boundary conditions as sparse additions.
+        # K, f = apply_boundary_conditions(K, f, r_nodes, r_h, r_T_inf, r_area,
+        #                                         d_nodes, d_T, beta=1e3)
+        #
+        # # Solve the full sparse system: K * u = f.
+        # # We assume K is now in BCOO format. Define a function for the iterative solver.
+        # def fea_solve(rhs):
+        #     # Use an iterative solver (e.g., Conjugate Gradient) suitable for symmetric positive-definite systems.
+        #     u_sol, _ = cg(K, rhs, tol=1e-8, maxiter=500)
+        #     return u_sol
+        #
+        # u = fea_solve(f)
+        #
+        # # For post-processing, compute a scalar measure of the solution.
+        # # For example, use a Kreisselmeier–Steinhauser function (here using a min-version as a placeholder).
+        # u_max = kreisselmeier_steinhauser_max(u)
 
         return u, u_max
 
