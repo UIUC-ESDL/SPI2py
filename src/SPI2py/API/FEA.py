@@ -268,104 +268,8 @@ class ExplicitFEA(ExplicitComponent):
         # Compute a scalar measure of the maximum temperature (e.g., using a KS function).
         u_max = kreisselmeier_steinhauser_max(u)
 
-        # # Flatten the inputs if needed.
-        # density = density.flatten()
-        # heat_loads = heat_loads.flatten()
-        #
-        # # Set the base thermal conductivity (or other base material property)
-        # # base_k = 1.0
-        #
-        # # Assemble the global stiffness matrix and load vector.
-        # # This routine should return K in a sparse format (e.g., BCOO) and f as a dense jnp.array.
-        # # TODO Assembly Kf in setup to avoid re-meshing!
-        # # K, f = assemble_global_stiffness_matrix(nodes, elements, density, base_k)
-        #
-        # # Apply the heat loads.
-        # # For an 8-node hexahedral element, distribute each element's heat load evenly to its nodes.
-        # nodes_per_elem = 8
-        # element_contrib = (heat_loads * density) / nodes_per_elem
-        # # Repeat each element's contribution for each of its nodes.
-        # node_contrib = jnp.repeat(element_contrib, nodes_per_elem)
-        # # Assume 'elements' is an array of shape (n_elements, nodes_per_elem).
-        # f = f.at[elements.flatten()].add(node_contrib)
-        #
-        # # Instead of partitioning the system, apply boundary conditions as sparse additions.
-        # K, f = apply_boundary_conditions(K, f, r_nodes, r_h, r_T_inf, r_area,
-        #                                         d_nodes, d_T, beta=1e3)
-        #
-        # # Solve the full sparse system: K * u = f.
-        # # We assume K is now in BCOO format. Define a function for the iterative solver.
-        # def fea_solve(rhs):
-        #     # Use an iterative solver (e.g., Conjugate Gradient) suitable for symmetric positive-definite systems.
-        #     u_sol, _ = cg(K, rhs, tol=1e-8, maxiter=500)
-        #     return u_sol
-        #
-        # u = fea_solve(f)
-        #
-        # # For post-processing, compute a scalar measure of the solution.
-        # # For example, use a Kreisselmeier–Steinhauser function (here using a min-version as a placeholder).
-        # u_max = kreisselmeier_steinhauser_max(u)
-
         return u, u_max
 
-    # @staticmethod
-    # def _compute_primal(density, heat_loads, nodes, elements,
-    #                     r_nodes, r_h, r_T_inf, r_area,
-    #                     d_nodes, d_T):
-    #
-    #     # Flatten the inputs
-    #     density = density.flatten()
-    #     heat_loads = heat_loads.flatten()
-    #
-    #     # Set the base thermal conductivity
-    #     # TODO What?
-    #     base_k = 1.0
-    #
-    #
-    #     # Assemble the global stiffness matrix and load vector.
-    #     K, f = assemble_global_stiffness_matrix(nodes, elements, density, base_k)
-    #
-    #     # Apply the heat loads to the system.
-    #     nodes_per_elem = 8
-    #     element_contrib = (heat_loads * density) / nodes_per_elem
-    #     node_contrib = jnp.repeat(element_contrib, nodes_per_elem)
-    #     f = f.at[elements.flatten()].add(node_contrib)
-    #
-    #     # Apply the boundary conditions and partition the system.
-    #     K_ff, K_fp, K_pf, K_pp, f_f, f_p, u_p, idx_f, idx_p = apply_boundary_conditions(K, f,
-    #                                                                                     r_nodes, r_h, r_T_inf, r_area,
-    #                                                                                     d_nodes, d_T)
-    #
-    #     # Solve the partitioned system for the unknown displacements.
-    #     # K_ff @ u_f + K_fp @ u_p = f_f
-    #     # K_ff @ u_f = f_f - K_fp @ u_p
-    #     # u_f = K_ff^-1 @ (f_f - K_fp @ u_p)
-    #     # u_f = jnp.linalg.solve(K_ff, f_f - K_fp @ u_p)
-    #
-    #     # Convert K_ff to a sparse format for efficient solving
-    #     # K_ff = BCOO.from_scipy_sparse(coo_matrix(K_ff))
-    #     # K_ff = coo_fromdense(K_ff)
-    #     K_ff = BCOO.fromdense(K_ff)
-    #
-    #     # Solve the partitioned system for the unknown displacements using Conjugate Gradient (CG)
-    #     def fea_solve(rhs):
-    #         u_f, _ = cg(K_ff, rhs, tol=1e-8, maxiter=500)
-    #         return u_f
-    #
-    #     u_f = fea_solve(f_f - K_fp @ u_p)  # Solving K_ff @ u_f = (f_f - K_fp @ u_p)
-    #
-    #     # Reassemble the full solution.
-    #     n_nodes = K.shape[0]
-    #     u = jnp.zeros(n_nodes)
-    #     u = u.at[idx_f].set(u_f)
-    #     u = u.at[idx_p].set(u_p)
-    #
-    #     # Calculate the max temp
-    #     # u_max = kreisselmeier_steinhauser_max(u)
-    #     # TODO Reset
-    #     u_max = kreisselmeier_steinhauser_min(u)
-    #
-    #     return u, u_max
 
     def compute_jacvec_product(self, inputs, d_inputs, d_outputs, mode):
 
@@ -384,6 +288,9 @@ class ExplicitFEA(ExplicitComponent):
         dirichlet_values = jnp.array(self.options['dirichlet_values'])
         robin_area = jnp.array(el_size ** 2)
 
+        K_base = self._K_base
+        elem_indices = self._elem_indices
+
         # Freeze all static arguments via partial so that only density and heat_loads are inputs.
         frozen_compute_primal = partial(
             self._compute_primal,
@@ -394,8 +301,9 @@ class ExplicitFEA(ExplicitComponent):
             r_T_inf=robin_T_inf,
             r_area=robin_area,
             d_nodes=dirichlet_nodes,
-            d_T=dirichlet_values
-        )
+            d_T=dirichlet_values,
+            K_base=K_base,
+            elem_indices=elem_indices)
 
 
         if mode == "fwd":
