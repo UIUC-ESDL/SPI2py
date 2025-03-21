@@ -6,272 +6,212 @@ from jax.experimental.sparse import BCOO
 from dataclasses import dataclass, field
 from chex import assert_shape, assert_type
 from .element import assemble_local_stiffness_matrix
-from .quadrature import gauss_quad
+from .quadrature import gauss_quad, shape_functions
 from scipy.sparse import coo_matrix, csr_matrix, diags
 
 
-# def assemble_local_stiffness_matrix_hex(el_size, base_k):
+# @jit
+# def assemble_global_stiffness_matrix_dense(nodes, elements, density, base_k):
 #     """
-#     Assemble the local stiffness matrix for an 8-node linear hexahedral element
-#     using two-point Gauss quadrature in each direction.
+#     Assemble the global stiffness matrix K in a sparse format.
 #
 #     Parameters:
-#       el_size : the edge length of the hexahedral element (assumed uniform)
-#       base_k  : the base conductivity (or stiffness constant)
+#       nodes:    (n_nodes, 3) array of coordinates.
+#       elements: (n_elem, 8) connectivity array (indices into nodes).
+#       density:  (n_elem,) array of material densities.
+#       base_k:   Base conductivity.
 #
 #     Returns:
-#       Ke : 8x8 local stiffness matrix.
-#
-#     Notes:
-#       - Natural coordinates: (xi,eta,zeta) in [-1,1]^3.
-#       - The 8 nodes have natural coordinates:
-#             (-1,-1,-1), (1,-1,-1), (1,1,-1), (-1,1,-1),
-#             (-1,-1, 1), (1,-1, 1), (1,1, 1), (-1,1, 1)
-#       - Two-point Gauss quadrature in each direction uses points ±1/√3 with weight 1.
-#       - For a uniform brick, the Jacobian is constant with |J| = (el_size/2)^3 = el_size^3/8,
-#         and the mapping gradients scale by 2/el_size.
-#       - Thus, each quadrature contribution carries a factor: (2/el_size)^2 * (el_size^3/8) = el_size/2.
-#     """
-#     # Define Gauss points and weights.
-#     gauss_pts = np.array([-1 / np.sqrt(3), 1 / np.sqrt(3)])
-#     weights = np.array([1.0, 1.0])
-#
-#     # Natural coordinates for 8-node hexahedron.
-#     nat_coords = np.array([
-#         [-1, -1, -1],
-#         [1, -1, -1],
-#         [1, 1, -1],
-#         [-1, 1, -1],
-#         [-1, -1, 1],
-#         [1, -1, 1],
-#         [1, 1, 1],
-#         [-1, 1, 1]
-#     ])
-#
-#     n_nodes = 8
-#     Ke = np.zeros((n_nodes, n_nodes))
-#
-#     # The constant Jacobian determinant.
-#     detJ = el_size ** 3 / 8.0
-#     # The transformation factor for derivatives: physical derivative = (2/el_size) * natural derivative.
-#     transform = 2.0 / el_size
-#
-#     # Loop over all 8 integration points.
-#     for xi in range(2):
-#         for eta in range(2):
-#             for zeta in range(2):
-#                 gp = np.array([gauss_pts[xi], gauss_pts[eta], gauss_pts[zeta]])
-#                 w = weights[xi] * weights[eta] * weights[zeta]
-#
-#                 # For each node, compute the derivatives of the shape functions with respect to xi, eta, zeta.
-#                 dN_nat = np.zeros((n_nodes, 3))  # each row for a node
-#                 for i in range(n_nodes):
-#                     xi_i, eta_i, zeta_i = nat_coords[i]
-#                     # Standard formulas for 8-node brick element.
-#                     dN_dxi = 1 / 8 * xi_i * (1 + gp[1] * eta_i) * (1 + gp[2] * zeta_i)
-#                     dN_deta = 1 / 8 * (1 + gp[0] * xi_i) * eta_i * (1 + gp[2] * zeta_i)
-#                     dN_dzeta = 1 / 8 * (1 + gp[0] * xi_i) * (1 + gp[1] * eta_i) * zeta_i
-#                     dN_nat[i, :] = np.array([dN_dxi, dN_deta, dN_dzeta])
-#
-#                 # Transform to physical derivatives.
-#                 dN_phys = transform * dN_nat  # each derivative multiplied by 2/h
-#
-#                 # Compute contribution at this integration point.
-#                 # Local stiffness contribution: Ke_ij += weight * detJ * (gradN_i dot gradN_j)
-#                 for i in range(n_nodes):
-#                     for j in range(n_nodes):
-#                         Ke[i, j] += w * detJ * np.dot(dN_phys[i, :], dN_phys[j, :])
-#
-#     # Multiply by the base conductivity.
-#     Ke *= base_k
-#     return Ke
-#
-#
-# def assemble_global_stiffness_matrix(nodes, elements, densities, base_k, el_size):
-#     """
-#     Assemble the global stiffness matrix for a mesh of uniform hexahedral elements.
-#
-#     Parameters:
-#       nodes      : (n_nodes x dim) array of node coordinates.
-#       elements   : (n_elements x 8) array of connectivity (indices into nodes).
-#       densities  : (n_elements,) array with ersatz densities for each element.
-#       base_k     : base conductivity.
-#       el_size    : edge length of each hexahedral element.
-#
-#     Returns:
-#       K_global : global stiffness matrix in CSR format.
-#       f_global : global load vector (initialized to zeros).
+#       K_sparse: Sparse global stiffness matrix (BCOO format).
+#       f_global: Load vector (sparse).
 #     """
 #     n_nodes = nodes.shape[0]
-#     data = []
-#     row = []
-#     col = []
-#     # Initialize load vector.
-#     f_global = np.zeros(n_nodes)
+#     n_elem = elements.shape[0]
 #
-#     # Precompute the constant local stiffness matrix (for a unit element)
-#     Ke_const = assemble_local_stiffness_matrix_hex(el_size, base_k)
-#     # Element volume.
-#     el_vol = el_size ** 3
+#     # Compute effective conductivity for each element
+#     k_eff_all = base_k * density
 #
-#     # Loop over each element.
-#     for e in range(elements.shape[0]):
-#         elem_nodes = elements[e, :]  # indices (length 8)
-#         rho = densities[e]
-#         # Scale local stiffness by ersatz density.
-#         Ke_e = rho * Ke_const
-#         # Assemble into global matrix.
-#         for i_local, i_global in enumerate(elem_nodes):
-#             for j_local, j_global in enumerate(elem_nodes):
-#                 data.append(Ke_e[i_local, j_local])
-#                 row.append(i_global)
-#                 col.append(j_global)
-#         # Optionally, assemble the element load vector.
-#         # Here, assume each element has a heat load Q (e.g. from inputs) that is distributed equally.
-#         # (For example, if heat_loads[e] is the load per element, then each node gets Q/8.)
-#         # We postpone applying heat loads until later (see below).
+#     # Gather nodal coordinates for all elements
+#     element_nodes_all = nodes[elements]
 #
-#     K_global = coo_matrix((data, (row, col)), shape=(n_nodes, n_nodes))
-#     return K_global.tocsr(), f_global
+#     # Get Gauss quadrature points and weights
+#     gauss_pts, gauss_wts = gauss_quad()
 #
+#     # Compute the local stiffness matrix for each element
+#     Ke_all = vmap(lambda el_nodes, k_eff: assemble_local_stiffness_matrix(el_nodes, k_eff, gauss_pts, gauss_wts))(element_nodes_all, k_eff_all)
 #
-# def assemble_global_load_vector(nodes, elements, heat_loads, densities, el_size):
+#     # Create index arrays for assembling global stiffness matrix
+#     rows = jnp.repeat(elements, repeats=8, axis=1).reshape(-1)
+#     cols = jnp.tile(elements, reps=(1, 8)).reshape(-1)
+#
+#     rows_flat = rows.reshape(-1)
+#     cols_flat = cols.reshape(-1)
+#     Ke_flat = Ke_all.reshape(-1)
+#
+#     # Initialize and assemble the global stiffness matrix.
+#     K_global = jnp.zeros((n_nodes, n_nodes))
+#     K_global = K_global.at[rows_flat, cols_flat].add(Ke_flat)
+#
+#     # Initialize sparse global load vector
+#     f_global = jnp.zeros(n_nodes)
+#
+#     return K_global, f_global
+
+
+# @jit
+# def assemble_global_stiffness_matrix(nodes, elements, density, base_k):
 #     """
-#     Assemble the global load vector by distributing the element heat load
-#     to the nodes. We assume that for each element, the load is scaled by the
-#     ersatz density and distributed equally among its 8 nodes.
+#     Assemble the global stiffness matrix K in a sparse format.
 #
 #     Parameters:
-#       nodes      : (n_nodes x dim) array.
-#       elements   : (n_elements x 8) connectivity.
-#       heat_loads : (n_elements,) array with heat load per element.
-#       densities  : (n_elements,) array with ersatz densities.
-#       el_size    : element edge length.
+#       nodes:    (n_nodes, 3) array of coordinates.
+#       elements: (n_elem, 8) connectivity array (indices into nodes).
+#       density:  (n_elem,) array of material densities.
+#       base_k:   Base conductivity.
 #
 #     Returns:
-#       f_global : global load vector (dense numpy array).
+#       K_sparse: Sparse global stiffness matrix (BCOO format).
+#       f_global: Load vector (sparse).
 #     """
 #     n_nodes = nodes.shape[0]
-#     f_global = np.zeros(n_nodes)
-#     nodes_per_elem = 8
-#     el_vol = el_size ** 3
-#     for e in range(elements.shape[0]):
-#         elem_nodes = elements[e, :]
-#         Qe = heat_loads[e] * densities[e] * el_vol  # total load in the element
-#         node_load = Qe / nodes_per_elem
-#         f_global[elem_nodes] += node_load
-#     return f_global
+#     n_elem = elements.shape[0]
 #
+#     # Compute effective conductivity for each element
+#     k_eff_all = base_k * density
 #
-# def apply_boundary_conditions(K, f, robin_nodes, r_h, r_T_inf, r_area,
-#                               dirichlet_nodes, dirichlet_values, beta):
-#     """
-#     Apply boundary conditions using a penalty method for Dirichlet BCs and
-#     adding a Robin (convective) contribution.
+#     # Gather nodal coordinates for all elements
+#     element_nodes_all = nodes[elements]
 #
-#     For each Robin node, add to the diagonal:
-#       K[ii, ii] += r_h * r_area,
-#     and add to the load vector:
-#       f[ii] += r_h * r_area * r_T_inf.
+#     # Get Gauss quadrature points and weights
+#     gauss_pts, gauss_wts = gauss_quad()
 #
-#     For each Dirichlet node, add a penalty term:
-#       K[ii, ii] += beta,
-#     and f[ii] += beta * (prescribed value).
-#     """
-#     n = K.shape[0]
+#     # Compute the local stiffness matrix for each element
+#     Ke_all = vmap(lambda el_nodes, k_eff: assemble_local_stiffness_matrix(el_nodes, k_eff, gauss_pts, gauss_wts))(element_nodes_all, k_eff_all)
 #
-#     # Robin contribution.
-#     robin_diag = np.zeros(n)
-#     robin_diag[robin_nodes] = r_h * r_area
-#     R = diags(robin_diag, offsets=0, shape=(n, n), format='csr')
-#     f_robin = np.zeros(n)
-#     f_robin[robin_nodes] = r_h * r_area * r_T_inf
+#     # Create global index arrays.
+#     # For each element (row in elements, shape (8,)), we want to generate all 64 (i,j) pairs.
+#     # rows: (n_elem, 8, 8) where each row is a repetition of the element connectivity along axis=1.
+#     # cols: (n_elem, 8, 8) where each column is the connectivity repeated along axis=2.
+#     rows = jnp.broadcast_to(elements[:, :, None], (n_elem, 8, 8))
+#     cols = jnp.broadcast_to(elements[:, None, :], (n_elem, 8, 8))
 #
-#     # Dirichlet penalty.
-#     dirichlet_diag = np.zeros(n)
-#     dirichlet_diag[dirichlet_nodes] = beta
-#     P = diags(dirichlet_diag, offsets=0, shape=(n, n), format='csr')
-#     f_penalty = np.zeros(n)
-#     f_penalty[dirichlet_nodes] = beta * dirichlet_values
+#     # Flatten local stiffness contributions and the index arrays.
+#     Ke_flat = Ke_all.reshape(-1)  # (n_elem*64,)
+#     rows_flat = rows.reshape(-1)
+#     cols_flat = cols.reshape(-1)
 #
-#     K_new = K + R + P
-#     f_new = f + f_robin + f_penalty
-#     return K_new, f_new
+#     # BCOO expects the indices to have shape (nnz, ndims); so stack rows and cols along last axis.
+#     indices = jnp.stack([rows_flat, cols_flat], axis=-1)  # shape: (n_elem*64, 2)
+#
+#     # Create the sparse global stiffness matrix.
+#     K_sparse = BCOO((Ke_flat, indices), shape=(n_nodes, n_nodes))
+#
+#     # Initialize load vector as zeros.
+#     f_global = jnp.zeros(n_nodes)
+#
+#     return K_sparse, f_global
 
-
-
-
-
-
-@jit
 def assemble_global_stiffness_matrix(nodes, elements, density, base_k):
     """
-    Assemble the global stiffness matrix K in a sparse format.
+    Assemble the global stiffness matrix K and load vector f in a fully vectorized way without using vmap.
 
     Parameters:
-      nodes:    (n_nodes, 3) array of coordinates.
-      elements: (n_elem, 8) connectivity array (indices into nodes).
-      density:  (n_elem,) array of material densities.
-      base_k:   Base conductivity.
+      nodes:      (n_nodes, 3) array of coordinates.
+      elements:   (n_elem, 8) connectivity array (indices into nodes).
+      density:    (n_elem,) array of material densities.
+      base_k:     Base thermal conductivity.
+      gauss_pts:  1D array of Gauss quadrature points.
+      gauss_wts:  1D array of Gauss quadrature weights.
 
     Returns:
-      K_sparse: Sparse global stiffness matrix (BCOO format).
-      f_global: Load vector (sparse).
+      K_global:   (n_nodes, n_nodes) global stiffness matrix.
+      f_global:   (n_nodes,) load vector (zero in this example).
     """
     n_nodes = nodes.shape[0]
     n_elem = elements.shape[0]
 
-    # Compute effective conductivity for each element
-    k_eff_all = base_k * density
+    # 1. Compute effective conductivity for each element.
+    #    (Assume a simple linear interpolation: k_eff = base_k * density)
+    k_eff_all = base_k * density  # shape: (n_elem,)
 
-    # Gather nodal coordinates for all elements
+    # 2. Gather nodal coordinates for all elements.
+    #    element_nodes_all will have shape (n_elem, 8, 3)
     element_nodes_all = nodes[elements]
 
     # Get Gauss quadrature points and weights
     gauss_pts, gauss_wts = gauss_quad()
 
-    # Compute the local stiffness matrix for each element
-    Ke_all = vmap(lambda el_nodes, k_eff: assemble_local_stiffness_matrix(el_nodes, k_eff, gauss_pts, gauss_wts))(element_nodes_all, k_eff_all)
+    # 3. Build the quadrature grid for the element integration.
+    #    Create a tensor grid from the 1D gauss_pts and gauss_wts.
+    xi_grid, eta_grid, zeta_grid = jnp.meshgrid(gauss_pts, gauss_pts, gauss_pts, indexing='ij')
+    xi = xi_grid.flatten()  # shape: (n_qp,)
+    eta = eta_grid.flatten()  # shape: (n_qp,)
+    zeta = zeta_grid.flatten()  # shape: (n_qp,)
+    n_qp = xi.shape[0]
 
-    # # Create index arrays for assembling global stiffness matrix
-    # rows = jnp.repeat(elements, repeats=8, axis=1).reshape(-1)
-    # cols = jnp.tile(elements, reps=(1, 8)).reshape(-1)
-    #
-    # rows_flat = rows.reshape(-1)
-    # cols_flat = cols.reshape(-1)
-    # Ke_flat = Ke_all.reshape(-1)
-    #
-    # # Initialize and assemble the global stiffness matrix.
-    # K_global = jnp.zeros((n_nodes, n_nodes))
-    # K_global = K_global.at[rows_flat, cols_flat].add(Ke_flat)
-    #
-    # # Initialize sparse global load vector
-    # f_global = jnp.zeros(n_nodes)
-    #
-    # return K_global, f_global
+    # 4. Build the corresponding quadrature weights.
+    wx, wy, wz = jnp.meshgrid(gauss_wts, gauss_wts, gauss_wts, indexing='ij')
+    w_total = (wx * wy * wz).flatten()  # shape: (n_qp,)
 
-    # Create global index arrays.
-    # For each element (row in elements, shape (8,)), we want to generate all 64 (i,j) pairs.
-    # rows: (n_elem, 8, 8) where each row is a repetition of the element connectivity along axis=1.
-    # cols: (n_elem, 8, 8) where each column is the connectivity repeated along axis=2.
-    rows = jnp.broadcast_to(elements[:, :, None], (n_elem, 8, 8))
-    cols = jnp.broadcast_to(elements[:, None, :], (n_elem, 8, 8))
+    # 5. Evaluate the shape functions and their natural derivatives at all quadrature points.
+    #    shape_functions_vec should accept arrays of quadrature points and return:
+    #      N_all: (n_qp, 8)
+    #      dN_dxi_all: (n_qp, 8, 3)
+    N_all, dN_dxi_all = shape_functions(xi, eta, zeta)
 
-    # Flatten local stiffness contributions and the index arrays.
-    Ke_flat = Ke_all.reshape(-1)  # (n_elem*64,)
-    rows_flat = rows.reshape(-1)
+    # 6. Compute the Jacobian for each element at each quadrature point.
+    #    For each element e and quadrature point q:
+    #       J_all[e, q, j, k] = sum_{i=0}^{7} element_nodes_all[e, i, j] * dN_dxi_all[q, i, k]
+    #    This can be done with einsum:
+    J_all = jnp.einsum('eij,qik->eqjk', element_nodes_all, dN_dxi_all)
+    # J_all has shape: (n_elem, n_qp, 3, 3)
+
+    # 7. Compute the determinant and inverse of each Jacobian.
+    detJ_all = jnp.abs(jnp.linalg.det(J_all))  # shape: (n_elem, n_qp)
+    J_inv_all = jnp.linalg.inv(J_all)  # shape: (n_elem, n_qp, 3, 3)
+
+    # 8. Map the shape function derivatives to physical coordinates.
+    #    For each element and quadrature point:
+    #       dN_dx = J_inv * dN_dxi.
+    #    First, broadcast dN_dxi_all from shape (n_qp, 8, 3) to (n_elem, n_qp, 8, 3):
+    dN_dxi_all_b = jnp.broadcast_to(dN_dxi_all, (n_elem, n_qp, 8, 3))
+    # Now compute dN_dx_all with einsum:
+    dN_dx_all = jnp.einsum('eqjk,eqik->eqij', J_inv_all, dN_dxi_all_b)
+    # dN_dx_all has shape: (n_elem, n_qp, 8, 3)
+
+    # 9. Compute the element stiffness contributions for each element and quadrature point.
+    #    For each element e and quadrature point q, the contribution is:
+    #      contrib[e, q] = k_eff_all[e] * (dN_dx_all[e,q] @ dN_dx_all[e,q]^T) * detJ_all[e,q] * w_total[q]
+    contrib_all = jnp.einsum('eqik,eqjk->eqij', dN_dx_all, dN_dx_all)  # shape: (n_elem, n_qp, 8, 8)
+    contrib_all = k_eff_all[:, None, None, None] * contrib_all \
+                  * detJ_all[:, :, None, None] * w_total[None, :, None, None]
+
+    # 10. Sum contributions over quadrature points for each element to obtain element stiffness matrices.
+    Ke_all = jnp.sum(contrib_all, axis=1)  # shape: (n_elem, 8, 8)
+
+    # 11. Assemble the global stiffness matrix via vectorized scatter-add.
+    #     For each element, we need to add its 8x8 block to the global K.
+    #     Build global index arrays for rows and columns:
+    #       rows: for each element, repeat its 8 node indices 8 times.
+    #       cols: for each element, tile its 8 node indices 8 times.
+    rows = jnp.repeat(elements, repeats=8, axis=1)  # shape: (n_elem, 64)
+    cols = jnp.tile(elements, reps=(1, 8))  # shape: (n_elem, 64)
+
+    # Flatten these index arrays.
+    rows_flat = rows.reshape(-1)  # shape: (n_elem*64,)
     cols_flat = cols.reshape(-1)
 
-    # BCOO expects the indices to have shape (nnz, ndims); so stack rows and cols along last axis.
-    indices = jnp.stack([rows_flat, cols_flat], axis=-1)  # shape: (n_elem*64, 2)
+    # Flatten the element stiffness matrices.
+    Ke_flat = Ke_all.reshape(-1)
 
-    # Create the sparse global stiffness matrix.
-    K_sparse = BCOO((Ke_flat, indices), shape=(n_nodes, n_nodes))
+    # Initialize the global stiffness matrix and scatter-add contributions.
+    K_global = jnp.zeros((n_nodes, n_nodes))
+    K_global = K_global.at[rows_flat, cols_flat].add(Ke_flat)
 
-    # Initialize load vector as zeros.
+    # For this simple example, the load vector is zero.
     f_global = jnp.zeros(n_nodes)
 
-    return K_sparse, f_global
+    return K_global, f_global
 
 
 def apply_boundary_conditions(K, f, r_nodes, r_h, r_T_inf, r_area,

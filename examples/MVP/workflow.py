@@ -61,8 +61,8 @@ z_min, z_max = (-5, 5)
 # element_size = 0.0675
 # element_size = 0.125
 # element_size = 0.25
-element_size = 0.5
-# element_size = 1.0
+# element_size = 0.5
+element_size = 1.0
 
 
 nodes, elements, centers, nx, ny, nz, lx, ly, lz = generate_mesh_vec(x_min, x_max, y_min, y_max, z_min, z_max, element_size=element_size)
@@ -253,7 +253,7 @@ densities_before = copy(prob.get_val('projections.aggregator.aggregated_densitie
 # TODO Why above 1-2?
 
 # Run the optimization
-prob.run_driver()
+# prob.run_driver()
 
 
 # # Sweep component and plot derivatives
