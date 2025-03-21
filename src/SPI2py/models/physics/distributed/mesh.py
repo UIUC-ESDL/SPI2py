@@ -85,14 +85,6 @@ def generate_mesh_vec(x_min, x_max, y_min, y_max, z_min, z_max, element_size=1.0
     return nodes, elements, centers, nx, ny, nz, lx, ly, lz
 
 
-# def find_active_nodes(densities, elements, threshold=1e-3):
-#     """
-#     Given a density array (per node), return the indices of nodes with density above the threshold.
-#     """
-#     return jnp.where(density.flatten() > threshold)[0]
-#     # active_nodes = jnp.argwhere(density > threshold)
-#     # return nodes[active_nodes]
-
 def find_active_nodes(element_densities, elements, threshold=1e-3):
     """
     Given an array of element densities (one value per element) and an
@@ -133,9 +125,6 @@ def find_active_nodes(element_densities, elements, threshold=1e-3):
     active_node_indices = jnp.unique(active_nodes_flat)
 
     return active_node_indices
-
-
-
 
 
 def find_face_nodes(nodes: jnp.ndarray, face_normal: jnp.ndarray, tol: float = 1e-6) -> jnp.ndarray:

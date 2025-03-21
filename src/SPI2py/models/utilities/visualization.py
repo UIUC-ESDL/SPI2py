@@ -217,7 +217,7 @@ def plot_temperature_distribution(plotter,
                                   dirichlet_nodes,
                                   dims=None,
                                   cmap="rainbow",
-                                  opacity=0.25,
+                                  opacity=0.10,
                                   climits=(0, 300)):
     """
     Visualize the 3D temperature distribution on a structured grid using PyVista.
@@ -260,7 +260,7 @@ def plot_temperature_distribution(plotter,
 
     # Setup PyVista plotter.
     vol = plotter.add_volume(grid, scalars="Temperature", cmap=cmap, clim=climits, opacity=opacity, show_scalar_bar=True, scalar_bar_args={'title': 'Temperature'})
-    plot_nodes(plotter, subplot_index, nodes, heat_load_nodes, label='Heat Load', color='red', point_size=20)
+    plot_nodes(plotter, subplot_index, nodes, heat_load_nodes, label='Heat Load', color='red', point_size=20, opacity=0.10)
     plot_nodes(plotter, subplot_index, nodes, robin_nodes, label='Robin BC', color='green')
     plot_nodes(plotter, subplot_index, nodes, dirichlet_nodes, label='Dirichlet BC', color='blue')
     plotter.add_legend()
@@ -271,7 +271,7 @@ def plot_temperature_distribution(plotter,
     # vol.prop.interpolation_type = 'linear'
 
 
-def plot_nodes(plotter, subplot_index, nodes, selected_nodes, label, color="blue",point_size=5):
+def plot_nodes(plotter, subplot_index, nodes, selected_nodes, label, color="blue",point_size=5,opacity=1):
 
     plotter.subplot(*subplot_index)
 
@@ -281,4 +281,4 @@ def plot_nodes(plotter, subplot_index, nodes, selected_nodes, label, color="blue
 
 
     # Setup PyVista plotter.
-    plotter.add_mesh(nodes_poly, color=color, point_size=point_size, render_points_as_spheres=True, label=label)
+    plotter.add_mesh(nodes_poly, color=color, point_size=point_size, render_points_as_spheres=True, label=label,opacity=opacity)

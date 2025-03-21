@@ -115,15 +115,16 @@ def apply_boundary_conditions(K, f, r_nodes, r_h, r_T_inf, r_area,
     """
 
     # Add the Robin (convective) contribution to the diagonal entries.
-    K_add = (r_h * r_area)
-    K = K.at[r_nodes, r_nodes].add(K_add)
-
     # Add the corresponding contribution to the load vector.
+    K_add = (r_h * r_area)
+    # K = K.at[r_nodes, r_nodes].add(K_add)
     f_add = (r_h * r_area * r_T_inf)
-    f = f.at[r_nodes].add(f_add)
+    # f = f.at[r_nodes].add(f_add)
 
+    K, f = append_global_system(K, f, r_nodes, K_add, f_add)
+
+    # TODO Replace with identify
     idx_p, u_p = d_nodes, d_T
-    # idx_p, u_p = combine_fixed_conditions(d_nodes, d_T)
 
     # Obtain the number of nodes and all node indices.
     n_nodes = K.shape[0]

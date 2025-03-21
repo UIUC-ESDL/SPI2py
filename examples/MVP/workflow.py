@@ -15,7 +15,7 @@ import openmdao.api as om
 
 # SPI2py libraries
 from SPI2py.API.system import System, Components, LinearSplineComponent, Interconnects, Component, Interconnect
-from SPI2py.API.projection import Projections, ProjectionAggregator, ProjectComponent, ProjectInterconnect, \
+from SPI2py.API.projection import Projections, ProjectionAggregator, ProjectMDBDComponent, ProjectInterconnect, \
     ProjectLinearSplineComponent
 from SPI2py.API.FEA import Mesh, ExplicitFEA
 from SPI2py.API.objectives import BoundingBoxVolume
@@ -51,18 +51,18 @@ model.add_subsystem('projections', projections)
 # x_min, x_max = (-2, 2)
 # y_min, y_max = (0, 2.5)
 # z_min, z_max = (0, 2.5)
-# x_min, x_max = (-5, 5)
-# y_min, y_max = (-5, 5)
-# z_min, z_max = (-5, 5)
-x_min, x_max = (-3, 3)
-y_min, y_max = (-3, 3)
-z_min, z_max = (-3, 3)
+x_min, x_max = (-5, 5)
+y_min, y_max = (-5, 5)
+z_min, z_max = (-5, 5)
+# x_min, x_max = (-3, 3)
+# y_min, y_max = (-3, 3)
+# z_min, z_max = (-3, 3)
 
 # element_size = 0.0675
 # element_size = 0.125
-# element_size = 0.25
+element_size = 0.25
 # element_size = 0.5
-element_size = 1.0
+# element_size = 1.0
 
 
 nodes, elements, centers, nx, ny, nz, lx, ly, lz = generate_mesh_vec(x_min, x_max, y_min, y_max, z_min, z_max, element_size=element_size)
@@ -476,7 +476,7 @@ t3 = time_ns()
 total_time = (t3 - t1) / 1e9
 print(f"Total time: {total_time} seconds")
 
-pf = prob.check_partials(includes='FEA')
+# pf = prob.check_partials(includes='FEA')
 # tot = prob.compute_totals(of=['FEA.max_temperature'], wrt=['system.components.comp_2.translation'])
 # tot = tot[('FEA.max_temperature', 'system.components.comp_2.translation')][0]
 # print("total", tot)
