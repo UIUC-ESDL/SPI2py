@@ -1,3 +1,4 @@
+from functools import partial
 import jax.numpy as jnp
 import jax
 from jax import jvp, vjp
@@ -81,17 +82,17 @@ class ExplicitFEA(ExplicitComponent):
     def compute(self, inputs, outputs):
 
         # Unpack the options
-        nodes = self.options['nodes']
-        elements = self.options['elements']
-        el_size = self.options['el_size']
-        el_centers = self.options['el_centers']
-        robin_nodes = self.options['robin_nodes']
-        robin_h = self.options['robin_h']
-        robin_T_inf = self.options['robin_T_inf']
-        dirichlet_nodes = self.options['dirichlet_nodes']
-        dirichlet_values = self.options['dirichlet_values']
+        nodes = jnp.array(self.options['nodes'])
+        elements = jnp.array(self.options['elements'])
+        el_size = jnp.array(self.options['el_size'])
+        el_centers = jnp.array(self.options['el_centers'])
+        robin_nodes = jnp.array(self.options['robin_nodes'])
+        robin_h = jnp.array(self.options['robin_h'])
+        robin_T_inf = jnp.array(self.options['robin_T_inf'])
+        dirichlet_nodes = jnp.array(self.options['dirichlet_nodes'])
+        dirichlet_values = jnp.array(self.options['dirichlet_values'])
 
-        robin_area = el_size ** 2
+        robin_area = jnp.array(el_size ** 2)
 
         # Unpack the inputs
         density = jnp.array(inputs["density"])
@@ -176,67 +177,62 @@ class ExplicitFEA(ExplicitComponent):
         return u, u_max
 
     def compute_jacvec_prod(self, inputs, d_inputs, d_outputs, mode):
-        """
-        Compute the matrix-free Jacobian-vector product for both outputs:
-          - "temperature" (full field) and
-          - "max_temperature" (a scalar, e.g., from a Kreisselmeier–Steinhauser function).
-        """
-        # Get current input values.
+
+        # Unpack dynamic (differentiable) inputs.
         density = jnp.array(inputs["density"])
         heat_loads = jnp.array(inputs["heat_loads"])
 
-        # Unpack options.
-        nodes = self.options['nodes']
-        elements = self.options['elements']
-        el_size = self.options['el_size']
-        robin_nodes = self.options['robin_nodes']
-        robin_h = self.options['robin_h']
-        robin_T_inf = self.options['robin_T_inf']
-        dirichlet_nodes = self.options['dirichlet_nodes']
-        dirichlet_values = self.options['dirichlet_values']
-        robin_area = el_size ** 2
+        # Unpack static options.
+        nodes = jnp.array(self.options['nodes'])
+        elements = jnp.array(self.options['elements'])
+        el_size = jnp.array(self.options['el_size'])
+        robin_nodes = jnp.array(self.options['robin_nodes'])
+        robin_h = jnp.array(self.options['robin_h'])
+        robin_T_inf = jnp.array(self.options['robin_T_inf'])
+        dirichlet_nodes = jnp.array(self.options['dirichlet_nodes'])
+        dirichlet_values = jnp.array(self.options['dirichlet_values'])
+        robin_area = jnp.array(el_size ** 2)
 
-        # Prepare the full set of "primal" arguments.
-        primals = (density, heat_loads, nodes, elements,
-                   robin_nodes, robin_h, robin_T_inf, robin_area,
-                   dirichlet_nodes, dirichlet_values)
+        # Freeze all static arguments via partial so that only density and heat_loads are inputs.
+        frozen_compute_primal = partial(
+            self._compute_primal,
+            nodes=nodes,
+            elements=elements,
+            r_nodes=robin_nodes,
+            r_h=robin_h,
+            r_T_inf=robin_T_inf,
+            r_area=robin_area,
+            d_nodes=dirichlet_nodes,
+            d_T=dirichlet_values
+        )
 
         if mode == "fwd":
+            # Build tangents only for differentiable inputs.
+            tan_density = (jnp.array(d_inputs["density"])
+                           if "density" in d_inputs and d_inputs["density"] is not None
+                           else jnp.zeros_like(density))
 
-            # Build tangent
-            tan_density = jnp.array(d_inputs["density"]) if "density" in d_inputs and d_inputs["density"] is not None else jnp.zeros_like(density)
-            tan_heat_loads = jnp.array(d_inputs["heat_loads"]) if "heat_loads" in d_inputs and d_inputs["heat_loads"] is not None else jnp.zeros_like(heat_loads)
-            tan_nodes = jnp.zeros_like(nodes)
-            tan_elements = jnp.zeros_like(elements)
-            tan_robin_nodes = jnp.zeros_like(robin_nodes)
-            tan_robin_h = jnp.zeros_like(robin_h)
-            tan_robin_T_inf = jnp.zeros_like(robin_T_inf)
-            tan_robin_area = jnp.zeros_like(robin_area)
-            tan_dirichlet_nodes = jnp.zeros_like(dirichlet_nodes)
-            tan_dirichlet_values = jnp.zeros_like(dirichlet_values)
+            tan_heat_loads = (jnp.array(d_inputs["heat_loads"])
+                              if "heat_loads" in d_inputs and d_inputs["heat_loads"] is not None
+                              else jnp.zeros_like(heat_loads))
 
-            tangents = (tan_density, tan_heat_loads, tan_nodes, tan_elements,
-                        tan_robin_nodes, tan_robin_h, tan_robin_T_inf, tan_robin_area,
-                        tan_dirichlet_nodes, tan_dirichlet_values)
+            primals = (density, heat_loads)
+            tangents = (tan_density, tan_heat_loads)
 
-            # Compute forward-mode JVP
-            _, tangent_out = jvp(self._compute_primal, primals, tangents)
+            # Call jax.jvp on the frozen function.
+            _, tangent_out = jvp(frozen_compute_primal, primals, tangents)
 
-            d_outputs["temperature"] = tangent_out[0]
-            d_outputs["max_temperature"] = tangent_out[1]
+            # Assign the computed derivatives to the outputs.
+            d_outputs["temperature"] += tangent_out[0]
+            d_outputs["max_temperature"] += tangent_out[1]
 
         elif mode == "rev":
-
-            _, pullback = vjp(self._compute_primal, *primals)
-
-            cotangent = (d_outputs["temperature"],
-                         d_outputs["max_temperature"])
-
+            # Get the VJP (pullback) for the frozen function.
+            _, pullback = vjp(frozen_compute_primal, density, heat_loads)
+            cotangent = (d_outputs["temperature"], d_outputs["max_temperature"])
             grads = pullback(cotangent)
 
-            # Only assign the non-None gradients
-            # 0 = density, 1 = heat_loads
-            # 2, 3, ... are constants
+            # Accumulate the gradients into d_inputs.
             d_inputs["density"] += grads[0]
             d_inputs["heat_loads"] += grads[1]
 
