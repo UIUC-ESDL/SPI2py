@@ -111,107 +111,191 @@ from scipy.sparse import coo_matrix, csr_matrix, diags
 #
 #     return K_sparse, f_global
 
-def assemble_global_stiffness_matrix(nodes, elements, density, base_k):
-    """
-    Assemble the global stiffness matrix K and load vector f in a fully vectorized way without using vmap.
+# def assemble_global_stiffness_matrix(nodes, elements, density, base_k):
+#     """
+#     Assemble the global stiffness matrix K and load vector f in a fully vectorized way without using vmap.
+#
+#     Parameters:
+#       nodes:      (n_nodes, 3) array of coordinates.
+#       elements:   (n_elem, 8) connectivity array (indices into nodes).
+#       density:    (n_elem,) array of material densities.
+#       base_k:     Base thermal conductivity.
+#       gauss_pts:  1D array of Gauss quadrature points.
+#       gauss_wts:  1D array of Gauss quadrature weights.
+#
+#     Returns:
+#       K_global:   (n_nodes, n_nodes) global stiffness matrix.
+#       f_global:   (n_nodes,) load vector (zero in this example).
+#     """
+#     n_nodes = nodes.shape[0]
+#     n_elem = elements.shape[0]
+#
+#     # 1. Compute effective conductivity for each element.
+#     #    (Assume a simple linear interpolation: k_eff = base_k * density)
+#     k_eff_all = base_k * density  # shape: (n_elem,)
+#
+#     # 2. Gather nodal coordinates for all elements.
+#     #    element_nodes_all will have shape (n_elem, 8, 3)
+#     element_nodes_all = nodes[elements]
+#
+#     # Get Gauss quadrature points and weights
+#     gauss_pts, gauss_wts = gauss_quad()
+#
+#     # 3. Build the quadrature grid for the element integration.
+#     #    Create a tensor grid from the 1D gauss_pts and gauss_wts.
+#     xi_grid, eta_grid, zeta_grid = jnp.meshgrid(gauss_pts, gauss_pts, gauss_pts, indexing='ij')
+#     xi = xi_grid.flatten()  # shape: (n_qp,)
+#     eta = eta_grid.flatten()  # shape: (n_qp,)
+#     zeta = zeta_grid.flatten()  # shape: (n_qp,)
+#     n_qp = xi.shape[0]
+#
+#     # 4. Build the corresponding quadrature weights.
+#     wx, wy, wz = jnp.meshgrid(gauss_wts, gauss_wts, gauss_wts, indexing='ij')
+#     w_total = (wx * wy * wz).flatten()  # shape: (n_qp,)
+#
+#     # 5. Evaluate the shape functions and their natural derivatives at all quadrature points.
+#     #    shape_functions_vec should accept arrays of quadrature points and return:
+#     #      N_all: (n_qp, 8)
+#     #      dN_dxi_all: (n_qp, 8, 3)
+#     N_all, dN_dxi_all = shape_functions(xi, eta, zeta)
+#
+#     # 6. Compute the Jacobian for each element at each quadrature point.
+#     #    For each element e and quadrature point q:
+#     #       J_all[e, q, j, k] = sum_{i=0}^{7} element_nodes_all[e, i, j] * dN_dxi_all[q, i, k]
+#     #    This can be done with einsum:
+#     J_all = jnp.einsum('eij,qik->eqjk', element_nodes_all, dN_dxi_all)
+#     # J_all has shape: (n_elem, n_qp, 3, 3)
+#
+#     # 7. Compute the determinant and inverse of each Jacobian.
+#     detJ_all = jnp.abs(jnp.linalg.det(J_all))  # shape: (n_elem, n_qp)
+#     J_inv_all = jnp.linalg.inv(J_all)  # shape: (n_elem, n_qp, 3, 3)
+#
+#     # 8. Map the shape function derivatives to physical coordinates.
+#     #    For each element and quadrature point:
+#     #       dN_dx = J_inv * dN_dxi.
+#     #    First, broadcast dN_dxi_all from shape (n_qp, 8, 3) to (n_elem, n_qp, 8, 3):
+#     dN_dxi_all_b = jnp.broadcast_to(dN_dxi_all, (n_elem, n_qp, 8, 3))
+#     # Now compute dN_dx_all with einsum:
+#     dN_dx_all = jnp.einsum('eqjk,eqik->eqij', J_inv_all, dN_dxi_all_b)
+#     # dN_dx_all has shape: (n_elem, n_qp, 8, 3)
+#
+#     # 9. Compute the element stiffness contributions for each element and quadrature point.
+#     #    For each element e and quadrature point q, the contribution is:
+#     #      contrib[e, q] = k_eff_all[e] * (dN_dx_all[e,q] @ dN_dx_all[e,q]^T) * detJ_all[e,q] * w_total[q]
+#     contrib_all = jnp.einsum('eqik,eqjk->eqij', dN_dx_all, dN_dx_all)  # shape: (n_elem, n_qp, 8, 8)
+#     contrib_all = k_eff_all[:, None, None, None] * contrib_all \
+#                   * detJ_all[:, :, None, None] * w_total[None, :, None, None]
+#
+#     # 10. Sum contributions over quadrature points for each element to obtain element stiffness matrices.
+#     Ke_all = jnp.sum(contrib_all, axis=1)  # shape: (n_elem, 8, 8)
+#
+#     # 11. Assemble the global stiffness matrix via vectorized scatter-add.
+#     #     For each element, we need to add its 8x8 block to the global K.
+#     #     Build global index arrays for rows and columns:
+#     #       rows: for each element, repeat its 8 node indices 8 times.
+#     #       cols: for each element, tile its 8 node indices 8 times.
+#     rows = jnp.repeat(elements, repeats=8, axis=1)  # shape: (n_elem, 64)
+#     cols = jnp.tile(elements, reps=(1, 8))  # shape: (n_elem, 64)
+#
+#     # Flatten these index arrays.
+#     rows_flat = rows.reshape(-1)  # shape: (n_elem*64,)
+#     cols_flat = cols.reshape(-1)
+#
+#     # Flatten the element stiffness matrices.
+#     Ke_flat = Ke_all.reshape(-1)
+#
+#     # Initialize the global stiffness matrix and scatter-add contributions.
+#     K_global = jnp.zeros((n_nodes, n_nodes))
+#     K_global = K_global.at[rows_flat, cols_flat].add(Ke_flat)
+#
+#     # For this simple example, the load vector is zero.
+#     f_global = jnp.zeros(n_nodes)
+#
+#     return K_global, f_global
 
-    Parameters:
-      nodes:      (n_nodes, 3) array of coordinates.
-      elements:   (n_elem, 8) connectivity array (indices into nodes).
-      density:    (n_elem,) array of material densities.
-      base_k:     Base thermal conductivity.
-      gauss_pts:  1D array of Gauss quadrature points.
-      gauss_wts:  1D array of Gauss quadrature weights.
-
-    Returns:
-      K_global:   (n_nodes, n_nodes) global stiffness matrix.
-      f_global:   (n_nodes,) load vector (zero in this example).
-    """
-    n_nodes = nodes.shape[0]
-    n_elem = elements.shape[0]
-
-    # 1. Compute effective conductivity for each element.
-    #    (Assume a simple linear interpolation: k_eff = base_k * density)
-    k_eff_all = base_k * density  # shape: (n_elem,)
-
-    # 2. Gather nodal coordinates for all elements.
-    #    element_nodes_all will have shape (n_elem, 8, 3)
-    element_nodes_all = nodes[elements]
-
-    # Get Gauss quadrature points and weights
-    gauss_pts, gauss_wts = gauss_quad()
-
-    # 3. Build the quadrature grid for the element integration.
-    #    Create a tensor grid from the 1D gauss_pts and gauss_wts.
-    xi_grid, eta_grid, zeta_grid = jnp.meshgrid(gauss_pts, gauss_pts, gauss_pts, indexing='ij')
-    xi = xi_grid.flatten()  # shape: (n_qp,)
-    eta = eta_grid.flatten()  # shape: (n_qp,)
-    zeta = zeta_grid.flatten()  # shape: (n_qp,)
-    n_qp = xi.shape[0]
-
-    # 4. Build the corresponding quadrature weights.
-    wx, wy, wz = jnp.meshgrid(gauss_wts, gauss_wts, gauss_wts, indexing='ij')
-    w_total = (wx * wy * wz).flatten()  # shape: (n_qp,)
-
-    # 5. Evaluate the shape functions and their natural derivatives at all quadrature points.
-    #    shape_functions_vec should accept arrays of quadrature points and return:
-    #      N_all: (n_qp, 8)
-    #      dN_dxi_all: (n_qp, 8, 3)
-    N_all, dN_dxi_all = shape_functions(xi, eta, zeta)
-
-    # 6. Compute the Jacobian for each element at each quadrature point.
-    #    For each element e and quadrature point q:
-    #       J_all[e, q, j, k] = sum_{i=0}^{7} element_nodes_all[e, i, j] * dN_dxi_all[q, i, k]
-    #    This can be done with einsum:
-    J_all = jnp.einsum('eij,qik->eqjk', element_nodes_all, dN_dxi_all)
-    # J_all has shape: (n_elem, n_qp, 3, 3)
-
-    # 7. Compute the determinant and inverse of each Jacobian.
-    detJ_all = jnp.abs(jnp.linalg.det(J_all))  # shape: (n_elem, n_qp)
-    J_inv_all = jnp.linalg.inv(J_all)  # shape: (n_elem, n_qp, 3, 3)
-
-    # 8. Map the shape function derivatives to physical coordinates.
-    #    For each element and quadrature point:
-    #       dN_dx = J_inv * dN_dxi.
-    #    First, broadcast dN_dxi_all from shape (n_qp, 8, 3) to (n_elem, n_qp, 8, 3):
-    dN_dxi_all_b = jnp.broadcast_to(dN_dxi_all, (n_elem, n_qp, 8, 3))
-    # Now compute dN_dx_all with einsum:
-    dN_dx_all = jnp.einsum('eqjk,eqik->eqij', J_inv_all, dN_dxi_all_b)
-    # dN_dx_all has shape: (n_elem, n_qp, 8, 3)
-
-    # 9. Compute the element stiffness contributions for each element and quadrature point.
-    #    For each element e and quadrature point q, the contribution is:
-    #      contrib[e, q] = k_eff_all[e] * (dN_dx_all[e,q] @ dN_dx_all[e,q]^T) * detJ_all[e,q] * w_total[q]
-    contrib_all = jnp.einsum('eqik,eqjk->eqij', dN_dx_all, dN_dx_all)  # shape: (n_elem, n_qp, 8, 8)
-    contrib_all = k_eff_all[:, None, None, None] * contrib_all \
-                  * detJ_all[:, :, None, None] * w_total[None, :, None, None]
-
-    # 10. Sum contributions over quadrature points for each element to obtain element stiffness matrices.
-    Ke_all = jnp.sum(contrib_all, axis=1)  # shape: (n_elem, 8, 8)
-
-    # 11. Assemble the global stiffness matrix via vectorized scatter-add.
-    #     For each element, we need to add its 8x8 block to the global K.
-    #     Build global index arrays for rows and columns:
-    #       rows: for each element, repeat its 8 node indices 8 times.
-    #       cols: for each element, tile its 8 node indices 8 times.
-    rows = jnp.repeat(elements, repeats=8, axis=1)  # shape: (n_elem, 64)
-    cols = jnp.tile(elements, reps=(1, 8))  # shape: (n_elem, 64)
-
-    # Flatten these index arrays.
-    rows_flat = rows.reshape(-1)  # shape: (n_elem*64,)
-    cols_flat = cols.reshape(-1)
-
-    # Flatten the element stiffness matrices.
-    Ke_flat = Ke_all.reshape(-1)
-
-    # Initialize the global stiffness matrix and scatter-add contributions.
-    K_global = jnp.zeros((n_nodes, n_nodes))
-    K_global = K_global.at[rows_flat, cols_flat].add(Ke_flat)
-
-    # For this simple example, the load vector is zero.
-    f_global = jnp.zeros(n_nodes)
-
-    return K_global, f_global
+# def assemble_global_stiffness_matrix(nodes, elements, density, base_k):
+#     """
+#     Assemble the global stiffness matrix K and load vector f in a fully vectorized way,
+#     initializing the global stiffness matrix as a sparse matrix (BCOO format).
+#
+#     Parameters:
+#       nodes:      (n_nodes, 3) array of coordinates.
+#       elements:   (n_elem, 8) connectivity array (indices into nodes).
+#       density:    (n_elem,) array of material densities.
+#       base_k:     Base thermal conductivity.
+#
+#     Returns:
+#       K_global:   Sparse global stiffness matrix in BCOO format (shape: n_nodes x n_nodes).
+#       f_global:   (n_nodes,) global load vector (zero in this simple example).
+#     """
+#     n_nodes = nodes.shape[0]
+#     n_elem = elements.shape[0]
+#
+#     # 1. Compute effective conductivity for each element.
+#     k_eff_all = base_k * density  # shape: (n_elem,)
+#
+#     # 2. Gather nodal coordinates for all elements.
+#     element_nodes_all = nodes[elements]  # shape: (n_elem, 8, 3)
+#
+#     # Get Gauss quadrature points and weights.
+#     gauss_pts, gauss_wts = gauss_quad()
+#
+#     # 3. Build the quadrature grid for element integration.
+#     xi_grid, eta_grid, zeta_grid = jnp.meshgrid(gauss_pts, gauss_pts, gauss_pts, indexing='ij')
+#     xi = xi_grid.flatten()  # shape: (n_qp,)
+#     eta = eta_grid.flatten()
+#     zeta = zeta_grid.flatten()
+#     n_qp = xi.shape[0]
+#
+#     # 4. Build corresponding quadrature weights.
+#     wx, wy, wz = jnp.meshgrid(gauss_wts, gauss_wts, gauss_wts, indexing='ij')
+#     w_total = (wx * wy * wz).flatten()  # shape: (n_qp,)
+#
+#     # 5. Evaluate shape functions and their natural derivatives.
+#     #    shape_functions returns:
+#     #      N_all: (n_qp, 8)
+#     #      dN_dxi_all: (n_qp, 8, 3)
+#     N_all, dN_dxi_all = shape_functions(xi, eta, zeta)
+#
+#     # 6. Compute the Jacobian for each element at each quadrature point.
+#     #    J_all[e, q, j, k] = sum_{i=0}^{7} element_nodes_all[e, i, j] * dN_dxi_all[q, i, k]
+#     J_all = jnp.einsum('eij,qik->eqjk', element_nodes_all, dN_dxi_all)
+#     # J_all has shape: (n_elem, n_qp, 3, 3)
+#
+#     # 7. Compute determinant and inverse of each Jacobian.
+#     detJ_all = jnp.abs(jnp.linalg.det(J_all))  # shape: (n_elem, n_qp)
+#     J_inv_all = jnp.linalg.inv(J_all)  # shape: (n_elem, n_qp, 3, 3)
+#
+#     # 8. Map shape function derivatives to physical coordinates.
+#     dN_dxi_all_b = jnp.broadcast_to(dN_dxi_all, (n_elem, n_qp, 8, 3))
+#     dN_dx_all = jnp.einsum('eqjk,eqik->eqij', J_inv_all, dN_dxi_all_b)
+#     # dN_dx_all has shape: (n_elem, n_qp, 8, 3)
+#
+#     # 9. Compute element stiffness contributions for each quadrature point.
+#     contrib_all = jnp.einsum('eqik,eqjk->eqij', dN_dx_all, dN_dx_all)
+#     contrib_all = k_eff_all[:, None, None, None] * contrib_all \
+#                   * detJ_all[:, :, None, None] * w_total[None, :, None, None]
+#     # contrib_all has shape: (n_elem, n_qp, 8, 8)
+#
+#     # 10. Sum contributions over quadrature points to get the element stiffness matrix.
+#     Ke_all = jnp.sum(contrib_all, axis=1)  # shape: (n_elem, 8, 8)
+#
+#     # 11. Assemble the global stiffness matrix via vectorized scatter-add.
+#     #     For each element, build index arrays for its 8x8 block.
+#     rows = jnp.repeat(elements, repeats=8, axis=1)  # shape: (n_elem, 64)
+#     cols = jnp.tile(elements, reps=(1, 8))  # shape: (n_elem, 64)
+#     rows_flat = rows.reshape(-1)  # shape: (n_elem*64,)
+#     cols_flat = cols.reshape(-1)
+#     Ke_flat = Ke_all.reshape(-1)  # shape: (n_elem*64,)
+#
+#     # 12. Build the sparse global stiffness matrix using BCOO.
+#     indices = jnp.stack([rows_flat, cols_flat], axis=-1)  # shape: (n_elem*64, 2)
+#     K_global = BCOO((Ke_flat, indices), shape=(n_nodes, n_nodes))
+#
+#     # 13. For this simple example, the load vector is zero.
+#     f_global = jnp.zeros(n_nodes)
+#
+#     return K_global, f_global
 
 
 def apply_boundary_conditions(K, f, r_nodes, r_h, r_T_inf, r_area,
