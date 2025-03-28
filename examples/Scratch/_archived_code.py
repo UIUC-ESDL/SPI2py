@@ -271,3 +271,83 @@
 #     # p.background_color = 'white'
 #
 #     plotter.show()
+
+
+
+# # Sweep component and plot derivatives
+# import matplotlib.pyplot as plt
+#
+# # prob.set_val('system.components.comp_2.translation', [-1.5, 0.75, 0.5])
+# x_values = np.linspace(-1.5, 1.5, 100)
+# # f_vals = []
+# # df_dx = []
+# c_vals = []
+# dc_dx = []
+# for xi in x_values:
+#     prob.set_val('system.components.comp_2.translation', [xi, 0, 0])
+#     # prob.set_val('system.components.comp_2.translation', [0, xi, 1])
+#     # prob.set_val('system.components.comp_2.translation', [0, 0, xi])
+#     prob.run_model()
+#     # fval = copy(prob.get_val('bbv.volume'))
+#     cval = copy(prob.get_val('projections.aggregator.max_density'))
+#     # f_vals.append(fval)
+#     c_vals.append(cval)
+#     # totalsf = prob.compute_totals(of=['bbv.volume'], wrt=['system.components.comp_2.translation'])
+#     totalsc = prob.compute_totals(of=['projections.aggregator.max_density'], wrt=['system.components.comp_2.translation'])
+#
+#     # Extract the scalar derivative
+#     # derivf = copy(totalsf[('bbv.volume', 'system.components.comp_2.translation')][0][0])
+#     derivc = copy(totalsc[('projections.aggregator.max_density', 'system.components.comp_2.translation')][0][0])
+#     # df_dx.append(derivf)
+#     dc_dx.append(derivc)
+#
+# # Apply finite difference
+# prob.model.approx_totals(method='fd')  # Use finite differencing
+# df_dx_approx = []
+# dc_dx_approx = []
+# for xi in x_values:
+#     prob.set_val('system.components.comp_2.translation', [xi, 0, 0])
+#     # prob.set_val('system.components.comp_2.translation', [0, xi, 1])
+#     # prob.set_val('system.components.comp_2.translation', [0, 0, xi])
+#     prob.run_model()
+#
+#     # totalsf = prob.compute_totals(of=['bbv.volume'], wrt=['system.components.comp_2.translation'])
+#     totalsc = prob.compute_totals(of=['projections.aggregator.max_density'], wrt=['system.components.comp_2.translation'])
+#
+#     # Extract the scalar derivative
+#     # derivf = copy(totalsf[('bbv.volume', 'system.components.comp_2.translation')][0][0])
+#     derivc = copy(totalsc[('projections.aggregator.max_density', 'system.components.comp_2.translation')][0][0])
+#     # df_dx_approx.append(derivf)
+#     dc_dx_approx.append(derivc)
+#
+#
+# # # Plot results
+# # plt.figure(figsize=(8, 6))
+# # plt.plot(x_values, f_vals, label='BBV', color='blue', linestyle='-')
+# # plt.plot(x_values, df_dx, label='Computed Derivative', color='red', linestyle='--')
+# # plt.plot(x_values, df_dx_approx, label='FD Derivative', color='green', linestyle='-.')
+# # plt.xlabel('Translation (x)')
+# # plt.ylabel('Value')
+# # plt.title('BBV Objective & Its Derivatives')
+# # plt.legend()
+# # plt.grid(True)
+# # plt.show()
+#
+#
+# # Plot results
+# plt.figure(figsize=(8, 6))
+# plt.plot(x_values, c_vals, label='Max Density Constraint', color='blue', linestyle='-')
+# plt.plot(x_values, dc_dx, label='Computed Derivative', color='red', linestyle='--')
+# plt.plot(x_values, dc_dx_approx, label='FD Derivative', color='green', linestyle='-.')
+# plt.xlabel('Translation (x)')
+# plt.ylabel('Value')
+# plt.title('Max Density Constraint & Its Derivatives')
+# plt.legend()
+# plt.grid(True)
+# plt.show()
+#
+# # prob.set_val('system.components.comp_2.translation', [1, 1, 1])
+# # prob.run_model()
+#
+# prob.set_val('system.components.comp_2.translation', [2, 0.75, 0.5])
+# prob.run_model()

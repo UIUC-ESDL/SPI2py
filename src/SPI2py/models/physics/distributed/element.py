@@ -4,12 +4,18 @@ from jax import jit
 
 
 @jit
-def assemble_local_stiffness_matrix(element_nodes, k_eff, gauss_pts, gauss_wts):
+def assemble_local_stiffness_matrix(nodes, k_eff, gauss_pts, gauss_wts):
     """
     Compute the 8x8 element stiffness matrix for a single element.
 
+    Einstein summation convention is used for clarity.
+    q = quadrature point index 0-7.
+    e = element node index 0-7.
+    g = global coordinate index 0-2 (x, y, z).
+    l = local coordinate index 0-2 (xi, eta, zeta).
+
     Parameters:
-      element_nodes: (8, 3) array with the coordinates of the element's nodes.
+      nodes: (8, 3)  array with the coordinates of the element's nodes.
       k_eff:         Scalar effective conductivity for the element.
       gauss_pts:     1D array of Gauss quadrature points.
       gauss_wts:     1D array of Gauss quadrature weights.
@@ -35,9 +41,9 @@ def assemble_local_stiffness_matrix(element_nodes, k_eff, gauss_pts, gauss_wts):
     N_all, dN_dxi_all = shape_functions(xi, eta, zeta)
 
     # Compute the Jacobian at each quadrature point.
-    # J[q, j, k] = sum_{i=0}^{7} element_nodes[i, j] * dN_dxi_all[q, i, k]
+    # J[q, g, l] = sum_{e=0}^{7} element_nodes[e, g] * dN_dxi_all[q, e, l]
     # Shape: (n_qp, 3, 3)
-    J = jnp.einsum('ij,qik->qjk', element_nodes, dN_dxi_all)
+    J = jnp.einsum('eg,qel->qgl', nodes, dN_dxi_all)
 
     # Compute determinant and inverse of the Jacobian.
     detJ = jnp.abs(jnp.linalg.det(J))
@@ -46,12 +52,12 @@ def assemble_local_stiffness_matrix(element_nodes, k_eff, gauss_pts, gauss_wts):
     # Map the shape function derivatives to physical coordinates:
     # dN_dx[q] = J_inv[q] @ dN_dxi_all[q] for each quadrature point.
     # Shape (n_qp, 8, 3)
-    dN_dx = jnp.einsum('qjk,qik->qij', J_inv, dN_dxi_all)
+    dN_dx = jnp.einsum('qgl,qel->qeg', J_inv, dN_dxi_all)
 
     # For each quadrature point, compute the contribution to the local stiffness:
     # Contribution = k_eff * (dN_dx @ dN_dx^T) * detJ * w_total.
     # Shape: (n_qp, 8, 8)
-    contrib = jnp.einsum('qik,qjk->qij', dN_dx, dN_dx)
+    contrib = jnp.einsum('qel,qgl->qeg', dN_dx, dN_dx)
     contrib = k_eff * contrib * (detJ * w_total)[:, None, None]
 
     # Sum over all quadrature points to obtain the local stiffness matrix.
