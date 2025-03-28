@@ -285,6 +285,7 @@ def apply_bc_partition_method(K_ff, K_fp, K_pf, K_pp,
     # For free nodes:
     f_val = r_h * r_area * r_T_inf
     f_f_updated = f_f.at[local_free].add(f_val)
+
     # For prescribed nodes:
     f_p_updated = f_p.at[local_presc].add(f_val)
 

@@ -149,48 +149,48 @@ class ExplicitFEA(ExplicitComponent):
 
 
 
-        # # Solve via the penalty method.
-        #
-        # # Update the global stiffness matrix using current densities.
-        # K_updated = update_global_stiffness_penalty(K_base, elem_indices, density)
-        #
-        # # Assemble the global load vector from heat loads.
-        # nodes_per_elem = 8
-        #
-        # # Distribute each element's heat load to its nodes (simple lumping).
-        # element_contrib = (heat_loads * density) / nodes_per_elem
-        # f = jnp.zeros(nodes.shape[0])
-        # f = f.at[elements.flatten()].add(jnp.repeat(element_contrib, nodes_per_elem))
-        #
-        # # Apply boundary conditions (both Robin and Dirichlet).
-        # K_updated, f = apply_bc_penalty(K_updated, f,
-        #                                 r_nodes, r_h, r_T_inf, r_area,
-        #                                 d_nodes, d_T, beta=1e3)
-        #
-        #
-        # # Solve the global system using a sparse solver (e.g., conjugate gradient).
-        # # TODO Is f complete? RHS
-        # u, _ = cg(K_updated, f, tol=1e-8, maxiter=500)
+        # Solve via the penalty method.
+
+        # Update the global stiffness matrix using current densities.
+        K_updated = update_global_stiffness_penalty(K_base, elem_indices, density)
+
+        # Assemble the global load vector from heat loads.
+        nodes_per_elem = 8
+
+        # Distribute each element's heat load to its nodes (simple lumping).
+        element_contrib = (heat_loads * density) / nodes_per_elem
+        f = jnp.zeros(nodes.shape[0])
+        f = f.at[elements.flatten()].add(jnp.repeat(element_contrib, nodes_per_elem))
+
+        # Apply boundary conditions (both Robin and Dirichlet).
+        K_updated, f = apply_bc_penalty(K_updated, f,
+                                        r_nodes, r_h, r_T_inf, r_area,
+                                        d_nodes, d_T, beta=1e3)
 
 
-        # Solve via the partition Method
-        idx = jnp.arange(nodes.shape[0])
-        idx_p = d_nodes
-        idx_f = jnp.setdiff1d(idx, idx_p)
+        # Solve the global system using a sparse solver (e.g., conjugate gradient).
+        # TODO Is f complete? RHS
+        u, _ = cg(K_updated, f, tol=1e-8, maxiter=500)
 
-        # Assemble the base system
-        # TODO move assemble to setup...
-        K_ff, K_fp, K_pf, K_pp, f_f, f_p, u_p, elem_indices = assemble_base_global_stiffness_partition(nodes, elements, 1, idx_f, idx_p)
-        K_ff, K_fp, K_pf, K_pp, f_f, f_p, u_p = update_global_stiffness_partition(K_ff, K_fp, K_pf, K_pp, f_f, f_p, u_p, elem_indices, density)
-        K_ff, K_fp, K_pf, K_pp, f_f, f_p = apply_bc_partition_method(K_ff, K_fp, K_pf, K_pp, f_f, f_p, r_nodes, r_h, r_area, r_T_inf, idx_f, idx_p)
 
-        u_f, _ = cg(K_ff, (f_f - K_fp @ u_p), tol=1e-8, maxiter=500)
-
-        # Reassemble the full solution.
-        n_nodes = nodes.shape[0]
-        u = jnp.zeros(n_nodes)
-        u = u.at[idx_f].set(u_f)
-        u = u.at[idx_p].set(u_p)
+        # # Solve via the partition Method
+        # idx = jnp.arange(nodes.shape[0])
+        # idx_p = d_nodes
+        # idx_f = jnp.setdiff1d(idx, idx_p)
+        #
+        # # Assemble the base system
+        # # TODO move assemble to setup...
+        # K_ff, K_fp, K_pf, K_pp, f_f, f_p, u_p, elem_indices = assemble_base_global_stiffness_partition(nodes, elements, 1, idx_f, idx_p)
+        # K_ff, K_fp, K_pf, K_pp, f_f, f_p, u_p = update_global_stiffness_partition(K_ff, K_fp, K_pf, K_pp, f_f, f_p, u_p, elem_indices, density)
+        # K_ff, K_fp, K_pf, K_pp, f_f, f_p = apply_bc_partition_method(K_ff, K_fp, K_pf, K_pp, f_f, f_p, r_nodes, r_h, r_area, r_T_inf, idx_f, idx_p)
+        #
+        # u_f, _ = cg(K_ff, (f_f - K_fp @ u_p), tol=1e-8, maxiter=500)
+        #
+        # # Reassemble the full solution.
+        # n_nodes = nodes.shape[0]
+        # u = jnp.zeros(n_nodes)
+        # u = u.at[idx_f].set(u_f)
+        # u = u.at[idx_p].set(u_p)
 
 
         # Compute a scalar measure of the maximum temperature (e.g., using a KS function).

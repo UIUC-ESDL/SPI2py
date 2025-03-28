@@ -27,6 +27,9 @@ from SPI2py.models.utilities.visualization import plot_grid, plot_spheres, plot_
 from SPI2py.models.utilities.visualization import plot_temperature_distribution
 from SPI2py.models.physics.distributed.mesh import generate_mesh_vec, find_active_nodes, find_face_nodes
 
+# Start the timer
+t0 = time_ns()
+
 # Set up the JAX backend
 jax.config.update("jax_enable_x64", True)
 # jax.config.update("jax_debug_nans", True)
@@ -48,12 +51,12 @@ model.add_subsystem('projections', projections)
 
 
 # Initialize the Mesh
-x_min, x_max = (-2, 2)
-y_min, y_max = (0, 2.5)
-z_min, z_max = (0, 2.5)
-# x_min, x_max = (-5, 5)
-# y_min, y_max = (-5, 5)
-# z_min, z_max = (-5, 5)
+# x_min, x_max = (-2, 2)
+# y_min, y_max = (0, 2.5)
+# z_min, z_max = (0, 2.5)
+x_min, x_max = (-5, 5)
+y_min, y_max = (-5, 5)
+z_min, z_max = (-5, 5)
 # x_min, x_max = (-3, 3)
 # y_min, y_max = (-3, 3)
 # z_min, z_max = (-3, 3)
@@ -61,8 +64,8 @@ z_min, z_max = (0, 2.5)
 # element_size = 0.0675
 # element_size = 0.125
 # element_size = 0.25
-# element_size = 0.5
-element_size = 1.0
+element_size = 0.5
+# element_size = 1.0
 
 
 nodes, elements, centers, nx, ny, nz, lx, ly, lz = generate_mesh_vec(x_min, x_max, y_min, y_max, z_min, z_max, element_size=element_size)
@@ -172,15 +175,7 @@ FEA = ExplicitFEA(nodes=nodes,
                   robin_nodes=robin_nodes,
                   robin_h=1.0, #10.0,
                   robin_T_inf=200.0)
-# FEA = ExplicitFEA(nodes=np.array(nodes),
-#                   elements=np.array(elements),
-#                   el_size=element_size,
-#                   el_centers=np.array(centers),
-#                   dirichlet_nodes=np.array(dirichlet_nodes),
-#                   dirichlet_values=np.array(dirichlet_T),
-#                   robin_nodes=np.array(robin_nodes),
-#                   robin_h=1.0, #10.0,
-#                   robin_T_inf=200.0)
+
 model.add_subsystem('FEA', FEA)
 model.connect('projections.aggregator.aggregated_densities', 'FEA.density')
 model.connect('projections.aggregator.aggregated_heat_loads', 'FEA.heat_loads')
@@ -228,7 +223,7 @@ t1 = time_ns()
 prob.run_model()
 t2 = time_ns()
 
-print(f"Elapsed time: {(t2 - t1) / 1e9} seconds")
+print(f"Run time: {(t2 - t1) / 1e9} seconds")
 
 
 # Check the initial state
@@ -252,8 +247,13 @@ comp_2_radii_before = copy(prob.get_val('system.components.comp_2.updated_radii'
 densities_before = copy(prob.get_val('projections.aggregator.aggregated_densities'))
 
 
-# Run the optimization
+# # Run the optimization
+# t3 = time_ns()
 # prob.run_driver()
+# t4 = time_ns()
+# print(f"Optimization time: {(t4 - t3) / 1e9} seconds")
+
+
 
 
 
@@ -320,6 +320,7 @@ print('Max Temp:', np.max(T_np))
 print('Mean Temp:', np.mean(T_np))
 
 # Plot the results
+t5 = time_ns()
 plotter = pv.Plotter(shape=(2, 2), window_size=(1500, 500))
 
 
@@ -385,9 +386,12 @@ plotter.show()
 
 
 
-t3 = time_ns()
-total_time = (t3 - t1) / 1e9
-print(f"Total time: {total_time} seconds")
+t6 = time_ns()
+print(f"Plot time: {(t6 - t5) / 1e9} seconds")
+
+# Print the total time
+print(f"Total time: {(t6 - t0) / 1e9} seconds")
+
 
 
 
