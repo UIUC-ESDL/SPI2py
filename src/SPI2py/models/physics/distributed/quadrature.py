@@ -1,17 +1,18 @@
 import jax.numpy as jnp
 from jax import jit
 
+
 @jit
 def shape_functions(xi, eta, zeta):
     """
-    Vectorized evaluation of the trilinear shape functions and their derivatives.
+    A vectorized evaluation of the trilinear shape functions and their derivatives.
 
     Parameters:
       xi, eta, zeta: arrays of shape (n_qp,)
 
     Returns:
-      N: (n_qp, 8) array of shape function values.
-      dN_dxi: (n_qp, 8, 3) array of derivatives with respect to (xi,eta,zeta).
+      Nqp: (n_qp, 8) array of shape function values.
+      dNqp_dLocal: (n_qp, 8, 3) array of shape function derivatives with respect to local coordinates (xi,eta,zeta).
     """
 
     # Reference coordinates for the eight nodes, shape (8, 3)
@@ -32,22 +33,22 @@ def shape_functions(xi, eta, zeta):
     zeta = zeta[:, None]
 
     # Evaluate shape functions.
-    N = 1/8.0 * (1 + xi * node_ref[:, 0]) * (1 + eta * node_ref[:, 1]) * (1 + zeta * node_ref[:, 2])
+    Nqp = 1/8.0 * (1 + xi * node_ref[:, 0]) * (1 + eta * node_ref[:, 1]) * (1 + zeta * node_ref[:, 2])
 
     # Compute derivatives with respect to xi, eta, and zeta.
-    dN_dxi0 = 1/8.0 * node_ref[:, 0] * (1 + eta * node_ref[:, 1]) * (1 + zeta * node_ref[:, 2])
-    dN_dxi1 = 1/8.0 * node_ref[:, 1] * (1 + xi  * node_ref[:, 0]) * (1 + zeta * node_ref[:, 2])
-    dN_dxi2 = 1/8.0 * node_ref[:, 2] * (1 + xi  * node_ref[:, 0]) * (1 + eta  * node_ref[:, 1])
+    dNqp_dxi = 1/8.0 * node_ref[:, 0] * (1 + eta * node_ref[:, 1]) * (1 + zeta * node_ref[:, 2])
+    dNqp_deta = 1/8.0 * node_ref[:, 1] * (1 + xi  * node_ref[:, 0]) * (1 + zeta * node_ref[:, 2])
+    dNqp_dzeta = 1/8.0 * node_ref[:, 2] * (1 + xi  * node_ref[:, 0]) * (1 + eta  * node_ref[:, 1])
 
     # Broadcast each derivative to shape (n_qp, 8)
-    dN_dxi0 = jnp.broadcast_to(dN_dxi0, N.shape)
-    dN_dxi1 = jnp.broadcast_to(dN_dxi1, N.shape)
-    dN_dxi2 = jnp.broadcast_to(dN_dxi2, N.shape)
+    dNqp_dxi = jnp.broadcast_to(dNqp_dxi, Nqp.shape)
+    dNqp_deta = jnp.broadcast_to(dNqp_deta, Nqp.shape)
+    dNqp_dzeta = jnp.broadcast_to(dNqp_dzeta, Nqp.shape)
 
     # Stack to get derivatives of shape (n_qp, 8, 3)
-    dN_dxi = jnp.stack([dN_dxi0, dN_dxi1, dN_dxi2], axis=-1)
+    dNqp_dLocal = jnp.stack([dNqp_dxi, dNqp_deta, dNqp_dzeta], axis=-1)
 
-    return N, dN_dxi
+    return Nqp, dNqp_dLocal
 
 
 @jit
