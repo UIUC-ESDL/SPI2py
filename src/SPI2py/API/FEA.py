@@ -11,7 +11,8 @@ from openmdao.api import ExplicitComponent, IndepVarComp
 
 from SPI2py.models.physics.distributed.mesh import generate_mesh_vec
 from SPI2py.models.projection.mesh_kernels import create_uniform_kernel
-from SPI2py.models.physics.distributed.assembly import assemble_base_global_stiffness, apply_bc_penalty_method, update_global_stiffness #, assemble_global_load_vector
+from SPI2py.models.physics.distributed.assembly import assemble_base_global_stiffness_penalty, apply_bc_penalty,  update_global_stiffness_penalty
+from SPI2py.models.physics.distributed.assembly import assemble_base_global_stiffness_partition, apply_bc_partition_method, update_global_stiffness_partition
 from SPI2py.models.utilities.aggregation import kreisselmeier_steinhauser_max, kreisselmeier_steinhauser_min
 
 
@@ -49,108 +50,6 @@ class Mesh(IndepVarComp):
         self.add_output('n_el_z', val=nz)
 
 
-# class ExplicitFEA(ExplicitComponent):
-#
-#     def initialize(self):
-#         # Mesh parameters.
-#         self.options.declare('nodes', types=np.ndarray, desc='Nodes of the mesh')
-#         self.options.declare('elements', types=np.ndarray,
-#                              desc='Elements connectivity of the mesh (8 nodes per element)')
-#         self.options.declare('el_size', types=(int, float), desc='Edge length of uniform hexahedral elements',
-#                              default=1.0)
-#         self.options.declare('el_centers', types=np.ndarray, desc='Centers of the mesh elements')
-#         self.options.declare('dirichlet_nodes', types=np.ndarray, desc='Indices of nodes with Dirichlet BCs')
-#         self.options.declare('dirichlet_values', types=np.ndarray, desc='Prescribed temperature at Dirichlet nodes')
-#         self.options.declare('robin_nodes', types=np.ndarray, desc='Indices of nodes with Robin BCs')
-#         self.options.declare('robin_h', types=float, desc='Robin convection coefficient')
-#         self.options.declare('robin_T_inf', types=float, desc='Ambient temperature for Robin BCs')
-#         # Penalty parameter.
-#         self.options.declare('penalty_beta', types=float, desc='Penalty parameter for Dirichlet BC enforcement',
-#                              default=1e3)
-#
-#     def setup(self):
-#         # Inputs.
-#         self.add_input("density", shape_by_conn=True, desc="Element density (ersatz material)")
-#         self.add_input("heat_loads", shape_by_conn=True, desc="Heat load per element")
-#         # Outputs.
-#         n_nodes = self.options['nodes'].shape[0]
-#         self.add_output("temperature", shape=(n_nodes,), desc="Computed temperature field")
-#         self.add_output("max_temperature", val=0.0, desc="Maximum temperature in the domain")
-#
-#     def setup_partials(self):
-#         # Declare that we are using matrix-free derivatives.
-#         self.declare_partials(of="temperature", wrt="density", method="exact")
-#         self.declare_partials(of="temperature", wrt="heat_loads", method="exact")
-#         self.declare_partials(of="max_temperature", wrt="density", method="exact")
-#         self.declare_partials(of="max_temperature", wrt="heat_loads", method="exact")
-#
-#     def compute(self, inputs, outputs):
-#         # Unpack options.
-#         nodes = self.options['nodes']
-#         elements = self.options['elements']
-#         el_size = self.options['el_size']
-#         robin_nodes = self.options['robin_nodes']
-#         robin_h = self.options['robin_h']
-#         robin_T_inf = self.options['robin_T_inf']
-#         dirichlet_nodes = self.options['dirichlet_nodes']
-#         dirichlet_values = self.options['dirichlet_values']
-#         penalty_beta = self.options['penalty_beta']
-#         # For Robin BC, assume the "area" associated with a node is the element face area.
-#         # For a uniform element, we use el_size^2.
-#         robin_area = el_size ** 2
-#
-#         # Unpack inputs.
-#         density = inputs["density"].flatten()  # one density per element
-#         heat_loads = inputs["heat_loads"].flatten()  # one heat load per element
-#
-#         temp, max_temp = self._compute_primal(density, heat_loads, nodes, elements,
-#                                               robin_nodes, robin_h, robin_T_inf, robin_area,
-#                                               dirichlet_nodes, dirichlet_values,
-#                                               penalty_beta, el_size)
-#         outputs["temperature"] = temp
-#         outputs["max_temperature"] = max_temp
-#
-#     @staticmethod
-#     def _compute_primal(density, heat_loads, nodes, elements,
-#                         r_nodes, r_h, r_T_inf, r_area,
-#                         d_nodes, d_T, beta, el_size):
-#         """
-#         Assemble the global system for a uniform hexahedral mesh using two-point Gauss quadrature,
-#         apply heat loads, enforce boundary conditions via a penalty formulation, and solve for the temperature.
-#
-#         Parameters:
-#           density  : (n_elements,) ersatz density values.
-#           heat_loads: (n_elements,) heat load per element.
-#           nodes    : (n_nodes x dim) array of node coordinates.
-#           elements : (n_elements x 8) connectivity array.
-#           r_nodes, r_h, r_T_inf, r_area: Robin BC parameters.
-#           d_nodes, d_T: Dirichlet BC nodes and prescribed temperature.
-#           beta     : Penalty parameter.
-#           el_size  : Edge length of each element.
-#
-#         Returns:
-#           u      : computed temperature field (n_nodes,).
-#           u_max  : maximum temperature (scalar), here using a simple np.max.
-#         """
-#         # Assemble global stiffness matrix and initial load vector.
-#         K, f = assemble_global_stiffness_matrix(nodes, elements, density, base_k=1.0, el_size=el_size)
-#         # Assemble the load vector from the heat loads.
-#         f_load = assemble_global_load_vector(nodes, elements, heat_loads, density, el_size)
-#         f = f + f_load
-#
-#         # Apply boundary conditions.
-#         K_bc, f_bc = apply_boundary_conditions(K, f, r_nodes, r_h, r_T_inf, r_area,
-#                                                       d_nodes, d_T, beta)
-#         # Solve the sparse system.
-#         u = spsolve(K_bc, f_bc)
-#         u_max = np.max(u)
-#         return u, u_max
-#
-#     # def compute_jacvec_product(self, inputs, d_inputs, d_outputs, mode):
-#     #     # For brevity, the implementation of JVP/VJP is omitted here.
-#     #     # One could use complex step (or other methods) externally.
-#     #     pass
-
 class ExplicitFEA(ExplicitComponent):
 
     def initialize(self):
@@ -183,7 +82,7 @@ class ExplicitFEA(ExplicitComponent):
         elements = jnp.array(self.options['elements'])
         base_k = self.options['base_k']
         # assemble_base_global_stiffness returns a sparse matrix in BCOO format and an auxiliary mapping.
-        self._K_base, self._elem_indices = assemble_base_global_stiffness(nodes, elements, base_k)
+        self._K_base, self._elem_indices = assemble_base_global_stiffness_penalty(nodes, elements, base_k)
 
     def setup_partials(self):
         # Declare that we are using matrix-free derivatives
@@ -217,8 +116,8 @@ class ExplicitFEA(ExplicitComponent):
         # penal = self.options['penal']
 
         temp, max_temp = self._compute_primal(density, heat_loads, nodes, elements,
-                                    robin_nodes, robin_h, robin_T_inf, robin_area,
-                                    dirichlet_nodes, dirichlet_values, K_base, elem_indices)
+                                              robin_nodes, robin_h, robin_T_inf, robin_area,
+                                              dirichlet_nodes, dirichlet_values, K_base, elem_indices)
 
         outputs["temperature"] = temp
         outputs["max_temperature"] = max_temp
@@ -247,36 +146,48 @@ class ExplicitFEA(ExplicitComponent):
           u    : computed temperature (or displacement) field (dense vector)
           u_max: a scalar computed via a Kreisselmeier–Steinhauser (KS) function (here using a min-version)
         """
-        # Update the global stiffness matrix using current densities.
-        K_updated = update_global_stiffness(K_base, elem_indices, density)
 
-        # Assemble the global load vector from heat loads.
-        nodes_per_elem = 8
-        # Distribute each element's heat load to its nodes (simple lumping).
-        element_contrib = (heat_loads * density) / nodes_per_elem
-        f = jnp.zeros(nodes.shape[0])
-        f = f.at[elements.flatten()].add(jnp.repeat(element_contrib, nodes_per_elem))
 
-        # Apply boundary conditions (both Robin and Dirichlet).
-        K_updated, f = apply_bc_penalty_method(K_updated, f,
-                                               r_nodes, r_h, r_T_inf, r_area,
-                                               d_nodes, d_T, beta=1e3)
 
-        # Solve via the penalty method.
-
-        # Solve the global system using a sparse solver (e.g., conjugate gradient).
-        # TODO Is f complete? RHS
-        u, _ = cg(K_updated, f, tol=1e-8, maxiter=500)
+        # # Solve via the penalty method.
+        #
+        # # Update the global stiffness matrix using current densities.
+        # K_updated = update_global_stiffness_penalty(K_base, elem_indices, density)
+        #
+        # # Assemble the global load vector from heat loads.
+        # nodes_per_elem = 8
+        #
+        # # Distribute each element's heat load to its nodes (simple lumping).
+        # element_contrib = (heat_loads * density) / nodes_per_elem
+        # f = jnp.zeros(nodes.shape[0])
+        # f = f.at[elements.flatten()].add(jnp.repeat(element_contrib, nodes_per_elem))
+        #
+        # # Apply boundary conditions (both Robin and Dirichlet).
+        # K_updated, f = apply_bc_penalty(K_updated, f,
+        #                                 r_nodes, r_h, r_T_inf, r_area,
+        #                                 d_nodes, d_T, beta=1e3)
+        #
+        #
+        # # Solve the global system using a sparse solver (e.g., conjugate gradient).
+        # # TODO Is f complete? RHS
+        # u, _ = cg(K_updated, f, tol=1e-8, maxiter=500)
 
 
         # Solve via the partition Method
-        K_ff, K_fp, K_pf, K_pp, f_f, f_p, u_p, idx_f, idx_p = apply_bc_penalty_method(K_updated, f,
-                                                                                      r_nodes, r_h, r_T_inf, r_area,
-                                                                                      d_nodes, d_T)
+        idx = jnp.arange(nodes.shape[0])
+        idx_p = d_nodes
+        idx_f = jnp.setdiff1d(idx, idx_p)
+
+        # Assemble the base system
+        # TODO move assemble to setup...
+        K_ff, K_fp, K_pf, K_pp, f_f, f_p, u_p, elem_indices = assemble_base_global_stiffness_partition(nodes, elements, 1, idx_f, idx_p)
+        K_ff, K_fp, K_pf, K_pp, f_f, f_p, u_p = update_global_stiffness_partition(K_ff, K_fp, K_pf, K_pp, f_f, f_p, u_p, elem_indices, density)
+        K_ff, K_fp, K_pf, K_pp, f_f, f_p = apply_bc_partition_method(K_ff, K_fp, K_pf, K_pp, f_f, f_p, r_nodes, r_h, r_area, r_T_inf, idx_f, idx_p)
+
         u_f, _ = cg(K_ff, (f_f - K_fp @ u_p), tol=1e-8, maxiter=500)
 
         # Reassemble the full solution.
-        n_nodes = K.shape[0]
+        n_nodes = nodes.shape[0]
         u = jnp.zeros(n_nodes)
         u = u.at[idx_f].set(u_f)
         u = u.at[idx_p].set(u_p)

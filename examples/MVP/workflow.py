@@ -48,12 +48,12 @@ model.add_subsystem('projections', projections)
 
 
 # Initialize the Mesh
-# x_min, x_max = (-2, 2)
-# y_min, y_max = (0, 2.5)
-# z_min, z_max = (0, 2.5)
-x_min, x_max = (-5, 5)
-y_min, y_max = (-5, 5)
-z_min, z_max = (-5, 5)
+x_min, x_max = (-2, 2)
+y_min, y_max = (0, 2.5)
+z_min, z_max = (0, 2.5)
+# x_min, x_max = (-5, 5)
+# y_min, y_max = (-5, 5)
+# z_min, z_max = (-5, 5)
 # x_min, x_max = (-3, 3)
 # y_min, y_max = (-3, 3)
 # z_min, z_max = (-3, 3)
