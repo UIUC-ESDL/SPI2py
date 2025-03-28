@@ -11,7 +11,7 @@ from openmdao.api import ExplicitComponent, IndepVarComp
 
 from SPI2py.models.physics.distributed.mesh import generate_mesh_vec
 from SPI2py.models.projection.mesh_kernels import create_uniform_kernel
-from SPI2py.models.physics.distributed.assembly import assemble_base_global_stiffness, apply_boundary_conditions, update_global_stiffness #, assemble_global_load_vector
+from SPI2py.models.physics.distributed.assembly import assemble_base_global_stiffness, apply_bc_penalty_method, update_global_stiffness #, assemble_global_load_vector
 from SPI2py.models.utilities.aggregation import kreisselmeier_steinhauser_max, kreisselmeier_steinhauser_min
 
 
@@ -258,12 +258,29 @@ class ExplicitFEA(ExplicitComponent):
         f = f.at[elements.flatten()].add(jnp.repeat(element_contrib, nodes_per_elem))
 
         # Apply boundary conditions (both Robin and Dirichlet).
-        K_updated, f = apply_boundary_conditions(K_updated, f,
-                                                 r_nodes, r_h, r_T_inf, r_area,
-                                                 d_nodes, d_T, beta=1e3)
+        K_updated, f = apply_bc_penalty_method(K_updated, f,
+                                               r_nodes, r_h, r_T_inf, r_area,
+                                               d_nodes, d_T, beta=1e3)
+
+        # Solve via the penalty method.
 
         # Solve the global system using a sparse solver (e.g., conjugate gradient).
+        # TODO Is f complete? RHS
         u, _ = cg(K_updated, f, tol=1e-8, maxiter=500)
+
+
+        # Solve via the partition Method
+        K_ff, K_fp, K_pf, K_pp, f_f, f_p, u_p, idx_f, idx_p = apply_bc_penalty_method(K_updated, f,
+                                                                                      r_nodes, r_h, r_T_inf, r_area,
+                                                                                      d_nodes, d_T)
+        u_f, _ = cg(K_ff, (f_f - K_fp @ u_p), tol=1e-8, maxiter=500)
+
+        # Reassemble the full solution.
+        n_nodes = K.shape[0]
+        u = jnp.zeros(n_nodes)
+        u = u.at[idx_f].set(u_f)
+        u = u.at[idx_p].set(u_p)
+
 
         # Compute a scalar measure of the maximum temperature (e.g., using a KS function).
         u_max = kreisselmeier_steinhauser_max(u)
