@@ -1,19 +1,15 @@
-import numpy as np
+# Standard library imports
 from functools import partial
 import jax.numpy as jnp
-import jax
 from jax import jvp, vjp
 from jax.scipy.sparse.linalg import cg
-from jax.experimental.sparse import BCOO
-from jax.experimental.sparse import coo_fromdense
 from openmdao.api import ExplicitComponent, IndepVarComp
-# from scipy.sparse.linalg import spsolve
 
+# Local imports
 from SPI2py.models.physics.distributed.mesh import generate_mesh_vec
-from SPI2py.models.projection.mesh_kernels import create_uniform_kernel
-from SPI2py.models.physics.distributed.assembly import assemble_base_global_stiffness_penalty, apply_bc_penalty,  update_global_stiffness_penalty
-from SPI2py.models.physics.distributed.assembly import assemble_base_global_stiffness_partition, apply_bc_partition_method, update_global_stiffness_partition
-from SPI2py.models.utilities.aggregation import kreisselmeier_steinhauser_max, kreisselmeier_steinhauser_min
+from SPI2py.models.physics.distributed.assembly import assemble_base_global_system_penalty, apply_bc_penalty,  update_global_system_penalty
+from SPI2py.models.physics.distributed.assembly import assemble_base_global_system_partition, apply_bc_partition_method, update_global_stiffness_partition
+from SPI2py.models.utilities.aggregation import kreisselmeier_steinhauser_max
 
 
 class Mesh(IndepVarComp):
@@ -65,8 +61,7 @@ class ExplicitFEA(ExplicitComponent):
         self.options.declare('robin_h', types=float)
         self.options.declare('robin_T_inf', types=float)
         self.options.declare('base_k', types=float, desc='Base thermal conductivity', default=1.0)
-
-
+        self.options.declare('fea_solution_scheme', types=str, desc='FEA solution scheme', default='partition')
 
     def setup(self):
 
@@ -77,12 +72,31 @@ class ExplicitFEA(ExplicitComponent):
         self.add_output("temperature", shape=(n_el,), desc="Computed temperature field")
         self.add_output("max_temperature", val=0.0, desc="Computed maximum temperature")
 
-        # Preassemble the base global stiffness matrix once (for density=1).
+        # Pre-assemble the base global system once.
         nodes = jnp.array(self.options['nodes'])
         elements = jnp.array(self.options['elements'])
         base_k = self.options['base_k']
-        # assemble_base_global_stiffness returns a sparse matrix in BCOO format and an auxiliary mapping.
-        self._K_base, self._elem_indices = assemble_base_global_stiffness_penalty(nodes, elements, base_k)
+        r_nodes = jnp.array(self.options['robin_nodes'])
+        r_h = jnp.array(self.options['robin_h'])
+        r_T_inf = jnp.array(self.options['robin_T_inf'])
+        r_area = jnp.array(self.options['el_size'] ** 2)
+        d_nodes = jnp.array(self.options['dirichlet_nodes'])
+        d_T = jnp.array(self.options['dirichlet_values'])
+
+        if self.options['fea_solution_scheme'] == 'partition':
+            self._K_base, self._f_base, self._elem_indices = assemble_base_global_system_partition(nodes, elements,
+                                                                                                   base_k,
+                                                                                                   r_nodes, r_h, r_T_inf, r_area,
+                                                                                                   d_nodes, d_T)
+
+        elif self.options['fea_solution_scheme'] == 'penalty':
+            self._K_base, self._f_base, self._elem_indices = assemble_base_global_system_penalty(nodes, elements,
+                                                                                                 base_k,
+                                                                                                 r_nodes, r_h, r_T_inf,
+                                                                                                 r_area,
+                                                                                                 d_nodes, d_T)
+        else:
+            raise NotImplementedError("Unknown FEA solution scheme: {}".format(self.options['fea_solution_scheme']))
 
     def setup_partials(self):
         # Declare that we are using matrix-free derivatives
@@ -112,20 +126,24 @@ class ExplicitFEA(ExplicitComponent):
 
         # Retrieve the preassembled base stiffness matrix and mapping.
         K_base = self._K_base
+        f_base = self._f_base
         elem_indices = self._elem_indices
         # penal = self.options['penal']
 
-        temp, max_temp = self._compute_primal(density, heat_loads, nodes, elements,
+        temp, max_temp = self._compute_primal(density, heat_loads,
+                                              nodes, elements,
                                               robin_nodes, robin_h, robin_T_inf, robin_area,
-                                              dirichlet_nodes, dirichlet_values, K_base, elem_indices)
+                                              dirichlet_nodes, dirichlet_values,
+                                              K_base, f_base, elem_indices)
 
         outputs["temperature"] = temp
         outputs["max_temperature"] = max_temp
 
     @staticmethod
-    def _compute_primal(density, heat_loads, nodes, elements,
+    def _compute_primal(densities, heat_loads,
+                        nodes, elements,
                         r_nodes, r_h, r_T_inf, r_area,
-                        d_nodes, d_T, K_base, elem_indices):
+                        d_nodes, d_T, K_base, f_base, elem_indices):
         """
         Compute the primal (temperature) solution and a measure of the maximum
         temperature using a sparse solver. This function assembles the global system,
@@ -133,7 +151,7 @@ class ExplicitFEA(ExplicitComponent):
         formulation rather than explicit partitioning.
 
         Parameters:
-          density      : material density field (array, to be flattened)
+          densities    : material density field (array, to be flattened)
           heat_loads   : distributed heat loads (array, to be flattened)
           nodes        : node coordinates (array)
           elements     : element connectivity (array)
@@ -147,30 +165,18 @@ class ExplicitFEA(ExplicitComponent):
           u_max: a scalar computed via a Kreisselmeier–Steinhauser (KS) function (here using a min-version)
         """
 
+        # Move full global system assembly and bc to setup
+        # Penalty: K_base, f_base, element_indices
+        # Partition: (K bases), (f bases), (element_indices)
 
 
         # Solve via the penalty method.
 
         # Update the global stiffness matrix using current densities.
-        K_updated = update_global_stiffness_penalty(K_base, elem_indices, density)
+        K_updated, f_updated = update_global_system_penalty(K_base, f_base, elements, elem_indices, densities, heat_loads)
 
-        # Assemble the global load vector from heat loads.
-        nodes_per_elem = 8
-
-        # Distribute each element's heat load to its nodes (simple lumping).
-        element_contrib = (heat_loads * density) / nodes_per_elem
-        f = jnp.zeros(nodes.shape[0])
-        f = f.at[elements.flatten()].add(jnp.repeat(element_contrib, nodes_per_elem))
-
-        # Apply boundary conditions (both Robin and Dirichlet).
-        K_updated, f = apply_bc_penalty(K_updated, f,
-                                        r_nodes, r_h, r_T_inf, r_area,
-                                        d_nodes, d_T, beta=1e3)
-
-
-        # Solve the global system using a sparse solver (e.g., conjugate gradient).
-        # TODO Is f complete? RHS
-        u, _ = cg(K_updated, f, tol=1e-8, maxiter=500)
+        # Solve the global system using a sparse solver.
+        u, _ = cg(K_updated, f_updated, tol=1e-8, maxiter=500)
 
 
         # # Solve via the partition Method
@@ -181,9 +187,14 @@ class ExplicitFEA(ExplicitComponent):
         # # Assemble the base system
         # # TODO move assemble to setup...
         # K_ff, K_fp, K_pf, K_pp, f_f, f_p, u_p, elem_indices = assemble_base_global_stiffness_partition(nodes, elements, 1, idx_f, idx_p)
-        # K_ff, K_fp, K_pf, K_pp, f_f, f_p, u_p = update_global_stiffness_partition(K_ff, K_fp, K_pf, K_pp, f_f, f_p, u_p, elem_indices, density)
         # K_ff, K_fp, K_pf, K_pp, f_f, f_p = apply_bc_partition_method(K_ff, K_fp, K_pf, K_pp, f_f, f_p, r_nodes, r_h, r_area, r_T_inf, idx_f, idx_p)
         #
+        # K_ff, K_fp, K_pf, K_pp, f_f, f_p, u_p = update_global_stiffness_partition(K_ff, K_fp, K_pf, K_pp, f_f, f_p, u_p, elem_indices, density)
+        #
+        # # Distribute each element's heat load to its nodes (simple lumping).
+        # element_contrib = (heat_loads * density) / nodes_per_elem
+        # f = jnp.zeros(nodes.shape[0])
+        # f = f.at[elements.flatten()].add(jnp.repeat(element_contrib, nodes_per_elem))
         # u_f, _ = cg(K_ff, (f_f - K_fp @ u_p), tol=1e-8, maxiter=500)
         #
         # # Reassemble the full solution.
@@ -217,6 +228,7 @@ class ExplicitFEA(ExplicitComponent):
         robin_area = jnp.array(el_size ** 2)
 
         K_base = self._K_base
+        f_base = self._f_base
         elem_indices = self._elem_indices
 
         # Freeze all static arguments via partial so that only density and heat_loads are inputs.
@@ -231,6 +243,7 @@ class ExplicitFEA(ExplicitComponent):
             d_nodes=dirichlet_nodes,
             d_T=dirichlet_values,
             K_base=K_base,
+            f_base=f_base,
             elem_indices=elem_indices)
 
 

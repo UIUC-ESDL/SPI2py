@@ -54,12 +54,12 @@ model.add_subsystem('projections', projections)
 # x_min, x_max = (-2, 2)
 # y_min, y_max = (0, 2.5)
 # z_min, z_max = (0, 2.5)
-x_min, x_max = (-5, 5)
-y_min, y_max = (-5, 5)
-z_min, z_max = (-5, 5)
-# x_min, x_max = (-3, 3)
-# y_min, y_max = (-3, 3)
-# z_min, z_max = (-3, 3)
+# x_min, x_max = (-5, 5)
+# y_min, y_max = (-5, 5)
+# z_min, z_max = (-5, 5)
+x_min, x_max = (-3, 3)
+y_min, y_max = (-3, 3)
+z_min, z_max = (-3, 3)
 
 # element_size = 0.0675
 # element_size = 0.125
@@ -174,7 +174,8 @@ FEA = ExplicitFEA(nodes=nodes,
                   dirichlet_values=dirichlet_T,
                   robin_nodes=robin_nodes,
                   robin_h=1.0, #10.0,
-                  robin_T_inf=200.0)
+                  robin_T_inf=200.0,
+                  fea_solution_scheme='penalty')
 
 model.add_subsystem('FEA', FEA)
 model.connect('projections.aggregator.aggregated_densities', 'FEA.density')
