@@ -10,7 +10,7 @@ def assemble_local_stiffness_matrix(nodes, k_eff, gauss_pts, gauss_wts):
 
     Einstein summation convention is used for clarity.
     q = gaussian quadrature point index, 0-1 (two-point quadrature).
-    e = hexahedral element node index, 0-7.
+    e = hexahedral element node index, 0-7 (8 nodes).
     g = global coordinate index, 0-2 (x, y, z).
     l = local coordinate index, 0-2 (xi, eta, zeta).
 

@@ -52,13 +52,13 @@ def assemble_base_global_stiffness(nodes, elements, base_k):
     cols_flat = cols.reshape(-1)
 
     # Build auxiliary mapping: for each element, its index repeats 64 times.
-    # Shape: (n_elem*64,)
+    # Shape: (n_elem*(8*8),)
     elem_indices = jnp.repeat(jnp.arange(n_elem), 64)
 
     return Ke_flat, elem_indices, rows_flat, cols_flat, n_nodes, n_elem
 
 
-@jit
+# @jit
 def assemble_base_global_system_penalty(nodes, elements, base_k,
                                         r_nodes, r_h, r_T_inf, r_area,
                                         d_nodes, d_T):
@@ -78,7 +78,7 @@ def assemble_base_global_system_penalty(nodes, elements, base_k,
     K_base, f_base = apply_bc_penalty(K_base, f_base,
                                       r_nodes, r_h, r_T_inf, r_area,
                                       d_nodes, d_T,
-                                      beta=1e3)
+                                      beta=1e10)
 
     return K_base, f_base, elem_indices
 
@@ -112,44 +112,67 @@ def apply_bc_penalty(K, f,
     Returns:
       K_new, f_new : the updated sparse system (BCOO and dense vector)
     """
-    n = K.shape[0]
+    # n = K.shape[0]
+    #
+    # # K--Robin BC contribution
+    # # Build a sparse diagonal matrix R with non-zeros only at r_nodes.
+    # robin_value = r_h * r_area
+    # data_R = jnp.full(r_nodes.shape, robin_value)
+    # indices_R = jnp.stack([r_nodes, r_nodes], axis=-1)
+    # R = BCOO((data_R, indices_R), shape=K.shape)
+    #
+    # # K--Dirichlet BC contribution
+    # data_P = jnp.full(d_nodes.shape, beta)
+    # indices_P = jnp.stack([d_nodes, d_nodes], axis=-1)
+    # P = BCOO((data_P, indices_P), shape=K.shape)
+    #
+    # # f--Robin contribution
+    # # f[i] += r_h * r_area * r_T_inf for each i in r_nodes.
+    # f_robin = jnp.zeros_like(f)
+    # f_robin = f_robin.at[r_nodes].set(r_h * r_area * r_T_inf)
+    #
+    # # f--Dirichlet penalty
+    # # f[i] += beta * d_T[i] for i in d_nodes.
+    # f_penalty = jnp.zeros_like(f)
+    # f_penalty = f_penalty.at[d_nodes].set(beta * d_T)
+    #
+    # # Combine contributions with K and f
+    # K_new = K + R + P
+    # f_new = f + f_robin + f_penalty
+    #
+    # return K_new, f_new
 
-    # K--Robin BC contribution
-    # Build a sparse diagonal matrix R with non-zeros only at r_nodes.
-    robin_value = r_h * r_area
-    data_R = jnp.full(r_nodes.shape, robin_value)
-    indices_R = jnp.stack([r_nodes, r_nodes], axis=-1)
-    R = BCOO((data_R, indices_R), shape=K.shape)
+    # Identify diagonal entries (where row index equals column index).
+    diag_mask = (K.indices[:, 0] == K.indices[:, 1])
+    diag_nodes = K.indices[:, 0]  # these are the node indices for the diagonal entries
 
-    # K--Dirichlet BC contribution
-    data_P = jnp.full(d_nodes.shape, beta)
-    indices_P = jnp.stack([d_nodes, d_nodes], axis=-1)
-    P = BCOO((data_P, indices_P), shape=K.shape)
+    # Create masks for Robin and Dirichlet BCs on the diagonal.
+    robin_mask = diag_mask & jnp.isin(diag_nodes, r_nodes)
+    dirichlet_mask = diag_mask & jnp.isin(diag_nodes, d_nodes)
 
-    # f--Robin contribution
-    # f[i] += r_h * r_area * r_T_inf for each i in r_nodes.
-    f_robin = jnp.zeros_like(f)
-    f_robin = f_robin.at[r_nodes].set(r_h * r_area * r_T_inf)
+    # Compute the total update for each diagonal entry.
+    # If a diagonal entry corresponds to a Robin node, add r_h*r_area.
+    # If it corresponds to a Dirichlet node, add beta.
+    # (If a node is in both sets, the contributions are summed.)
+    update = robin_mask.astype(K.data.dtype) * (r_h * r_area) \
+             + dirichlet_mask.astype(K.data.dtype) * (beta)
 
-    # f--Dirichlet penalty
-    # f[i] += beta * d_T[i] for i in d_nodes.
-    f_penalty = jnp.zeros_like(f)
-    f_penalty = f_penalty.at[d_nodes].set(beta * d_T)
+    # Update the K data array.
+    new_data = K.data + update
+    K_new = BCOO((new_data, K.indices), shape=K.shape)
 
-    # Combine contributions with K and f
-    K_new = K + R + P
-    f_new = f + f_robin + f_penalty
+    # Update the load vector f.
+    f_new = f
+    f_new = f_new.at[r_nodes].add(r_h * r_area * r_T_inf)
+    f_new = f_new.at[d_nodes].add(beta * d_T)
 
     return K_new, f_new
 
 
-@jit
-def update_global_system_penalty(K_base,
-                                 f_base,
-                                 elements,
-                                 elem_indices,
-                                 densities,
-                                 heat_loads):
+# @jit
+def update_global_system_penalty(K_base, f_base,
+                                 elements, elem_indices,
+                                 densities, heat_loads):
     """
     Update the base global stiffness matrix using the current densities.
 
@@ -164,6 +187,7 @@ def update_global_system_penalty(K_base,
 
     # Ensure density is a 1D vector.
     densities = densities.flatten()
+    heat_loads = heat_loads.flatten()
 
     # Use the element mapping to broadcast the scaling to each nonzero.
     scaling = densities[elem_indices]
@@ -244,34 +268,111 @@ def assemble_base_global_system_partition(nodes, elements,
     f_f = f[idx_f]
     f_p = f[idx_p]
 
-    # Prescribed values u_p; here zeros (TODO)
-    u_p = jnp.zeros_like(f_p)
+    # # Prescribed values u_p; here zeros (TODO)
+    # u_p = jnp.zeros_like(f_p)
 
-    K_bases = (K_ff, K_fp, K_pf, K_pp)
-    f_bases = (f_f, f_p)
-    el_indices = (ei_ff, ei_fp, ei_pf, ei_pp)
+    K_base = (K_ff, K_fp, K_pf, K_pp)
+    f_base = (f_f, f_p)
+    elem_indices = (ei_ff, ei_fp, ei_pf, ei_pp)
 
     # Apply boundary conditions (both Robin and Dirichlet).
-    K_base, f_base = apply_bc_penalty(K_base, f_base,
+    K_base, f_base = apply_bc_partition(K_base, f_base,
                                       r_nodes, r_h, r_T_inf, r_area,
-                                      d_nodes, d_T,
-                                      beta=1e3)
+                                      idx_f, idx_p)
 
-    return K_bases, f_bases, u_p, el_indices
+    return K_base, f_base, elem_indices
 
 
-def update_global_stiffness_partition(K_base,
-                                      f_base,
-                                      elements,
-                                      elem_indices,
-                                      densities,
-                                      heat_loads):
+def apply_bc_partition(K_base,f_base,
+                       r_nodes, r_h, r_area, r_T_inf,
+                       idx_f, idx_p):
+
+    # Unpack the base stiffness matrix and load vector.
+    K_ff, K_fp, K_pf, K_pp = K_base
+    f_f, f_p = f_base
+
+    # # Partition Robin nodes into free and prescribed sets.
+    # # jnp.intersect1d returns sorted intersections.
+    # r_nodes_free = jnp.intersect1d(r_nodes, idx_f)
+    # r_nodes_presc = jnp.intersect1d(r_nodes, idx_p)
+    #
+    # # For free nodes: remap global indices to local indices within idx_f.
+    # local_free = jnp.searchsorted(idx_f, r_nodes_free)
+    # # Build a diagonal sparse update for K_ff.
+    # diag_free = r_h * r_area * jnp.ones_like(local_free)
+    # indices_free = jnp.stack([local_free, local_free], axis=-1)
+    # R_free = BCOO((diag_free, indices_free), shape=(len(idx_f), len(idx_f)))
+    # K_ff_updated = K_ff + R_free
+    #
+    # # Similarly for prescribed nodes: remap global indices to local indices in idx_p.
+    # local_presc = jnp.searchsorted(idx_p, r_nodes_presc)
+    # diag_presc = r_h * r_area * jnp.ones_like(local_presc)
+    # indices_presc = jnp.stack([local_presc, local_presc], axis=-1)
+    # R_presc = BCOO((diag_presc, indices_presc), shape=(len(idx_p), len(idx_p)))
+    # K_pp_updated = K_pp + R_presc
+    #
+    # # Update the load vectors: add f_val = r_h * r_area * r_T_inf.
+    # # For free nodes:
+    # f_val = r_h * r_area * r_T_inf
+    # f_f_updated = f_f.at[local_free].add(f_val)
+    #
+    # # For prescribed nodes:
+    # f_p_updated = f_p.at[local_presc].add(f_val)
+    #
+    # K_updated = (K_ff_updated, K_fp, K_pf, K_pp_updated)
+    # f_updated = (f_f_updated, f_p_updated)
+    #
+    # return K_updated, f_updated
+
+    # Partition Robin nodes into free and prescribed sets (global indices).
+    r_nodes_free = jnp.intersect1d(r_nodes, idx_f)
+    r_nodes_presc = jnp.intersect1d(r_nodes, idx_p)
+
+    # Convert these global indices into local indices for each partition.
+    local_free = jnp.searchsorted(idx_f, r_nodes_free)
+    local_presc = jnp.searchsorted(idx_p, r_nodes_presc)
+
+    # --- Update free-free partition K_ff ---
+    # Identify the diagonal entries in K_ff.
+    diag_mask_ff = (K_ff.indices[:, 0] == K_ff.indices[:, 1])
+    # For these entries, get the local node index.
+    diag_nodes_ff = K_ff.indices[:, 0]
+    # Determine which diagonal entries correspond to nodes in local_free.
+    update_mask_ff = diag_mask_ff & jnp.isin(diag_nodes_ff, local_free)
+    # Update these entries by adding the Robin stiffness contribution.
+    new_data_ff = K_ff.data + update_mask_ff.astype(K_ff.data.dtype) * (r_h * r_area)
+    K_ff_updated = BCOO((new_data_ff, K_ff.indices), shape=K_ff.shape)
+
+    # --- Update prescribed-prescribed partition K_pp ---
+    diag_mask_pp = (K_pp.indices[:, 0] == K_pp.indices[:, 1])
+    diag_nodes_pp = K_pp.indices[:, 0]
+    update_mask_pp = diag_mask_pp & jnp.isin(diag_nodes_pp, local_presc)
+    new_data_pp = K_pp.data + update_mask_pp.astype(K_pp.data.dtype) * (r_h * r_area)
+    K_pp_updated = BCOO((new_data_pp, K_pp.indices), shape=K_pp.shape)
+
+    # --- Update the load vectors ---
+    # For free nodes, add f_val = r_h * r_area * r_T_inf
+    f_val = r_h * r_area * r_T_inf
+    f_f_updated = f_f.at[local_free].add(f_val)
+    # For prescribed nodes:
+    f_p_updated = f_p.at[local_presc].add(f_val)
+
+    K_updated = (K_ff_updated, K_fp, K_pf, K_pp_updated)
+    f_updated = (f_f_updated, f_p_updated)
+
+    return K_updated, f_updated
+
+
+def update_global_stiffness_partition(K_base, f_base,
+                                      elements, elem_indices,
+                                      densities, heat_loads):
 
     K_ff, K_fp, K_pf, K_pp = K_base
     f_f, f_p = f_base
 
     ei_ff, ei_fp, ei_pf, ei_pp = elem_indices
     densities = densities.flatten()
+    heat_loads = heat_loads.flatten()
 
     new_data_ff = K_ff.data * densities[ei_ff]
     new_data_fp = K_fp.data * densities[ei_fp]
@@ -283,7 +384,7 @@ def update_global_stiffness_partition(K_base,
     K_pf_new = BCOO((new_data_pf, K_pf.indices), shape=K_pf.shape)
     K_pp_new = BCOO((new_data_pp, K_pp.indices), shape=K_pp.shape)
 
-    # # f_f, f_p, and u_p remain unchanged.
+    # # TODO f_f, f_p, and u_p remain unchanged.
 
     # Assemble the global load vector from heat loads.
     nodes_per_elem = 8
@@ -298,44 +399,7 @@ def update_global_stiffness_partition(K_base,
     return K_updated, f_updated
 
 
-def apply_bc_partition_method(K_base,
-                              f_base,
-                              r_nodes, r_h, r_area, r_T_inf,
-                              idx_f, idx_p):
 
-    # Unpack the base stiffness matrix and load vector.
-    K_ff, K_fp, K_pf, K_pp = K_base
-    f_f, f_p = f_base
-
-    # Partition Robin nodes into free and prescribed sets.
-    # jnp.intersect1d returns sorted intersections.
-    r_nodes_free = jnp.intersect1d(r_nodes, idx_f)
-    r_nodes_presc = jnp.intersect1d(r_nodes, idx_p)
-
-    # For free nodes: remap global indices to local indices within idx_f.
-    local_free = jnp.searchsorted(idx_f, r_nodes_free)
-    # Build a diagonal sparse update for K_ff.
-    diag_free = r_h * r_area * jnp.ones_like(local_free)
-    indices_free = jnp.stack([local_free, local_free], axis=-1)
-    R_free = BCOO((diag_free, indices_free), shape=(len(idx_f), len(idx_f)))
-    K_ff_updated = K_ff + R_free
-
-    # Similarly for prescribed nodes: remap global indices to local indices in idx_p.
-    local_presc = jnp.searchsorted(idx_p, r_nodes_presc)
-    diag_presc = r_h * r_area * jnp.ones_like(local_presc)
-    indices_presc = jnp.stack([local_presc, local_presc], axis=-1)
-    R_presc = BCOO((diag_presc, indices_presc), shape=(len(idx_p), len(idx_p)))
-    K_pp_updated = K_pp + R_presc
-
-    # Update the load vectors: add f_val = r_h * r_area * r_T_inf.
-    # For free nodes:
-    f_val = r_h * r_area * r_T_inf
-    f_f_updated = f_f.at[local_free].add(f_val)
-
-    # For prescribed nodes:
-    f_p_updated = f_p.at[local_presc].add(f_val)
-
-    return K_ff_updated, K_fp, K_pf, K_pp_updated, f_f_updated, f_p_updated
 
 
 # def apply_bc_partition_method_dense(K, f,

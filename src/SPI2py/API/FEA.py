@@ -8,7 +8,7 @@ from openmdao.api import ExplicitComponent, IndepVarComp
 # Local imports
 from SPI2py.models.physics.distributed.mesh import generate_mesh_vec
 from SPI2py.models.physics.distributed.assembly import assemble_base_global_system_penalty, apply_bc_penalty,  update_global_system_penalty
-from SPI2py.models.physics.distributed.assembly import assemble_base_global_system_partition, apply_bc_partition_method, update_global_stiffness_partition
+from SPI2py.models.physics.distributed.assembly import assemble_base_global_system_partition, apply_bc_partition, update_global_stiffness_partition
 from SPI2py.models.utilities.aggregation import kreisselmeier_steinhauser_max
 
 
@@ -165,43 +165,42 @@ class ExplicitFEA(ExplicitComponent):
           u_max: a scalar computed via a Kreisselmeier–Steinhauser (KS) function (here using a min-version)
         """
 
-        # Move full global system assembly and bc to setup
-        # Penalty: K_base, f_base, element_indices
-        # Partition: (K bases), (f bases), (element_indices)
+
+        # # Solve via the penalty method.
+        #
+        # # Update the global stiffness matrix using current densities.
+        # K_updated, f_updated = update_global_system_penalty(K_base, f_base,
+        #                                                     elements, elem_indices,
+        #                                                     densities, heat_loads)
+        #
+        # # Solve the global system using a sparse solver.
+        # u, _ = cg(K_updated, f_updated, tol=1e-8, maxiter=500)
 
 
-        # Solve via the penalty method.
 
-        # Update the global stiffness matrix using current densities.
-        K_updated, f_updated = update_global_system_penalty(K_base, f_base, elements, elem_indices, densities, heat_loads)
+        # Solve via the partition method.
+
+        K_updated, f_updated = update_global_stiffness_partition(K_base, f_base,
+                                                                 elements, elem_indices,
+                                                                 densities, heat_loads)
+        K_ff, K_fp, K_pf, K_pp = K_updated
+        f_f, f_p = f_updated
+
+        # Prescribed values u_p; here zeros (TODO)
+        u_p = jnp.zeros_like(f_p)
 
         # Solve the global system using a sparse solver.
-        u, _ = cg(K_updated, f_updated, tol=1e-8, maxiter=500)
+        rhs = (f_f - K_fp @ u_p)
+        u_f, _ = cg(K_ff, rhs, tol=1e-8, maxiter=500)
 
-
-        # # Solve via the partition Method
-        # idx = jnp.arange(nodes.shape[0])
-        # idx_p = d_nodes
-        # idx_f = jnp.setdiff1d(idx, idx_p)
-        #
-        # # Assemble the base system
-        # # TODO move assemble to setup...
-        # K_ff, K_fp, K_pf, K_pp, f_f, f_p, u_p, elem_indices = assemble_base_global_stiffness_partition(nodes, elements, 1, idx_f, idx_p)
-        # K_ff, K_fp, K_pf, K_pp, f_f, f_p = apply_bc_partition_method(K_ff, K_fp, K_pf, K_pp, f_f, f_p, r_nodes, r_h, r_area, r_T_inf, idx_f, idx_p)
-        #
-        # K_ff, K_fp, K_pf, K_pp, f_f, f_p, u_p = update_global_stiffness_partition(K_ff, K_fp, K_pf, K_pp, f_f, f_p, u_p, elem_indices, density)
-        #
-        # # Distribute each element's heat load to its nodes (simple lumping).
-        # element_contrib = (heat_loads * density) / nodes_per_elem
-        # f = jnp.zeros(nodes.shape[0])
-        # f = f.at[elements.flatten()].add(jnp.repeat(element_contrib, nodes_per_elem))
-        # u_f, _ = cg(K_ff, (f_f - K_fp @ u_p), tol=1e-8, maxiter=500)
-        #
-        # # Reassemble the full solution.
-        # n_nodes = nodes.shape[0]
-        # u = jnp.zeros(n_nodes)
-        # u = u.at[idx_f].set(u_f)
-        # u = u.at[idx_p].set(u_p)
+        # Reassemble the full solution.
+        idx = jnp.arange(nodes.shape[0])
+        idx_p = d_nodes
+        idx_f = jnp.setdiff1d(idx, idx_p)
+        n_nodes = nodes.shape[0]
+        u = jnp.zeros(n_nodes)
+        u = u.at[idx_f].set(u_f)
+        u = u.at[idx_p].set(u_p)
 
 
         # Compute a scalar measure of the maximum temperature (e.g., using a KS function).

@@ -175,7 +175,7 @@ FEA = ExplicitFEA(nodes=nodes,
                   robin_nodes=robin_nodes,
                   robin_h=1.0, #10.0,
                   robin_T_inf=200.0,
-                  fea_solution_scheme='penalty')
+                  fea_solution_scheme='partition')
 
 model.add_subsystem('FEA', FEA)
 model.connect('projections.aggregator.aggregated_densities', 'FEA.density')
