@@ -371,6 +371,7 @@ def update_global_stiffness_partition(K_base, f_base,
     f_f, f_p = f_base
 
     ei_ff, ei_fp, ei_pf, ei_pp = elem_indices
+
     densities = densities.flatten()
     heat_loads = heat_loads.flatten()
 

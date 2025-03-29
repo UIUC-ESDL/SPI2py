@@ -186,12 +186,12 @@ class ExplicitFEA(ExplicitComponent):
         K_ff, K_fp, K_pf, K_pp = K_updated
         f_f, f_p = f_updated
 
-        # Prescribed values u_p; here zeros (TODO)
-        u_p = jnp.zeros_like(f_p)
+        # Prescribed values u_p
+        u_p = d_T
 
         # Solve the global system using a sparse solver.
         rhs = (f_f - K_fp @ u_p)
-        u_f, _ = cg(K_ff, rhs, tol=1e-8, maxiter=500)
+        u_f, _ = cg(K_ff, rhs)
 
         # Reassemble the full solution.
         idx = jnp.arange(nodes.shape[0])
