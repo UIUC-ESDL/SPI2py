@@ -178,7 +178,7 @@ FEA = ExplicitFEA(nodes=nodes,
                   dirichlet_nodes=dirichlet_nodes,
                   dirichlet_values=dirichlet_T,
                   robin_nodes=robin_nodes,
-                  robin_h=1.0, #10.0,
+                  robin_h=10.0,
                   robin_T_inf=200.0,
                   fea_solution_scheme='partition')
 
@@ -213,6 +213,8 @@ prob.setup()
 prob.set_val('system.components.comp_2.translation', [3, 0, 0])
 prob.set_val('system.components.comp_2.rotation', [np.pi/3, 0, 0])
 # prob.set_val('system.interconnects.int_1.control_points', [[1.75, 1, 0], [1, 1, 0]])
+
+prob.set_val('projections.proj_1.heat_load', 0.1)
 
 
 # Set up the optimizer
