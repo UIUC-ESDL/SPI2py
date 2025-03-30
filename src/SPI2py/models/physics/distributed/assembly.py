@@ -287,42 +287,9 @@ def apply_bc_partition(K_base,f_base,
                        r_nodes, r_h, r_area, r_T_inf,
                        idx_f, idx_p):
 
-    # Unpack the base stiffness matrix and load vector.
+    # Unpack the partitioned stiffness matrix and load vector.
     K_ff, K_fp, K_pf, K_pp = K_base
     f_f, f_p = f_base
-
-    # # Partition Robin nodes into free and prescribed sets.
-    # # jnp.intersect1d returns sorted intersections.
-    # r_nodes_free = jnp.intersect1d(r_nodes, idx_f)
-    # r_nodes_presc = jnp.intersect1d(r_nodes, idx_p)
-    #
-    # # For free nodes: remap global indices to local indices within idx_f.
-    # local_free = jnp.searchsorted(idx_f, r_nodes_free)
-    # # Build a diagonal sparse update for K_ff.
-    # diag_free = r_h * r_area * jnp.ones_like(local_free)
-    # indices_free = jnp.stack([local_free, local_free], axis=-1)
-    # R_free = BCOO((diag_free, indices_free), shape=(len(idx_f), len(idx_f)))
-    # K_ff_updated = K_ff + R_free
-    #
-    # # Similarly for prescribed nodes: remap global indices to local indices in idx_p.
-    # local_presc = jnp.searchsorted(idx_p, r_nodes_presc)
-    # diag_presc = r_h * r_area * jnp.ones_like(local_presc)
-    # indices_presc = jnp.stack([local_presc, local_presc], axis=-1)
-    # R_presc = BCOO((diag_presc, indices_presc), shape=(len(idx_p), len(idx_p)))
-    # K_pp_updated = K_pp + R_presc
-    #
-    # # Update the load vectors: add f_val = r_h * r_area * r_T_inf.
-    # # For free nodes:
-    # f_val = r_h * r_area * r_T_inf
-    # f_f_updated = f_f.at[local_free].add(f_val)
-    #
-    # # For prescribed nodes:
-    # f_p_updated = f_p.at[local_presc].add(f_val)
-    #
-    # K_updated = (K_ff_updated, K_fp, K_pf, K_pp_updated)
-    # f_updated = (f_f_updated, f_p_updated)
-    #
-    # return K_updated, f_updated
 
     # Partition Robin nodes into free and prescribed sets (global indices).
     r_nodes_free = jnp.intersect1d(r_nodes, idx_f)
@@ -332,31 +299,30 @@ def apply_bc_partition(K_base,f_base,
     local_free = jnp.searchsorted(idx_f, r_nodes_free)
     local_presc = jnp.searchsorted(idx_p, r_nodes_presc)
 
-    # --- Update free-free partition K_ff ---
-    # Identify the diagonal entries in K_ff.
+    # Update free-free partition K_ff
     diag_mask_ff = (K_ff.indices[:, 0] == K_ff.indices[:, 1])
-    # For these entries, get the local node index.
     diag_nodes_ff = K_ff.indices[:, 0]
+
     # Determine which diagonal entries correspond to nodes in local_free.
     update_mask_ff = diag_mask_ff & jnp.isin(diag_nodes_ff, local_free)
+
     # Update these entries by adding the Robin stiffness contribution.
     new_data_ff = K_ff.data + update_mask_ff.astype(K_ff.data.dtype) * (r_h * r_area)
     K_ff_updated = BCOO((new_data_ff, K_ff.indices), shape=K_ff.shape)
 
-    # --- Update prescribed-prescribed partition K_pp ---
+    # Update prescribed-prescribed partition K_pp
     diag_mask_pp = (K_pp.indices[:, 0] == K_pp.indices[:, 1])
     diag_nodes_pp = K_pp.indices[:, 0]
     update_mask_pp = diag_mask_pp & jnp.isin(diag_nodes_pp, local_presc)
     new_data_pp = K_pp.data + update_mask_pp.astype(K_pp.data.dtype) * (r_h * r_area)
     K_pp_updated = BCOO((new_data_pp, K_pp.indices), shape=K_pp.shape)
 
-    # --- Update the load vectors ---
-    # For free nodes, add f_val = r_h * r_area * r_T_inf
+    # Update the load vectors
     f_val = r_h * r_area * r_T_inf
     f_f_updated = f_f.at[local_free].add(f_val)
-    # For prescribed nodes:
     f_p_updated = f_p.at[local_presc].add(f_val)
 
+    # Repack the updated stiffness matrices and load vector.
     K_updated = (K_ff_updated, K_fp, K_pf, K_pp_updated)
     f_updated = (f_f_updated, f_p_updated)
 
@@ -367,33 +333,34 @@ def update_global_stiffness_partition(K_base, f_base,
                                       elements, elem_indices,
                                       densities, heat_loads):
 
+    # Unpack the partitioned stiffness matrix and load vector.
     K_ff, K_fp, K_pf, K_pp = K_base
     f_f, f_p = f_base
-
     ei_ff, ei_fp, ei_pf, ei_pp = elem_indices
 
+    # Ensure the inputs are 1D arrays.
     densities = densities.flatten()
     heat_loads = heat_loads.flatten()
 
+    # Update the stiffness matrices using the densities.
     new_data_ff = K_ff.data * densities[ei_ff]
     new_data_fp = K_fp.data * densities[ei_fp]
     new_data_pf = K_pf.data * densities[ei_pf]
     new_data_pp = K_pp.data * densities[ei_pp]
 
+    # Create new BCOO matrices with the updated data.
     K_ff_new = BCOO((new_data_ff, K_ff.indices), shape=K_ff.shape)
     K_fp_new = BCOO((new_data_fp, K_fp.indices), shape=K_fp.shape)
     K_pf_new = BCOO((new_data_pf, K_pf.indices), shape=K_pf.shape)
     K_pp_new = BCOO((new_data_pp, K_pp.indices), shape=K_pp.shape)
 
-    # # TODO f_f, f_p, and u_p remain unchanged.
-
     # Assemble the global load vector from heat loads.
     nodes_per_elem = 8
     element_contrib = (heat_loads * densities) / nodes_per_elem
-    # f_updated = f_base.at[elements.flatten()].add(jnp.repeat(element_contrib, nodes_per_elem))
     f_f_new = f_f.at[elements.flatten()].add(jnp.repeat(element_contrib, nodes_per_elem))
     f_p_new = f_p.at[elements.flatten()].add(jnp.repeat(element_contrib, nodes_per_elem))
 
+    # Repack the updated stiffness matrices and load vector.
     K_updated = (K_ff_new, K_fp_new, K_pf_new, K_pp_new)
     f_updated = (f_f_new, f_p_new)
 

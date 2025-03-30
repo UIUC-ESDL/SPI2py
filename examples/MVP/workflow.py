@@ -1,6 +1,11 @@
 """
 Example 1:  Simple optimization of a 3D layout
 Author:     Chad Peterson
+
+TODO
+1. Why prob.check_partials(includes='system.components.comp_1')
+updated end points to end points not correctly identity matrix?
+Same for updated ports and radii
 """
 
 # Standard Python libraries
@@ -32,7 +37,7 @@ t0 = time_ns()
 
 # Set up the JAX backend
 jax.config.update("jax_enable_x64", True)
-# jax.config.update("jax_debug_nans", True)
+jax.config.update("jax_debug_nans", True)
 
 # Initialize the main problem elements/groups
 prob = om.Problem()
@@ -51,21 +56,21 @@ model.add_subsystem('projections', projections)
 
 
 # Initialize the Mesh
-# x_min, x_max = (-2, 2)
-# y_min, y_max = (0, 2.5)
-# z_min, z_max = (0, 2.5)
+x_min, x_max = (-2, 2)
+y_min, y_max = (0, 3)
+z_min, z_max = (0, 3)
 # x_min, x_max = (-5, 5)
 # y_min, y_max = (-5, 5)
 # z_min, z_max = (-5, 5)
-x_min, x_max = (-3, 3)
-y_min, y_max = (-3, 3)
-z_min, z_max = (-3, 3)
+# x_min, x_max = (-3, 3)
+# y_min, y_max = (-3, 3)
+# z_min, z_max = (-3, 3)
 
 # element_size = 0.0675
 # element_size = 0.125
 # element_size = 0.25
-element_size = 0.5
-# element_size = 1.0
+# element_size = 0.5
+element_size = 1.0
 
 
 nodes, elements, centers, nx, ny, nz, lx, ly, lz = generate_mesh_vec(x_min, x_max, y_min, y_max, z_min, z_max, element_size=element_size)
@@ -383,7 +388,7 @@ plotter.add_mesh(pv.Sphere(radius=0.25), color='red', show_edges=True)
 
 plotter.link_views()
 plotter.show_axes()
-plotter.show()
+# plotter.show()
 
 
 
@@ -404,9 +409,12 @@ print('Done')
 # prob.model.approx_totals(method='fd')
 # totals_c_approx = copy(prob.compute_totals(of=['projections.aggregator.max_density'], wrt=['system.components.comp_2.translation']))
 # pf = prob.check_partials(includes='FEA')
-# tot = prob.compute_totals(of=['FEA.max_temperature'], wrt=['system.components.comp_2.translation'])
-# tot = tot[('FEA.max_temperature', 'system.components.comp_2.translation')][0]
-# d_inputs = {'density': jnp.ones_like(densities_combined), 'heat_loads': jnp.ones_like(densities_combined)}
-# d_outputs = {'temperature': jnp.ones_like(T), 'max_temperature': jnp.array(1)}
-# jvp_vals = prob.model.FEA.compute_jacvec_prod(prob.model.FEA._inputs, d_inputs, d_outputs, mode='fwd')
-# vjp_vals = prob.model.FEA.compute_jacvec_prod(prob.model.FEA._inputs, d_inputs, d_outputs, mode='rev')
+tot = prob.compute_totals(of=['FEA.max_temperature'], wrt=['system.components.comp_2.translation'])
+tot = tot[('FEA.max_temperature', 'system.components.comp_2.translation')][0]
+print(tot)
+# d_inputs = {'density': jnp.ones_like(densities_combined, dtype=jnp.float64), 'heat_loads': jnp.ones_like(densities_combined, dtype=jnp.float64)}
+# d_outputs = {'temperature': jnp.ones_like(T, dtype=jnp.float64), 'max_temperature': jnp.array([1], dtype=jnp.float64)}
+# jvp_vals = prob.model.FEA.compute_jacvec_product(prob.model.FEA._inputs, d_inputs, d_outputs, mode='fwd')
+# vjp_vals = prob.model.FEA.compute_jacvec_product(prob.model.FEA._inputs, d_inputs, d_outputs, mode='rev')
+# print('JVP:', jvp_vals)
+# print('VJP:', vjp_vals)

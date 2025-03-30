@@ -112,13 +112,9 @@ class ExplicitFEA(ExplicitComponent):
         elements = jnp.array(self.options['elements'])
         el_size = jnp.array(self.options['el_size'])
         el_centers = jnp.array(self.options['el_centers'])
-        robin_nodes = jnp.array(self.options['robin_nodes'])
-        robin_h = jnp.array(self.options['robin_h'])
-        robin_T_inf = jnp.array(self.options['robin_T_inf'])
         dirichlet_nodes = jnp.array(self.options['dirichlet_nodes'])
         dirichlet_values = jnp.array(self.options['dirichlet_values'])
 
-        robin_area = jnp.array(el_size ** 2)
 
         # Unpack the inputs
         density = jnp.array(inputs["density"])
@@ -128,11 +124,9 @@ class ExplicitFEA(ExplicitComponent):
         K_base = self._K_base
         f_base = self._f_base
         elem_indices = self._elem_indices
-        # penal = self.options['penal']
 
         temp, max_temp = self._compute_primal(density, heat_loads,
                                               nodes, elements,
-                                              robin_nodes, robin_h, robin_T_inf, robin_area,
                                               dirichlet_nodes, dirichlet_values,
                                               K_base, f_base, elem_indices)
 
@@ -142,8 +136,9 @@ class ExplicitFEA(ExplicitComponent):
     @staticmethod
     def _compute_primal(densities, heat_loads,
                         nodes, elements,
-                        r_nodes, r_h, r_T_inf, r_area,
-                        d_nodes, d_T, K_base, f_base, elem_indices):
+                        d_nodes, d_T,
+                        K_base, f_base,
+                        elem_indices):
         """
         Compute the primal (temperature) solution and a measure of the maximum
         temperature using a sparse solver. This function assembles the global system,
@@ -231,19 +226,11 @@ class ExplicitFEA(ExplicitComponent):
         elem_indices = self._elem_indices
 
         # Freeze all static arguments via partial so that only density and heat_loads are inputs.
-        frozen_compute_primal = partial(
-            self._compute_primal,
-            nodes=nodes,
-            elements=elements,
-            r_nodes=robin_nodes,
-            r_h=robin_h,
-            r_T_inf=robin_T_inf,
-            r_area=robin_area,
-            d_nodes=dirichlet_nodes,
-            d_T=dirichlet_values,
-            K_base=K_base,
-            f_base=f_base,
-            elem_indices=elem_indices)
+        frozen_compute_primal = partial(self._compute_primal,
+                                        nodes=nodes, elements=elements,
+                                        d_nodes=dirichlet_nodes, d_T=dirichlet_values,
+                                        K_base=K_base, f_base=f_base,
+                                        elem_indices=elem_indices)
 
 
         if mode == "fwd":
