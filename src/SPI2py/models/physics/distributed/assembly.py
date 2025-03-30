@@ -291,7 +291,7 @@ def apply_bc_partition(K_base,f_base,
     K_ff, K_fp, K_pf, K_pp = K_base
     f_f, f_p = f_base
 
-    # Partition Robin nodes into free and prescribed sets (global indices).
+    # Additionally partition the Robin nodes into free and prescribed sets.
     r_nodes_free = jnp.intersect1d(r_nodes, idx_f)
     r_nodes_presc = jnp.intersect1d(r_nodes, idx_p)
 
