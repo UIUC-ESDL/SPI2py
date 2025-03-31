@@ -103,8 +103,8 @@ def plot_capsules(plotter, subplot_index, cyl_control_points, cyl_radius, color,
         cylinder = pv.Cylinder(center=center, direction=direction, radius=cyl_radius, height=length)
         plotter.add_mesh(cylinder, color=color, opacity=opacity, lighting=False)
 
-    plotter.add_text("Pipe Segments", position='upper_edge', font_size=14)
-    plotter.show_bounds(all_edges=True)
+    # plotter.add_text("Pipe Segments", position='upper_edge', font_size=14)
+    # plotter.show_bounds(all_edges=True)
 
 
 def plot_capsules2(plotter, subplot_index, start_points, end_points, radii, color, opacity=0.875):
@@ -126,7 +126,7 @@ def plot_capsules2(plotter, subplot_index, start_points, end_points, radii, colo
         plotter.add_mesh(cylinder, color=color, opacity=opacity, lighting=False)
 
     # plotter.add_text("Pipe Segments", position='upper_edge', font_size=14)
-    plotter.show_bounds(all_edges=True)
+    # plotter.show_bounds(all_edges=True)
 
 
 def plot_AABB_spheres(plotter, subplot_index, centers, radii, color, opacity=0.25):
@@ -282,3 +282,48 @@ def plot_nodes(plotter, subplot_index, nodes, selected_nodes, label, color="blue
 
     # Setup PyVista plotter.
     plotter.add_mesh(nodes_poly, color=color, point_size=point_size, render_points_as_spheres=True, label=label,opacity=opacity)
+
+
+def plot_translation_sensitivities(plotter, subplot_index, centers, sensitivities, color='red', factor=1.0):
+    """
+    Plot normalized 3D arrows representing translation sensitivities.
+
+    Parameters:
+      plotter       : PyVista Plotter object.
+      subplot_index : Tuple (row, col) for subplot placement.
+      centers       : (N, 3) array of 3D positions (starting points of arrows).
+      sens_x, sens_y, sens_z : (N,) arrays for the translation sensitivities.
+      color         : Color for the arrows.
+      factor        : Scaling factor for arrow size.
+
+    Each arrow starts at centers[i] and points in the direction given by the normalized vector
+    (sens_x[i], sens_y[i], sens_z[i]).
+    """
+    # Set the desired subplot.
+    plotter.subplot(*subplot_index)
+    plotter.render_window.SetMultiSamples(0)
+
+    # TODO Reverse direction?
+    sensitivities = -sensitivities.reshape(-1,3)
+
+
+    # Normalize each direction vector (avoiding division by zero).
+    norms = np.linalg.norm(sensitivities, axis=1, keepdims=True)
+    norms[norms == 0] = 1.0
+    directions_normalized = sensitivities / norms
+
+    # Create a point cloud from the provided centers.
+    points = pv.PolyData(centers)
+    points["direction"] = directions_normalized
+
+    # Create an arrow template.
+    arrow_template = pv.Arrow(start=(0, 0, 0), direction=(1, 0, 0),
+                              tip_length=0.35, tip_radius=0.1, shaft_radius=0.03)
+
+    # Generate arrow glyphs oriented by the "direction" field and scaled by factor.
+    glyphs = points.glyph(orient="direction", geom=arrow_template, factor=factor)
+
+    # Add the arrow glyph mesh to the plotter.
+    plotter.add_mesh(glyphs, color=color)
+    sphere = pv.Sphere(radius=0.1, theta_resolution=8, phi_resolution=8)
+    plotter.add_mesh(sphere, color=color)

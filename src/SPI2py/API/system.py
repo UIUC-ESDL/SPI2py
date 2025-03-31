@@ -9,6 +9,11 @@ from ..models.mechanics.homogenous_transformation import transform_points
 from ..models.utilities.input_and_output import read_xyzr_file, read_csv_file
 
 
+class System(Group):
+    pass
+
+
+
 class Components(Group):
     pass
 
@@ -17,7 +22,7 @@ class Interconnects(Group):
     pass
 
 
-class Component(ExplicitComponent):
+class MDBDComponent(ExplicitComponent):
 
     def initialize(self):
         self.options.declare('description', types=str)
@@ -52,35 +57,32 @@ class Component(ExplicitComponent):
         self.add_input('translation', val=np.array([0.0, 0.0, 0.0]))
         self.add_input('rotation', val=np.array([0.0, 0.0, 0.0]))
 
-        # FEA Inputs
-        # ...
-
         # Outputs:
-        self.add_output('transformed_sphere_positions', val=sphere_positions)
-        self.add_output('transformed_sphere_radii', val=sphere_radii)
-        self.add_output('transformed_ports', val=ports)
+        self.add_output('updated_sphere_positions', val=sphere_positions)
+        self.add_output('updated_sphere_radii', val=sphere_radii)
+        self.add_output('updated_ports', val=ports)
 
     def setup_partials(self):
 
         # Declare the partials for the outputs wrt the design variables
-        self.declare_partials('transformed_sphere_positions', ['translation', 'rotation'])
-        self.declare_partials('transformed_ports', ['translation', 'rotation'])
+        self.declare_partials('updated_sphere_positions', ['translation', 'rotation'])
+        self.declare_partials('updated_ports', ['translation', 'rotation'])
 
         # Declare the partials for the outputs wrt the static inputs
         # Note: The default check_partials step size of 1e-6 results in numerical errors on
         # some off-diagonal terms, which raises an error about non-zero rows and columns. Use 1e-4.
         I_s = jnp.eye(self.num_spheres * 3)
         rows_s, cols_s = jnp.where(I_s)
-        self.declare_partials('transformed_sphere_positions', 'sphere_positions', rows=rows_s, cols=cols_s, val=1.0, method='exact')
+        self.declare_partials('updated_sphere_positions', 'sphere_positions', rows=rows_s, cols=cols_s, val=1.0, method='exact')
 
         I_p = jnp.eye(self.num_ports * 3)
         rows_p, cols_p = jnp.where(I_p)
-        self.declare_partials('transformed_ports', 'ports', rows=rows_p, cols=cols_p, val=1.0,
+        self.declare_partials('updated_ports', 'ports', rows=rows_p, cols=cols_p, val=1.0,
                               method='exact')
 
         I_r = jnp.eye(self.num_spheres)
         rows_r, cols_r = jnp.where(I_r)
-        self.declare_partials('transformed_sphere_radii', 'sphere_radii', rows=rows_r, cols=cols_r, val=1.0, method='exact')
+        self.declare_partials('updated_sphere_radii', 'sphere_radii', rows=rows_r, cols=cols_r, val=1.0, method='exact')
 
     def compute(self, inputs, outputs):
 
@@ -95,9 +97,9 @@ class Component(ExplicitComponent):
         sphere_positions_transformed, ports_transformed = self._compute_primal(sphere_positions, port_positions, translation, rotation)
 
         # Set the outputs
-        outputs['transformed_sphere_positions'] = sphere_positions_transformed
-        outputs['transformed_sphere_radii'] = sphere_radii
-        outputs['transformed_ports'] = ports_transformed
+        outputs['updated_sphere_positions'] = sphere_positions_transformed
+        outputs['updated_sphere_radii'] = sphere_radii
+        outputs['updated_ports'] = ports_transformed
 
     def compute_partials(self, inputs, partials):
 
@@ -121,7 +123,6 @@ class Component(ExplicitComponent):
 
         # Evaluate the Jacobian matrices
         jac_sphere_positions_val, jac_ports_val = jac_fun(sphere_positions, ports, translation, rotation)
-        # jac_ports_val = jac_ports(ports, translation, rotation)
 
         # Slice the Jacobian matrices
         grad_sphere_positions_translation = jac_sphere_positions_val[0]
@@ -130,10 +131,10 @@ class Component(ExplicitComponent):
         grad_ports_rotation = jac_ports_val[1]
 
         # Set the outputs
-        partials['transformed_sphere_positions', 'translation'] = grad_sphere_positions_translation
-        partials['transformed_sphere_positions', 'rotation'] = grad_sphere_positions_rotation
-        partials['transformed_ports', 'translation'] = grad_ports_translation
-        partials['transformed_ports', 'rotation'] = grad_ports_rotation
+        partials['updated_sphere_positions', 'translation'] = grad_sphere_positions_translation
+        partials['updated_sphere_positions', 'rotation'] = grad_sphere_positions_rotation
+        partials['updated_ports', 'translation'] = grad_ports_translation
+        partials['updated_ports', 'rotation'] = grad_ports_rotation
 
     @staticmethod
     def _compute_primal(sphere_positions, port_positions, translation, rotation):
@@ -213,7 +214,6 @@ class LinearSplineComponent(ExplicitComponent):
 
         # Calculate the transformed sphere positions and port positions
         updated_start_points, updated_end_points, updated_radii, updated_ports = self._compute_primal(start_points, end_points, radii, ports, translation, rotation)
-
 
         # Set the outputs
         outputs['updated_start_points'] = updated_start_points
@@ -300,12 +300,12 @@ class Interconnect(ExplicitComponent):
         self.add_input('radius', val=radius)
 
         # Define the outputs
-        self.add_output('transformed_cyl_positions', shape=shape_positions)
-        self.add_output('transformed_cyl_radius', val=radius)
+        self.add_output('updated_cyl_positions', shape=shape_positions)
+        self.add_output('updated_cyl_radius', val=radius)
 
     def setup_partials(self):
-        self.declare_partials('transformed_cyl_positions', ['start_point', 'control_points', 'end_point'])
-        self.declare_partials('transformed_cyl_radius', ['radius'])
+        self.declare_partials('updated_cyl_positions', ['start_point', 'control_points', 'end_point'])
+        self.declare_partials('updated_cyl_radius', ['radius'])
 
 
     def compute(self, inputs, outputs):
@@ -320,8 +320,8 @@ class Interconnect(ExplicitComponent):
         points, radius = self._compute_primal(start_point, control_points, end_point, radius)
 
         # Set the outputs
-        outputs['transformed_cyl_positions'] = points
-        outputs['transformed_cyl_radius'] = radius
+        outputs['updated_cyl_positions'] = points
+        outputs['updated_cyl_radius'] = radius
 
     @staticmethod
     def _compute_primal(start_point, control_points, end_point, radius):
@@ -353,120 +353,10 @@ class Interconnect(ExplicitComponent):
         jac_translated_positions_radius = jac_radius_val
 
         # Set the outputs
-        partials['transformed_cyl_positions', 'start_point'] = jac_translated_positions_start_point
-        partials['transformed_cyl_positions', 'control_points'] = jac_translated_positions_control_points
-        partials['transformed_cyl_positions', 'end_point'] = jac_translated_positions_end_point
-        partials['transformed_cyl_radius', 'radius'] = jac_translated_positions_radius
-
-
-        # # Calculate the positions
-        # points, radius = self._compute_primal(start_point, control_points, end_point, radius)
+        partials['updated_cyl_positions', 'start_point'] = jac_translated_positions_start_point
+        partials['updated_cyl_positions', 'control_points'] = jac_translated_positions_control_points
+        partials['updated_cyl_positions', 'end_point'] = jac_translated_positions_end_point
+        partials['updated_cyl_radius', 'radius'] = jac_translated_positions_radius
 
 
 
-        # # Set the outputs
-        # outputs['transformed_cyl_positions'] = points
-        # outputs['transformed_cyl_radius'] = radius
-        #
-        # # Calculate the partial derivatives
-        # jac_translated_positions = jacfwd(translate_linear_spline, argnums=(1, 2, 3))
-        # jac_translated_positions_val = jac_translated_positions(positions, start_point, control_points, end_point)
-        #
-        # # Slice the Jacobian
-        # jac_translated_positions_start_point = jac_translated_positions_val[0]
-        # jac_translated_positions_control_points = jac_translated_positions_val[1]
-        # jac_translated_positions_end_point = jac_translated_positions_val[2]
-
-        # Set the outputs
-        # partials['transformed_sphere_positions', 'start_point'] = jac_translated_positions_start_point
-        # partials['transformed_sphere_positions', 'control_points'] = jac_translated_positions_control_points
-        # partials['transformed_sphere_positions', 'end_point'] = jac_translated_positions_end_point
-
-
-class System(Group):
-    pass
-
-# class System(ExplicitComponent):
-#
-#     def initialize(self):
-#         self.options.declare('n_projections', types=int, desc='Number of projections')
-#         self.options.declare('rho_min', types=(int, float), desc='Minimum value of the density', default=3e-3)
-#
-#     def setup(self):
-#         # Get the options
-#         n_projections = self.options['n_projections']
-#
-#         # Set the inputs
-#         self.add_input('element_length', val=0)
-#
-#         for i in range(n_projections):
-#             self.add_input(f'pseudo_densities_{i}', shape_by_conn=True)
-#
-#         # Set the outputs
-#         self.add_output('pseudo_densities', copy_shape='pseudo_densities_0')
-#         self.add_output('max_pseudo_density', val=0.0, desc='How much of each object overlaps/is out of bounds')
-#         # TODO output penalized and unpenalized, and min and w/o min
-#
-#     def setup_partials(self):
-#
-#         # Get the options
-#         n_projections = self.options['n_projections']
-#
-#         # Set the partials
-#         for i in range(n_projections):
-#             self.declare_partials('pseudo_densities', f'pseudo_densities_{i}')
-#             self.declare_partials('max_pseudo_density', f'pseudo_densities_{i}')
-#
-#
-#     def compute(self, inputs, outputs):
-#
-#         # Get the options
-#         n_projections = self.options['n_projections']
-#         rho_min = self.options['rho_min']
-#
-#         # Get the inputs
-#         element_length = inputs['element_length']
-#         pseudo_densities = [inputs[f'pseudo_densities_{i}'] for i in range(n_projections)]
-#
-#         # Calculate the values
-#         aggregate_pseudo_densities, max_pseudo_density = self._aggregate_pseudo_densities(pseudo_densities, element_length, rho_min)
-#
-#
-#         # Write the outputs
-#         outputs['pseudo_densities'] = aggregate_pseudo_densities
-#         outputs['max_pseudo_density'] = max_pseudo_density
-#
-#     def compute_partials(self, inputs, partials):
-#
-#         # Get the options
-#         n_projections = self.options['n_projections']
-#         rho_min = self.options['rho_min']
-#
-#         # Get the inputs
-#         element_length = np.array(inputs['element_length'])
-#         pseudo_densities = [np.array(inputs[f'pseudo_densities_{i}']) for i in range(n_projections)]
-#
-#         # Calculate the partial derivatives
-#         jac_pseudo_densities, jac_max_pseudo_density = jacfwd(self._aggregate_pseudo_densities)(pseudo_densities, element_length, rho_min)
-#
-#         # Set the partial derivatives
-#         jacs = zip(jac_pseudo_densities, jac_max_pseudo_density)
-#         for i, (jac_pseudo_densities_i, jac_max_pseudo_density_i) in enumerate(jacs):
-#             partials['pseudo_densities', f'pseudo_densities_{i}'] = jac_pseudo_densities_i
-#             partials['max_pseudo_density', f'pseudo_densities_{i}'] = jac_max_pseudo_density_i
-#
-#     @staticmethod
-#     def _aggregate_pseudo_densities(pseudo_densities, element_length, rho_min):
-#
-#         # Aggregate the pseudo-densities
-#         aggregate_pseudo_densities = np.zeros_like(pseudo_densities[0])
-#         for pseudo_density in pseudo_densities:
-#             aggregate_pseudo_densities += pseudo_density
-#
-#         # Ensure that no pseudo-density is below the minimum value
-#         aggregate_pseudo_densities = np.maximum(aggregate_pseudo_densities, rho_min)
-#
-#         # Calculate the maximum pseudo-density
-#         max_pseudo_density = kreisselmeier_steinhauser_max(aggregate_pseudo_densities)
-#
-#         return aggregate_pseudo_densities, max_pseudo_density
