@@ -301,7 +301,8 @@ class Interconnect(ExplicitComponent):
 
         # Define the outputs
         self.add_output('updated_cyl_positions', shape=shape_positions)
-        self.add_output('updated_cyl_radius', val=radius)
+        # self.add_output('updated_cyl_radius', val=radius)
+        self.add_output('updated_cyl_radius', shape=(n_segments + 1, 1))
 
     def setup_partials(self):
         self.declare_partials('updated_cyl_positions', ['start_point', 'control_points', 'end_point'])
@@ -313,7 +314,7 @@ class Interconnect(ExplicitComponent):
         # Unpack the inputs
         start_point = jnp.array(inputs['start_point'])
         control_points = jnp.array(inputs['control_points'])
-        end_point =jnp.array( inputs['end_point'])
+        end_point = jnp.array(inputs['end_point'])
         radius = jnp.array(inputs['radius'])
 
         # Calculate the positions
@@ -327,6 +328,9 @@ class Interconnect(ExplicitComponent):
     def _compute_primal(start_point, control_points, end_point, radius):
 
         points = jnp.vstack([start_point, control_points, end_point])
+
+        # One radius per point
+        radius = jnp.full((points.shape[0], 1), radius)
 
         return points, radius
 

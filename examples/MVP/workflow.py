@@ -30,6 +30,10 @@ from SPI2py.models.physics.distributed.mesh import generate_mesh_vec, find_activ
 from SPI2py.models.utilities.visualization import plot_grid, plot_spheres, plot_capsules, plot_stl_file, plot_AABB, plot_capsules2
 from SPI2py.models.utilities.visualization import plot_temperature_distribution, plot_translation_sensitivities
 
+# Set PyVista backend to use PyQt6
+# from pyvistaqt import BackgroundPlotter
+# import os
+# os.environ["QT_API"] = "pyside6"  # Force use of PySide6
 
 # Start the timer
 t0 = time_ns()
@@ -68,8 +72,8 @@ z_min, z_max = (-2, 4)
 # element_size = 0.35
 # element_size = 0.125
 # element_size = 0.25
-# element_size = 0.5
-element_size = 1.0
+element_size = 0.5
+# element_size = 1.0
 
 
 nodes, elements, centers, nx, ny, nz, lx, ly, lz = generate_mesh_vec(x_min, x_max, y_min, y_max, z_min, z_max, element_size=element_size)
@@ -128,10 +132,10 @@ model.connect('system.interconnects.int_1.updated_cyl_radius', 'projections.proj
 # Aggregate the spheres of each component
 # TODO Update for interconnects
 # mux_centers = Multiplexer(n_i=[2, 2, 2, 2], m=3)
-mux_centers = Multiplexer(n_i=[939, 3, 3], m=3)
+mux_centers = Multiplexer(n_i=[939, 3, 3, 4], m=3)
 prob.model.add_subsystem('mux_centers', mux_centers)
 # mux_radii = Multiplexer(n_i=[2, 2, 2, 2], m=1)
-mux_radii = Multiplexer(n_i=[939, 3, 3], m=1)
+mux_radii = Multiplexer(n_i=[939, 3, 3, 4], m=1)
 prob.model.add_subsystem('mux_radii', mux_radii)
 
 bbv = BoundingBoxVolume()
@@ -153,7 +157,6 @@ prob.model.connect('system.components.comp_1.updated_sphere_radii', 'mux_radii.i
 prob.model.connect('system.components.comp_2.updated_start_points', 'mux_centers.input_1')
 prob.model.connect('system.components.comp_2.updated_end_points', 'mux_centers.input_2')
 prob.model.connect('system.interconnects.int_1.updated_cyl_positions', 'mux_centers.input_3')
-prob.model.connect('system.interconnects.int_1.updated_cyl_radius', 'mux_centers.input_4')
 prob.model.connect('mux_centers.stacked_output', 'bbv.centers')
 
 # prob.model.connect('system.components.comp_1.updated_radii', 'mux_radii.input_0')
@@ -164,7 +167,6 @@ prob.model.connect('mux_centers.stacked_output', 'bbv.centers')
 prob.model.connect('system.components.comp_2.updated_radii', 'mux_radii.input_1')
 prob.model.connect('system.components.comp_2.updated_radii', 'mux_radii.input_2')
 prob.model.connect('system.interconnects.int_1.updated_cyl_radius', 'mux_radii.input_3')
-prob.model.connect('system.interconnects.int_1.updated_cyl_radius', 'mux_radii.input_4')
 prob.model.connect('mux_radii.stacked_output', 'bbv.radii')
 
 
@@ -209,6 +211,7 @@ prob.model.add_design_var('system.components.comp_2.rotation', ref=(np.pi/2)/4, 
 # prob.model.add_design_var('system.components.comp_2.translation', ref=0.25, lower=-3, upper=3, indices=[0], flat_indices=True)
 # prob.model.add_design_var('system.components.comp_2.translation', ref=0.25, lower=0, upper=3, indices=[1], flat_indices=True)
 # prob.model.add_design_var('system.components.comp_2.translation', ref=0.25, lower=0, upper=3, indices=[2], flat_indices=True)
+prob.model.add_design_var('system.interconnects.int_1.control_points', ref=0.25, lower=-5, upper=5)
 
 # Define the objective and constraints
 prob.model.add_objective('bbv.volume', ref=1)
@@ -226,14 +229,14 @@ prob.set_val('system.components.comp_1.translation', [2, 0, 0])
 # prob.set_val('system.components.comp_2.translation', [1.5, 0, 0])
 prob.set_val('system.components.comp_2.translation', [-3, 0, 0])
 prob.set_val('system.components.comp_2.rotation', [np.pi/3, 0, 0])
-prob.set_val('system.interconnects.int_1.control_points', [[1.5, 0, -1], [-1.5, 0, -1]])
+prob.set_val('system.interconnects.int_1.control_points', [[1.5, 0, -1], [-1, 0, -1]])
 
 prob.set_val('projections.proj_1.heat_load', 0.1)
 
 
 # Set up the optimizer
 prob.driver = om.ScipyOptimizeDriver()
-prob.driver.options['maxiter'] = 5
+prob.driver.options['maxiter'] = 1
 
 
 # Run the model once
@@ -260,9 +263,10 @@ comp_2_start_points_before = copy(prob.get_val('system.components.comp_2.updated
 comp_2_end_points_before = copy(prob.get_val('system.components.comp_2.updated_end_points'))
 comp_2_radii_before = copy(prob.get_val('system.components.comp_2.updated_radii'))
 int_1_points_before = copy(prob.get_val('system.interconnects.int_1.updated_cyl_positions'))
+int_1_control_points_before = copy(prob.get_val('system.interconnects.int_1.control_points'))
 # sphere_positions_before = copy(prob.get_val('mux_centers.stacked_output'))
 # sphere_radii_before = copy(prob.get_val('mux_radii.stacked_output'))
-# bounds_before = copy(prob.get_val('bbv.bounds'))
+bounds_before = copy(prob.get_val('bbv.bounds'))
 densities_before = copy(prob.get_val('projections.aggregator.aggregated_densities'))
 T_before = copy(prob.get_val('FEA.temperature'))
 densities_before = copy(prob.get_val('projections.aggregator.aggregated_densities'))
@@ -305,9 +309,10 @@ comp_2_start_points_after = prob.get_val('system.components.comp_2.updated_start
 comp_2_end_points_after = prob.get_val('system.components.comp_2.updated_end_points')
 comp_2_radii_after = prob.get_val('system.components.comp_2.updated_radii')
 int_1_points_after = prob.get_val('system.interconnects.int_1.updated_cyl_positions')
+int_1_control_points_after = prob.get_val('system.interconnects.int_1.control_points')
 # sphere_positions_after = prob.get_val('mux_centers.stacked_output')
 # sphere_radii_after = prob.get_val('mux_radii.stacked_output')
-# bounds_after = prob.get_val('bbv.bounds')
+bounds_after = prob.get_val('bbv.bounds')
 densities_after = prob.get_val('projections.aggregator.aggregated_densities')
 T_after = prob.get_val('FEA.temperature')
 densities_after = prob.get_val('projections.aggregator.aggregated_densities')
@@ -346,8 +351,8 @@ comp_2_rotation_after = tuple(np.array(comp_2_rotation_after).tolist())
 comp_2_start_points_after = np.array(comp_2_start_points_after)
 comp_2_end_points_after = np.array(comp_2_end_points_after)
 comp_2_radii_after = np.array(comp_2_radii_after)
-# bounds_before = np.array(bounds_before)
-# bounds_after = np.array(bounds_after)
+bounds_before = np.array(bounds_before)
+bounds_after = np.array(bounds_after)
 densities_before = np.array(densities_before)
 densities_after = np.array(densities_after)
 # sphere_positions_before = np.array(sphere_positions_before)
@@ -356,6 +361,8 @@ densities_after = np.array(densities_after)
 # sphere_radii_after = np.array(sphere_radii_after)
 int_1_points_before = np.array(int_1_points_before)
 int_1_points_after = np.array(int_1_points_after)
+int_1_control_points_before = np.array(int_1_control_points_before)
+int_1_control_points_after = np.array(int_1_control_points_after)
 T_before = np.array(T_before)
 T_after = np.array(T_after)
 densities_before = np.array(densities_before)
@@ -369,29 +376,34 @@ print('Mean Temp:', np.mean(T_after))
 
 # Plot the results
 t5 = time_ns()
-# plotter = pv.Plotter(shape=(2, 3), window_size=(1500, 500))
-#
-#
-# # BEFORE
-#
-# # Geometry
-# plot_grid(plotter, (0, 0), centers, element_size, densities=None)
-# plot_stl_file(plotter, (0, 0), 'models/CrossHead_Pin_scaled.stl', translation=comp_1_translation_before, rotation=comp_1_rotation_before, opacity=0.25, color='blue')
-# plot_spheres(plotter, (0, 0), comp_1_spheres_before, comp_1_radii_before, 'blue', opacity=0.5)
-# # plot_capsules2(plotter, (0, 0), comp_1_start_points_before, comp_1_end_points_before, comp_1_radii_before, color='blue', opacity=0.5)
-# plot_capsules2(plotter, (0, 0), comp_2_start_points_before, comp_2_end_points_before, comp_2_radii_before, color='red', opacity=0.5)
-# plot_capsules(plotter, (0, 0), int_1_points_before, 0.25, color='green', opacity=0.5)
-#
-#
-# # Projection
-# plot_grid(plotter, (0, 1), centers, element_size, densities=None)
-# plot_grid(plotter, (0, 1), centers, element_size, densities=densities_before)
-#
-# # FEA
-# plot_grid(plotter, (0, 2), centers, element_size, densities=None)
-# plot_stl_file(plotter, (0, 2), 'models/CrossHead_Pin_scaled.stl', translation=comp_1_translation_before, rotation=comp_1_rotation_before, opacity=1.0, color='black')
-# plot_capsules2(plotter, (0, 2), comp_2_start_points_before, comp_2_end_points_before, comp_2_radii_before, color='black', opacity=1.0)
-# plot_capsules(plotter, (0, 2), int_1_points_before, 0.25, color='black', opacity=1.0)
+plotter = pv.Plotter(shape=(2, 3), window_size=(1500, 500))
+# plotter = BackgroundPlotter(shape=(2, 3), window_size=(1500, 500))
+
+# BEFORE
+
+# Geometry
+plot_grid(plotter, (0, 0), centers, element_size, densities=None)
+plot_stl_file(plotter, (0, 0), 'models/CrossHead_Pin_scaled.stl', translation=comp_1_translation_before, rotation=comp_1_rotation_before, opacity=0.25, color='blue')
+plot_spheres(plotter, (0, 0), comp_1_spheres_before, comp_1_radii_before, 'blue', opacity=0.5)
+# plot_capsules2(plotter, (0, 0), comp_1_start_points_before, comp_1_end_points_before, comp_1_radii_before, color='blue', opacity=0.5)
+plot_capsules2(plotter, (0, 0), comp_2_start_points_before, comp_2_end_points_before, comp_2_radii_before, color='red', opacity=0.5)
+plot_capsules(plotter, (0, 0), int_1_points_before, 0.25, color='green', opacity=0.5)
+
+
+# Projection
+plot_grid(plotter, (0, 1), centers, element_size, densities=None)
+plot_grid(plotter, (0, 1), centers, element_size, densities=densities_before)
+
+plot_AABB(plotter, (0, 1), bounds_before, color='blue', opacity=0.15)
+plot_translation_sensitivities(plotter, (0, 1), comp_1_spheres_before[0], tot_before_comp_1, color='red', factor=3.0)
+plot_translation_sensitivities(plotter, (0, 1), comp_2_start_points_before[2], tot_before_comp_2, color='red', factor=3.0)
+plot_translation_sensitivities(plotter, (0, 1), int_1_control_points_before, tot_before_int_1, color='red', factor=3.0)
+
+# FEA
+plot_grid(plotter, (0, 2), centers, element_size, densities=None)
+plot_stl_file(plotter, (0, 2), 'models/CrossHead_Pin_scaled.stl', translation=comp_1_translation_before, rotation=comp_1_rotation_before, opacity=1.0, color='black')
+plot_capsules2(plotter, (0, 2), comp_2_start_points_before, comp_2_end_points_before, comp_2_radii_before, color='black', opacity=1.0)
+plot_capsules(plotter, (0, 2), int_1_points_before, 0.25, color='black', opacity=1.0)
 # plot_temperature_distribution(plotter,
 #                               (0, 2),
 #                               np.array(nodes),
@@ -401,28 +413,61 @@ t5 = time_ns()
 #                               dirichlet_nodes=dirichlet_nodes,
 #                               dims=(nx + 1, ny + 1, nz + 1),
 #                               cmap='jet')
-#
-# plot_translation_sensitivities(plotter, (0, 2), comp_1_spheres_before[0], tot_before_comp_1, color='red', factor=3.0)
-# plot_translation_sensitivities(plotter, (0, 2), comp_2_start_points_before[0], tot_before_comp_2, color='red', factor=3.0)
-# plot_translation_sensitivities(plotter, (0, 2), int_1_points_before, tot_before_int_1, color='red', factor=3.0)
-#
-#
-# # AFTER
-#
-# # Geometry
-# plot_grid(plotter, (1, 0), centers, element_size, densities=None)
-# plot_stl_file(plotter, (1, 0), 'models/CrossHead_Pin_scaled.stl', translation=comp_1_translation_after, rotation=comp_1_rotation_after, opacity=0.25, color='blue')
-# plot_spheres(plotter, (1, 0), comp_1_spheres_after, comp_1_radii_after, 'blue', opacity=0.5)
-# # plot_capsules2(plotter, (1, 0), comp_1_start_points_after, comp_1_end_points_after, comp_1_radii_after, color='blue', opacity=0.5)
-# plot_capsules2(plotter, (1, 0), comp_2_start_points_after, comp_2_end_points_after, comp_2_radii_after, color='red', opacity=0.5)
-# plot_capsules(plotter, (1, 0), int_1_points_after, 0.25, color='green', opacity=0.5)
-#
-# # Projection
-# plot_grid(plotter, (1, 1), centers, element_size, densities=None)
-# plot_grid(plotter, (1, 1), centers, element_size, densities=densities_after)
-#
-# # FEA
-# plot_grid(plotter, (1, 2), centers, element_size, densities=None)
+
+
+
+# Define grid dimensions.
+nx, ny, nz = 50, 40, 30
+dims = (nx, ny, nz)
+
+# Create a structured grid in [0,1] for each axis.
+x = np.linspace(0, 1, nx)
+y = np.linspace(0, 1, ny)
+z = np.linspace(0, 1, nz)
+# Generate a structured grid with 'ij' indexing.
+X, Y, Z = np.meshgrid(x, y, z, indexing='ij')
+
+# Create nodal positions: shape (nx*ny*nz, 3).
+nodes = np.column_stack((X.ravel(), Y.ravel(), Z.ravel()))
+
+# Create a smooth temperature field.
+# For example, a smooth function that varies with sine and cosine.
+T = 150 + 50 * np.sin(np.pi * X.ravel()) * np.cos(np.pi * Y.ravel()) * np.sin(np.pi * Z.ravel())
+# Alternatively, you could try a simpler function:
+# T = 300 * (X.ravel() + Y.ravel() + Z.ravel()) / 3.0
+
+plot_temperature_distribution(plotter,
+                              (0, 2),
+                              nodes,
+                              T,
+                              dims=dims)
+
+
+
+# AFTER
+
+# Geometry
+plot_grid(plotter, (1, 0), centers, element_size, densities=None)
+plot_stl_file(plotter, (1, 0), 'models/CrossHead_Pin_scaled.stl', translation=comp_1_translation_after, rotation=comp_1_rotation_after, opacity=0.25, color='blue')
+plot_spheres(plotter, (1, 0), comp_1_spheres_after, comp_1_radii_after, 'blue', opacity=0.5)
+# plot_capsules2(plotter, (1, 0), comp_1_start_points_after, comp_1_end_points_after, comp_1_radii_after, color='blue', opacity=0.5)
+plot_capsules2(plotter, (1, 0), comp_2_start_points_after, comp_2_end_points_after, comp_2_radii_after, color='red', opacity=0.5)
+plot_capsules(plotter, (1, 0), int_1_points_after, 0.25, color='green', opacity=0.5)
+
+# Projection
+plot_grid(plotter, (1, 1), centers, element_size, densities=None)
+plot_grid(plotter, (1, 1), centers, element_size, densities=densities_after)
+
+plot_AABB(plotter, (1, 1), bounds_after, color='blue', opacity=0.15)
+plot_translation_sensitivities(plotter, (1, 1), comp_1_spheres_after[0], tot_after_comp_1, color='red', factor=3.0)
+plot_translation_sensitivities(plotter, (1, 1), comp_2_start_points_after[2], tot_after_comp_2, color='red', factor=3.0)
+plot_translation_sensitivities(plotter, (1, 1), int_1_control_points_after, tot_after_int_1, color='red', factor=3.0)
+
+# FEA
+plot_grid(plotter, (1, 2), centers, element_size, densities=None)
+plot_stl_file(plotter, (0, 2), 'models/CrossHead_Pin_scaled.stl', translation=comp_1_translation_after, rotation=comp_1_rotation_after, opacity=1.0, color='black')
+plot_capsules2(plotter, (0, 2), comp_2_start_points_after, comp_2_end_points_after, comp_2_radii_after, color='black', opacity=1.0)
+plot_capsules(plotter, (0, 2), int_1_points_after, 0.25, color='black', opacity=1.0)
 # plot_temperature_distribution(plotter,
 #                               (1, 2),
 #                               np.array(nodes),
@@ -432,32 +477,32 @@ t5 = time_ns()
 #                               dirichlet_nodes=dirichlet_nodes,
 #                               dims=(nx + 1, ny + 1, nz + 1),
 #                               cmap='jet')
-#
-#
-#
-# # Plot the geometries before optimization
-# # plotter.subplot(0, 0)
-# # plotter.add_title("Before Optimization")
-# # plot_stl_file(plotter, (0, 0), 'models/CrossHead_Pin_scaled.stl', translation=comp_1_translation_before, rotation=comp_1_rotation_before, opacity=0.25, color='purple')
-# # plot_stl_file(plotter, (0, 0), 'models/Bot_Eye_scaled.stl', translation=comp_2_translation_before, rotation=comp_2_rotation_before, opacity=0.25, color='blue')
-# # plot_spheres(plotter, (0, 0), sphere_positions_before, sphere_radii_before, 'purple', opacity=0.5)
-# # plot_AABB(plotter, (0, 0), bounds_before, color='blue')
-#
-# # Plot the geometries after optimization
-# # plotter.subplot(0, 1)
-# # plotter.add_title("After Optimization")
-#
-# # plot_stl_file(plotter, (0, 1), 'models/CrossHead_Pin_scaled.stl', translation=comp_1_translation_after, rotation=comp_1_rotation_after, opacity=0.25, color='purple')
-# # plot_stl_file(plotter, (0, 1), 'models/Bot_Eye_scaled.stl', translation=comp_2_translation_after, rotation=comp_2_rotation_after, opacity=0.25, color='blue')
-# # plot_spheres(plotter, (0, 1), sphere_positions_after, sphere_radii_after, 'purple', opacity=0.5)
-# # plot_AABB(plotter, (0, 1), bounds_after, color='blue')
-#
-#
-#
-#
-# plotter.link_views()
-# # plotter.show_axes()
-# plotter.show()
+
+
+
+# Plot the geometries before optimization
+# plotter.subplot(0, 0)
+# plotter.add_title("Before Optimization")
+# plot_stl_file(plotter, (0, 0), 'models/CrossHead_Pin_scaled.stl', translation=comp_1_translation_before, rotation=comp_1_rotation_before, opacity=0.25, color='purple')
+# plot_stl_file(plotter, (0, 0), 'models/Bot_Eye_scaled.stl', translation=comp_2_translation_before, rotation=comp_2_rotation_before, opacity=0.25, color='blue')
+# plot_spheres(plotter, (0, 0), sphere_positions_before, sphere_radii_before, 'purple', opacity=0.5)
+# plot_AABB(plotter, (0, 0), bounds_before, color='blue')
+
+# Plot the geometries after optimization
+# plotter.subplot(0, 1)
+# plotter.add_title("After Optimization")
+
+# plot_stl_file(plotter, (0, 1), 'models/CrossHead_Pin_scaled.stl', translation=comp_1_translation_after, rotation=comp_1_rotation_after, opacity=0.25, color='purple')
+# plot_stl_file(plotter, (0, 1), 'models/Bot_Eye_scaled.stl', translation=comp_2_translation_after, rotation=comp_2_rotation_after, opacity=0.25, color='blue')
+# plot_spheres(plotter, (0, 1), sphere_positions_after, sphere_radii_after, 'purple', opacity=0.5)
+# plot_AABB(plotter, (0, 1), bounds_after, color='blue')
+
+
+
+
+plotter.link_views()
+# plotter.show_axes()
+plotter.show()
 
 
 

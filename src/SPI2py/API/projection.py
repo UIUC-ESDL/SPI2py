@@ -441,6 +441,9 @@ class ProjectInterconnect(ExplicitComponent):
                         cyl_points, cyl_radii,
                         heat_load):
 
+        # TODO Fix this
+        cyl_radii = cyl_radii[0]
+
         # Decompose control points into start and end points
         start_points, end_points, radii = create_cylinders(cyl_points, cyl_radii)
 
@@ -561,11 +564,6 @@ class ProjectionAggregator(ExplicitComponent):
     def _compute_primal(densities, heat_loads, rho_min):
 
         # Aggregate the pseudo-densities
-        # aggregated_densities = jnp.zeros_like(densities[0])
-        # aggregated_heat_loads = jnp.zeros_like(heat_loads[0])
-        # for density in densities:
-        #     aggregated_densities += density
-
         aggregated_densities = jnp.sum(jnp.stack(densities, axis=0), axis=0)
         aggregated_heat_loads = jnp.sum(jnp.stack(heat_loads, axis=0), axis=0)
 
