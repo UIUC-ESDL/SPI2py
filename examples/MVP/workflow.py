@@ -69,10 +69,10 @@ z_min, z_max = (-2, 4)
 # y_min, y_max = (-3, 3)
 # z_min, z_max = (-3, 3)
 
-# element_size = 0.35
+# element_size = 0.4
 # element_size = 0.125
-# element_size = 0.25
-element_size = 0.5
+element_size = 0.25
+# element_size = 0.5
 # element_size = 1.0
 
 
@@ -92,7 +92,7 @@ kernel_radii = kernel_radii.reshape(-1, 1)
 comp_1 = MDBDComponent(description='Cross Head Pin', filepath='csvs/CrossHead_Pin_5k_300s.csv', n_spheres=50, ports=[[0.0, 0.415, 0.415], [2.850, 0.415, 0.415]], color='blue')
 # comp_2 = LinearSplineComponent(start_points=[[0, 0, 0], [0, 2, 0]], end_points=[[0, 2, 0], [0, 2, 1]], radii=[0.25, 0.5], ports=[[0, 0, 0]], color='red')
 # comp_1 = LinearSplineComponent(start_points=[[0, 0, 0], [0, 2, 0]], end_points=[[0, 2, 0], [0, 2, 1]], radii=[0.5, 0.25], ports=[[0, 0, 0]], color='blue')
-comp_2 = LinearSplineComponent(start_points=[[0, 0, 0], [0, 0, 0], [0, 2, 0]], end_points=[[0, 2, 0], [1, 0, 0], [1, 2, 0]], radii=[0.5, 0.5, 0.5], ports=[[1.5, 0, 0]], color='red')
+comp_2 = LinearSplineComponent(start_points=[[0, 0, 0], [0, 0, 0], [0, 2, 0]], end_points=[[0, 2, 0], [1, 0, 0], [1, 2, 0]], radii=[0.5, 0.5, 0.5], ports=[[1.75, 0, 0]], color='red')
 int_1 = Interconnect(n_segments=3, radius=0.25, color='green')
 model.system.components.add_subsystem('comp_1', comp_1)
 model.system.components.add_subsystem('comp_2', comp_2)
@@ -236,7 +236,7 @@ prob.set_val('projections.proj_1.heat_load', 0.1)
 
 # Set up the optimizer
 prob.driver = om.ScipyOptimizeDriver()
-prob.driver.options['maxiter'] = 1
+prob.driver.options['maxiter'] = 10
 
 
 # Run the model once
@@ -404,43 +404,50 @@ plot_grid(plotter, (0, 2), centers, element_size, densities=None)
 plot_stl_file(plotter, (0, 2), 'models/CrossHead_Pin_scaled.stl', translation=comp_1_translation_before, rotation=comp_1_rotation_before, opacity=1.0, color='black')
 plot_capsules2(plotter, (0, 2), comp_2_start_points_before, comp_2_end_points_before, comp_2_radii_before, color='black', opacity=1.0)
 plot_capsules(plotter, (0, 2), int_1_points_before, 0.25, color='black', opacity=1.0)
+plot_temperature_distribution(plotter,
+                              (0, 2),
+                              np.array(nodes),
+                              T_before,
+                              heat_load_nodes=heat_load_nodes_before,
+                              robin_nodes=robin_nodes,
+                              dirichlet_nodes=dirichlet_nodes,
+                              dims=(nx + 1, ny + 1, nz + 1),
+                              cmap='jet')
+
 # plot_temperature_distribution(plotter,
 #                               (0, 2),
 #                               np.array(nodes),
 #                               T_before,
-#                               heat_load_nodes=heat_load_nodes_before,
-#                               robin_nodes=robin_nodes,
-#                               dirichlet_nodes=dirichlet_nodes,
 #                               dims=(nx + 1, ny + 1, nz + 1),
 #                               cmap='jet')
 
 
 
-# Define grid dimensions.
-nx, ny, nz = 50, 40, 30
-dims = (nx, ny, nz)
-
-# Create a structured grid in [0,1] for each axis.
-x = np.linspace(0, 1, nx)
-y = np.linspace(0, 1, ny)
-z = np.linspace(0, 1, nz)
-# Generate a structured grid with 'ij' indexing.
-X, Y, Z = np.meshgrid(x, y, z, indexing='ij')
-
-# Create nodal positions: shape (nx*ny*nz, 3).
-nodes = np.column_stack((X.ravel(), Y.ravel(), Z.ravel()))
-
-# Create a smooth temperature field.
-# For example, a smooth function that varies with sine and cosine.
-T = 150 + 50 * np.sin(np.pi * X.ravel()) * np.cos(np.pi * Y.ravel()) * np.sin(np.pi * Z.ravel())
-# Alternatively, you could try a simpler function:
-# T = 300 * (X.ravel() + Y.ravel() + Z.ravel()) / 3.0
-
-plot_temperature_distribution(plotter,
-                              (0, 2),
-                              nodes,
-                              T,
-                              dims=dims)
+# # Define grid dimensions.
+# nx, ny, nz = 50, 40, 30
+# dims = (nx, ny, nz)
+#
+# # Create a structured grid in [0,1] for each axis.
+# x = np.linspace(0, 1, nx)
+# y = np.linspace(0, 1, ny)
+# z = np.linspace(0, 1, nz)
+# # Generate a structured grid with 'ij' indexing.
+# X, Y, Z = np.meshgrid(x, y, z, indexing='ij')
+#
+# # Create nodal positions: shape (nx*ny*nz, 3).
+# nodes = np.column_stack((X.ravel(), Y.ravel(), Z.ravel()))
+#
+# # Create a smooth temperature field.
+# # For example, a smooth function that varies with sine and cosine.
+# T = 150 + 50 * np.sin(np.pi * X.ravel()) * np.cos(np.pi * Y.ravel()) * np.sin(np.pi * Z.ravel())
+# # Alternatively, you could try a simpler function:
+# # T = 300 * (X.ravel() + Y.ravel() + Z.ravel()) / 3.0
+#
+# plot_temperature_distribution(plotter,
+#                               (0, 2),
+#                               nodes,
+#                               T,
+#                               dims=dims)
 
 
 
@@ -465,18 +472,18 @@ plot_translation_sensitivities(plotter, (1, 1), int_1_control_points_after, tot_
 
 # FEA
 plot_grid(plotter, (1, 2), centers, element_size, densities=None)
-plot_stl_file(plotter, (0, 2), 'models/CrossHead_Pin_scaled.stl', translation=comp_1_translation_after, rotation=comp_1_rotation_after, opacity=1.0, color='black')
-plot_capsules2(plotter, (0, 2), comp_2_start_points_after, comp_2_end_points_after, comp_2_radii_after, color='black', opacity=1.0)
-plot_capsules(plotter, (0, 2), int_1_points_after, 0.25, color='black', opacity=1.0)
-# plot_temperature_distribution(plotter,
-#                               (1, 2),
-#                               np.array(nodes),
-#                               T_after,
-#                               heat_load_nodes=heat_load_nodes_after,
-#                               robin_nodes=robin_nodes,
-#                               dirichlet_nodes=dirichlet_nodes,
-#                               dims=(nx + 1, ny + 1, nz + 1),
-#                               cmap='jet')
+plot_stl_file(plotter, (1, 2), 'models/CrossHead_Pin_scaled.stl', translation=comp_1_translation_after, rotation=comp_1_rotation_after, opacity=1.0, color='black')
+plot_capsules2(plotter, (1, 2), comp_2_start_points_after, comp_2_end_points_after, comp_2_radii_after, color='black', opacity=1.0)
+plot_capsules(plotter, (1, 2), int_1_points_after, 0.25, color='black', opacity=1.0)
+plot_temperature_distribution(plotter,
+                              (1, 2),
+                              np.array(nodes),
+                              T_after,
+                              heat_load_nodes=heat_load_nodes_after,
+                              robin_nodes=robin_nodes,
+                              dirichlet_nodes=dirichlet_nodes,
+                              dims=(nx + 1, ny + 1, nz + 1),
+                              cmap='jet')
 
 
 

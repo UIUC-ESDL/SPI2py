@@ -208,127 +208,148 @@ def plot_stl_file(plotter, subplot_index, stl_file_path, translation=(0, 0, 0), 
     plotter.add_mesh(mesh, color=color, opacity=opacity, lighting=False)
 
 
-# def plot_temperature_distribution(plotter,
-#                                   subplot_index,
-#                                   nodes,
-#                                   T,
-#                                   heat_load_nodes,
-#                                   robin_nodes,
-#                                   dirichlet_nodes,
-#                                   dims=None,
-#                                   cmap="rainbow",
-#                                   opacity=0.10,
-#                                   climits=(0, 300)):
-#     """
-#     Visualize the 3D temperature distribution on a structured grid using PyVista.
-#
-#     Parameters:
-#         plotter          : PyVista plotter instance.
-#         subplot_index    : Tuple (i, j) specifying the subplot location.
-#       nodes            : NumPy array of shape (n_nodes,3) with node coordinates.
-#       T                : NumPy array of nodal temperatures.
-#       robin_nodes : 1D NumPy array of indices for nodes on the convection boundary.
-#       dirichlet_nodes      : 1D NumPy array of indices for nodes with Dirichlet conditions.
-#       dims             : Tuple (nx+1, ny+1, nz+1) defining grid dimensions. If None, it is inferred.
-#       origin           : Grid origin (default (0,0,0)).
-#       cmap             : Colormap for temperature (default "inferno").
-#       opacity          : Mesh opacity.
-#     """
-#
-#     # Create the subplot
-#     plotter.subplot(*subplot_index)
-#     # plotter.render_window.SetMultiSamples(0)
-#
-#     # Infer grid dimensions if not provided.
-#     # if dims is None:
-#     #     unique_x = np.unique(nodes[:, 0])
-#     #     unique_y = np.unique(nodes[:, 1])
-#     #     unique_z = np.unique(nodes[:, 2])
-#     #     dims = (len(unique_x), len(unique_y), len(unique_z))
-#
-#     # # Reshape nodes into (nx+1, ny+1, nz+1, 3) array.
-#     # try:
-#     #     grid_points = nodes.reshape(dims + (3,))
-#     # except ValueError:
-#     #     raise ValueError("Nodes cannot be reshaped to the provided dimensions.")
-#
-#     # Create the StructuredGrid by setting points (flattened) and dimensions.
-#     grid = pv.StructuredGrid()
-#     # grid.points = grid_points.reshape(-1, 3)
-#     grid.points = nodes
-#     # grid.dimensions = dims
-#     grid["Temperature"] = T
-#
-#     # Setup PyVista plotter.
-#     # vol = plotter.add_volume(grid, scalars="Temperature", cmap=cmap, clim=climits, opacity=opacity, show_scalar_bar=True, scalar_bar_args={'title': 'Temperature'})
-#     vol = plotter.add_volume(grid, scalars="Temperature")
-#     # plot_nodes(plotter, subplot_index, nodes, heat_load_nodes, label='Heat Load', color='red', point_size=20, opacity=0.10)
-#     # plot_nodes(plotter, subplot_index, nodes, robin_nodes, label='Robin BC', color='green')
-#     # plot_nodes(plotter, subplot_index, nodes, dirichlet_nodes, label='Dirichlet BC', color='blue')
-#     # plotter.add_legend()
-#
-#     # Force the scalar range on the volume mapper
-#     # vol.mapper.scalar_range = climits
-#
-#     vol.prop.interpolation_type = 'linear'
-
-
-def plot_temperature_distribution(plotter, subplot_index, nodes, T, dims,
-                                             clip_box=None, cmap="autumn_r",
-                                             opacity=0.5, climits=(0, 300)):
+def plot_temperature_distribution(plotter,
+                                  subplot_index,
+                                  nodes,
+                                  T,
+                                  heat_load_nodes,
+                                  robin_nodes,
+                                  dirichlet_nodes,
+                                  dims=None,
+                                  cmap="rainbow",
+                                  opacity=0.10,
+                                  climits=(0, 300)):
     """
-    Visualize the 3D temperature distribution as a volume using a PyVista ImageData object,
-    where nodal positions and temperatures are provided. The nodes array should have shape
-    (n_nodes, 3) with n_nodes = dims[0]*dims[1]*dims[2]. The grid's origin and spacing are computed
-    from the nodal positions. Optionally, a clip_box (xmin, xmax, ymin, ymax, zmin, zmax) can be provided
-    to clip the volume display.
+    Visualize the 3D temperature distribution on a structured grid using PyVista.
 
     Parameters:
-      plotter       : PyVista Plotter instance.
-      subplot_index : Tuple (i, j) specifying the subplot location.
-      nodes         : NumPy array of shape (n_nodes, 3) of nodal positions.
-      T             : 1D NumPy array of temperatures (length n_nodes).
-      dims          : Tuple (nx, ny, nz) defining grid dimensions.
-      clip_box      : Optional tuple (xmin, xmax, ymin, ymax, zmin, zmax) to clip the volume.
-      cmap          : Colormap for the volume (default "autumn_r").
-      opacity       : Opacity for volume rendering (default 0.5).
-      climits       : Tuple (min, max) for the temperature scalar range.
+        plotter          : PyVista plotter instance.
+        subplot_index    : Tuple (i, j) specifying the subplot location.
+      nodes            : NumPy array of shape (n_nodes,3) with node coordinates.
+      T                : NumPy array of nodal temperatures.
+      robin_nodes : 1D NumPy array of indices for nodes on the convection boundary.
+      dirichlet_nodes      : 1D NumPy array of indices for nodes with Dirichlet conditions.
+      dims             : Tuple (nx+1, ny+1, nz+1) defining grid dimensions. If None, it is inferred.
+      origin           : Grid origin (default (0,0,0)).
+      cmap             : Colormap for temperature (default "inferno").
+      opacity          : Mesh opacity.
     """
-    # Reshape nodes into a structured grid of shape (nx, ny, nz, 3)
-    try:
-        grid_points = nodes.reshape(dims + (3,))
-    except ValueError:
-        raise ValueError("Nodes cannot be reshaped to the provided dimensions. "
-                         "Ensure that len(nodes) equals nx * ny * nz, where dims = (nx, ny, nz).")
 
-    # Compute origin as the minimum along each axis.
-    flat_pts = grid_points.reshape(-1, 3)
-    origin = tuple(flat_pts.min(axis=0))
+    # Create the subplot
+    plotter.subplot(*subplot_index)
+    # plotter.render_window.SetMultiSamples(0)
 
-    # Compute spacing as the difference between the max and min divided by (n-1) along each axis.
-    max_pt = flat_pts.max(axis=0)
-    dims_arr = np.array(dims)
-    # Avoid division by zero if any dimension is 1.
-    spacing = tuple(np.where(dims_arr > 1, (max_pt - np.array(origin)) / (dims_arr - 1), 1.0))
+    # Create a point cloud from the nodal positions.
+    points = pv.PolyData(nodes)
+    points["Temperature"] = T
 
-    # Create a PyVista ImageData grid.
-    grid = pv.ImageData(dimensions=dims, spacing=spacing, origin=origin)
-    grid["T"] = T  # Attach the temperature field.
-
-    # Optionally clip the volume display using the provided clip_box.
-    if clip_box is not None:
-        grid = grid.clip_box(bounds=clip_box, invert=False)
-
-    # Create the subplot.
+    # Select the desired subplot.
     plotter.subplot(*subplot_index)
 
-    # Add the volume to the plotter.
-    vol = plotter.add_volume(grid, scalars="T", cmap=cmap, clim=climits,
-                             opacity=opacity, show_scalar_bar=True,
-                             scalar_bar_args={'title': 'Temperature'})
-    # Set linear interpolation for smoother rendering.
-    vol.prop.interpolation_type = 'linear'
-    vol.mapper.scalar_range = climits
+    # Plot the point cloud as spheres with a color mapping based on temperature.
+    # Adjust point_size for better visibility.
+    actor = plotter.add_mesh(
+        points,
+        render_points_as_spheres=True,
+        point_size=10,
+        scalars="Temperature",
+        cmap=cmap,
+        opacity=opacity,
+        clim=climits,
+        show_scalar_bar=True,
+        scalar_bar_args={'title': 'Temperature'}
+    )
+
+    # # Infer grid dimensions if not provided.
+    # if dims is None:
+    #     unique_x = np.unique(nodes[:, 0])
+    #     unique_y = np.unique(nodes[:, 1])
+    #     unique_z = np.unique(nodes[:, 2])
+    #     dims = (len(unique_x), len(unique_y), len(unique_z))
+    #
+    # # Reshape nodes into (nx+1, ny+1, nz+1, 3) array.
+    # try:
+    #     grid_points = nodes.reshape(dims + (3,))
+    # except ValueError:
+    #     raise ValueError("Nodes cannot be reshaped to the provided dimensions.")
+    #
+    # # Create the StructuredGrid by setting points (flattened) and dimensions.
+    # grid = pv.StructuredGrid()
+    # grid.points = grid_points.reshape(-1, 3)
+    # grid.points = nodes
+    # grid.dimensions = dims
+    # grid["Temperature"] = T
+    #
+    # # Setup PyVista plotter.
+    # # vol = plotter.add_volume(grid, scalars="Temperature", cmap=cmap, clim=climits, opacity=opacity, show_scalar_bar=True, scalar_bar_args={'title': 'Temperature'})
+    # vol = plotter.add_volume(grid, scalars="Temperature")
+    plot_nodes(plotter, subplot_index, nodes, heat_load_nodes, label='Heat Load', color='red', point_size=20, opacity=0.10)
+    plot_nodes(plotter, subplot_index, nodes, robin_nodes, label='Robin BC', color='green')
+    plot_nodes(plotter, subplot_index, nodes, dirichlet_nodes, label='Dirichlet BC', color='blue')
+    plotter.add_legend()
+    #
+    # # Force the scalar range on the volume mapper
+    # # vol.mapper.scalar_range = climits
+    #
+    # vol.prop.interpolation_type = 'linear'
+
+
+# def plot_temperature_distribution(plotter, subplot_index, nodes, T, dims,
+#                                              clip_box=None, cmap="autumn_r",
+#                                              opacity=0.5, climits=(0, 300)):
+#     """
+#     Visualize the 3D temperature distribution as a volume using a PyVista ImageData object,
+#     where nodal positions and temperatures are provided. The nodes array should have shape
+#     (n_nodes, 3) with n_nodes = dims[0]*dims[1]*dims[2]. The grid's origin and spacing are computed
+#     from the nodal positions. Optionally, a clip_box (xmin, xmax, ymin, ymax, zmin, zmax) can be provided
+#     to clip the volume display.
+#
+#     Parameters:
+#       plotter       : PyVista Plotter instance.
+#       subplot_index : Tuple (i, j) specifying the subplot location.
+#       nodes         : NumPy array of shape (n_nodes, 3) of nodal positions.
+#       T             : 1D NumPy array of temperatures (length n_nodes).
+#       dims          : Tuple (nx, ny, nz) defining grid dimensions.
+#       clip_box      : Optional tuple (xmin, xmax, ymin, ymax, zmin, zmax) to clip the volume.
+#       cmap          : Colormap for the volume (default "autumn_r").
+#       opacity       : Opacity for volume rendering (default 0.5).
+#       climits       : Tuple (min, max) for the temperature scalar range.
+#     """
+#     # Reshape nodes into a structured grid of shape (nx, ny, nz, 3)
+#     try:
+#         grid_points = nodes.reshape(dims + (3,))
+#     except ValueError:
+#         raise ValueError("Nodes cannot be reshaped to the provided dimensions. "
+#                          "Ensure that len(nodes) equals nx * ny * nz, where dims = (nx, ny, nz).")
+#
+#     # Compute origin as the minimum along each axis.
+#     flat_pts = grid_points.reshape(-1, 3)
+#     origin = tuple(flat_pts.min(axis=0))
+#
+#     # Compute spacing as the difference between the max and min divided by (n-1) along each axis.
+#     max_pt = flat_pts.max(axis=0)
+#     dims_arr = np.array(dims)
+#     # Avoid division by zero if any dimension is 1.
+#     spacing = tuple(np.where(dims_arr > 1, (max_pt - np.array(origin)) / (dims_arr - 1), 1.0))
+#
+#     # Create a PyVista ImageData grid.
+#     grid = pv.ImageData(dimensions=dims, spacing=spacing, origin=origin)
+#     grid["T"] = T  # Attach the temperature field.
+#
+#     # Optionally clip the volume display using the provided clip_box.
+#     if clip_box is not None:
+#         grid = grid.clip_box(bounds=clip_box, invert=False)
+#
+#     # Create the subplot.
+#     plotter.subplot(*subplot_index)
+#
+#     # Add the volume to the plotter.
+#     vol = plotter.add_volume(grid, scalars="T", cmap=cmap, clim=climits,
+#                              opacity=opacity, show_scalar_bar=True,
+#                              scalar_bar_args={'title': 'Temperature'})
+#     # Set linear interpolation for smoother rendering.
+#     vol.prop.interpolation_type = 'linear'
+#     vol.mapper.scalar_range = climits
 
 
 def plot_nodes(plotter, subplot_index, nodes, selected_nodes, label, color="blue",point_size=5,opacity=1):
