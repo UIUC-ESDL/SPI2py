@@ -34,9 +34,14 @@ def generate_mesh(x_min, x_max, y_min, y_max, z_min, z_max, element_size=1.0):
 
     # Create a 3D meshgrid of node positions.
     X, Y, Z = jnp.meshgrid(x, y, z, indexing='ij')
-    X = X.ravel()
-    Y = Y.ravel()
-    Z = Z.ravel()
+    # X = X.ravel()
+    # Y = Y.ravel()
+    # Z = Z.ravel()
+
+    # 2) Flatten in column-major so that x changes fastest:
+    X = X.flatten(order='F')
+    Y = Y.flatten(order='F')
+    Z = Z.flatten(order='F')
 
     nodes = jnp.stack([X, Y, Z], axis=-1)
 
@@ -45,18 +50,28 @@ def generate_mesh(x_min, x_max, y_min, y_max, z_min, z_max, element_size=1.0):
     i = jnp.arange(nx)
     j = jnp.arange(ny)
     k = jnp.arange(nz)
+
     I, J, K = jnp.meshgrid(i, j, k, indexing='ij')
     I = I.ravel()
     J = J.ravel()
     K = K.ravel()
 
-    # Node numbering in the grid of vertices:
-    # index = i * ((ny+1) * (nz+1)) + j * (nz+1) + k.
-    stride_j = (nz + 1)
-    stride_i = (ny + 1) * (nz + 1)
+    # # Node numbering in the grid of vertices:
+    # # index = i * ((ny+1) * (nz+1)) + j * (nz+1) + k.
+    # stride_j = (nz + 1)
+    # stride_i = (ny + 1) * (nz + 1)
+    #
+    # def idx(i, j, k):
+    #     return i * stride_i + j * stride_j + k
+
+
+
+    # 3) Now define an idx that does:
+    stride_y = (nx + 1)
+    stride_z = (nx + 1) * (ny + 1)
 
     def idx(i, j, k):
-        return i * stride_i + j * stride_j + k
+        return i + j * stride_y + k * stride_z
 
     # For each cell, compute the indices of its 8 vertices.
     n0 = idx(I, J, K)

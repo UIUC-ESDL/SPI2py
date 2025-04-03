@@ -36,7 +36,7 @@ nodes_ex = jnp.array([[0, 0, 0],
 
 nodes, elements, centers, nx, ny, nz, lx, ly, lz = generate_mesh(0, w, 0, h, 0, d, element_size=1.0)
 
-jnp.isclose(nodes_ex, nodes)
+jnp.isclose(nodes_ex, nodes[elements])
 
 # Verify local stiffness matrix
 
