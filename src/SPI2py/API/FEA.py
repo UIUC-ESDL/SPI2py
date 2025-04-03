@@ -82,6 +82,7 @@ class ExplicitFEA(ExplicitComponent):
         r_area = jnp.array(self.options['el_size'] ** 2)
         d_nodes = jnp.array(self.options['dirichlet_nodes'])
         d_T = jnp.array(self.options['dirichlet_values'])
+        # d_T = self.options['dirichlet_values'] * jnp.ones(len(d_nodes))
 
         if self.options['fea_solution_scheme'] == 'partition':
             self._K_base, self._f_base, self._elem_indices = assemble_base_global_system_partition(nodes, elements,
@@ -110,8 +111,6 @@ class ExplicitFEA(ExplicitComponent):
         # Unpack the options
         nodes = jnp.array(self.options['nodes'])
         elements = jnp.array(self.options['elements'])
-        el_size = jnp.array(self.options['el_size'])
-        el_centers = jnp.array(self.options['el_centers'])
         dirichlet_nodes = jnp.array(self.options['dirichlet_nodes'])
         dirichlet_values = jnp.array(self.options['dirichlet_values'])
 

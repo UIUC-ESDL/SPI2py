@@ -56,13 +56,13 @@ model.add_subsystem('projections', projections)
 # x_min, x_max = (0, 4)
 # y_min, y_max = (0, 4)
 # z_min, z_max = (0, 2)
-x_min, x_max = (-5, 5)
-y_min, y_max = (-5, 5)
-z_min, z_max = (-5, 5)
+x_min, x_max = (-3, 3)
+y_min, y_max = (-4, 4)
+z_min, z_max = (-3, 3)
 
 
-# element_size = 0.5
-element_size = 1
+element_size = 0.5
+# element_size = 1
 
 
 nodes, elements, centers, nx, ny, nz, lx, ly, lz = generate_mesh_vec(x_min, x_max, y_min, y_max, z_min, z_max, element_size=element_size)
@@ -77,9 +77,19 @@ kernel_points = kernel_points.reshape(-1, 3)
 kernel_radii = kernel_radii.reshape(-1, 1)
 
 
+# Define material properties
+sh_TiN = 598  # Specific heat capacity,  J/kg*K
+sh_Si = 711  # Specific heat capacity, J/ kg*K
+G_Si = 148  # Thermal conductivity, W/m*K
+G_SiO2 = 1.4  # Thermal conductivity, W/m*K
+
+T_substrate = 300.0  # Temperature of the substrate, K
+h = 10.0  # Convection coefficient, W/m^2*K
+
+
 # Define the system elements
-comp_1 = LinearSplineComponent(start_points=[[0, 0, 0]], end_points=[[0, 2, 0]], radii=[0.5], ports=[[0, 0, 0]], color='blue')
-comp_2 = LinearSplineComponent(start_points=[[0, 0, 0]], end_points=[[0, 2, 0]], radii=[0.5], ports=[[0, 0, 0]], color='red')
+comp_1 = LinearSplineComponent(start_points=[[0, 0, 0]], end_points=[[2, 0, 0]], radii=[0.5], ports=[[0, 0, 0]], color='blue')
+comp_2 = LinearSplineComponent(start_points=[[0, 0, 0]], end_points=[[2, 0, 0]], radii=[0.5], ports=[[0, 0, 0]], color='red')
 model.system.components.add_subsystem('comp_1', comp_1)
 model.system.components.add_subsystem('comp_2', comp_2)
 
@@ -150,7 +160,7 @@ FEA = ExplicitFEA(nodes=nodes,
                   dirichlet_nodes=dirichlet_nodes,
                   dirichlet_values=dirichlet_T,
                   robin_nodes=robin_nodes,
-                  robin_h=10.0,
+                  robin_h=h,
                   robin_T_inf=200.0,
                   fea_solution_scheme='partition')
 
@@ -175,15 +185,13 @@ prob.setup()
 
 
 # # Configure the system
-
-prob.set_val('system.components.comp_1.translation', [2, 0, 0])
-# prob.set_val('system.components.comp_1.rotation', [0, 0, 0])
-
-prob.set_val('system.components.comp_2.translation', [-3, 0, 0])
-prob.set_val('system.components.comp_2.rotation', [np.pi/3, 0, 0])
-
-
-prob.set_val('projections.proj_1.heat_load', 0.1)
+prob.set_val('system.components.comp_1.translation', [0, 0, 0])
+prob.set_val('system.components.comp_1.rotation', [0, 0, 0])
+prob.set_val('system.components.comp_2.translation', [0, 0, 2])
+prob.set_val('system.components.comp_2.rotation', [0, 0, 0])
+# Todo something wrong with heat gen...
+prob.set_val('projections.proj_1.heat_load', 0.0)
+prob.set_val('projections.proj_2.heat_load', 2.0)
 
 
 # Set up the optimizer
@@ -302,30 +310,29 @@ print('Mean Temp:', np.mean(T_after))
 # Plot the results
 t5 = time_ns()
 plotter = pv.Plotter(shape=(2, 3), window_size=(1500, 500))
-# plotter = BackgroundPlotter(shape=(2, 3), window_size=(1500, 500))
 
 # BEFORE
 
 # Geometry
 plot_grid(plotter, (0, 0), centers, element_size, densities=None)
-plot_stl_file(plotter, (0, 0), 'models/CrossHead_Pin_scaled.stl', translation=comp_1_translation_before, rotation=comp_1_rotation_before, opacity=0.25, color='blue')
-
-# plot_capsules2(plotter, (0, 0), comp_1_start_points_before, comp_1_end_points_before, comp_1_radii_before, color='blue', opacity=0.5)
-plot_capsules2(plotter, (0, 0), comp_2_start_points_before, comp_2_end_points_before, comp_2_radii_before, color='red', opacity=0.5)
-
+plot_capsules2(plotter, (0, 0), comp_1_start_points_before, comp_1_end_points_before, comp_1_radii_before, color='black', opacity=0.5)
+plot_capsules2(plotter, (0, 0), comp_2_start_points_before, comp_2_end_points_before, comp_2_radii_before, color='black', opacity=0.5)
 
 
 # Projection
 plot_grid(plotter, (0, 1), centers, element_size, densities=None)
 plot_grid(plotter, (0, 1), centers, element_size, densities=densities_before)
 
-plot_AABB(plotter, (0, 1), bounds_before, color='blue', opacity=0.15)
+plot_AABB(plotter, (0, 1), bounds_before, color='gray', opacity=0.15)
 
-# plot_translation_sensitivities(plotter, (0, 1), comp_2_start_points_before[2], tot_before_comp_2, color='red', factor=3.0)
+plot_translation_sensitivities(plotter, (0, 1), comp_1_start_points_before[0], tot_before_comp_1, color='red', factor=2.0)
+plot_translation_sensitivities(plotter, (0, 1), comp_2_start_points_before[0], tot_before_comp_2, color='red', factor=2.0)
 
 
 # FEA
 plot_grid(plotter, (0, 2), centers, element_size, densities=None)
+
+plot_capsules2(plotter, (0, 2), comp_1_start_points_before, comp_1_end_points_before, comp_1_radii_before, color='black', opacity=1.0)
 plot_capsules2(plotter, (0, 2), comp_2_start_points_before, comp_2_end_points_before, comp_2_radii_before, color='black', opacity=1.0)
 
 plot_temperature_distribution(plotter,
