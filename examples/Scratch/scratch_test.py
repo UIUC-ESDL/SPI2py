@@ -22,9 +22,9 @@ from SPI2py.models.physics.distributed.assembly import assemble_base_global_stif
 
 # Verify single-element mesh
 
-w = 1
-h = 1
-d = 1
+w = 1  # x
+h = 1  # y
+d = 1  # Z
 nodes_ex = jnp.array([[0, 0, 0],
                       [w, 0, 0],
                       [w, h, 0],
@@ -34,9 +34,29 @@ nodes_ex = jnp.array([[0, 0, 0],
                       [w, h, d],
                       [0, h, d]])
 
-nodes, elements, centers, nx, ny, nz, lx, ly, lz = generate_mesh(0, w, 0, h, 0, d, element_size=1.0)
+nodes, elements, _, _, _, _, _, _, _ = generate_mesh(0, w, 0, h, 0, d, element_size=1.0)
 
 jnp.isclose(nodes_ex, nodes[elements])
+
+# Verify for multiple elements
+
+nodes_ex_4e = jnp.array([[0, 0, 0],
+                         [w, 0, 0],
+                         [w, h, 0],
+                         [0, h, 0],
+                         [0, 0, d],
+                         [w, 0, d],
+                         [w, h, d],
+                         [0, h, d]])
+
+
+# nodes_4e, elements_4e, _, _, _, _, _, _, _ = generate_mesh(0, 2*w, 0, 2*h, 0, 2*d, element_size=1.0)
+nodes_4e, elements_4e, _, _, _, _, _, _, _ = generate_mesh(0, 2*w, 0, 2*h, 0, d, element_size=1.0)
+
+print(nodes_ex)
+print(nodes[elements])
+# print('One element:', nodes)
+# print('Four elements:', nodes_4e)
 
 # Verify local stiffness matrix
 

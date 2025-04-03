@@ -37,8 +37,6 @@ def generate_mesh(x_min, x_max, y_min, y_max, z_min, z_max, element_size=1.0):
     # X = X.ravel()
     # Y = Y.ravel()
     # Z = Z.ravel()
-
-    # 2) Flatten in column-major so that x changes fastest:
     X = X.flatten(order='F')
     Y = Y.flatten(order='F')
     Z = Z.flatten(order='F')
@@ -56,7 +54,7 @@ def generate_mesh(x_min, x_max, y_min, y_max, z_min, z_max, element_size=1.0):
     J = J.ravel()
     K = K.ravel()
 
-    # # Node numbering in the grid of vertices:
+    # Node numbering in the grid of vertices:
     # # index = i * ((ny+1) * (nz+1)) + j * (nz+1) + k.
     # stride_j = (nz + 1)
     # stride_i = (ny + 1) * (nz + 1)
