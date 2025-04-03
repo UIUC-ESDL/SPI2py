@@ -1,7 +1,7 @@
 import numpy as np
 import pyvista as pv
 import jax.numpy as jnp
-from SPI2py.models.physics.distributed.mesh import generate_mesh_vec, find_active_nodes, find_face_nodes
+from SPI2py.models.physics.distributed.mesh import generate_mesh, find_active_nodes, find_face_nodes
 from SPI2py.models.physics.distributed.assembly import apply_dirichlet_bc, apply_robin_bc, apply_load
 from SPI2py.models.physics.distributed.solver import fea_3d_thermal
 from SPI2py.models.utilities.visualization import plot_temperature_distribution
@@ -13,7 +13,7 @@ lx, ly, lz = 2.0, 2.0, 2.0
 
 
 # For simplicity, assume all elements are “solid” (density = 1.0)
-nodes_temp, elements_temp = generate_mesh_vec(nx, ny, nz, lx, ly, lz)
+nodes_temp, elements_temp = generate_mesh(nx, ny, nz, lx, ly, lz)
 n_elem = elements_temp.shape[0]
 density = jnp.ones(n_elem)
 

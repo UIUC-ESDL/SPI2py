@@ -6,7 +6,7 @@ from jax.scipy.sparse.linalg import cg
 from openmdao.api import ExplicitComponent, IndepVarComp
 
 # Local imports
-from SPI2py.models.physics.distributed.mesh import generate_mesh_vec
+from SPI2py.models.physics.distributed.mesh import generate_mesh
 from SPI2py.models.physics.distributed.assembly import assemble_base_global_system_penalty, apply_bc_penalty,  update_global_system_penalty
 from SPI2py.models.physics.distributed.assembly import assemble_base_global_system_partition, apply_bc_partition, update_global_stiffness_partition
 from SPI2py.models.utilities.aggregation import kreisselmeier_steinhauser_max
@@ -29,7 +29,7 @@ class Mesh(IndepVarComp):
         element_size = self.options['element_size']
 
         # Define the mesh grid positions
-        nodes, elements, centers, nx, ny, nz, lx, ly, lz = generate_mesh_vec(x_min, x_max, y_min, y_max, z_min, z_max, element_size=element_size)
+        nodes, elements, centers, nx, ny, nz, lx, ly, lz = generate_mesh(x_min, x_max, y_min, y_max, z_min, z_max, element_size=element_size)
         centers = centers.reshape(nx, ny, nz, 1, 3)
 
         # Calculate the kernel volume fraction

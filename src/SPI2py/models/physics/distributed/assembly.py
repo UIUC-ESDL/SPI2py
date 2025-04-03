@@ -2,7 +2,7 @@ import jax.numpy as jnp
 from jax import vmap, jit
 from jax.experimental.sparse import BCOO
 
-from .element import assemble_local_stiffness_matrix
+from .element import assemble_local_stiffness_matrix_scalar
 from .quadrature import gauss_quad
 
 
@@ -35,7 +35,7 @@ def assemble_base_global_stiffness(nodes, elements, base_k):
 
     # Use vmap to compute the 8x8 local stiffness matrix for each element.
     # Shape: (n_elem, 8, 8)
-    Ke_all = vmap(lambda el_nodes, k_eff: assemble_local_stiffness_matrix(el_nodes, k_eff, gauss_pts, gauss_wts))(
+    Ke_all = vmap(lambda el_nodes, k_eff: assemble_local_stiffness_matrix_scalar(el_nodes, k_eff, gauss_pts, gauss_wts))(
         el_nodes_all, k_eff_all)
 
     # Flatten the local stiffness contributions.

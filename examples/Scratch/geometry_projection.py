@@ -8,9 +8,9 @@ from SPI2py.models.mechanics.homogenous_transformation import transform_points
 from SPI2py.models.projection.projection import project_component, combine_densities
 from SPI2py.models.utilities.visualization import plot_grid, plot_spheres, plot_AABB_spheres, plot_stl_file, plot_nodes
 from SPI2py.models.projection.mesh_kernels import create_uniform_kernel
-from SPI2py.models.physics.distributed.mesh import generate_mesh_vec, find_active_nodes, find_face_nodes
+from SPI2py.models.physics.distributed.mesh import generate_mesh, find_active_nodes, find_face_nodes
 from SPI2py.models.physics.distributed.assembly import DirichletBC, RobinBC
-from SPI2py.models.physics.distributed.mesh import generate_mesh_vec
+from SPI2py.models.physics.distributed.mesh import generate_mesh
 from SPI2py.models.physics.distributed.solver import solve_system
 from SPI2py.models.utilities.visualization import plot_temperature_distribution
 
@@ -43,7 +43,7 @@ el_size = 0.25
 # bounds = (0, 7.5, 0, 5, 0, 7.5)
 #
 # x_min, x_max, y_min, y_max, z_min, z_max = bounds
-nodes, elements, el_centers, nx, ny, nz, lx, ly, lz = generate_mesh_vec(x_min, x_max, y_min, y_max, z_min, z_max, element_size=el_size)
+nodes, elements, el_centers, nx, ny, nz, lx, ly, lz = generate_mesh(x_min, x_max, y_min, y_max, z_min, z_max, element_size=el_size)
 el_centers = el_centers.reshape(nx, ny, nz, 1, 3)
 
 # Read the mesh kernel

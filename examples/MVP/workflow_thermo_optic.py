@@ -26,7 +26,7 @@ from SPI2py.API.utilities import Multiplexer
 
 # Import SPI2py supporting models
 from SPI2py.models.projection.mesh_kernels import create_uniform_kernel
-from SPI2py.models.physics.distributed.mesh import generate_mesh_vec, find_active_nodes, find_face_nodes
+from SPI2py.models.physics.distributed.mesh import generate_mesh, find_active_nodes, find_face_nodes
 from SPI2py.models.utilities.visualization import plot_grid, plot_spheres, plot_capsules, plot_stl_file, plot_AABB, plot_capsules2
 from SPI2py.models.utilities.visualization import plot_temperature_distribution, plot_translation_sensitivities
 
@@ -65,7 +65,7 @@ element_size = 0.5
 # element_size = 1
 
 
-nodes, elements, centers, nx, ny, nz, lx, ly, lz = generate_mesh_vec(x_min, x_max, y_min, y_max, z_min, z_max, element_size=element_size)
+nodes, elements, centers, nx, ny, nz, lx, ly, lz = generate_mesh(x_min, x_max, y_min, y_max, z_min, z_max, element_size=element_size)
 centers = centers.reshape(nx, ny, nz, 1, 3)
 
 

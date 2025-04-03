@@ -2,9 +2,13 @@ from jax import jit
 import jax.numpy as jnp
 from .quadrature import shape_functions
 
+# @jit
+def assemble_local_stiffness_matrix_vector():
+    pass
+
 
 @jit
-def assemble_local_stiffness_matrix(nodes, k_eff, gauss_pts, gauss_wts):
+def assemble_local_stiffness_matrix_scalar(nodes, k_eff, gauss_pts, gauss_wts):
     """
     Compute the 8x8 element stiffness matrix for a single element.
 
