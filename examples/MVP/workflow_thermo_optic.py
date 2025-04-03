@@ -78,12 +78,13 @@ kernel_radii = kernel_radii.reshape(-1, 1)
 
 
 # Define material properties
-sh_TiN = 598  # Specific heat capacity,  J/kg*K
-sh_Si = 711  # Specific heat capacity, J/ kg*K
-G_Si = 148  # Thermal conductivity, W/m*K
-G_SiO2 = 1.4  # Thermal conductivity, W/m*K
+sh_TiN = 598.0  # Specific heat capacity,  J/kg*K
+sh_Si = 711.0  # Specific heat capacity, J/ kg*K
+k_Si = 148.0  # Thermal conductivity, W/m*K
+k_SiO2 = 1.4  # Thermal conductivity, W/m*K
 
 T_substrate = 300.0  # Temperature of the substrate, K
+T_inf_air = 300.0  # Temperature of the air, K (assumed)
 h = 10.0  # Convection coefficient, W/m^2*K
 
 
@@ -110,18 +111,15 @@ model.connect('system.components.comp_2.updated_end_points', 'projections.proj_2
 model.connect('system.components.comp_2.updated_radii', 'projections.proj_2.radii')
 
 
-
 # Aggregate the spheres of each component
-
 mux_centers = Multiplexer(n_i=[1, 1, 1, 1], m=3)
-prob.model.add_subsystem('mux_centers', mux_centers)
-
 mux_radii = Multiplexer(n_i=[1, 1, 1, 1], m=1)
+
+prob.model.add_subsystem('mux_centers', mux_centers)
 prob.model.add_subsystem('mux_radii', mux_radii)
 
 bbv = BoundingBoxVolume()
 model.add_subsystem('bbv', bbv)
-
 
 prob.model.connect('system.components.comp_1.updated_start_points', 'mux_centers.input_0')
 prob.model.connect('system.components.comp_1.updated_end_points', 'mux_centers.input_1')
@@ -137,20 +135,17 @@ prob.model.connect('mux_radii.stacked_output', 'bbv.radii')
 
 
 # Aggregate the pseudo-densities
-projection_aggregator = ProjectionAggregator(n_projections=2, rho_min=3e-3)
-
+rho_min = 1e-3
+projection_aggregator = ProjectionAggregator(n_projections=2, rho_min=rho_min)
 model.projections.add_subsystem('aggregator', projection_aggregator)
-
 model.connect('projections.proj_1.penalized_densities', 'projections.aggregator.densities_0')
 model.connect('projections.proj_2.penalized_densities', 'projections.aggregator.densities_1')
-
 model.connect('projections.proj_1.penalized_heat_loads', 'projections.aggregator.heat_loads_0')
 model.connect('projections.proj_2.penalized_heat_loads', 'projections.aggregator.heat_loads_1')
 
 
 # FEA
 dirichlet_nodes = find_face_nodes(nodes, jnp.array([0.0, 0.0, -1.0]))
-dirichlet_T = 300.0 * jnp.ones(len(dirichlet_nodes))
 robin_nodes = find_face_nodes(nodes, jnp.array([0.0, 0.0, 1.0]))
 
 FEA = ExplicitFEA(nodes=nodes,
@@ -158,10 +153,11 @@ FEA = ExplicitFEA(nodes=nodes,
                   el_size=element_size,
                   el_centers=centers,
                   dirichlet_nodes=dirichlet_nodes,
-                  dirichlet_values=dirichlet_T,
+                  dirichlet_T=T_substrate,
                   robin_nodes=robin_nodes,
                   robin_h=h,
-                  robin_T_inf=200.0,
+                  robin_T_inf=T_inf_air,
+                  base_k=k_Si,
                   fea_solution_scheme='partition')
 
 model.add_subsystem('FEA', FEA)
@@ -238,8 +234,6 @@ tot_before_comp_2 = copy(tot_before[('bbv.volume', 'system.components.comp_2.tra
 # prob.run_driver()
 # t4 = time_ns()
 # print(f"Optimization time: {(t4 - t3) / 1e9} seconds")
-
-
 
 
 

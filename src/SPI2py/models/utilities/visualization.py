@@ -9,7 +9,6 @@ def plot_grid(plotter,
               centers, size,
               densities=None,
               min_opacity=5e-3):
-
     # Create the subplot
     plotter.subplot(*subplot_index)
     # plotter.render_window.SetMultiSamples(0)
@@ -59,7 +58,6 @@ def plot_grid(plotter,
 
 
 def plot_spheres(plotter, subplot_index, positions, radii, color, opacity=0.15):
-
     # Create the subplot
     plotter.subplot(*subplot_index)
     # plotter.render_window.SetMultiSamples(0)
@@ -108,7 +106,6 @@ def plot_capsules(plotter, subplot_index, cyl_control_points, cyl_radius, color,
 
 
 def plot_capsules2(plotter, subplot_index, start_points, end_points, radii, color, opacity=0.875):
-
     # Create the subplot
     plotter.subplot(*subplot_index)
     # plotter.render_window.SetMultiSamples(0)
@@ -288,46 +285,41 @@ def plot_temperature_distribution(plotter,
 
     # Plot the point cloud as spheres with a color mapping based on temperature.
     # Adjust point_size for better visibility.
-    actor = plotter.add_mesh(
-        points,
-        render_points_as_spheres=True,
-        point_size=10,
-        scalars="Temperature",
-        cmap=cmap,
-        opacity=opacity,
-        clim=climits,
-        show_scalar_bar=True,
-        scalar_bar_args={'title': 'Temperature'}
-    )
+    plotter.add_mesh(points,
+                     render_points_as_spheres=True,
+                     point_size=10,
+                     scalars="Temperature",
+                     cmap=cmap,
+                     opacity=opacity,
+                     clim=climits,
+                     show_scalar_bar=True,
+                     scalar_bar_args={'title': 'Temperature'}
+                     )
 
-
-    # plot_nodes(plotter, subplot_index, nodes, heat_load_nodes, label='Heat Load', color='red', point_size=20, opacity=0.10)
+    plot_nodes(plotter, subplot_index, nodes, heat_load_nodes, label='Heat Load', color='red', point_size=20,
+               opacity=0.10)
     plot_nodes(plotter, subplot_index, nodes, robin_nodes, label='Robin BC', color='green')
     plot_nodes(plotter, subplot_index, nodes, dirichlet_nodes, label='Dirichlet BC', color='blue')
-
 
     # Plot the hottest and coldest points
     hottest_point = nodes[np.argmax(T)]
     coldest_point = nodes[np.argmin(T)]
-    plotter.add_mesh(pv.Sphere(radius=0.5, center=hottest_point), color='red', opacity=0.25)
-    plotter.add_mesh(pv.Sphere(radius=0.5, center=coldest_point), color='blue', opacity=0.25)
+    plotter.add_mesh(pv.Sphere(radius=0.75, center=hottest_point), color='red', opacity=0.5)
+    plotter.add_mesh(pv.Sphere(radius=0.75, center=coldest_point), color='blue', opacity=0.5)
 
     plotter.add_legend()
 
 
-
-
-def plot_nodes(plotter, subplot_index, nodes, selected_nodes, label, color="blue",point_size=5,opacity=1):
-
+def plot_nodes(plotter, subplot_index, nodes, selected_nodes, label, color="blue", point_size=5, opacity=1):
     plotter.subplot(*subplot_index)
 
     # Create PolyData for convection boundary and fixed (Dirichlet) nodes.
     node_points = nodes[selected_nodes]
     nodes_poly = pv.PolyData(node_points.reshape(-1, 3))
 
-
     # Setup PyVista plotter.
-    plotter.add_mesh(nodes_poly, color=color, point_size=point_size, render_points_as_spheres=True, label=label,opacity=opacity)
+    plotter.add_mesh(nodes_poly, color=color, point_size=point_size, render_points_as_spheres=True, label=label,
+                     opacity=opacity)
 
 
 def plot_translation_sensitivities(plotter, subplot_index, centers, sensitivities, color='red', factor=1.0):
@@ -351,7 +343,6 @@ def plot_translation_sensitivities(plotter, subplot_index, centers, sensitivitie
 
     # TODO Reverse direction?
     sensitivities = -sensitivities.reshape(-1, 3)
-
 
     # Normalize each direction vector (avoiding division by zero).
     norms = np.linalg.norm(sensitivities, axis=1, keepdims=True)
