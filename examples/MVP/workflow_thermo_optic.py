@@ -57,7 +57,7 @@ model.add_subsystem('projections', projections)
 # y_min, y_max = (0, 4)
 # z_min, z_max = (0, 2)
 x_min, x_max = (-3, 3)
-y_min, y_max = (-4, 4)
+y_min, y_max = (-5, 5)
 z_min, z_max = (-3, 3)
 
 
@@ -305,6 +305,7 @@ print('Mean Temp:', np.mean(T_after))
 t5 = time_ns()
 plotter = pv.Plotter(shape=(2, 3), window_size=(1500, 500))
 
+
 # BEFORE
 
 # Geometry
@@ -399,6 +400,8 @@ plot_temperature_distribution(plotter,
 
 plotter.link_views()
 plotter.show_axes()
+
+
 plotter.show()
 
 

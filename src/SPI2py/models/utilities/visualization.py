@@ -276,8 +276,14 @@ def plot_temperature_distribution(plotter,
     grid.dimensions = dims
     grid["Temperature"] = T
 
+    # vol_clip = grid.clip_box(bounds=(0, 1, 0, 1, 0, 1), invert=False)
+
     # Setup PyVista plotter.
     plotter.add_volume(grid, scalars="Temperature", cmap=cmap, opacity=opacity, show_scalar_bar=True, scalar_bar_args={'title': 'Temperature'})
+
+    z_slice = grid.slice(normal='x', origin=(0, 0, 0.5))
+
+    plotter.add_mesh(z_slice, scalars="Temperature", cmap=cmap)
 
     # Create a point cloud from the nodal positions.
     points = pv.PolyData(nodes)
