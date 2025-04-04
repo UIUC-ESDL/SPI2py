@@ -211,6 +211,7 @@ class ProjectLinearSplineComponent(ExplicitComponent):
                                                                          heat_load)
 
         # Write the outputs
+        outputs['densities'] = densities
         outputs['penalized_densities'] = penalized_densities
         outputs['penalized_heat_loads'] = penalized_heat_loads
 
@@ -228,85 +229,45 @@ class ProjectLinearSplineComponent(ExplicitComponent):
         radii = jnp.array(inputs['radii'])
         heat_load = jnp.array(inputs['heat_load'])
 
-        # Pack all inputs in the order expected by _compute_primal.
-        primals = (mesh_centers, mesh_size,
-                   kernel_centers, kernel_radii,
-                   start_points, end_points, radii,
-                   heat_load)
+        # Freeze the constant (primal) parameters using functools.partial.
+        # The _compute_primal function now only expects the design inputs.
+        frozen_compute_primal = partial(self._compute_primal,
+                                        mesh_centers, mesh_size,
+                                        kernel_centers, kernel_radii)
+
+        # Pack design inputs.
+        primals = (start_points, end_points, radii, heat_load)
 
         if mode == 'fwd':
-
-            t_mesh_centers = jnp.zeros_like(mesh_centers)
-            t_mesh_size = jnp.zeros_like(mesh_size)
-            t_kernel_centers = jnp.zeros_like(kernel_centers)
-            t_kernel_radii = jnp.zeros_like(kernel_radii)
-
-            t_start_points = d_inputs['start_points'] if 'start_points' in d_inputs else jnp.zeros_like(start_points)
-            t_end_points = d_inputs['end_points'] if 'end_points' in d_inputs else jnp.zeros_like(end_points)
-            t_radii = d_inputs['radii'] if 'radii' in d_inputs else jnp.zeros_like(radii)
-            t_heat_load = d_inputs['heat_load'] if 'heat_load' in d_inputs else jnp.zeros_like(heat_load)
-
-            tangents = (t_mesh_centers, t_mesh_size,
-                        t_kernel_centers, t_kernel_radii,
-                        t_start_points, t_end_points, t_radii,
-                        t_heat_load)
+            # Get tangents for design inputs (defaulting to zeros if not provided).
+            t_start_points = d_inputs.get('start_points', jnp.zeros_like(start_points))
+            t_end_points = d_inputs.get('end_points', jnp.zeros_like(end_points))
+            t_radii = d_inputs.get('radii', jnp.zeros_like(radii))
+            t_heat_load = d_inputs.get('heat_load', jnp.zeros_like(heat_load))
+            tangents = (t_start_points, t_end_points, t_radii, t_heat_load)
 
             # Compute the forward Jacobian-vector product.
-            _, tangent_out = jvp(self._compute_primal, primals, tangents)
+            _, tangent_out = jvp(frozen_compute_primal, primals, tangents)
 
-            # tangent_out is a tuple: (densities_t, penalized_densities_t, penalized_heat_loads_t)
+            # tangent_out is assumed to be a tuple of (densities_t, penalized_densities_t, penalized_heat_loads_t).
             d_outputs['densities'] += tangent_out[0]
             d_outputs['penalized_densities'] += tangent_out[1]
             d_outputs['penalized_heat_loads'] += tangent_out[2]
 
         elif mode == 'rev':
-
-            _, pullback = vjp(self._compute_primal, *primals)
-
+            # Compute the vector-Jacobian product (pullback) for the design inputs.
+            _, pullback = vjp(frozen_compute_primal, *primals)
             cotangent = (d_outputs['densities'],
                          d_outputs['penalized_densities'],
                          d_outputs['penalized_heat_loads'])
-
             grads = pullback(cotangent)
 
-            # Only assign derivatives to design inputs.
-            # 0 = mesh_centers, 1 = mesh_size,
-            # 2 = kernel_centers, 3 = kernel_radii,
-            # 4 = start_points, 5 = end_points, 6 = radii,
-            # 7 = heat_load
-            d_inputs['start_points'] += grads[4]
-            d_inputs['end_points'] += grads[5]
-            d_inputs['radii'] += grads[6]
-            d_inputs['heat_load'] += grads[7]
-
-    # def compute_partials(self, inputs, partials):
-    #     # Get the Mesh parameters
-    #     mesh_size = jnp.atleast_1d(self.options['mesh_size'])
-    #     mesh_centers = jnp.array(self.options['mesh_centers'])
-    #     kernel_centers = jnp.array(self.options['kernel_centers'])
-    #     kernel_radii = jnp.array(self.options['kernel_radii'])
-    #
-    #     # Get the inputs
-    #     start_points = jnp.array(inputs['start_points'])
-    #     end_points = jnp.array(inputs['end_points'])
-    #     radii = jnp.array(inputs['radii'])
-    #     heat_load = jnp.array(inputs['heat_load'])
-    #
-    #
-    #     jac_pd, jac_phl = jacfwd(self._compute_primal, argnums=(4, 5, 6, 7))(mesh_centers, mesh_size,
-    #                                                                         kernel_centers, kernel_radii,
-    #                                                                         start_points, end_points, radii,
-    #                                                                         heat_load)
-    #
-    #
-    #     # Write the outputs
-    #     partials['penalized_densities', 'start_points'] = jac_pd[0]
-    #     partials['penalized_densities', 'end_points'] = jac_pd[1]
-    #     partials['penalized_densities', 'radii'] = jac_pd[2]
-    #     partials['penalized_heat_loads', 'start_points'] = jac_phl[0]
-    #     partials['penalized_heat_loads', 'end_points'] = jac_phl[1]
-    #     partials['penalized_heat_loads', 'radii'] = jac_phl[2]
-    #     partials['penalized_heat_loads', 'heat_load'] = jac_phl[3]
+            # Assign derivatives only to the design inputs.
+            # Here grads is a tuple: (grad_start_points, grad_end_points, grad_radii, grad_heat_load)
+            d_inputs['start_points'] += grads[0]
+            d_inputs['end_points'] += grads[1]
+            d_inputs['radii'] += grads[2]
+            d_inputs['heat_load'] += grads[3]
 
 
     @staticmethod

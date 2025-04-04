@@ -187,7 +187,7 @@ prob.set_val('system.components.comp_2.translation', [0, 0, 2])
 prob.set_val('system.components.comp_2.rotation', [0, 0, 0])
 # Todo something wrong with heat gen...
 prob.set_val('projections.proj_1.heat_load', 0.0)
-prob.set_val('projections.proj_2.heat_load', 2.0)
+prob.set_val('projections.proj_2.heat_load', 400.0)
 
 
 # Set up the optimizer

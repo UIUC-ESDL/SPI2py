@@ -34,9 +34,6 @@ def generate_mesh(x_min, x_max, y_min, y_max, z_min, z_max, element_size=1.0):
 
     # Create a 3D meshgrid of node positions.
     X, Y, Z = jnp.meshgrid(x, y, z, indexing='ij')
-    # X = X.ravel()
-    # Y = Y.ravel()
-    # Z = Z.ravel()
     X = X.flatten(order='F')
     Y = Y.flatten(order='F')
     Z = Z.flatten(order='F')

@@ -36,22 +36,25 @@ nodes_ex = jnp.array([[0, 0, 0],
 
 nodes, elements, _, _, _, _, _, _, _ = generate_mesh(0, w, 0, h, 0, d, element_size=1.0)
 
-jnp.isclose(nodes_ex, nodes[elements])
+assert jnp.all(jnp.isclose(nodes_ex, nodes[elements]))
 
 # Verify for multiple elements
 
-nodes_ex_4e = jnp.array([[0, 0, 0],
-                         [w, 0, 0],
-                         [w, h, 0],
-                         [0, h, 0],
-                         [0, 0, d],
-                         [w, 0, d],
-                         [w, h, d],
-                         [0, h, d]])
+nodes_ex_2e = jnp.array([[0, 0, 0],  # 0
+                         [w, 0, 0],  # 1
+                         [w, h, 0],  # 2
+                         [0, h, 0],  # 3
+                         [0, 0, d],  # 4
+                         [w, 0, d],  # 5
+                         [w, h, d],  # 6
+                         [0, h, d],  # 7
+                         [2*w, 0, 0],  # 8
+                         [2*w, h, 0],  # 9
+                         [2*w, 0, d],  # 10
+                         [2*w, h, d]])  # 11
 
+nodes_2e, elements_4e, _, _, _, _, _, _, _ = generate_mesh(0, 2*w, 0, h, 0, d, element_size=1.0)
 
-# nodes_4e, elements_4e, _, _, _, _, _, _, _ = generate_mesh(0, 2*w, 0, 2*h, 0, 2*d, element_size=1.0)
-nodes_4e, elements_4e, _, _, _, _, _, _, _ = generate_mesh(0, 2*w, 0, 2*h, 0, d, element_size=1.0)
 
 print(nodes_ex)
 print(nodes[elements])

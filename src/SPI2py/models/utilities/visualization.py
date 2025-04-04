@@ -262,22 +262,22 @@ def plot_temperature_distribution(plotter,
     #     unique_y = np.unique(nodes[:, 1])
     #     unique_z = np.unique(nodes[:, 2])
     #     dims = (len(unique_x), len(unique_y), len(unique_z))
-    #
-    # # Reshape nodes into (nx+1, ny+1, nz+1, 3) array.
-    # try:
-    #     grid_points = nodes.reshape(dims + (3,))
-    # except ValueError:
-    #     raise ValueError("Nodes cannot be reshaped to the provided dimensions.")
-    #
-    #
-    # # Create the StructuredGrid by setting points (flattened) and dimensions.
-    # grid = pv.StructuredGrid()
-    # grid.points = grid_points.reshape(-1, 3)
-    # grid.dimensions = dims
-    # grid["Temperature"] = T
-    #
-    # # Setup PyVista plotter.
-    # plotter.add_volume(grid, scalars="Temperature", cmap=cmap, opacity=opacity, show_scalar_bar=True, scalar_bar_args={'title': 'Temperature'})
+
+    # Reshape nodes into (nx+1, ny+1, nz+1, 3) array.
+    try:
+        grid_points = nodes.reshape(dims + (3,))
+    except ValueError:
+        raise ValueError("Nodes cannot be reshaped to the provided dimensions.")
+
+
+    # Create the StructuredGrid by setting points (flattened) and dimensions.
+    grid = pv.StructuredGrid()
+    grid.points = grid_points.reshape(-1, 3)
+    grid.dimensions = dims
+    grid["Temperature"] = T
+
+    # Setup PyVista plotter.
+    plotter.add_volume(grid, scalars="Temperature", cmap=cmap, opacity=opacity, show_scalar_bar=True, scalar_bar_args={'title': 'Temperature'})
 
     # Create a point cloud from the nodal positions.
     points = pv.PolyData(nodes)
@@ -285,16 +285,16 @@ def plot_temperature_distribution(plotter,
 
     # Plot the point cloud as spheres with a color mapping based on temperature.
     # Adjust point_size for better visibility.
-    plotter.add_mesh(points,
-                     render_points_as_spheres=True,
-                     point_size=10,
-                     scalars="Temperature",
-                     cmap=cmap,
-                     opacity=opacity,
-                     clim=climits,
-                     show_scalar_bar=True,
-                     scalar_bar_args={'title': 'Temperature'}
-                     )
+    # plotter.add_mesh(points,
+    #                  render_points_as_spheres=True,
+    #                  point_size=10,
+    #                  scalars="Temperature",
+    #                  cmap=cmap,
+    #                  opacity=opacity,
+    #                  clim=climits,
+    #                  show_scalar_bar=True,
+    #                  scalar_bar_args={'title': 'Temperature'}
+    #                  )
 
     plot_nodes(plotter, subplot_index, nodes, heat_load_nodes, label='Heat Load', color='red', point_size=20,
                opacity=0.10)
