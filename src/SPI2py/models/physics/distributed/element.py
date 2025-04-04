@@ -7,7 +7,7 @@ def assemble_local_stiffness_matrix_vector():
     pass
 
 
-@jit
+# @jit
 def assemble_local_stiffness_matrix_scalar(nodes, k_eff, gauss_pts, gauss_wts):
     """
     Compute the 8x8 element stiffness matrix for a single element.
@@ -35,10 +35,16 @@ def assemble_local_stiffness_matrix_scalar(nodes, k_eff, gauss_pts, gauss_wts):
     eta = eta_grid.flatten()
     zeta = zeta_grid.flatten()
 
+    # xi_grid, eta_grid, zeta_grid = jnp.meshgrid(gauss_pts, gauss_pts, gauss_pts, indexing='ij')
+    # xi = xi_grid.flatten(order='F')
+    # eta = eta_grid.flatten(order='F')
+    # zeta = zeta_grid.flatten(order='F')
+
     # Build the total quadrature weights.
     # Shape: (n_qp,)
     wx, wy, wz = jnp.meshgrid(gauss_wts, gauss_wts, gauss_wts, indexing='ij')
     w_total = (wx * wy * wz).flatten()
+    # w_total = (wx * wy * wz).flatten(order='F')
 
     # Evaluate shape functions and their derivatives at all quadrature points.
     # Shapes (n_qp, 8) and (n_qp, 8, 3)
