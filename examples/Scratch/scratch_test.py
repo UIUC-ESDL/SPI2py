@@ -32,58 +32,6 @@ from SPI2py.models.physics.distributed.element import assemble_local_stiffness_m
 from SPI2py.models.physics.distributed.assembly import assemble_base_global_stiffness
 
 
-# # Verify single-element mesh
-#
-# w = 1
-# h = 1
-# d = 1
-#
-# nodes_ex = jnp.array([[0, 0, 0],
-#                       [w, 0, 0],
-#                       [w, h, 0],
-#                       [0, h, 0],
-#                       [0, 0, d],
-#                       [w, 0, d],
-#                       [w, h, d],
-#                       [0, h, d]])
-#
-# nodes, elements, centers, nx, ny, nz, lx, ly, lz = generate_mesh(0, w, 0, h, 0, d, element_size=1.0)
-#
-# jnp.isclose(nodes_ex, nodes)
-#
-# # Verify local stiffness matrix
-#
-# K = 1
-#
-# A =  4*h*d + 4*w*d + 4*w*h
-# B = -4*h*d + 2*w*d + 2*w*h
-# C = -2*h*d - 2*w*d +   w*h
-# D =  2*h*d - 4*w*d + 2*w*h
-# E =  2*h*d + 2*w*d - 4*w*h
-# F = -2*h*d +   w*d - 2*w*h
-# G =   -h*d -   w*d -   w*h
-# H =    h*d - 2*w*d - 2*w*h
-#
-# k_ex = K/36 * jnp.array([[A, B, C, D, E, F, G, H],
-#                          [B, A, D, C, F, E, H, G],
-#                          [C, D, A, B, G, H, E, F],
-#                          [D, C, B, A, H, G, F, E],
-#                          [E, F, G, H, A, B, C, D],
-#                          [F, E, H, G, B, A, D, C],
-#                          [G, H, E, F, C, D, A, B],
-#                          [H, G, F, E, D, C, B, A]])
-#
-#
-# gauss_pts, gauss_wts = gauss_quad()
-#
-# k_SPI2py_ex_nodes = assemble_local_stiffness_matrix_scalar(nodes_ex, K, gauss_pts, gauss_wts)
-# k_SPI2py = assemble_local_stiffness_matrix_scalar(nodes[element_1], K, gauss_pts, gauss_wts)
-#
-# # Assert
-# print(jnp.isclose(k_ex, k_SPI2py))
-
-
-
 # Verify a single-element mesh
 
 
@@ -174,4 +122,4 @@ assert jnp.all(jnp.isclose(k_ex, k_SPI2py))
 # Verify Global stiffness matrix...
 
 
-# Ke_flat, elem_indices, rows_flat, cols_flat, n_nodes, n_elem = assemble_base_global_stiffness
+# Ke_flat, elem_indices, rows_flat, cols_flat, n_nodes, _ = assemble_base_global_stiffness

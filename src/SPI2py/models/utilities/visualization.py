@@ -276,10 +276,9 @@ def plot_temperature_distribution(plotter,
     grid.dimensions = dims
     grid["Temperature"] = T
 
-    # vol_clip = grid.clip_box(bounds=(0, 1, 0, 1, 0, 1), invert=False)
 
     # Setup PyVista plotter.
-    plotter.add_volume(grid, scalars="Temperature", cmap=cmap, opacity=opacity, show_scalar_bar=True, scalar_bar_args={'title': 'Temperature'})
+    # plotter.add_volume(grid, scalars="Temperature", cmap=cmap, opacity=opacity, show_scalar_bar=True, scalar_bar_args={'title': 'Temperature'})
 
     z_slice = grid.slice(normal='x', origin=(0, 0, 0.5))
 
@@ -288,19 +287,6 @@ def plot_temperature_distribution(plotter,
     # Create a point cloud from the nodal positions.
     points = pv.PolyData(nodes)
     points["Temperature"] = T
-
-    # Plot the point cloud as spheres with a color mapping based on temperature.
-    # Adjust point_size for better visibility.
-    # plotter.add_mesh(points,
-    #                  render_points_as_spheres=True,
-    #                  point_size=10,
-    #                  scalars="Temperature",
-    #                  cmap=cmap,
-    #                  opacity=opacity,
-    #                  clim=climits,
-    #                  show_scalar_bar=True,
-    #                  scalar_bar_args={'title': 'Temperature'}
-    #                  )
 
     plot_nodes(plotter, subplot_index, nodes, heat_load_nodes, label='Heat Load', color='red', point_size=20,
                opacity=0.10)
@@ -368,5 +354,7 @@ def plot_translation_sensitivities(plotter, subplot_index, centers, sensitivitie
 
     # Add the arrow glyph mesh to the plotter.
     plotter.add_mesh(glyphs, color=color)
-    # sphere = pv.Sphere(radius=0.1, theta_resolution=8, phi_resolution=8)
-    # plotter.add_mesh(sphere, color=color)
+    sphere = pv.Sphere(radius=0.25, theta_resolution=8, phi_resolution=8, center=centers)
+    plotter.add_mesh(sphere, color=color)
+
+
