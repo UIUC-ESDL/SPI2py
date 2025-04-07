@@ -6,7 +6,8 @@ from .element import assemble_local_stiffness_matrix_scalar
 from .quadrature import gauss_quad
 
 
-def assemble_base_global_stiffness(nodes, elements, base_k):
+# @jit
+def assemble_global_stiffness(nodes, elements, base_k):
     """
         Assemble the global base stiffness matrix.
         Indices are included for mapping element densities to each of their local stiffness matrix contributions.
@@ -51,6 +52,7 @@ def assemble_base_global_stiffness(nodes, elements, base_k):
     rows_flat = rows.reshape(-1)
     cols_flat = cols.reshape(-1)
 
+    #
     # Build auxiliary mapping: for each element, its index repeats 64 times.
     # Shape: (n_elem*(8*8),)
     elem_indices = jnp.repeat(jnp.arange(n_elem), 64)
@@ -58,6 +60,7 @@ def assemble_base_global_stiffness(nodes, elements, base_k):
     return Ke_flat, elem_indices, rows_flat, cols_flat, n_nodes, n_elem
 
 
+# @jit
 def assemble_base_global_system_partition(nodes, elements,
                                           base_k,
                                           r_nodes, r_h, r_T_inf, r_area,
@@ -67,7 +70,7 @@ def assemble_base_global_system_partition(nodes, elements,
     idx_p = d_nodes
     idx_f = jnp.setdiff1d(idx, idx_p)
 
-    Ke_flat, elem_indices_full, rows_flat, cols_flat, n_nodes, n_elem = assemble_base_global_stiffness(nodes, elements,
+    Ke_flat, elem_indices_full, rows_flat, cols_flat, n_nodes, n_elem = assemble_global_stiffness(nodes, elements,
                                                                                                   base_k)
     indices = jnp.stack([rows_flat, cols_flat], axis=-1)  # shape: (nnz, 2)
 
@@ -137,6 +140,7 @@ def assemble_base_global_system_partition(nodes, elements,
     return K_base, f_base, elem_indices
 
 
+# @jit
 def apply_bc_partition(K_base,f_base,
                        r_nodes, r_h, r_area, r_T_inf,
                        idx_f, idx_p):
@@ -183,24 +187,34 @@ def apply_bc_partition(K_base,f_base,
     return K_updated, f_updated
 
 
+# @jit
 def update_global_stiffness_partition(K_base, f_base,
-                                      elements, elem_indices,
-                                      densities, heat_loads):
+                                      element_to_node_mapping,
+                                      idx_vector,
+                                      ei_matrix,
+                                      element_densities, element_heat_loads):
 
-    # Unpack the partitioned stiffness matrix and load vector.
-    K_ff, K_fp, K_pf, K_pp = K_base
-    f_f, f_p = f_base
-    ei_ff, ei_fp, ei_pf, ei_pp = elem_indices
+    # Unpack the partitioned stiffness matrix, load vector, and their indices.
+    K_ff, K_fp, K_pf, K_pp         = K_base
+    f_f, f_p                       = f_base
+    idx_f, idx_p                   = idx_vector
+    ei_ff, ei_fp, ei_pf, ei_pp = ei_matrix
 
-    # Ensure the inputs are 1D arrays.
-    densities = densities.flatten()
-    heat_loads = heat_loads.flatten()
+    # Flatten the pseudo-densities and heat loads to ensure they are 1D.
+    element_densities  = element_densities.flatten()
+    element_heat_loads = element_heat_loads.flatten()
 
-    # Update the stiffness matrices using the densities.
-    new_data_ff = K_ff.data * densities[ei_ff]
-    new_data_fp = K_fp.data * densities[ei_fp]
-    new_data_pf = K_pf.data * densities[ei_pf]
-    new_data_pp = K_pp.data * densities[ei_pp]
+    # UPDATE THE STIFFNESS MATRIX
+
+    # TODO Am I multiplying by multiple densities?
+    #  Stiffness matrix is nodal, one index may contain contributions from multiple elements.
+    #  Updating should multiply each element's contribution by its density...
+
+    # Interpolate material properties based on the penalized pseudo densities.
+    new_data_ff = element_densities[ei_ff] * K_ff.data
+    new_data_fp = element_densities[ei_fp] * K_fp.data
+    new_data_pf = element_densities[ei_pf] * K_pf.data
+    new_data_pp = element_densities[ei_pp] * K_pp.data
 
     # Create new BCOO matrices with the updated data.
     K_ff_new = BCOO((new_data_ff, K_ff.indices), shape=K_ff.shape)
@@ -208,17 +222,27 @@ def update_global_stiffness_partition(K_base, f_base,
     K_pf_new = BCOO((new_data_pf, K_pf.indices), shape=K_pf.shape)
     K_pp_new = BCOO((new_data_pp, K_pp.indices), shape=K_pp.shape)
 
+    # UPDATE THE LOAD VECTOR
+    # TODO scale by penalized density... but density already penalized?
+
     # Assemble the global load vector from heat loads.
-    nodes_per_elem = 8
-    element_contrib = (heat_loads * densities) / nodes_per_elem
-    f_f_new = f_f.at[elements.flatten()].add(jnp.repeat(element_contrib, nodes_per_elem))
-    f_p_new = f_p.at[elements.flatten()].add(jnp.repeat(element_contrib, nodes_per_elem))
 
-    # Repack the updated stiffness matrices and load vector.
-    K_updated = (K_ff_new, K_fp_new, K_pf_new, K_pp_new)
-    f_updated = (f_f_new, f_p_new)
 
-    return K_updated, f_updated
+    n_nodes_per_element = 8
+    element_to_node_heat_load = jnp.tile((element_heat_loads / 8), (8, 1)).T
+    f_new = jnp.zeros_like
+
+
+    # f_f_new = f_f.at[element_to_node_mapping_f.flatten()].add(f_nodal_heat_load)
+    # f_p_new = f_p.at[element_to_node_mapping.flatten()].add(f_nodal_heat_load)
+    # # f_f_new = f_f.at[element_to_node_mapping.flatten()].add(f_nodal_heat_load)
+    # # f_p_new = f_p.at[element_to_node_mapping.flatten()].add(f_nodal_heat_load)
+    #
+    # # Repack the updated stiffness matrices and load vector.
+    # K_updated = (K_ff_new, K_fp_new, K_pf_new, K_pp_new)
+    # f_updated = (f_f_new, f_p_new)
+    #
+    # return K_updated, f_updated
 
 
 
@@ -227,7 +251,7 @@ def assemble_base_global_system_penalty(nodes, elements, base_k,
                                         r_nodes, r_h, r_T_inf, r_area,
                                         d_nodes, d_T):
 
-    Ke_flat, elem_indices, rows_flat, cols_flat, n_nodes, n_elem = assemble_base_global_stiffness(nodes, elements, base_k)
+    Ke_flat, elem_indices, rows_flat, cols_flat, n_nodes, n_elem = assemble_global_stiffness(nodes, elements, base_k)
 
     # Stack rows and cols to form an index array of shape (n_elem*64, 2).
     indices = jnp.stack([rows_flat, cols_flat], axis=-1)

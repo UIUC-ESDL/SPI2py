@@ -1,7 +1,7 @@
 import jax.numpy as jnp
 from jax import jacrev
 from openmdao.api import ExplicitComponent
-from SPI2py.models.geometry.bounds import bounding_box_bounds, bounding_box_volume
+from SPI2py.models.geometry.bounds import smooth_bounding_box_bounds, bounding_box_volume
 
 
 class BoundingBoxVolume(ExplicitComponent):
@@ -50,6 +50,6 @@ class BoundingBoxVolume(ExplicitComponent):
 
     @staticmethod
     def _compute_primal(positions, radii):
-        bounds = bounding_box_bounds(positions, radii)
+        bounds = smooth_bounding_box_bounds(positions, radii)
         volume = bounding_box_volume(bounds)
         return volume, bounds

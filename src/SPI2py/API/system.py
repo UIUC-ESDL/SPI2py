@@ -22,31 +22,33 @@ class Interconnects(Group):
     pass
 
 
+class PointCloudComponent(ExplicitComponent):
+    raise NotImplementedError("PointCloudComponent is not implemented yet.")
+
+
 class MDBDComponent(ExplicitComponent):
 
     def initialize(self):
-        self.options.declare('description', types=str)
         self.options.declare('filepath', types=str)
-        self.options.declare('color', types=str)
-        self.options.declare('ports', types=list)
-        self.options.declare('n_spheres', types=int)
+        self.options.declare('port_positions', types=list)
+        self.options.declare('minimum_radius', types=int)
 
     def setup(self):
 
         # Unpack the options
-        ports = self.options['ports']
-        filepath = self.options['filepath']
-        n_spheres = self.options['n_spheres']
+        filepath       = self.options['filepath']
+        port_positions = self.options['port_positions']
+        min_radius     = self.options['minimum_radius']
 
-        # min_radius = 1.0e-1
-        min_radius = 3.0e-2
-        # min_radius = 2.0e-2
+        # Read the sphere positions and radii from the CSV file
         sphere_positions, sphere_radii = read_csv_file(filepath, min_radius)
 
         # Convert the lists to numpy arrays
         sphere_positions = np.array(sphere_positions).reshape(-1, 3)
-        sphere_radii = np.array(sphere_radii).reshape(-1, 1)
-        ports = np.array(ports).reshape(-1, 3)
+        sphere_radii     = np.array(sphere_radii).reshape(-1, 1)
+        ports            = np.array(port_positions).reshape(-1, 3)
+
+        # Determine the number of spheres and ports
         self.num_spheres = sphere_positions.shape[0]
         self.num_ports = ports.shape[0]
 
@@ -119,7 +121,6 @@ class MDBDComponent(ExplicitComponent):
 
         # Define the Jacobian matrices using PyTorch Autograd
         jac_fun = jacfwd(self._compute_primal, argnums=(2, 3))
-        # jac_ports = jacfwd(self._compute_primal, argnums=(1, 2))
 
         # Evaluate the Jacobian matrices
         jac_sphere_positions_val, jac_ports_val = jac_fun(sphere_positions, ports, translation, rotation)
@@ -162,8 +163,7 @@ class LinearSplineComponent(ExplicitComponent):
         self.options.declare('start_points', types=list)
         self.options.declare('end_points', types=list)
         self.options.declare('radii', types=list)
-        self.options.declare('ports', types=list)
-        self.options.declare('color', types=str)
+        self.options.declare('port_positions', types=list)
 
     def setup(self):
 
@@ -171,13 +171,13 @@ class LinearSplineComponent(ExplicitComponent):
         start_points = self.options['start_points']
         end_points = self.options['end_points']
         radii = self.options['radii']
-        ports = self.options['ports']
+        ports = self.options['port_positions']
 
         # Convert the lists to JAX numpy arrays
         start_points = jnp.array(start_points).reshape(-1, 3)
-        end_points = jnp.array(end_points).reshape(-1, 3)
-        radii = jnp.array(radii).reshape(-1, 1)
-        ports = jnp.array(ports).reshape(-1, 3)
+        end_points   = jnp.array(end_points).reshape(-1, 3)
+        radii        = jnp.array(radii).reshape(-1, 1)
+        ports        = jnp.array(ports).reshape(-1, 3)
 
         # Define the input shapes
         self.add_input('start_points', val=start_points)
