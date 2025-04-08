@@ -90,15 +90,22 @@ A two-element mesh:
 
 # Standard imports
 import jax.numpy as jnp
+from jax.experimental.sparse import BCOO
 
 # Local imports
 from SPI2py.models.physics.distributed.mesh import generate_mesh
+from SPI2py.models.physics.distributed.assembly import assemble_global_stiffness
+
 
 w = 1  # x
 h = 1  # y
 d = 1  # Z
 
 nodes_2e, elements_2e, _, _, _, _, _, _, _ = generate_mesh(0, 2*w, 0, h, 0, d, element_size=1.0)
+Ke_flat, elem_indices, rows_flat, cols_flat, n_nodes, n_elem = assemble_global_stiffness(nodes_2e, elements_2e, base_k=1.0)
+indices = jnp.stack([rows_flat, cols_flat], axis=-1)
+K_global = K_pf = BCOO((Ke_flat, indices), shape=(n_nodes, n_nodes))
+K_global_dense = K_global.todense()
 
 element_1 = elements_2e[0]
 element_2 = elements_2e[1]
@@ -126,7 +133,60 @@ k_ex = K/36 * jnp.array([[A, B, C, D, E, F, G, H],
                          [H, G, F, E, D, C, B, A]])
 
 
-K_global_expected = jnp.zeros((12, 12))
-K_global_expected[]
+# K_global_expected = jnp.zeros((12, 12))
+# K_global_expected[]
+
+
+# Confirm that all entries that should be zeros are zeros
+
+zeros_i = jnp.array([[0, 0, 0, 0],
+                     [2, 2, 2, 2],
+                     [3, 3, 3, 3],
+                     [5, 5, 5, 5],
+                     [6, 6, 6, 6],
+                     [8, 8, 8, 8],
+                     [9, 9, 9, 9],
+                     [11, 11, 11, 11]])
+
+zeros_j = jnp.array([[2, 5, 8, 11],
+                     [0, 3, 6, 9],
+                     [2, 5, 8, 11],
+                     [0, 3, 6, 9],
+                     [2, 5, 8, 11],
+                     [0, 3, 6, 9],
+                     [2, 5, 8, 11],
+                     [0, 3, 6, 9]])
+
+assert jnp.all(K_global_dense[zeros_i, zeros_j] == 0.0)
+
+# And confirm that all other entries are not zeros
+
+non_zeros_i = jnp.array([0, 0, 0, 0, 0, 0, 0, 0,
+                         1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+                         2, 2, 2, 2, 2, 2, 2, 2,
+                         3, 3, 3, 3, 3, 3, 3, 3,
+                         4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
+                         5, 5, 5, 5, 5, 5, 5, 5,
+                         6, 6, 6, 6, 6, 6, 6, 6,
+                         7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
+                         8, 8, 8, 8, 8, 8, 8, 8,
+                         9, 9, 9, 9, 9, 9, 9, 9,
+                         10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10,
+                         11, 11, 11, 11, 11, 11, 11, 11])
+
+non_zeros_j = jnp.array([0, 1, 3, 4, 6, 7, 9, 10,
+                         0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11,
+                         1, 2, 4, 5, 7, 8, 10, 11,
+                         0, 1, 3, 4, 6, 7, 9, 10,
+                         0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11,
+                         1, 2, 4, 5, 7, 8, 10, 11,
+                         0, 1, 3, 4, 6, 7, 9, 10,
+                         0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11,
+                         1, 2, 4, 5, 7, 8, 10, 11,
+                         0, 1, 3, 4, 6, 7, 9, 10,
+                         0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11,
+                         1, 2, 4, 5, 7, 8, 10, 11])
+
+assert jnp.all(K_global_dense[non_zeros_i, non_zeros_j] != 0.0)
 
 
