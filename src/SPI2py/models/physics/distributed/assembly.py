@@ -7,7 +7,7 @@ from .quadrature import gauss_quad
 
 
 # @jit
-def assemble_global_stiffness(nodes, elements, base_k):
+def assemble_sparse_global_stiffness(nodes, elements, base_k):
     """
         Assemble the global base stiffness matrix.
         Indices are included for mapping element densities to each of their local stiffness matrix contributions.
@@ -60,6 +60,10 @@ def assemble_global_stiffness(nodes, elements, base_k):
     return Ke_flat, elem_indices, rows_flat, cols_flat, n_nodes, n_elem
 
 
+def partition_sparse_global_system():
+    pass
+
+
 # @jit
 def assemble_base_global_system_partition(nodes, elements,
                                           base_k,
@@ -70,8 +74,8 @@ def assemble_base_global_system_partition(nodes, elements,
     idx_p = d_nodes
     idx_f = jnp.setdiff1d(idx, idx_p)
 
-    Ke_flat, elem_indices_full, rows_flat, cols_flat, n_nodes, n_elem = assemble_global_stiffness(nodes, elements,
-                                                                                                  base_k)
+    Ke_flat, elem_indices_full, rows_flat, cols_flat, n_nodes, n_elem = assemble_sparse_global_stiffness(nodes, elements,
+                                                                                                         base_k)
     indices = jnp.stack([rows_flat, cols_flat], axis=-1)  # shape: (nnz, 2)
 
     # Partition the contributions into four blocks based on free (idx_f) and prescribed (idx_p) DOF indices.
@@ -134,8 +138,8 @@ def assemble_base_global_system_partition(nodes, elements,
 
     # Apply boundary conditions (both Robin and Dirichlet).
     K_base, f_base = apply_bc_partition(K_base, f_base,
-                                      r_nodes, r_h, r_T_inf, r_area,
-                                      idx_f, idx_p)
+                                        r_nodes, r_h, r_T_inf, r_area,
+                                        idx_f, idx_p)
 
     return K_base, f_base, elem_indices
 
@@ -195,9 +199,9 @@ def update_global_stiffness_partition(K_base, f_base,
                                       element_densities, element_heat_loads):
 
     # Unpack the partitioned stiffness matrix, load vector, and their indices.
-    K_ff, K_fp, K_pf, K_pp         = K_base
-    f_f, f_p                       = f_base
-    idx_f, idx_p                   = idx_vector
+    K_ff, K_fp, K_pf, K_pp     = K_base
+    f_f, f_p                   = f_base
+    idx_f, idx_p               = idx_vector
     ei_ff, ei_fp, ei_pf, ei_pp = ei_matrix
 
     # Flatten the pseudo-densities and heat loads to ensure they are 1D.
@@ -251,7 +255,7 @@ def assemble_base_global_system_penalty(nodes, elements, base_k,
                                         r_nodes, r_h, r_T_inf, r_area,
                                         d_nodes, d_T):
 
-    Ke_flat, elem_indices, rows_flat, cols_flat, n_nodes, n_elem = assemble_global_stiffness(nodes, elements, base_k)
+    Ke_flat, elem_indices, rows_flat, cols_flat, n_nodes, n_elem = assemble_sparse_global_stiffness(nodes, elements, base_k)
 
     # Stack rows and cols to form an index array of shape (n_elem*64, 2).
     indices = jnp.stack([rows_flat, cols_flat], axis=-1)

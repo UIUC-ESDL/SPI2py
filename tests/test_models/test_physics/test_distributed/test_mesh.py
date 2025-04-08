@@ -11,27 +11,35 @@ Note: This paper contains a typographic error in the stiffness matrix. Terms "F"
 This is first noticeable when enumerated as A, B, C, D, F, E, G, H; and the error can be confirmed when comparing
 with the local stiffness matrix in SPI2py.
 
-Node numbering for a single element:
+Node ordering scheme for the natural coordinates of an element:
 
-          3--------------2
-        / |            / |
-      /   |          /   |
-    7--------------6     |
-    |     0--------|-----1
-    |   /          |   /
-    | /            | /
-    4--------------5
+         (eta/y)
+            |
+            *----(xi/x)
+           /
+      (zeta/z)
 
-Local stiffness matrix for two elements:
+            3--------------2
+          / |            / |
+        /   |          /   |
+      7--------------6     |
+      |     0--------|-----1
+      |   /          |   /
+      | /            | /
+      4--------------5
 
-          3--------------2--------------9
+A two-element mesh:
+
+             Element 1       Element 2
+
+          3--------------4--------------5
         / |            / |            / |
       /   |          /   |          /   |
-    7--------------6--------------11    |
-    |     0--------|-----1--------|-----8
+    9--------------10-------------11    |
+    |     0--------|-----1--------|-----2
     |   /          |   /          |   /
     | /            | /            | /
-    4--------------5--------------10
+    6--------------7--------------8
 
 """
 
@@ -39,7 +47,7 @@ Local stiffness matrix for two elements:
 import jax.numpy as jnp
 
 # Local imports
-from SPI2py.models.physics.distributed.mesh import generate_mesh
+from SPI2py.models.physics.distributed.mesh import generate_mesh, find_face_nodes
 
 
 def test_mesh_generation_1_element():
@@ -89,7 +97,7 @@ def test_mesh_generation_2_elements():
                                [2*w, h, d],  # 6
                                [w, h, d]])   # 7
 
-    nodes_2e, elements_2e, _, _, _, _, _, _, _ = generate_mesh(0, 2*w, 0, h, 0, d, element_size=1.0)
+    nodes_2e, elements_2e, _, _, _, _, _, _, _ = generate_mesh(0, 2, 0, 1, 0, 1, element_size=1.0)
 
     # GLOBAL ORDERING SCHEME
 
@@ -112,3 +120,25 @@ def test_mesh_generation_2_elements():
 
     assert jnp.all(jnp.isclose(nodes_ex_el_1, nodes_el_1))
     assert jnp.all(jnp.isclose(nodes_ex_el_2, nodes_el_2))
+
+
+def test_find_face_nodes():
+    """
+    Test the find_face_nodes function.
+    """
+
+    nodes_2e, elements_2e, _, _, _, _, _, _, _ = generate_mesh(0, 2, 0, 1, 0, 1, element_size=1.0)
+
+    top_nodes, top_normal = jnp.array([3, 4, 5, 9, 10, 11], dtype=jnp.int64), jnp.array([0, 1, 0])
+    bottom_nodes, bottom_normal = jnp.array([0, 1, 2, 6, 7, 8], dtype=jnp.int64), jnp.array([0, -1, 0])
+    left_nodes, left_normal = jnp.array([0, 3, 6, 9], dtype=jnp.int64), jnp.array([-1, 0, 0])
+    right_nodes, right_normal = jnp.array([2, 5, 8, 11], dtype=jnp.int64), jnp.array([1, 0, 0])
+    front_nodes, front_normal = jnp.array([6, 7, 8, 9, 10, 11], dtype=jnp.int64), jnp.array([0, 0, 1])
+    back_nodes, back_normal = jnp.array([0, 1, 2, 3, 4, 5], dtype=jnp.int64), jnp.array([0, 0, -1])
+
+    assert jnp.all(jnp.isclose(find_face_nodes(nodes_2e, top_normal), top_nodes))
+    assert jnp.all(jnp.isclose(find_face_nodes(nodes_2e, bottom_normal), bottom_nodes))
+    assert jnp.all(jnp.isclose(find_face_nodes(nodes_2e, left_normal), left_nodes))
+    assert jnp.all(jnp.isclose(find_face_nodes(nodes_2e, right_normal), right_nodes))
+    assert jnp.all(jnp.isclose(find_face_nodes(nodes_2e, front_normal), front_nodes))
+    assert jnp.all(jnp.isclose(find_face_nodes(nodes_2e, back_normal), back_nodes))
