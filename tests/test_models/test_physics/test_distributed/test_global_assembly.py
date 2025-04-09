@@ -52,7 +52,6 @@ from jax.experimental.sparse import BCOO
 from SPI2py.models.physics.distributed.mesh import generate_mesh
 from SPI2py.models.physics.distributed.assembly import construct_global_stiffness_matrix, partition_sparse_matrix
 from SPI2py.models.physics.distributed.assembly import (partition_vector,
-                                                        apply_bc_partition,
                                                         assemble_global_system_partition)
 
 
