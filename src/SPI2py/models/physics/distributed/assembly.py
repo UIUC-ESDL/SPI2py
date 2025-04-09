@@ -128,10 +128,10 @@ def partition_vector(v, idx_f, idx_p):
 
 
 # @jit
-def assemble_base_global_system_partition(nodes, elements,
-                                          base_k,
-                                          r_nodes, r_h, r_T_inf, r_area,
-                                          d_nodes, d_T):
+def assemble_global_system_partition(nodes, elements,
+                                     base_k,
+                                     r_nodes, r_h, r_T_inf, r_area,
+                                     d_nodes, d_T):
 
     # Identify the free and prescribed nodes.
     idx = jnp.arange(nodes.shape[0])
@@ -139,11 +139,21 @@ def assemble_base_global_system_partition(nodes, elements,
     idx_f = jnp.setdiff1d(idx, idx_p)
 
     # Construct the global stiffness matrix and load vector
-    K, elem_indices_full = construct_global_stiffness_matrix(nodes, elements, base_k)
-    f = jnp.zeros_like(idx)
-    u = jnp.zeros_like(idx)
+    K = construct_global_stiffness_matrix(nodes, elements, base_k)
+    f = jnp.zeros_like(idx, dtype=jnp.float64)
+    u = jnp.zeros_like(idx, dtype=jnp.float64)
 
-    # Apply BC
+    # Apply Robin BC
+    K_robin_indices = jnp.stack([r_nodes, r_nodes], axis=-1)
+    K_robin_data = (r_h * r_area) * jnp.ones_like(r_nodes)
+    K_robin = BCOO((K_robin_data, K_robin_indices), shape=K.shape)
+    K = K + K_robin
+
+    f_robin_data = (r_h * r_area * r_T_inf) * jnp.ones_like(r_nodes)
+    f = f.at[r_nodes].add(f_robin_data)
+
+    # Apply Dirichlet BC
+    u = u.at[d_nodes].add(d_T)
 
     # Partition the global stiffness matrix and load vector
     K_ff, K_fp, K_pf, K_pp = partition_sparse_matrix(K, idx_f, idx_p)
@@ -154,13 +164,6 @@ def assemble_base_global_system_partition(nodes, elements,
     K_base = (K_ff, K_fp, K_pf, K_pp)
     f_base = (f_f, f_p)
     u_base = (u_f, u_p)
-
-    # Apply boundary conditions (Robin and Dirichlet).
-    K_base, f_base, u_base = apply_bc_partition(K_base, f_base, u_base,
-                                                r_nodes, r_h, r_T_inf, r_area,
-                                                d_T,
-                                                idx_f, idx_p)
-
 
     return K_base, f_base, u_base
 
@@ -173,8 +176,8 @@ def apply_bc_partition(K_base, f_base, u_base,
 
     # Unpack the partitioned stiffness matrix and load vector.
     K_ff, K_fp, K_pf, K_pp = K_base
-    f_f, f_p = f_base
-    u_f, u_p = u_base
+    f_f, f_p               = f_base
+    u_f, u_p               = u_base
 
     # Additionally partition the Robin nodes into free and prescribed sets.
     r_nodes_free = jnp.intersect1d(r_nodes, idx_f)

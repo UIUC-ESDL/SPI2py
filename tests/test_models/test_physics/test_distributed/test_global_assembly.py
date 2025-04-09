@@ -51,6 +51,9 @@ from jax.experimental.sparse import BCOO
 # Local imports
 from SPI2py.models.physics.distributed.mesh import generate_mesh
 from SPI2py.models.physics.distributed.assembly import construct_global_stiffness_matrix, partition_sparse_matrix
+from SPI2py.models.physics.distributed.assembly import (partition_vector,
+                                                        apply_bc_partition,
+                                                        assemble_global_system_partition)
 
 
 @pytest.fixture
@@ -262,6 +265,10 @@ def test_partition_global_stiffness_matrix():
     assert jnp.all(jnp.isclose(K_fp_data_expected, k_fp_data))
     assert jnp.all(jnp.isclose(K_pf_data_expected, k_pf_data))
     assert jnp.all(jnp.isclose(K_pp_data_expected, k_pp_data))
+
+
+def test_partition_vector():
+    pass
 
 
 def test_apply_bc():

@@ -7,7 +7,7 @@ from openmdao.api import ExplicitComponent, IndepVarComp
 # Local imports
 from SPI2py.models.physics.distributed.mesh import generate_mesh
 from SPI2py.models.physics.distributed.assembly import assemble_base_global_system_penalty, apply_bc_penalty,  update_global_system_penalty
-from SPI2py.models.physics.distributed.assembly import assemble_base_global_system_partition, apply_bc_partition, update_global_stiffness_partition
+from SPI2py.models.physics.distributed.assembly import assemble_global_system_partition, apply_bc_partition, update_global_stiffness_partition
 from SPI2py.models.physics.distributed.solver import solve_system_partition, solve_system_penalty
 from SPI2py.models.utilities.aggregation import kreisselmeier_steinhauser_max
 
@@ -126,10 +126,10 @@ class ExplicitFEA(ExplicitComponent):
 
         u_p = d_T_arr
 
-        K_base, f_base = assemble_base_global_system_partition(nodes, elements,
-                                                               base_k,
-                                                               r_nodes, r_h, r_T_inf, r_area,
-                                                               d_nodes, d_T_arr)
+        K_base, f_base = assemble_global_system_partition(nodes, elements,
+                                                          base_k,
+                                                          r_nodes, r_h, r_T_inf, r_area,
+                                                          d_nodes, d_T_arr)
 
 
         temp, max_temp = self._compute_primal(density, heat_loads,

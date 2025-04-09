@@ -224,7 +224,10 @@ assert jnp.all(jnp.isclose(K_pf_data_expected, k_pf_data))
 assert jnp.all(jnp.isclose(K_pp_data_expected, k_pp_data))
 
 
+r_nodes = jnp.array([3, 4, 5, 9, 10, 11])
+d_nodes = jnp.array([0, 1, 2, 6, 7, 8])
 
+r_
 
 
 
