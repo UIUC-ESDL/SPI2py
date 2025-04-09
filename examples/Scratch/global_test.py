@@ -155,7 +155,7 @@ assert jnp.all(sparse_indices.sort() == sparse_indices_expected.sort())
 # K[0,0] == K_e1[0,0]
 assert jnp.isclose(K_global_dense[0, 0], k_ex[0, 0])
 
-# K[0,1] == K_e1[0,1] == 0 ...?
+# K[0,1] == K_e1[0,1] == 0 (or near-zero)
 assert jnp.isclose(K_global_dense[0, 1], k_ex[0, 1])
 
 # K[1,1] == K_e1[1,1] + K_e2[0,0]
@@ -176,10 +176,10 @@ idx_p_2d = jnp.array([[0, 1, 2, 6, 7, 8]])
 n_f = idx_f_2d.shape[1]
 n_p = idx_p_2d.shape[1]
 
-idx_ff = jnp.stack((jnp.repeat(idx_f_2d, n_f, axis=0).T.flatten(), jnp.repeat(idx_f_2d, n_f, axis=0).flatten()), axis=1)
-idx_fp = jnp.stack((jnp.repeat(idx_f_2d, n_p, axis=0).T.flatten(), jnp.repeat(idx_p_2d, n_f, axis=0).flatten()), axis=1)
-idx_pf = jnp.stack((jnp.repeat(idx_p_2d, n_f, axis=0).T.flatten(), jnp.repeat(idx_f_2d, n_p, axis=0).flatten()), axis=1)
-idx_pp = jnp.stack((jnp.repeat(idx_p_2d, n_p, axis=0).T.flatten(), jnp.repeat(idx_p_2d, n_p, axis=0).flatten()), axis=1)
+idx_ff = jnp.stack((jnp.repeat(idx_f_2d, n_f).flatten(), jnp.repeat(idx_f_2d, n_f, axis=0).flatten()), axis=1)
+idx_fp = jnp.stack((jnp.repeat(idx_f_2d, n_p).flatten(), jnp.repeat(idx_p_2d, n_f, axis=0).flatten()), axis=1)
+idx_pf = jnp.stack((jnp.repeat(idx_p_2d, n_f).flatten(), jnp.repeat(idx_f_2d, n_p, axis=0).flatten()), axis=1)
+idx_pp = jnp.stack((jnp.repeat(idx_p_2d, n_p).flatten(), jnp.repeat(idx_p_2d, n_p, axis=0).flatten()), axis=1)
 
 idx_ff_expected = jnp.array([[3, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 5, 5, 5, 5, 5, 5, 9, 9, 9, 9, 9, 9, 10, 10, 10, 10, 10, 10, 11, 11, 11, 11, 11, 11],
                              [3, 4, 5, 9, 10, 11, 3, 4, 5, 9, 10, 11, 3, 4, 5, 9, 10, 11, 3, 4, 5, 9, 10, 11, 3, 4, 5, 9, 10, 11, 3, 4, 5, 9, 10, 11]]).T
@@ -206,24 +206,22 @@ K_pp_data_expected = K_global_dense[idx_pp[:, 0], idx_pp[:, 1]]
 
 K_ff, K_fp, K_pf, K_pp = partition_sparse_matrix(K_global, idx_f, idx_p)
 
-# Data should be the same
-assert jnp.all(K_ff_data_expected.shape == K_ff.data.shape)
-assert jnp.all(K_fp_data_expected.shape == K_fp.data.shape)
-assert jnp.all(K_pf_data_expected.shape == K_pf.data.shape)
-assert jnp.all(K_pp_data_expected.shape == K_pp.data.shape)
+# We've already verified sparsity indices, so converting partitions to their dense forms makes comparisons easier.
+k_ff_data = K_ff.todense().flatten()
+k_fp_data = K_fp.todense().flatten()
+k_pf_data = K_pf.todense().flatten()
+k_pp_data = K_pp.todense().flatten()
 
-# And verify the values
-# Note: The global stiffness matrix contains zero terms for two reasons.
-# First, the local stiffness matrix might contain at least one zero term.
-# Second, the global stiffness matrix is sparse and has nodes that are not directly connected.
-# I convert the sparse, partitioned matrices to their dense form so that only zeros ................
+# Verify the partitions match up as expected.
+assert jnp.all(K_ff_data_expected.shape == k_ff_data.shape)
+assert jnp.all(K_fp_data_expected.shape == k_fp_data.shape)
+assert jnp.all(K_pf_data_expected.shape == k_pf_data.shape)
+assert jnp.all(K_pp_data_expected.shape == k_pp_data.shape)
 
-# K_ff, sparse zeros are (3,5), (3,11), (5,3), (5,9), (9,5) (9,11), (11,3), (11,9)
-# K_fp,
-assert jnp.all(jnp.isclose(K_ff_data_expected, K_ff.data))
-assert jnp.all(jnp.isclose(K_fp_data_expected, K_fp.data))
-assert jnp.all(jnp.isclose(K_pf_data_expected, K_pf.data))
-assert jnp.all(jnp.isclose(K_pp_data_expected, K_pp.data))
+assert jnp.all(jnp.isclose(K_ff_data_expected, k_ff_data))
+assert jnp.all(jnp.isclose(K_fp_data_expected, k_fp_data))
+assert jnp.all(jnp.isclose(K_pf_data_expected, k_pf_data))
+assert jnp.all(jnp.isclose(K_pp_data_expected, k_pp_data))
 
 
 
