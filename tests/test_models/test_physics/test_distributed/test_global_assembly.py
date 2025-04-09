@@ -50,7 +50,7 @@ from jax.experimental.sparse import BCOO
 
 # Local imports
 from SPI2py.models.physics.distributed.mesh import generate_mesh
-from SPI2py.models.physics.distributed.assembly import assemble_sparse_global_stiffness
+from SPI2py.models.physics.distributed.assembly import construct_global_stiffness_matrix
 
 
 @pytest.fixture
@@ -99,7 +99,7 @@ def test_global_assembly(fixture_hex8_scalar):
     nodes_2e, elements_2e, _, _, _, _, _, _, _ = generate_mesh(0, 2, 0, 1, 0, 1, element_size=1.0)
 
     # Assemble the sparse global stiffness matrix
-    Ke_flat, elem_indices, rows_flat, cols_flat, n_nodes, n_elem = assemble_sparse_global_stiffness(nodes_2e, elements_2e, base_k=1.0)
+    Ke_flat, elem_indices, rows_flat, cols_flat, n_nodes, n_elem = construct_global_stiffness_matrix(nodes_2e, elements_2e, base_k=1.0)
     indices = jnp.stack([rows_flat, cols_flat], axis=-1)
     K_global = BCOO((Ke_flat, indices), shape=(n_nodes, n_nodes))
 

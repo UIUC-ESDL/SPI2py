@@ -86,20 +86,20 @@ class ExplicitFEA(ExplicitComponent):
 
         base_k = self.options['base_k']
 
-        if self.options['fea_solution_scheme'] == 'partition':
-            self._K_base, self._f_base, self._elem_indices = assemble_base_global_system_partition(nodes, elements,
-                                                                                                   base_k,
-                                                                                                   r_nodes, r_h, r_T_inf, r_area,
-                                                                                                   d_nodes, d_T_arr)
-
-        elif self.options['fea_solution_scheme'] == 'penalty':
-            self._K_base, self._f_base, self._elem_indices = assemble_base_global_system_penalty(nodes, elements,
-                                                                                                 base_k,
-                                                                                                 r_nodes, r_h, r_T_inf,
-                                                                                                 r_area,
-                                                                                                 d_nodes, d_T_arr)
-        else:
-            raise NotImplementedError("Unknown FEA solution scheme: {}".format(self.options['fea_solution_scheme']))
+        # if self.options['fea_solution_scheme'] == 'partition':
+        #     self._K_base, self._f_base, self._elem_indices = assemble_base_global_system_partition(nodes, elements,
+        #                                                                                            base_k,
+        #                                                                                            r_nodes, r_h, r_T_inf, r_area,
+        #                                                                                            d_nodes, d_T_arr)
+        #
+        # elif self.options['fea_solution_scheme'] == 'penalty':
+        #     self._K_base, self._f_base, self._elem_indices = assemble_base_global_system_penalty(nodes, elements,
+        #                                                                                          base_k,
+        #                                                                                          r_nodes, r_h, r_T_inf,
+        #                                                                                          r_area,
+        #                                                                                          d_nodes, d_T_arr)
+        # else:
+        #     raise NotImplementedError("Unknown FEA solution scheme: {}".format(self.options['fea_solution_scheme']))
 
     def setup_partials(self):
         # Declare that we are using matrix-free derivatives
@@ -120,16 +120,16 @@ class ExplicitFEA(ExplicitComponent):
         density = jnp.array(inputs["density"])
         heat_loads = jnp.array(inputs["heat_loads"])
 
-        # Retrieve the pre-assembled base stiffness matrix and mapping.
-        K_base = self._K_base
-        f_base = self._f_base
-        elem_indices = self._elem_indices
-
         idx = jnp.arange(nodes.shape[0])
         idx_p = d_nodes
         idx_f = jnp.setdiff1d(idx, idx_p)
 
         u_p = d_T_arr
+
+        K_base, f_base = assemble_base_global_system_partition(nodes, elements,
+                                                               base_k,
+                                                               r_nodes, r_h, r_T_inf, r_area,
+                                                               d_nodes, d_T_arr)
 
 
         temp, max_temp = self._compute_primal(density, heat_loads,
@@ -179,6 +179,8 @@ class ExplicitFEA(ExplicitComponent):
         idx_f = jnp.setdiff1d(idx, idx_p)
 
         u_p = d_T_arr
+
+
 
         # Freeze all static arguments via partial so that only density and heat_loads are inputs.
         frozen_compute_primal = partial(self._compute_primal,

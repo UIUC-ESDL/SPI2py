@@ -7,7 +7,7 @@ from jax.experimental.sparse import BCOO
 from SPI2py.models.physics.distributed.mesh import generate_mesh, find_face_nodes
 from SPI2py.models.physics.distributed.assembly import assemble_base_global_system_partition, apply_bc_partition
 from SPI2py.models.physics.distributed.solver import solve_system_partition
-from SPI2py.models.physics.distributed.assembly import assemble_sparse_global_stiffness
+from SPI2py.models.physics.distributed.assembly import construct_global_stiffness_matrix
 
 
 """

@@ -73,6 +73,9 @@ def test_hex8_scalar():
 
     assert jnp.all(jnp.isclose(k_ex, k_SPI2py))
 
+    # TODO Same number of nonzero terms
+
+
 
 def test_hex8_vector():
     """

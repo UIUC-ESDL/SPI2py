@@ -7,29 +7,33 @@ from .quadrature import gauss_quad
 
 
 # @jit
-def assemble_sparse_global_stiffness(nodes, elements, base_k):
+def construct_global_stiffness_matrix(node_positions,
+                                      element_to_node_mapping,
+                                      base_k):
     """
         Assemble the global base stiffness matrix.
         Indices are included for mapping element densities to each of their local stiffness matrix contributions.
 
         Parameters:
-          nodes:    (n_nodes, 3) array of coordinates.
-          elements: (n_elem, 8) connectivity array (indices into nodes).
+          node_positions:    (n_nodes, 3) array of coordinates.
+          element_to_node_mapping: (n_elem, 8) connectivity array (indices into nodes).
           base_k:   Base thermal conductivity.
 
         Returns:
           K_base:      Sparse global stiffness matrix in BCOO format.
-          elem_indices: Integer array mapping each nonzero entry in K_base to its element index.
         """
-    n_elem = elements.shape[0]
-    n_nodes = nodes.shape[0]
+
+    # Get the number of elements and nodes.
+    n_elem = element_to_node_mapping.shape[0]
+    n_nodes = node_positions.shape[0]
 
     # For the base case, use density=1 for every element.
+    # TODO Use penalized density...
     k_eff_all = base_k * jnp.ones((n_elem,))
 
     # Gather nodal coordinates for each element.
     # Shape: (n_elem, 8, 3)
-    el_nodes_all = nodes[elements]
+    el_nodes_all = node_positions[element_to_node_mapping]
 
     # Get quadrature points and weights.
     gauss_pts, gauss_wts = gauss_quad()
@@ -47,36 +51,28 @@ def assemble_sparse_global_stiffness(nodes, elements, base_k):
     # For each element, generate its 8x8 block of indices.
     # rows: shape (n_elem, 64)
     # cols: shape (n_elem, 64)
-    rows = jnp.repeat(elements, repeats=8, axis=1)
-    cols = jnp.tile(elements, reps=(1, 8))
+    rows = jnp.repeat(element_to_node_mapping, repeats=8, axis=1)
+    cols = jnp.tile(element_to_node_mapping, reps=(1, 8))
     rows_flat = rows.reshape(-1)
     cols_flat = cols.reshape(-1)
 
-    #
-    # Build auxiliary mapping: for each element, its index repeats 64 times.
-    # Shape: (n_elem*(8*8),)
-    elem_indices = jnp.repeat(jnp.arange(n_elem), 64)
+    # Create the sparse matrix in BCOO format.
+    indices = jnp.stack([rows_flat, cols_flat], axis=-1)
+    K = BCOO((Ke_flat, indices), shape=(n_nodes, n_nodes))
 
-    return Ke_flat, elem_indices, rows_flat, cols_flat, n_nodes, n_elem
+    # Remove duplicate entries in the sparse matrix.
+    # For example, if there is no interaction between nodes A and B, then we must ensure that K[A, B] = K[B, A] = 0.
+    K = K.sum_duplicates()
+
+    return K
 
 
-def partition_sparse_global_system():
-    pass
+def partition_sparse_matrix(K, idx_f, idx_p):
 
-
-# @jit
-def assemble_base_global_system_partition(nodes, elements,
-                                          base_k,
-                                          r_nodes, r_h, r_T_inf, r_area,
-                                          d_nodes, d_T):
-
-    idx = jnp.arange(nodes.shape[0])
-    idx_p = d_nodes
-    idx_f = jnp.setdiff1d(idx, idx_p)
-
-    Ke_flat, elem_indices_full, rows_flat, cols_flat, n_nodes, n_elem = assemble_sparse_global_stiffness(nodes, elements,
-                                                                                                         base_k)
-    indices = jnp.stack([rows_flat, cols_flat], axis=-1)  # shape: (nnz, 2)
+    Ke_flat = K.data
+    indices = K.indices
+    rows_flat = K.indices[:, 0]
+    cols_flat = K.indices[:, 1]
 
     # Partition the contributions into four blocks based on free (idx_f) and prescribed (idx_p) DOF indices.
     mask_ff = jnp.logical_and(jnp.isin(rows_flat, idx_f), jnp.isin(cols_flat, idx_f))
@@ -95,7 +91,6 @@ def assemble_base_global_system_partition(nodes, elements,
     local_cols_ff = remap_local(indices_ff[:, 1], idx_f)
     indices_ff_local = jnp.stack([local_rows_ff, local_cols_ff], axis=-1)
     K_ff = BCOO((data_ff, indices_ff_local), shape=(len(idx_f), len(idx_f)))
-    ei_ff = elem_indices_full[mask_ff]
 
     # Free–Prescribed block.
     data_fp = Ke_flat[mask_fp]
@@ -104,7 +99,6 @@ def assemble_base_global_system_partition(nodes, elements,
     local_cols_fp = remap_local(indices_fp[:, 1], idx_p)
     indices_fp_local = jnp.stack([local_rows_fp, local_cols_fp], axis=-1)
     K_fp = BCOO((data_fp, indices_fp_local), shape=(len(idx_f), len(idx_p)))
-    ei_fp = elem_indices_full[mask_fp]
 
     # Prescribed–Free block.
     data_pf = Ke_flat[mask_pf]
@@ -113,7 +107,6 @@ def assemble_base_global_system_partition(nodes, elements,
     local_cols_pf = remap_local(indices_pf[:, 1], idx_f)
     indices_pf_local = jnp.stack([local_rows_pf, local_cols_pf], axis=-1)
     K_pf = BCOO((data_pf, indices_pf_local), shape=(len(idx_p), len(idx_f)))
-    ei_pf = elem_indices_full[mask_pf]
 
     # Prescribed–Prescribed block.
     data_pp = Ke_flat[mask_pp]
@@ -122,36 +115,66 @@ def assemble_base_global_system_partition(nodes, elements,
     local_cols_pp = remap_local(indices_pp[:, 1], idx_p)
     indices_pp_local = jnp.stack([local_rows_pp, local_cols_pp], axis=-1)
     K_pp = BCOO((data_pp, indices_pp_local), shape=(len(idx_p), len(idx_p)))
-    ei_pp = elem_indices_full[mask_pp]
 
-    # Assemble load vector f (here zero) and partition.
-    f = jnp.zeros((n_nodes,))
-    f_f = f[idx_f]
-    f_p = f[idx_p]
+    return K_ff, K_fp, K_pf, K_pp
 
-    # # Prescribed values u_p; here zeros (TODO)
-    # u_p = jnp.zeros_like(f_p)
 
-    K_base = (K_ff, K_fp, K_pf, K_pp)
-    f_base = (f_f, f_p)
-    elem_indices = (ei_ff, ei_fp, ei_pf, ei_pp)
+def partition_vector(v, idx_f, idx_p):
 
-    # Apply boundary conditions (both Robin and Dirichlet).
-    K_base, f_base = apply_bc_partition(K_base, f_base,
-                                        r_nodes, r_h, r_T_inf, r_area,
-                                        idx_f, idx_p)
+    v_f = v[idx_f]
+    v_p = v[idx_p]
 
-    return K_base, f_base, elem_indices
+    return v_f, v_p
 
 
 # @jit
-def apply_bc_partition(K_base,f_base,
+def assemble_base_global_system_partition(nodes, elements,
+                                          base_k,
+                                          r_nodes, r_h, r_T_inf, r_area,
+                                          d_nodes, d_T):
+
+    # Identify the free and prescribed nodes.
+    idx = jnp.arange(nodes.shape[0])
+    idx_p = d_nodes
+    idx_f = jnp.setdiff1d(idx, idx_p)
+
+    # Construct the global stiffness matrix and load vector
+    K, elem_indices_full = construct_global_stiffness_matrix(nodes, elements, base_k)
+    f = jnp.zeros_like(idx)
+    u = jnp.zeros_like(idx)
+
+    # Apply BC
+
+    # Partition the global stiffness matrix and load vector
+    K_ff, K_fp, K_pf, K_pp = partition_sparse_matrix(K, idx_f, idx_p)
+    f_f, f_p               = partition_vector(f, idx_f, idx_p)
+    u_f, u_p               = partition_vector(u, idx_f, idx_p)
+
+    # Repack the partitioned stiffness matrices and load vector.
+    K_base = (K_ff, K_fp, K_pf, K_pp)
+    f_base = (f_f, f_p)
+    u_base = (u_f, u_p)
+
+    # Apply boundary conditions (Robin and Dirichlet).
+    K_base, f_base, u_base = apply_bc_partition(K_base, f_base, u_base,
+                                                r_nodes, r_h, r_T_inf, r_area,
+                                                d_T,
+                                                idx_f, idx_p)
+
+
+    return K_base, f_base, u_base
+
+
+# @jit
+def apply_bc_partition(K_base, f_base, u_base,
                        r_nodes, r_h, r_area, r_T_inf,
+                       d_T,
                        idx_f, idx_p):
 
     # Unpack the partitioned stiffness matrix and load vector.
     K_ff, K_fp, K_pf, K_pp = K_base
     f_f, f_p = f_base
+    u_f, u_p = u_base
 
     # Additionally partition the Robin nodes into free and prescribed sets.
     r_nodes_free = jnp.intersect1d(r_nodes, idx_f)
@@ -161,34 +184,39 @@ def apply_bc_partition(K_base,f_base,
     local_free = jnp.searchsorted(idx_f, r_nodes_free)
     local_presc = jnp.searchsorted(idx_p, r_nodes_presc)
 
-    # Update free-free partition K_ff
-    diag_mask_ff = (K_ff.indices[:, 0] == K_ff.indices[:, 1])
-    diag_nodes_ff = K_ff.indices[:, 0]
-
-    # Determine which diagonal entries correspond to nodes in local_free.
-    update_mask_ff = diag_mask_ff & jnp.isin(diag_nodes_ff, local_free)
-
-    # Update these entries by adding the Robin stiffness contribution.
-    new_data_ff = K_ff.data + update_mask_ff.astype(K_ff.data.dtype) * (r_h * r_area)
-    K_ff_updated = BCOO((new_data_ff, K_ff.indices), shape=K_ff.shape)
-
-    # Update prescribed-prescribed partition K_pp
-    diag_mask_pp = (K_pp.indices[:, 0] == K_pp.indices[:, 1])
-    diag_nodes_pp = K_pp.indices[:, 0]
-    update_mask_pp = diag_mask_pp & jnp.isin(diag_nodes_pp, local_presc)
-    new_data_pp = K_pp.data + update_mask_pp.astype(K_pp.data.dtype) * (r_h * r_area)
-    K_pp_updated = BCOO((new_data_pp, K_pp.indices), shape=K_pp.shape)
+    # # Update free-free partition K_ff
+    # diag_mask_ff = (K_ff.indices[:, 0] == K_ff.indices[:, 1])
+    # diag_nodes_ff = K_ff.indices[:, 0]
+    #
+    # # Determine which diagonal entries correspond to nodes in local_free.
+    # update_mask_ff = diag_mask_ff & jnp.isin(diag_nodes_ff, local_free)
+    #
+    # # Update these entries by adding the Robin stiffness contribution.
+    # new_data_ff = K_ff.data + update_mask_ff.astype(K_ff.data.dtype) * (r_h * r_area)
+    # K_ff_updated = BCOO((new_data_ff, K_ff.indices), shape=K_ff.shape)
+    #
+    # # Update prescribed-prescribed partition K_pp
+    # diag_mask_pp = (K_pp.indices[:, 0] == K_pp.indices[:, 1])
+    # diag_nodes_pp = K_pp.indices[:, 0]
+    # update_mask_pp = diag_mask_pp & jnp.isin(diag_nodes_pp, local_presc)
+    # new_data_pp = K_pp.data + update_mask_pp.astype(K_pp.data.dtype) * (r_h * r_area)
+    # K_pp_updated = BCOO((new_data_pp, K_pp.indices), shape=K_pp.shape)
 
     # Update the load vectors
     f_val = r_h * r_area * r_T_inf
     f_f_updated = f_f.at[local_free].add(f_val)
     f_p_updated = f_p.at[local_presc].add(f_val)
 
+    # Update the prescribed temperature values.
+    u_p_updated = u_p.at[local_presc].add(d_T)
+    u_f_updated = []
+
     # Repack the updated stiffness matrices and load vector.
     K_updated = (K_ff_updated, K_fp, K_pf, K_pp_updated)
     f_updated = (f_f_updated, f_p_updated)
+    u_updated = (u_f_updated, u_p_updated)
 
-    return K_updated, f_updated
+    return K_updated, f_updated, u_updated
 
 
 # @jit
@@ -255,7 +283,7 @@ def assemble_base_global_system_penalty(nodes, elements, base_k,
                                         r_nodes, r_h, r_T_inf, r_area,
                                         d_nodes, d_T):
 
-    Ke_flat, elem_indices, rows_flat, cols_flat, n_nodes, n_elem = assemble_sparse_global_stiffness(nodes, elements, base_k)
+    Ke_flat, elem_indices, rows_flat, cols_flat, n_nodes, n_elem = construct_global_stiffness_matrix(nodes, elements, base_k)
 
     # Stack rows and cols to form an index array of shape (n_elem*64, 2).
     indices = jnp.stack([rows_flat, cols_flat], axis=-1)
