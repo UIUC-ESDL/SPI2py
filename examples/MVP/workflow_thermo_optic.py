@@ -89,8 +89,8 @@ h = 10.0  # Convection coefficient, W/m^2*K
 
 
 # Define the system elements
-comp_1 = LinearSplineComponent(start_points=[[0, 0, 0]], end_points=[[2, 0, 0]], radii=[0.5], ports=[[0, 0, 0]], color='blue')
-comp_2 = LinearSplineComponent(start_points=[[0, 0, 0]], end_points=[[2, 0, 0]], radii=[0.5], ports=[[0, 0, 0]], color='red')
+comp_1 = LinearSplineComponent(start_points=[[0, 0, 0]], end_points=[[2, 0, 0]], radii=[0.5], port_positions=[[0, 0, 0]])
+comp_2 = LinearSplineComponent(start_points=[[0, 0, 0]], end_points=[[2, 0, 0]], radii=[0.5], port_positions=[[0, 0, 0]])
 model.system.components.add_subsystem('comp_1', comp_1)
 model.system.components.add_subsystem('comp_2', comp_2)
 

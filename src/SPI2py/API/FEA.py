@@ -7,7 +7,7 @@ from openmdao.api import ExplicitComponent, IndepVarComp
 # Local imports
 from SPI2py.models.physics.distributed.mesh import generate_mesh
 from SPI2py.models.physics.distributed.assembly import assemble_base_global_system_penalty, apply_bc_penalty,  update_global_system_penalty
-from SPI2py.models.physics.distributed.assembly import assemble_global_system_partition, apply_bc_partition, update_global_stiffness_partition
+from SPI2py.models.physics.distributed.assembly import assemble_global_system_partition
 from SPI2py.models.physics.distributed.solver import solve_system_partition, solve_system_penalty
 from SPI2py.models.utilities.aggregation import kreisselmeier_steinhauser_max
 
@@ -83,27 +83,30 @@ class ExplicitFEA(ExplicitComponent):
     def compute(self, inputs, outputs):
 
         # Unpack the options
-        nodes = jnp.array(self.options['nodes'])
+        nodes    = jnp.array(self.options['nodes'])
         elements = jnp.array(self.options['elements'])
-        d_nodes = jnp.array(self.options['dirichlet_nodes'])
-        d_T_arr = self.options['dirichlet_T'] * jnp.ones(len(d_nodes))
+        k        = jnp.array(self.options['base_k'])
+        r_nodes  = jnp.array(self.options['robin_nodes'])
+        r_h      = self.options['robin_h']
+        r_T_inf  = self.options['robin_T_inf']
+        r_area   = self.options['el_size'] ** 2
+        d_nodes  = jnp.array(self.options['dirichlet_nodes'])
+        d_T_arr  = self.options['dirichlet_T'] * jnp.ones(len(d_nodes))
 
         # Unpack the inputs
-        density = jnp.array(inputs["density"])
+        density    = jnp.array(inputs["density"])
         heat_loads = jnp.array(inputs["heat_loads"])
 
         idx = jnp.arange(nodes.shape[0])
         idx_p = d_nodes
         idx_f = jnp.setdiff1d(idx, idx_p)
 
-        u_p = d_T_arr
-
-
-
         temp, max_temp = self._compute_primal(density, heat_loads,
                                               nodes, elements,
-                                              K_base, f_base, u_p,
-                                              elem_indices, idx_f, idx_p)
+                                              k,
+                                              r_nodes, r_h, r_T_inf, r_area,
+                                              d_nodes, d_T_arr,
+                                              idx_f, idx_p)
 
         outputs["temperature"] = temp
         outputs["max_temperature"] = max_temp
@@ -111,14 +114,31 @@ class ExplicitFEA(ExplicitComponent):
     @staticmethod
     def _compute_primal(densities, heat_loads,
                         nodes, elements,
+                        k,
+                        r_nodes, r_h, r_T_inf, r_area,
+                        d_nodes, d_T,
+                        idx_f, idx_p):
 
-                        elem_indices, idx_f, idx_p):
+        heat_nodes = jnp.arange(elements.shape[0])
 
-        # solve_system_partition
-        u = solve_system_partition(densities, heat_loads,
-                                   nodes, elements,
-                                   K_base, f_base, u_p,
-                                   elem_indices, idx_f, idx_p)
+        # Flatten the inputs
+        densities = densities.flatten()
+        heat_loads = heat_loads.flatten()
+
+        # Initialize global stiffness matrix and force vector
+        K, f, u = assemble_global_system_partition(nodes, elements,
+                                                   k=k,
+                                                   pseudo_densities=densities,
+                                                   r_nodes=r_nodes,
+                                                   r_h=r_h,
+                                                   r_T_inf=r_T_inf,
+                                                   r_area=r_area,
+                                                   heat_nodes=heat_nodes,
+                                                   heat_loads=heat_loads,
+                                                   d_nodes=d_nodes,
+                                                   d_T=d_T)
+
+        u = solve_system_partition(K, f, u, idx_f, idx_p)
 
         # Compute a scalar measure of the maximum temperature (e.g., using a KS function).
         u_max = kreisselmeier_steinhauser_max(u)

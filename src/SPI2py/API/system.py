@@ -22,8 +22,8 @@ class Interconnects(Group):
     pass
 
 
-class PointCloudComponent(ExplicitComponent):
-    raise NotImplementedError("PointCloudComponent is not implemented yet.")
+# class PointCloudComponent(ExplicitComponent):
+#     raise NotImplementedError("PointCloudComponent is not implemented yet.")
 
 
 class MDBDComponent(ExplicitComponent):
