@@ -99,7 +99,7 @@ def plot_capsules(plotter, subplot_index, cyl_control_points, cyl_radius, color,
         direction = (cyl_stop - cyl_start) / length
         center = (cyl_start + cyl_stop) / 2
         cylinder = pv.Cylinder(center=center, direction=direction, radius=cyl_radius[0], height=length)
-        plotter.add_mesh(cylinder, color=color, opacity=opacity, lighting=False)
+        plotter.add_mesh(cylinder, color=color, opacity=opacity)
 
     # plotter.add_text("Pipe Segments", position='upper_edge', font_size=14)
     # plotter.show_bounds(all_edges=True)
@@ -112,15 +112,16 @@ def plot_capsules2(plotter, subplot_index, start_points, end_points, radii, colo
 
     for cyl_start, cyl_stop, cyl_radius in zip(start_points, end_points, radii):
         # Plot the spheres
-        plot_spheres(plotter, subplot_index, cyl_start, cyl_radius, color, opacity)
-        plot_spheres(plotter, subplot_index, cyl_stop, cyl_radius, color, opacity)
+        # TODO Add back in
+        # plot_spheres(plotter, subplot_index, cyl_start, cyl_radius, color, opacity)
+        # plot_spheres(plotter, subplot_index, cyl_stop, cyl_radius, color, opacity)
 
         # Plot the cylinders
         length = np.linalg.norm(cyl_stop - cyl_start)
         direction = (cyl_stop - cyl_start) / length
         center = (cyl_start + cyl_stop) / 2
         cylinder = pv.Cylinder(center=center, direction=direction, radius=cyl_radius, height=length)
-        plotter.add_mesh(cylinder, color=color, opacity=opacity, lighting=False)
+        plotter.add_mesh(cylinder, color=color, opacity=opacity)
 
     # plotter.add_text("Pipe Segments", position='upper_edge', font_size=14)
     # plotter.show_bounds(all_edges=True)
@@ -138,10 +139,10 @@ def plot_AABB_spheres(plotter, subplot_index, centers, radii, color, opacity=0.2
     aabb = pv.Box([x_min, x_max, y_min, y_max, z_min, z_max])
 
     # Add the AABB to the plot
-    plotter.add_mesh(aabb, color='black', style='wireframe', lighting=False)
+    plotter.add_mesh(aabb, color='black', style='wireframe')
 
     # Add the AABB to the plot
-    plotter.add_mesh(aabb, color=color, opacity=opacity, lighting=False)
+    plotter.add_mesh(aabb, color=color, opacity=opacity)
 
 
 def plot_AABB(plotter, subplot_index, bounds, color, opacity=0.25):
@@ -156,10 +157,10 @@ def plot_AABB(plotter, subplot_index, bounds, color, opacity=0.25):
     aabb = pv.Box([x_min, x_max, y_min, y_max, z_min, z_max])
 
     # Add the AABB to the plot
-    plotter.add_mesh(aabb, color='black', style='wireframe', lighting=False)
+    plotter.add_mesh(aabb, color='black', style='wireframe')
 
     # Add the AABB to the plot
-    plotter.add_mesh(aabb, color=color, opacity=opacity, lighting=False)
+    plotter.add_mesh(aabb, color=color, opacity=opacity)
 
 
 def plot_stl_file(plotter, subplot_index, stl_file_path, translation=(0, 0, 0), rotation=(0, 0, 0), scaling=1,
@@ -202,7 +203,7 @@ def plot_stl_file(plotter, subplot_index, stl_file_path, translation=(0, 0, 0), 
             mesh.rotate_z(rz, point=center, inplace=True)
 
     # Add the mesh to the plotter
-    plotter.add_mesh(mesh, color=color, opacity=opacity, lighting=False)
+    plotter.add_mesh(mesh, color=color, opacity=opacity)
 
 
 def plot_temperature_distribution(plotter,
@@ -288,18 +289,18 @@ def plot_temperature_distribution(plotter,
     points = pv.PolyData(nodes)
     points["Temperature"] = T
 
-    plot_nodes(plotter, subplot_index, nodes, heat_load_nodes, label='Heat Load', color='red', point_size=20,
-               opacity=0.10)
-    plot_nodes(plotter, subplot_index, nodes, robin_nodes, label='Robin BC', color='green')
-    plot_nodes(plotter, subplot_index, nodes, dirichlet_nodes, label='Dirichlet BC', color='blue')
+    # plot_nodes(plotter, subplot_index, nodes, heat_load_nodes, label='Heat Load', color='red', point_size=20,
+    #            opacity=0.10)
+    # plot_nodes(plotter, subplot_index, nodes, robin_nodes, label='Robin BC', color='green')
+    # plot_nodes(plotter, subplot_index, nodes, dirichlet_nodes, label='Dirichlet BC', color='blue')
 
-    # Plot the hottest and coldest points
-    hottest_point = nodes[np.argmax(T)]
-    coldest_point = nodes[np.argmin(T)]
-    plotter.add_mesh(pv.Sphere(radius=0.75, center=hottest_point), color='red', opacity=0.5)
-    plotter.add_mesh(pv.Sphere(radius=0.75, center=coldest_point), color='blue', opacity=0.5)
+    # # Plot the hottest and coldest points
+    # hottest_point = nodes[np.argmax(T)]
+    # coldest_point = nodes[np.argmin(T)]
+    # plotter.add_mesh(pv.Sphere(radius=0.75, center=hottest_point), color='red', opacity=0.5)
+    # plotter.add_mesh(pv.Sphere(radius=0.75, center=coldest_point), color='blue', opacity=0.5)
 
-    plotter.add_legend()
+    # plotter.add_legend()
 
 
 def plot_nodes(plotter, subplot_index, nodes, selected_nodes, label, color="blue", point_size=5, opacity=1):

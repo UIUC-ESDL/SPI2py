@@ -136,7 +136,7 @@ prob.model.connect('mux_radii.stacked_output', 'bbv.radii')
 
 # Aggregate the pseudo-densities
 # rho_min = 1e-3
-rho_min = 1e-1
+rho_min = 1e-2
 projection_aggregator = ProjectionAggregator(n_projections=2, rho_min=rho_min)
 model.projections.add_subsystem('aggregator', projection_aggregator)
 model.connect('projections.proj_1.penalized_densities', 'projections.aggregator.densities_0')
@@ -305,6 +305,9 @@ print('Mean Temp:', np.mean(T_after))
 # Plot the results
 t5 = time_ns()
 plotter = pv.Plotter(shape=(2, 3), window_size=(1500, 500))
+# plotter.enable_ssao(radius=0.5)
+
+
 
 
 # BEFORE
@@ -328,8 +331,8 @@ plot_translation_sensitivities(plotter, (0, 1), comp_2_start_points_before[0], t
 # FEA
 plot_grid(plotter, (0, 2), centers, element_size, densities=None)
 
-plot_capsules2(plotter, (0, 2), comp_1_start_points_before, comp_1_end_points_before, comp_1_radii_before, color='black', opacity=1.0)
-plot_capsules2(plotter, (0, 2), comp_2_start_points_before, comp_2_end_points_before, comp_2_radii_before, color='black', opacity=1.0)
+plot_capsules2(plotter, (0, 2), comp_1_start_points_before, comp_1_end_points_before, comp_1_radii_before, color='#77bbd2', opacity=1.0)
+plot_capsules2(plotter, (0, 2), comp_2_start_points_before, comp_2_end_points_before, comp_2_radii_before, color='#f1cc7c', opacity=1.0)
 
 plot_temperature_distribution(plotter,
                               (0, 2),
@@ -403,6 +406,7 @@ plotter.link_views()
 plotter.show_axes()
 
 
+plotter.enable_anti_aliasing('fxaa')
 plotter.show()
 
 

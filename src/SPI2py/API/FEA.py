@@ -120,7 +120,6 @@ class ExplicitFEA(ExplicitComponent):
                         idx_f, idx_p):
 
 
-
         # Flatten the inputs
         densities = densities.flatten()
         heat_loads = heat_loads.flatten()
