@@ -9,7 +9,8 @@ from .quadrature import gauss_quad
 # @jit
 def construct_global_stiffness_matrix(node_positions,
                                       element_to_node_mapping,
-                                      base_k):
+                                      k,
+                                      pseudo_densities):
     """
         Assemble the global base stiffness matrix.
         Indices are included for mapping element densities to each of their local stiffness matrix contributions.
@@ -27,9 +28,8 @@ def construct_global_stiffness_matrix(node_positions,
     n_elem = element_to_node_mapping.shape[0]
     n_nodes = node_positions.shape[0]
 
-    # For the base case, use density=1 for every element.
-    # TODO Use penalized density...
-    k_eff_all = base_k * jnp.ones((n_elem,))
+    # Scale the base thermal conductivity by the pseudo-densities.
+    k_eff = k * pseudo_densities
 
     # Gather nodal coordinates for each element.
     # Shape: (n_elem, 8, 3)
@@ -41,7 +41,7 @@ def construct_global_stiffness_matrix(node_positions,
     # Use vmap to compute the 8x8 local stiffness matrix for each element.
     # Shape: (n_elem, 8, 8)
     Ke_all = vmap(lambda el_nodes, k_eff: assemble_local_stiffness_matrix_scalar(el_nodes, k_eff, gauss_pts, gauss_wts))(
-        el_nodes_all, k_eff_all)
+        el_nodes_all, k_eff)
 
     # Flatten the local stiffness contributions.
     # Shape: (n_elem*64,)
@@ -129,7 +129,8 @@ def partition_vector(v, idx_f, idx_p):
 
 # @jit
 def assemble_global_system_partition(nodes, elements,
-                                     base_k,
+                                     k,
+                                     pseudo_densities,
                                      r_nodes, r_h, r_T_inf, r_area,
                                      heat_nodes, heat_loads,
                                      d_nodes, d_T):
@@ -140,7 +141,7 @@ def assemble_global_system_partition(nodes, elements,
     idx_f = jnp.setdiff1d(idx, idx_p)
 
     # Construct the global stiffness matrix and load vector
-    K = construct_global_stiffness_matrix(nodes, elements, base_k)
+    K = construct_global_stiffness_matrix(nodes, elements, k, pseudo_densities)
     f = jnp.zeros_like(idx, dtype=jnp.float64)
     u = jnp.zeros_like(idx, dtype=jnp.float64)
 

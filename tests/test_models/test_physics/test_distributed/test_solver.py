@@ -27,8 +27,7 @@ def test_case_1():
     element_size = 0.075
     nodes, elements, _, _, _, _, _, _, _ = generate_mesh(0, 2, 0, 1, 0, 1, element_size=element_size)
 
-    densities = jnp.ones(nodes.shape[0])  # uniform density
-    heat_loads = jnp.zeros(nodes.shape[0])  # no heat generation
+    densities = jnp.ones(elements.shape[0])  # uniform density
 
     # Find active nodes and face nodes
     top_normal = jnp.array([0, 1, 0])
@@ -46,7 +45,8 @@ def test_case_1():
 
     # Initialize global stiffness matrix and force vector
     K, f, u = assemble_global_system_partition(nodes, elements,
-                                               base_k=k,
+                                               k=k,
+                                               pseudo_densities=densities,
                                                r_nodes=robin_nodes,
                                                r_h=h_c,
                                                r_T_inf=T_inf,
@@ -90,6 +90,8 @@ def test_case_2():
     element_size = 0.075
     nodes, elements, _, _, _, _, _, _, _ = generate_mesh(0, 2, 0, 1, 0, 1, element_size=element_size)
 
+    densities = jnp.ones(elements.shape[0])  # uniform density
+
     # Find active nodes and face nodes
     top_normal = jnp.array([0, 1, 0])
     bottom_normal = jnp.array([0, -1, 0])
@@ -112,7 +114,8 @@ def test_case_2():
 
     # Initialize global stiffness matrix and force vector
     K, f, u = assemble_global_system_partition(nodes, elements,
-                                               base_k=k,
+                                               k=k,
+                                               pseudo_densities=densities,
                                                r_nodes=robin_nodes,
                                                r_h=h_c,
                                                r_T_inf=T_inf,
@@ -134,4 +137,65 @@ def test_case_2():
     # Allow for a 7.5% tolerance as this is a non-conformal mesh, and the mesh is coarse for quick tests
     rtol = 0.075
     assert jnp.isclose(T_max, T_max_known, rtol=rtol)
+    assert jnp.isclose(T_min, T_min_known, rtol=rtol)
+
+
+def test_case_3():
+    """
+    Like test case 1, but with half the thermal conductivity, as scaled by pseudo-densities.
+    With a fixed temperature bottom and a convection top, a lower conduction rate does not affect the max
+    temperature, but does allow the top to cool more, resulting in a slightly lower min temperature.
+    """
+
+    T_inf = 293  # ambient temperature (K)
+    T_fixed = 573  # fixed temperature on bottom boundary (K)
+
+    h_c = 21  # convection coefficient (W / (m^2 * K))
+    k = 56.00  # thermal conductivity (W / (m * K))
+
+    element_size = 0.075
+    nodes, elements, _, _, _, _, _, _, _ = generate_mesh(0, 2, 0, 1, 0, 1, element_size=element_size)
+
+    densities = 0.5 * jnp.ones(elements.shape[0])  # uniform density
+
+    # Find active nodes and face nodes
+    top_normal = jnp.array([0, 1, 0])
+    bottom_normal = jnp.array([0, -1, 0])
+
+    robin_nodes = find_face_nodes(nodes, top_normal)
+    dirichlet_nodes = find_face_nodes(nodes, bottom_normal)
+
+    idx = jnp.arange(nodes.shape[0])
+    idx_p = dirichlet_nodes
+    idx_f = jnp.setdiff1d(idx, idx_p)
+
+    robin_area = element_size * element_size
+    dirichlet_temperature = T_fixed * jnp.ones(dirichlet_nodes.shape[0])
+
+    # Initialize global stiffness matrix and force vector
+    K, f, u = assemble_global_system_partition(nodes, elements,
+                                               k=k,
+                                               pseudo_densities=densities,
+                                               r_nodes=robin_nodes,
+                                               r_h=h_c,
+                                               r_T_inf=T_inf,
+                                               r_area=robin_area,
+                                               heat_nodes=None,
+                                               heat_loads=None,
+                                               d_nodes=dirichlet_nodes,
+                                               d_T=dirichlet_temperature)
+
+    u = solve_system_partition(K, f, u, idx_f, idx_p)
+
+    # Simulation vals
+    T_max_known = 573.0  # The bottom face is held at 573K
+    T_min_known = 451.823  # The top face
+
+
+    T_max = jnp.max(u)
+    T_min = jnp.min(u)
+
+    # Allow for a 7.5% tolerance as this is a non-conformal mesh, and the mesh is coarse for quick tests
+    rtol = 0.075
+    assert jnp.isclose(T_max, T_max_known)
     assert jnp.isclose(T_min, T_min_known, rtol=rtol)

@@ -101,7 +101,9 @@ def test_construct_global_Stiffness_matrix(fixture_hex8_scalar):
     nodes_2e, elements_2e, _, _, _, _, _, _, _ = generate_mesh(0, 2, 0, 1, 0, 1, element_size=1.0)
 
     # Assemble the global stiffness matrix and convert it to a dense matrix
-    K_global = construct_global_stiffness_matrix(nodes_2e, elements_2e, base_k=1.0)
+    K_global = construct_global_stiffness_matrix(nodes_2e, elements_2e,
+                                                 k=1.0,
+                                                 pseudo_densities=jnp.ones(elements_2e.shape[0]))
 
     # Convert the sparse matrix to a dense matrix for easier comparison
     K_global_dense = K_global.todense()
@@ -197,7 +199,9 @@ def test_partition_global_stiffness_matrix():
     nodes_2e, elements_2e, _, _, _, _, _, _, _ = generate_mesh(0, 2, 0, 1, 0, 1, element_size=1.0)
 
     # Assemble the global stiffness matrix and convert it to a dense matrix
-    K_global = construct_global_stiffness_matrix(nodes_2e, elements_2e, base_k=1.0)
+    K_global = construct_global_stiffness_matrix(nodes_2e, elements_2e,
+                                                 k=1.0,
+                                                 pseudo_densities=jnp.ones(elements_2e.shape[0]))
 
     # Convert the sparse matrix to a dense matrix for easier comparison
     K_global_dense = K_global.todense()

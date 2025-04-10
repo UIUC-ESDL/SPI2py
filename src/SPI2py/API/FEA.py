@@ -72,34 +72,6 @@ class ExplicitFEA(ExplicitComponent):
         self.add_output("temperature", shape=(n_el,), desc="Computed temperature field")
         self.add_output("max_temperature", val=0.0, desc="Computed maximum temperature")
 
-        # Pre-assemble the base global system once.
-        nodes = jnp.array(self.options['nodes'])
-        elements = jnp.array(self.options['elements'])
-
-        r_nodes = jnp.array(self.options['robin_nodes'])
-        r_h = jnp.array(self.options['robin_h'])
-        r_T_inf = jnp.array(self.options['robin_T_inf'])
-        r_area = jnp.array(self.options['el_size'] ** 2)
-
-        d_nodes = jnp.array(self.options['dirichlet_nodes'])
-        d_T_arr = self.options['dirichlet_T'] * jnp.ones(len(d_nodes))
-
-        base_k = self.options['base_k']
-
-        # if self.options['fea_solution_scheme'] == 'partition':
-        #     self._K_base, self._f_base, self._elem_indices = assemble_base_global_system_partition(nodes, elements,
-        #                                                                                            base_k,
-        #                                                                                            r_nodes, r_h, r_T_inf, r_area,
-        #                                                                                            d_nodes, d_T_arr)
-        #
-        # elif self.options['fea_solution_scheme'] == 'penalty':
-        #     self._K_base, self._f_base, self._elem_indices = assemble_base_global_system_penalty(nodes, elements,
-        #                                                                                          base_k,
-        #                                                                                          r_nodes, r_h, r_T_inf,
-        #                                                                                          r_area,
-        #                                                                                          d_nodes, d_T_arr)
-        # else:
-        #     raise NotImplementedError("Unknown FEA solution scheme: {}".format(self.options['fea_solution_scheme']))
 
     def setup_partials(self):
         # Declare that we are using matrix-free derivatives
@@ -126,10 +98,6 @@ class ExplicitFEA(ExplicitComponent):
 
         u_p = d_T_arr
 
-        K_base, f_base = assemble_global_system_partition(nodes, elements,
-                                                          base_k,
-                                                          r_nodes, r_h, r_T_inf, r_area,
-                                                          d_nodes, d_T_arr)
 
 
         temp, max_temp = self._compute_primal(density, heat_loads,
@@ -143,7 +111,7 @@ class ExplicitFEA(ExplicitComponent):
     @staticmethod
     def _compute_primal(densities, heat_loads,
                         nodes, elements,
-                        K_base, f_base, u_p,
+
                         elem_indices, idx_f, idx_p):
 
         # solve_system_partition
