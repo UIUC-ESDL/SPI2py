@@ -119,11 +119,27 @@ class ExplicitFEA(ExplicitComponent):
                         d_nodes, d_T,
                         idx_f, idx_p):
 
-        heat_nodes = jnp.arange(elements.shape[0])
+
 
         # Flatten the inputs
         densities = densities.flatten()
         heat_loads = heat_loads.flatten()
+
+        # Determine the nodal heat_loads
+        heat_nodes = elements.flatten()
+
+        # Evenly distribute the heat loads across the nodes of each element
+        n_nodes_per_element = 8
+        nodal_heat_load_contributions = heat_loads / n_nodes_per_element
+        nodal_heat_load_contributions = jnp.repeat(nodal_heat_load_contributions.reshape(-1, 1), axis=1, repeats=8)
+        nodal_heat_load_contributions = nodal_heat_load_contributions.flatten()
+
+        # Now we'll add up the contributions for each node
+        # nodal_heat_loads =
+        unique_heat_nodes, inverse_indices = jnp.unique(heat_nodes, return_inverse=True)
+        nodal_heat_loads = jnp.bincount(inverse_indices, weights=nodal_heat_load_contributions)
+
+
 
         # Initialize global stiffness matrix and force vector
         K, f, u = assemble_global_system_partition(nodes, elements,
@@ -133,8 +149,8 @@ class ExplicitFEA(ExplicitComponent):
                                                    r_h=r_h,
                                                    r_T_inf=r_T_inf,
                                                    r_area=r_area,
-                                                   heat_nodes=heat_nodes,
-                                                   heat_loads=heat_loads,
+                                                   heat_nodes=unique_heat_nodes,
+                                                   heat_loads=nodal_heat_loads,
                                                    d_nodes=d_nodes,
                                                    d_T=d_T)
 

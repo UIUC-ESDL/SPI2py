@@ -135,7 +135,8 @@ prob.model.connect('mux_radii.stacked_output', 'bbv.radii')
 
 
 # Aggregate the pseudo-densities
-rho_min = 1e-3
+# rho_min = 1e-3
+rho_min = 1e-1
 projection_aggregator = ProjectionAggregator(n_projections=2, rho_min=rho_min)
 model.projections.add_subsystem('aggregator', projection_aggregator)
 model.connect('projections.proj_1.penalized_densities', 'projections.aggregator.densities_0')
