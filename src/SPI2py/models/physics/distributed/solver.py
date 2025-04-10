@@ -2,9 +2,6 @@
 import jax.numpy as jnp
 from jax.scipy.sparse.linalg import cg
 
-# Local imports
-# from .assembly import update_global_stiffness_partition
-
 
 def solve_system_partition(K, f, u,
                            idx_f, idx_p):

@@ -131,6 +131,7 @@ def partition_vector(v, idx_f, idx_p):
 def assemble_global_system_partition(nodes, elements,
                                      base_k,
                                      r_nodes, r_h, r_T_inf, r_area,
+                                     heat_nodes, heat_loads,
                                      d_nodes, d_T):
 
     # Identify the free and prescribed nodes.
@@ -151,6 +152,10 @@ def assemble_global_system_partition(nodes, elements,
 
     f_robin_data = (r_h * r_area * r_T_inf) * jnp.ones_like(r_nodes)
     f = f.at[r_nodes].add(f_robin_data)
+
+    # Apply heat loads
+    if heat_nodes is not None:
+        f = f.at[heat_nodes].add(heat_loads)
 
     # Apply Dirichlet BC
     u = u.at[d_nodes].add(d_T)

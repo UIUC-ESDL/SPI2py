@@ -20,6 +20,7 @@ T_fixed = 573  # fixed temperature on bottom boundary (K)
 
 h_c = 21  # convection coefficient (W / (m^2 * K))
 k = 56.00  # thermal conductivity (W / (m * K))
+heat_source = 25000.00  # Heat generation (W / m^2)
 
 # # Mesh generation
 # x_min, x_max = (0, 1)
@@ -41,9 +42,11 @@ heat_loads = jnp.zeros(elements.shape[0])  # no heat generation
 # Find active nodes and face nodes
 top_normal = jnp.array([0, 1, 0])
 bottom_normal = jnp.array([0, -1, 0])
+right_normal = jnp.array([1, 0, 0])
 
 robin_nodes = find_face_nodes(nodes, top_normal)
 dirichlet_nodes = find_face_nodes(nodes, bottom_normal)
+heat_nodes = find_face_nodes(nodes, right_normal)
 
 idx = jnp.arange(nodes.shape[0])
 idx_p = dirichlet_nodes
@@ -56,6 +59,10 @@ robin_area = element_size * element_size
 
 dirichlet_temperature = T_fixed * jnp.ones(dirichlet_nodes.shape[0])
 
+# Face is 1 m^2. If there were for nodes, nodal contribution would be w/4.
+# heat (W / m^2) * area (m^2) = total heat (W) --> nodal contribution (W) / n_nodes
+face_heat_loads = heat_source * jnp.ones(heat_nodes.shape[0]) / heat_nodes.size
+
 # Initialize global stiffness matrix and force vector
 K, f, u = assemble_global_system_partition(nodes, elements,
                                             base_k=k,
@@ -63,6 +70,8 @@ K, f, u = assemble_global_system_partition(nodes, elements,
                                             r_h=h_c,
                                             r_T_inf=T_inf,
                                             r_area=robin_area,
+                                            heat_nodes=heat_nodes,
+                                            heat_loads=face_heat_loads,
                                             d_nodes=dirichlet_nodes,
                                             d_T=dirichlet_temperature)
 

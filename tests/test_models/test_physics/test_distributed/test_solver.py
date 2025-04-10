@@ -51,6 +51,8 @@ def test_case_1():
                                                r_h=h_c,
                                                r_T_inf=T_inf,
                                                r_area=robin_area,
+                                               heat_nodes=None,
+                                               heat_loads=None,
                                                d_nodes=dirichlet_nodes,
                                                d_T=dirichlet_temperature)
 
@@ -73,162 +75,63 @@ def test_case_1():
     assert jnp.isclose(T_min, T_min_known, rtol=rtol)
 
 
+def test_case_2():
+    """
+    Similar to test case 1, but a heat load is applied to the rightmost face
+    """
 
+    T_inf = 293  # ambient temperature (K)
+    T_fixed = 573  # fixed temperature on bottom boundary (K)
 
-#     assert 1 == 1
+    h_c = 21  # convection coefficient (W / (m^2 * K))
+    k = 56.00  # thermal conductivity (W / (m * K))
+    heat_source = 25000.00  # Heat generation (W / m^2)
 
+    element_size = 0.075
+    nodes, elements, _, _, _, _, _, _, _ = generate_mesh(0, 2, 0, 1, 0, 1, element_size=element_size)
 
+    # Find active nodes and face nodes
+    top_normal = jnp.array([0, 1, 0])
+    bottom_normal = jnp.array([0, -1, 0])
+    right_normal = jnp.array([1, 0, 0])
 
-# # Parameters
-# k = 1.4  # thermal conductivity, concrete (W * m * K)
-# size_c = 0.20  # size of chimney (m)
-# size_w = 0.60  # size of wall (m)
-# T_i = 300  # temperature, hot gas in chimney (C)
-# T_o = 20  # temperature, ambient air (C)
-# h_i = 70  # convection coefficient, inside chimney (W / m^2 * K)
-# h_o = 21  # convection coefficient, outside wall (W / m^2 * K)
-#
-# # Convert temperatures to Kelvin
-# T_i += 273
-# T_o += 273
-#
-#
-# n_elements = 20  # number of elements along one side
-# k = 200  # thermal conductivity (W / m * K)
-# h_c = 10  # convection coefficient (W / m^2 * K)
-# T_inf = 293  # ambient temperature (K)
-# q = 1000  # heat generation (W/m³)
-# T_fixed = 300  # fixed temperature on bottom boundary (K)
+    robin_nodes = find_face_nodes(nodes, top_normal)
+    dirichlet_nodes = find_face_nodes(nodes, bottom_normal)
+    heat_nodes = find_face_nodes(nodes, right_normal)
 
-# # Mesh generation
-# n_nodes = n_elements + 1
-# dx = length / n_elements
-# x = np.linspace(0, length, n_nodes)
-# y = np.linspace(0, length, n_nodes)
-# X, Y = np.meshgrid(x, y)  # Create 2D grid
-# nodes = np.column_stack((X.ravel(), Y.ravel()))  # Flatten into list of (x, y)
-#
-# # nodes = [(i, j) for j in y for i in x]
-# n_total_nodes = len(nodes)
-#
-# # Create elements (connectivity of nodes)
-# elements = []
-# for j in range(n_elements):  # Loop over rows of elements
-#     for i in range(n_elements):  # Loop over columns of elements
-#         n1 = j * (n_elements + 1) + i  # Bottom-left node
-#         n2 = n1 + 1  # Bottom-right node
-#         n3 = n1 + n_elements + 1  # Top-left node
-#         n4 = n3 + 1  # Top-right node
-#         elements.append([n1, n2, n4, n3])
-#
-# # Initialize global stiffness matrix and force vector
-# K = np.zeros((n_total_nodes, n_total_nodes))
-# F = np.zeros(n_total_nodes)
-#
-# # Helper functions for 2D shape functions
-# def local_stiffness(dx, dy, k):
-#     """2D bilinear element stiffness matrix for heat conduction."""
-#     coeff = k / (dx * dy)
-#     return coeff * np.array([
-#         [ 2, -1, -1,  0],
-#         [-1,  2,  0, -1],
-#         [-1,  0,  2, -1],
-#         [ 0, -1, -1,  2]
-#     ])
-#
-# def local_force(dx, dy, q):
-#     """2D bilinear element force vector for heat generation."""
-#     coeff = q * dx * dy / 4
-#     return coeff * np.ones(4)
-#
-# # Assemble global stiffness matrix and force vector
-# for element in elements:
-#     n1, n2, n3, n4 = element
-#     stiffness = local_stiffness(dx, dx, k)
-#     force = local_force(dx, dx, q)
-#     global_nodes = [n1, n2, n3, n4]
-#
-#     for i in range(4):
-#         F[global_nodes[i]] += force[i]
-#         for j in range(4):
-#             K[global_nodes[i], global_nodes[j]] += stiffness[i, j]
-#
-# # Apply boundary conditions (Dirichlet BC on bottom surface)
-# bottom_nodes = [i for i in range(n_nodes)]
-# for node in bottom_nodes:
-#     K[node, :] = 0
-#     K[node, node] = 1
-#     F[node] = T_fixed
-#
-# # Apply convection (Neumann BCs) on other boundaries
-# top_nodes = [i + n_nodes * n_elements for i in range(n_nodes)]
-# left_nodes = [i * n_nodes for i in range(n_nodes)]
-# right_nodes = [(i + 1) * n_nodes - 1 for i in range(n_nodes)]
-# convection_nodes = set(top_nodes + left_nodes + right_nodes)
-#
-# for node in convection_nodes:
-#     K[node, node] += h_c * dx
-#     F[node] += h_c * T_inf * dx
-#
-#
-# # Define the size and position of the fixed-temperature square
-# square_size = 4  # Number of elements along one side of the square
-# square_start_x = int(n_elements / 2 - square_size / 2)  # Center square
-# square_start_y = int(n_elements / 2 - square_size / 2)
-# square_end_x = square_start_x + square_size
-# square_end_y = square_start_y + square_size
-#
-# # Identify nodes inside the fixed-temperature square
-# fixed_square_nodes = []
-# for j in range(square_start_y, square_end_y + 1):
-#     for i in range(square_start_x, square_end_x + 1):
-#         node = j * n_nodes + i
-#         fixed_square_nodes.append(node)
-#
-# # Apply Dirichlet boundary conditions for the fixed-temperature square
-# T_fixed_square = 350  # Fixed temperature for the square
-# for node in fixed_square_nodes:
-#     K[node, :] = 0
-#     K[node, node] = 1
-#     F[node] = T_fixed_square
-#
-# # Optional: Adjust heat generation for the square region if necessary
-# # For simplicity, assume no heat generation in the square
-# for element in elements:
-#     n1, n2, n3, n4 = element
-#     if any(node in fixed_square_nodes for node in element):
-#         local_f = np.zeros(4)  # No heat generation in the fixed-temperature square
-#         global_nodes = [n1, n2, n3, n4]
-#         for i in range(4):
-#             F[global_nodes[i]] += local_f[i]
-#
-# # Solve for temperature distribution
-# T = np.linalg.solve(K, F)
-#
-# # Post-process and visualize results
-# T_grid = T.reshape((n_nodes, n_nodes))
-# plt.figure(figsize=(8, 6))
-# plt.contourf(x, y, T_grid, levels=50, cmap="inferno")
-# plt.colorbar(label="Temperature (K)")
-# plt.xlabel("x (m)")
-# plt.ylabel("y (m)")
-# plt.title("Temperature Distribution")
-#
-# # Plot elements
-# for element in elements:
-#     coords = nodes[element]  # Get coordinates of element nodes
-#     x_coords = np.append(coords[:, 0], coords[0, 0])  # Close the square
-#     y_coords = np.append(coords[:, 1], coords[0, 1])
-#     plt.plot(x_coords, y_coords, 'k-', lw=0.5)
-#
-# # Highlight the fixed-temperature nodes
-# fixed_square_x = [nodes[n][0] for n in fixed_square_nodes]
-# fixed_square_y = [nodes[n][1] for n in fixed_square_nodes]
-# plt.scatter(fixed_square_x, fixed_square_y, c='red', label='Fixed Temperature (350K)')
-# # plt.legend()
-#
-#
-# plt.show()
+    idx = jnp.arange(nodes.shape[0])
+    idx_p = dirichlet_nodes
+    idx_f = jnp.setdiff1d(idx, idx_p)
 
+    robin_area = element_size * element_size
+    dirichlet_temperature = T_fixed * jnp.ones(dirichlet_nodes.shape[0])
 
+    # Face is 1 m^2. If there were for nodes, nodal contribution would be w/4.
+    # heat (W / m^2) * area (m^2) = total heat (W) --> nodal contribution (W) / n_nodes
+    face_heat_loads = heat_source * jnp.ones(heat_nodes.shape[0]) / heat_nodes.size
 
+    # Initialize global stiffness matrix and force vector
+    K, f, u = assemble_global_system_partition(nodes, elements,
+                                               base_k=k,
+                                               r_nodes=robin_nodes,
+                                               r_h=h_c,
+                                               r_T_inf=T_inf,
+                                               r_area=robin_area,
+                                               heat_nodes=heat_nodes,
+                                               heat_loads=face_heat_loads,
+                                               d_nodes=dirichlet_nodes,
+                                               d_T=dirichlet_temperature)
+
+    u = solve_system_partition(K, f, u, idx_f, idx_p)
+
+    # Simulation vals
+    T_max_known = 797.176  # Center of rightmost face, perhaps 0.75m up out of 1m
+    T_min_known = 513.514  # The top leftmost front and back corners.
+
+    T_max = jnp.max(u)
+    T_min = jnp.min(u)
+
+    # Allow for a 7.5% tolerance as this is a non-conformal mesh, and the mesh is coarse for quick tests
+    rtol = 0.075
+    assert jnp.isclose(T_max, T_max_known, rtol=rtol)
+    assert jnp.isclose(T_min, T_min_known, rtol=rtol)
