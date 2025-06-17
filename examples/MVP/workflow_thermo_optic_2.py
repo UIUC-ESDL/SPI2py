@@ -61,8 +61,8 @@ y_min, y_max = (-5, 5)
 z_min, z_max = (-3, 3)
 
 
-element_size = 0.5
-# element_size = 1
+# element_size = 0.5
+element_size = 0.35
 
 
 nodes, elements, centers, nx, ny, nz, lx, ly, lz = generate_mesh(x_min, x_max, y_min, y_max, z_min, z_max, element_size=element_size)
@@ -91,15 +91,23 @@ h = 10.0  # Convection coefficient, W/m^2*K
 # Define the system elements
 comp_1 = LinearSplineComponent(start_points=[[0, 0, 0]], end_points=[[6, 0, 0]], radii=[0.35], port_positions=[[0, 0, 0]])
 comp_2 = LinearSplineComponent(start_points=[[0, 0, 0]], end_points=[[6, 0, 0]], radii=[0.75], port_positions=[[0, 0, 0]])
+comp_3 = LinearSplineComponent(start_points=[[0, 0, 0]], end_points=[[6, 0, 0]], radii=[0.75], port_positions=[[0, 0, 0]])
+comp_4 = LinearSplineComponent(start_points=[[0, 0, 0]], end_points=[[6, 0, 0]], radii=[0.35], port_positions=[[0, 0, 0]])
 model.system.components.add_subsystem('comp_1', comp_1)
 model.system.components.add_subsystem('comp_2', comp_2)
+model.system.components.add_subsystem('comp_3', comp_3)
+model.system.components.add_subsystem('comp_4', comp_4)
 
 
 # Define the projections
 proj_1 = ProjectLinearSplineComponent(mesh_size=element_size, mesh_centers=centers, kernel_centers=kernel_points, kernel_radii=kernel_radii)
 proj_2 = ProjectLinearSplineComponent(mesh_size=element_size, mesh_centers=centers, kernel_centers=kernel_points, kernel_radii=kernel_radii)
+proj_3 = ProjectLinearSplineComponent(mesh_size=element_size, mesh_centers=centers, kernel_centers=kernel_points, kernel_radii=kernel_radii)
+proj_4 = ProjectLinearSplineComponent(mesh_size=element_size, mesh_centers=centers, kernel_centers=kernel_points, kernel_radii=kernel_radii)
 model.projections.add_subsystem('proj_1', proj_1)
 model.projections.add_subsystem('proj_2', proj_2)
+model.projections.add_subsystem('proj_3', proj_3)
+model.projections.add_subsystem('proj_4', proj_4)
 
 
 # Connect the system elements to the projections
@@ -109,11 +117,18 @@ model.connect('system.components.comp_1.updated_radii', 'projections.proj_1.radi
 model.connect('system.components.comp_2.updated_start_points', 'projections.proj_2.start_points')
 model.connect('system.components.comp_2.updated_end_points', 'projections.proj_2.end_points')
 model.connect('system.components.comp_2.updated_radii', 'projections.proj_2.radii')
+model.connect('system.components.comp_3.updated_start_points', 'projections.proj_3.start_points')
+model.connect('system.components.comp_3.updated_end_points', 'projections.proj_3.end_points')
+model.connect('system.components.comp_3.updated_radii', 'projections.proj_3.radii')
+model.connect('system.components.comp_4.updated_start_points', 'projections.proj_4.start_points')
+model.connect('system.components.comp_4.updated_end_points', 'projections.proj_4.end_points')
+model.connect('system.components.comp_4.updated_radii', 'projections.proj_4.radii')
+
 
 
 # Aggregate the spheres of each component
-mux_centers = Multiplexer(n_i=[1, 1, 1, 1], m=3)
-mux_radii = Multiplexer(n_i=[1, 1, 1, 1], m=1)
+mux_centers = Multiplexer(n_i=[1, 1, 1, 1, 1, 1, 1, 1], m=3)
+mux_radii = Multiplexer(n_i=[1, 1, 1, 1, 1, 1, 1, 1], m=1)
 
 prob.model.add_subsystem('mux_centers', mux_centers)
 prob.model.add_subsystem('mux_radii', mux_radii)
@@ -125,24 +140,38 @@ prob.model.connect('system.components.comp_1.updated_start_points', 'mux_centers
 prob.model.connect('system.components.comp_1.updated_end_points', 'mux_centers.input_1')
 prob.model.connect('system.components.comp_2.updated_start_points', 'mux_centers.input_2')
 prob.model.connect('system.components.comp_2.updated_end_points', 'mux_centers.input_3')
+prob.model.connect('system.components.comp_3.updated_start_points', 'mux_centers.input_4')
+prob.model.connect('system.components.comp_3.updated_end_points', 'mux_centers.input_5')
+prob.model.connect('system.components.comp_4.updated_start_points', 'mux_centers.input_6')
+prob.model.connect('system.components.comp_4.updated_end_points', 'mux_centers.input_7')
 prob.model.connect('mux_centers.stacked_output', 'bbv.centers')
 
 prob.model.connect('system.components.comp_1.updated_radii', 'mux_radii.input_0')
 prob.model.connect('system.components.comp_1.updated_radii', 'mux_radii.input_1')
 prob.model.connect('system.components.comp_2.updated_radii', 'mux_radii.input_2')
 prob.model.connect('system.components.comp_2.updated_radii', 'mux_radii.input_3')
+prob.model.connect('system.components.comp_3.updated_radii', 'mux_radii.input_4')
+prob.model.connect('system.components.comp_3.updated_radii', 'mux_radii.input_5')
+prob.model.connect('system.components.comp_4.updated_radii', 'mux_radii.input_6')
+prob.model.connect('system.components.comp_4.updated_radii', 'mux_radii.input_7')
 prob.model.connect('mux_radii.stacked_output', 'bbv.radii')
 
 
 # Aggregate the pseudo-densities
 # rho_min = 1e-3
 rho_min = 1e-2
-projection_aggregator = ProjectionAggregator(n_projections=2, rho_min=rho_min)
+projection_aggregator = ProjectionAggregator(n_projections=4, rho_min=rho_min)
 model.projections.add_subsystem('aggregator', projection_aggregator)
 model.connect('projections.proj_1.penalized_densities', 'projections.aggregator.densities_0')
 model.connect('projections.proj_2.penalized_densities', 'projections.aggregator.densities_1')
+model.connect('projections.proj_3.penalized_densities', 'projections.aggregator.densities_2')
+model.connect('projections.proj_4.penalized_densities', 'projections.aggregator.densities_3')
 model.connect('projections.proj_1.penalized_heat_loads', 'projections.aggregator.heat_loads_0')
 model.connect('projections.proj_2.penalized_heat_loads', 'projections.aggregator.heat_loads_1')
+model.connect('projections.proj_3.penalized_heat_loads', 'projections.aggregator.heat_loads_2')
+model.connect('projections.proj_4.penalized_heat_loads', 'projections.aggregator.heat_loads_3')
+
+
 
 
 # FEA
@@ -170,7 +199,7 @@ model.connect('projections.aggregator.aggregated_heat_loads', 'FEA.heat_loads')
 # prob.model.add_design_var('system.components.comp_1.translation', ref=0.25, lower=-5, upper=5)
 # prob.model.add_design_var('system.components.comp_1.rotation', ref=(np.pi/2)/4, lower=-np.pi, upper=np.pi)
 prob.model.add_design_var('system.components.comp_2.translation', ref=0.25, lower=-5, upper=5)
-prob.model.add_design_var('system.components.comp_2.rotation', ref=(np.pi/2)/4, lower=-np.pi, upper=np.pi)
+# prob.model.add_design_var('system.components.comp_2.rotation', ref=(np.pi/2)/4, lower=-np.pi, upper=np.pi)
 
 # Define the objective and constraints
 prob.model.add_objective('bbv.volume', ref=1)
@@ -182,13 +211,39 @@ prob.setup()
 
 
 # # Configure the system
+# prob.set_val('system.components.comp_1.translation', [-3, 0, -1])
+# prob.set_val('system.components.comp_1.rotation', [0, 0, 0])
+# # prob.set_val('system.components.comp_2.translation', [0, 0, 2])
+# prob.set_val('system.components.comp_2.translation', [-3, 0, 1])
+# prob.set_val('system.components.comp_2.rotation', [0, 0, 0])
+#
+# prob.set_val('system.components.comp_3.translation', [-3, 3, 1])
+# prob.set_val('system.components.comp_3.rotation', [0, 0, 0])
+#
+# prob.set_val('system.components.comp_4.translation', [-3, 1.75, -1])
+# prob.set_val('system.components.comp_4.rotation', [0, 0, 0])
+
 prob.set_val('system.components.comp_1.translation', [-3, 0, -1])
 prob.set_val('system.components.comp_1.rotation', [0, 0, 0])
 # prob.set_val('system.components.comp_2.translation', [0, 0, 2])
-prob.set_val('system.components.comp_2.translation', [-3, 0, 1])
+# prob.set_val('system.components.comp_2.translation', [-3, -0.25, 0.75])
+# prob.set_val('system.components.comp_2.rotation', [0, 0, 0])
+prob.set_val('system.components.comp_2.translation', [-3, -0.75, 0.65])
 prob.set_val('system.components.comp_2.rotation', [0, 0, 0])
+
+# prob.set_val('system.components.comp_3.translation', [-3, 2.5, 1.5])
+# prob.set_val('system.components.comp_3.rotation', [0, 0, 0])
+prob.set_val('system.components.comp_3.translation', [-3, 3.25, 1.5])
+prob.set_val('system.components.comp_3.rotation', [0, 0, 0])
+
+prob.set_val('system.components.comp_4.translation', [-3, 2.25, -1])
+prob.set_val('system.components.comp_4.rotation', [0, 0, 0])
+
+
 prob.set_val('projections.proj_1.heat_load', 0.0)
-prob.set_val('projections.proj_2.heat_load', 400.0)
+prob.set_val('projections.proj_2.heat_load', 75.0)
+prob.set_val('projections.proj_3.heat_load', 75.0)
+prob.set_val('projections.proj_4.heat_load', 0.0)
 
 
 # Set up the optimizer
@@ -217,6 +272,17 @@ comp_2_rotation_before = copy(prob.get_val('system.components.comp_2.rotation'))
 comp_2_start_points_before = copy(prob.get_val('system.components.comp_2.updated_start_points'))
 comp_2_end_points_before = copy(prob.get_val('system.components.comp_2.updated_end_points'))
 comp_2_radii_before = copy(prob.get_val('system.components.comp_2.updated_radii'))
+comp_3_translation_before = copy(prob.get_val('system.components.comp_3.translation'))
+comp_3_rotation_before = copy(prob.get_val('system.components.comp_3.rotation'))
+comp_3_start_points_before = copy(prob.get_val('system.components.comp_3.updated_start_points'))
+comp_3_end_points_before = copy(prob.get_val('system.components.comp_3.updated_end_points'))
+comp_3_radii_before = copy(prob.get_val('system.components.comp_3.updated_radii'))
+comp_4_translation_before = copy(prob.get_val('system.components.comp_4.translation'))
+comp_4_rotation_before = copy(prob.get_val('system.components.comp_4.rotation'))
+comp_4_start_points_before = copy(prob.get_val('system.components.comp_4.updated_start_points'))
+comp_4_end_points_before = copy(prob.get_val('system.components.comp_4.updated_end_points'))
+comp_4_radii_before = copy(prob.get_val('system.components.comp_4.updated_radii'))
+
 
 bounds_before = copy(prob.get_val('bbv.bounds'))
 densities_before = copy(prob.get_val('projections.aggregator.aggregated_densities'))
@@ -224,13 +290,17 @@ T_before = copy(prob.get_val('FEA.temperature'))
 densities_before = copy(prob.get_val('projections.aggregator.aggregated_densities'))
 heat_load_nodes_before = find_active_nodes(densities_before, elements, threshold=1e-3)
 
-tot_before = prob.compute_totals(of=['bbv.volume'], wrt=['system.components.comp_1.translation','system.components.comp_2.translation'])
+tot_before = prob.compute_totals(of=['bbv.volume'], wrt=['system.components.comp_1.translation','system.components.comp_2.translation','system.components.comp_3.translation','system.components.comp_4.translation'])
 tot_before_comp_1 = copy(tot_before[('bbv.volume', 'system.components.comp_1.translation')][0])
 tot_before_comp_2 = copy(tot_before[('bbv.volume', 'system.components.comp_2.translation')][0])
+tot_before_comp_3 = copy(tot_before[('bbv.volume', 'system.components.comp_3.translation')][0])
+tot_before_comp_4 = copy(tot_before[('bbv.volume', 'system.components.comp_4.translation')][0])
 
-tot_FEA_before = prob.compute_totals(of=['FEA.max_temperature'], wrt=['system.components.comp_1.translation','system.components.comp_2.translation'])
+tot_FEA_before = prob.compute_totals(of=['FEA.max_temperature'], wrt=['system.components.comp_1.translation','system.components.comp_2.translation', 'system.components.comp_3.translation','system.components.comp_4.translation'])
 tot_FEA_before_comp_1 = copy(tot_FEA_before[('FEA.max_temperature', 'system.components.comp_1.translation')][0])
 tot_FEA_before_comp_2 = copy(tot_FEA_before[('FEA.max_temperature', 'system.components.comp_2.translation')][0])
+tot_FEA_before_comp_3 = copy(tot_FEA_before[('FEA.max_temperature', 'system.components.comp_3.translation')][0])
+tot_FEA_before_comp_4 = copy(tot_FEA_before[('FEA.max_temperature', 'system.components.comp_4.translation')][0])
 
 # # Run the optimization
 # t3 = time_ns()
@@ -278,6 +348,16 @@ comp_2_rotation_before = tuple(np.array(comp_2_rotation_before).tolist())
 comp_2_start_points_before = np.array(comp_2_start_points_before)
 comp_2_end_points_before = np.array(comp_2_end_points_before)
 comp_2_radii_before = np.array(comp_2_radii_before)
+comp_3_translation_before = tuple(np.array(comp_3_translation_before).tolist())
+comp_3_rotation_before = tuple(np.array(comp_3_rotation_before).tolist())
+comp_3_start_points_before = np.array(comp_3_start_points_before)
+comp_3_end_points_before = np.array(comp_3_end_points_before)
+comp_3_radii_before = np.array(comp_3_radii_before)
+comp_4_translation_before = tuple(np.array(comp_4_translation_before).tolist())
+comp_4_rotation_before = tuple(np.array(comp_4_rotation_before).tolist())
+comp_4_start_points_before = np.array(comp_4_start_points_before)
+comp_4_end_points_before = np.array(comp_4_end_points_before)
+comp_4_radii_before = np.array(comp_4_radii_before)
 comp_1_translation_after = tuple(np.array(comp_1_translation_after).tolist())
 comp_1_rotation_after = tuple(np.array(comp_1_rotation_after).tolist())
 comp_1_start_points_after = np.array(comp_1_start_points_after)
@@ -318,6 +398,8 @@ plotter = pv.Plotter(shape=(1, 3), window_size=(1500, 500), lighting='light kit'
 plot_grid(plotter, (0, 0), centers, element_size, densities=None, min_opacity=0.0)
 plot_capsules2(plotter, (0, 0), comp_1_start_points_before, comp_1_end_points_before, comp_1_radii_before, color='#77bbd2', opacity=1.0)
 plot_capsules2(plotter, (0, 0), comp_2_start_points_before, comp_2_end_points_before, comp_2_radii_before, color='#f1cc7c', opacity=1.0)
+plot_capsules2(plotter, (0, 0), comp_3_start_points_before, comp_3_end_points_before, comp_3_radii_before, color='#f1cc7c', opacity=1.0)
+plot_capsules2(plotter, (0, 0), comp_4_start_points_before, comp_4_end_points_before, comp_4_radii_before, color='#77bbd2', opacity=1.0)
 
 # Block to box below
 pv_box = pv.Box(bounds=[-3, 3, -5, 5, -5, -3])
@@ -335,15 +417,21 @@ plot_translation_sensitivities(plotter, (0, 1), comp_2_start_points_before[0], t
 
 
 # FEA
-plot_grid(plotter, (0, 2), centers, element_size, densities=None)
+# plot_grid(plotter, (0, 2), centers, element_size, densities=None)
 
 plot_capsules2(plotter, (0, 2), comp_1_start_points_before, comp_1_end_points_before, comp_1_radii_before, color='#77bbd2', opacity=1.0)
 plot_capsules2(plotter, (0, 2), comp_2_start_points_before, comp_2_end_points_before, comp_2_radii_before, color='#f1cc7c', opacity=1.0)
+plot_capsules2(plotter, (0, 2), comp_3_start_points_before, comp_3_end_points_before, comp_3_radii_before, color='#f1cc7c', opacity=1.0)
+plot_capsules2(plotter, (0, 2), comp_4_start_points_before, comp_4_end_points_before, comp_4_radii_before, color='#77bbd2', opacity=1.0)
 
-plot_translation_sensitivities(plotter, (0, 2), comp_1_start_points_before[0]+np.array([[6,0,0]]), tot_before_comp_1, color='black', factor=1.5)
-plot_translation_sensitivities(plotter, (0, 2), comp_2_start_points_before[0]+np.array([[6,0,0]]), tot_before_comp_2, color='black', factor=1.5)
-# plot_translation_sensitivities(plotter, (0, 2), comp_1_start_points_before[0]+np.array([[6,0,0]]), tot_FEA_before_comp_1, color='red', factor=1.5)
-# plot_translation_sensitivities(plotter, (0, 2), comp_2_start_points_before[0]+np.array([[6,0,0]]), tot_FEA_before_comp_2, color='red', factor=1.5)
+plot_translation_sensitivities(plotter, (0, 2), comp_1_start_points_before[0]+np.array([[6.1,0,0]]), tot_before_comp_1, color='black', factor=1.5)
+plot_translation_sensitivities(plotter, (0, 2), comp_2_start_points_before[0]+np.array([[6.1,0,0]]), tot_before_comp_2, color='black', factor=1.5)
+plot_translation_sensitivities(plotter, (0, 2), comp_3_start_points_before[0]+np.array([[6.1,0,0]]), tot_before_comp_3, color='black', factor=1.5)
+plot_translation_sensitivities(plotter, (0, 2), comp_4_start_points_before[0]+np.array([[6.1,0,0]]), tot_before_comp_4, color='black', factor=1.5)
+plot_translation_sensitivities(plotter, (0, 2), comp_1_start_points_before[0]+np.array([[6.1,0,0]]), tot_FEA_before_comp_1, color='red', factor=1.5)
+plot_translation_sensitivities(plotter, (0, 2), comp_2_start_points_before[0]+np.array([[6.1,0,0]]), tot_FEA_before_comp_2, color='red', factor=1.5)
+plot_translation_sensitivities(plotter, (0, 2), comp_3_start_points_before[0]+np.array([[6.1,0,0]]), tot_FEA_before_comp_3, color='red', factor=1.5)
+plot_translation_sensitivities(plotter, (0, 2), comp_4_start_points_before[0]+np.array([[6.1,0,0]]), tot_FEA_before_comp_4, color='red', factor=1.5)
 
 plot_temperature_distribution(plotter,
                               (0, 2),
@@ -353,7 +441,8 @@ plot_temperature_distribution(plotter,
                               robin_nodes=robin_nodes,
                               dirichlet_nodes=dirichlet_nodes,
                               dims=(nx + 1, ny + 1, nz + 1),
-                              cmap='jet')
+                              cmap='jet',
+                              climits=(300, 800))
 
 
 
@@ -411,7 +500,7 @@ plot_temperature_distribution(plotter,
 # plot_AABB(plotter, (0, 1), bounds_after, color='blue')
 
 
-plotter.view_yz()
+
 
 plotter.link_views()
 plotter.show_axes()
@@ -420,6 +509,7 @@ plotter.show_axes()
 # plotter.enable_shadows()
 plotter.enable_anti_aliasing('fxaa')
 
+plotter.view_yz()
 plotter.show()
 
 

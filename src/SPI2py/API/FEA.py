@@ -163,33 +163,34 @@ class ExplicitFEA(ExplicitComponent):
 
     def compute_jacvec_product(self, inputs, d_inputs, d_outputs, mode):
 
-        # Unpack dynamic (differentiable) inputs.
-        density = jnp.array(inputs["density"])
-        heat_loads = jnp.array(inputs["heat_loads"])
-
-        # Unpack static options.
+        # Unpack the options
         nodes = jnp.array(self.options['nodes'])
         elements = jnp.array(self.options['elements'])
+        k = jnp.array(self.options['base_k'])
+        r_nodes = jnp.array(self.options['robin_nodes'])
+        r_h = self.options['robin_h']
+        r_T_inf = self.options['robin_T_inf']
+        r_area = self.options['el_size'] ** 2
         d_nodes = jnp.array(self.options['dirichlet_nodes'])
         d_T_arr = self.options['dirichlet_T'] * jnp.ones(len(d_nodes))
 
-        K_base = self._K_base
-        f_base = self._f_base
-        elem_indices = self._elem_indices
+        # Unpack the inputs
+        density = jnp.array(inputs["density"])
+        heat_loads = jnp.array(inputs["heat_loads"])
 
         idx = jnp.arange(nodes.shape[0])
         idx_p = d_nodes
         idx_f = jnp.setdiff1d(idx, idx_p)
-
-        u_p = d_T_arr
 
 
 
         # Freeze all static arguments via partial so that only density and heat_loads are inputs.
         frozen_compute_primal = partial(self._compute_primal,
                                         nodes=nodes, elements=elements,
-                                        K_base=K_base, f_base=f_base, u_p=u_p,
-                                        elem_indices=elem_indices, idx_f=idx_f, idx_p=idx_p)
+                                        k=k,
+                                        r_nodes=r_nodes, r_h=r_h, r_T_inf=r_T_inf, r_area=r_area,
+                                        d_nodes=d_nodes, d_T=d_T_arr,
+                                        idx_f=idx_f, idx_p=idx_p)
 
 
         if mode == "fwd":

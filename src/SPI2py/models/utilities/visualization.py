@@ -283,7 +283,7 @@ def plot_temperature_distribution(plotter,
 
     z_slice = grid.slice(normal='x', origin=(0, 0, 0.5))
 
-    plotter.add_mesh(z_slice, scalars="Temperature", cmap=cmap)
+    plotter.add_mesh(z_slice, scalars="Temperature", cmap=cmap, clim=climits)
 
     # Create a point cloud from the nodal positions.
     points = pv.PolyData(nodes)
@@ -355,7 +355,7 @@ def plot_translation_sensitivities(plotter, subplot_index, centers, sensitivitie
 
     # Add the arrow glyph mesh to the plotter.
     plotter.add_mesh(glyphs, color=color)
-    sphere = pv.Sphere(radius=0.25, theta_resolution=8, phi_resolution=8, center=centers)
+    sphere = pv.Sphere(radius=0.1, theta_resolution=8, phi_resolution=8, center=centers)
     plotter.add_mesh(sphere, color=color)
 
 
