@@ -203,11 +203,17 @@ def plot_stl_file(plotter, subplot_index, stl_file_path, translation=(0, 0, 0), 
     - subplot_index: Tuple specifying the subplot location.
     - stl_file_path: Path to the STL file.
     - translation: Tuple (x, y, z) to shift the STL mesh.
+    - rotation: Tuple (rx, ry, rz) specifying rotation angles in radians around x, y, z axes.
     """
 
-    # If inputs are JAX arrays, convert them to NumPy arrays for PyVista compatibility.
+    # FIXME Translations do not perfectly line up with MDBD results.
+
+    # If inputs are arrays, convert them to tuples for PyVista compatibility.
     translation = tuple(translation)
     rotation = tuple(rotation)
+
+    # Convert rotation from radians to degrees for PyVista.
+    rotation = tuple(np.degrees(rotation))
 
     # Create the subplot
     plotter.subplot(*subplot_index)
