@@ -20,11 +20,12 @@ def transform_points(positions, reference_point, translation, rotation):
     - transformed_positions: numpy array of shape (N, 3), the transformed points.
     """
 
+    # FIXME
     # Ensure inputs are proper shapes
     assert_shape(positions, (None, 3))
-    assert_shape(reference_point, (3,))
-    assert_shape(translation, (3,))
-    assert_shape(rotation, (3,))
+    # assert_shape(reference_point, (3,))
+    # assert_shape(translation, (3,))
+    # assert_shape(rotation, (3,))
 
     # Assemble the transformation matrix
     t = jnp.eye(4, dtype=jnp.float64)

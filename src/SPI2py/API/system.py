@@ -31,7 +31,7 @@ class MDBDComponent(ExplicitComponent):
     def initialize(self):
         self.options.declare('filepath', types=str)
         self.options.declare('port_positions', types=list)
-        self.options.declare('minimum_radius', types=int)
+        self.options.declare('minimum_radius', types=(int, float))
 
     def setup(self):
 

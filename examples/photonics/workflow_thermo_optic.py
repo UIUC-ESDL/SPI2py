@@ -1,11 +1,6 @@
 """
 Example 1:  Simple optimization of a 3D layout
 Author:     Chad Peterson
-
-TODO
-1. Why prob.check_partials(includes='system.components.comp_1')
-updated end points to end points not correctly identity matrix?
-Same for updated ports and radii
 """
 
 # Standard Python libraries
@@ -39,13 +34,11 @@ jax.config.update("jax_enable_x64", True)
 # jax.config.update("jax_debug_nans", True)
 
 # Initialize the main problem elements/groups
-prob = om.Problem()
-model = prob.model
-
-system = System()
-components = Components()
+prob        = om.Problem()
+model       = prob.model
+system      = System()
+components  = Components()
 projections = Projections()
-
 
 model.add_subsystem('system', system)
 model.system.add_subsystem('components', components)

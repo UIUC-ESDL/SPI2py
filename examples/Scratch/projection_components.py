@@ -1,14 +1,15 @@
 import numpy as np
 import pyvista as pv
-from SPI2py.models.projection.grid import create_grid
-from SPI2py.models.mechanics.transformations_rigidbody import transform_points
+from SPI2py.models.physics.distributed.mesh import generate_mesh
+from SPI2py.models.projection.mesh_kernels import create_uniform_kernel
+from SPI2py.models.mechanics.homogenous_transformation import transform_points
 from SPI2py.models.projection.projection import project_component, combine_densities
 from SPI2py.models.utilities.visualization import plot_grid, plot_spheres, plot_AABB, plot_stl_file
-from SPI2py.models.projection.grid_kernels import create_uniform_kernel
+
 
 # Create grid
 el_size = 0.25
-el_centers = create_grid(0, 2, 0, 6.5, 0,  4.5, element_size=el_size)
+el_centers = generate_mesh(0, 2, 0, 6.5, 0,  4.5, element_size=el_size)
 
 # Read the mesh kernel
 # Slice by minimum radius instead of length to maintain kernel symmetry
