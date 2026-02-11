@@ -143,9 +143,12 @@ prob.model.connect('mux_radii.stacked_output', 'bbv.radii')
 rho_min = 1e-2
 projection_aggregator = ProjectionAggregator(n_projections=3, rho_min=rho_min)
 model.projections.add_subsystem('aggregator', projection_aggregator)
-model.connect('projections.proj_c1.penalized_densities', 'projections.aggregator.densities_1')
-model.connect('projections.proj_c2.penalized_densities', 'projections.aggregator.densities_2')
-model.connect('projections.proj_c3.penalized_densities', 'projections.aggregator.densities_3')
+model.connect('projections.proj_c1.penalized_densities', 'projections.aggregator.densities_0')
+model.connect('projections.proj_c2.penalized_densities', 'projections.aggregator.densities_1')
+model.connect('projections.proj_c3.penalized_densities', 'projections.aggregator.densities_2')
+model.connect('projections.proj_c1.penalized_heat_loads', 'projections.aggregator.heat_loads_0')
+model.connect('projections.proj_c2.penalized_heat_loads', 'projections.aggregator.heat_loads_1')
+model.connect('projections.proj_c3.penalized_heat_loads', 'projections.aggregator.heat_loads_2')
 # model.connect('projections.proj_i1.penalized_densities', 'projections.aggregator.densities_4')
 # model.connect('projections.proj_i2.penalized_densities', 'projections.aggregator.densities_5')
 # model.connect('projections.proj_i3.penalized_densities', 'projections.aggregator.densities_6')
@@ -168,14 +171,20 @@ prob.setup()
 
 
 # Configure the system
-prob.set_val('system.components.comp_1.translation', [0.625, 0.625, 0.125])
-prob.set_val('system.components.comp_1.rotation', [0, 0, 0])
-prob.set_val('system.components.comp_2.translation', [0.5, 4, 1.5])
-prob.set_val('system.components.comp_2.rotation', [np.pi/2, 0, np.pi/2])
-prob.set_val('system.components.comp_3.translation', [0, 0.5, 1.75])
-prob.set_val('system.components.comp_3.rotation', [0, 0, 0])
+# prob.set_val('system.components.comp_1.translation', [0.625, 0.625, 0.125])
+# prob.set_val('system.components.comp_1.rotation', [0, 0, 0])
+# prob.set_val('system.components.comp_2.translation', [0.5, 4, 1.5])
+# prob.set_val('system.components.comp_2.rotation', [np.pi/2, 0, np.pi/2])
+# prob.set_val('system.components.comp_3.translation', [0, 0.5, 1.75])
+# prob.set_val('system.components.comp_3.rotation', [0, 0, 0])
 
-
+prob.set_val('system.components.comp_1.translation', [1, 1, 0.5])
+prob.set_val('system.components.comp_2.translation', [3.5, 2, 0.5])
+prob.set_val('system.components.comp_3.translation', [0.5, 1, 0])
+prob.set_val('system.components.comp_3.rotation', [-np.pi/2, 0, 0])
+# prob.set_val('system.interconnects.int_1.control_points', [[1.6, 1.6, 0.5]])
+# prob.set_val('system.interconnects.int_2.control_points', [[2.35, 3.75, 0.5]])
+# prob.set_val('system.interconnects.int_3.control_points', [[0.65, 1.75, 0.5]])
 
 #
 # # Set up the optimizer
@@ -187,50 +196,43 @@ prob.set_val('system.components.comp_3.rotation', [0, 0, 0])
 t1 = time_ns()
 prob.run_model()
 t2 = time_ns()
-#
-# print(f"Run time: {(t2 - t1) / 1e9} seconds")
+
+print(f"Run time: {(t2 - t1) / 1e9} seconds")
 
 
-# # Check the initial state
-# print("BBV Before:", prob.get_val('bbv.volume'))
-# print("Max Density:", prob.get_val('projections.aggregator.max_density'))
-# comp_1_translation_before = copy(prob.get_val('system.components.comp_1.translation'))
-# comp_1_rotation_before = copy(prob.get_val('system.components.comp_1.rotation'))
-# comp_1_start_points_before = copy(prob.get_val('system.components.comp_1.updated_sphere_positions'))
-# comp_1_end_points_before = copy(prob.get_val('system.components.comp_1.updated_end_points'))
-# comp_1_radii_before = copy(prob.get_val('system.components.comp_1.updated_sphere_radii'))
-# comp_2_translation_before = copy(prob.get_val('system.components.comp_2.translation'))
-# comp_2_rotation_before = copy(prob.get_val('system.components.comp_2.rotation'))
-# comp_2_start_points_before = copy(prob.get_val('system.components.comp_2.updated_sphere_positions'))
-# comp_2_end_points_before = copy(prob.get_val('system.components.comp_2.updated_end_points'))
-# comp_2_radii_before = copy(prob.get_val('system.components.comp_2.updated_sphere_radii'))
-# comp_3_translation_before = copy(prob.get_val('system.components.comp_3.translation'))
-# comp_3_rotation_before = copy(prob.get_val('system.components.comp_3.rotation'))
-# comp_3_start_points_before = copy(prob.get_val('system.components.comp_3.updated_sphere_positions'))
-# comp_3_end_points_before = copy(prob.get_val('system.components.comp_3.updated_end_points'))
-# comp_3_radii_before = copy(prob.get_val('system.components.comp_3.updated_sphere_radii'))
-#
-#
-# bounds_before = copy(prob.get_val('bbv.bounds'))
-# densities_before = copy(prob.get_val('projections.aggregator.aggregated_densities'))
-#
-# densities_before = copy(prob.get_val('projections.aggregator.aggregated_densities'))
-#
+# Check the initial state
+print("BBV Before:", prob.get_val('bbv.volume'))
+print("Max Density:", prob.get_val('projections.aggregator.max_density'))
+comp_1_translation_before = copy(prob.get_val('system.components.comp_1.translation'))
+comp_1_rotation_before = copy(prob.get_val('system.components.comp_1.rotation'))
+comp_1_start_points_before = copy(prob.get_val('system.components.comp_1.updated_sphere_positions'))
+comp_1_radii_before = copy(prob.get_val('system.components.comp_1.updated_sphere_radii'))
+comp_2_translation_before = copy(prob.get_val('system.components.comp_2.translation'))
+comp_2_rotation_before = copy(prob.get_val('system.components.comp_2.rotation'))
+comp_2_start_points_before = copy(prob.get_val('system.components.comp_2.updated_sphere_positions'))
+comp_2_radii_before = copy(prob.get_val('system.components.comp_2.updated_sphere_radii'))
+comp_3_translation_before = copy(prob.get_val('system.components.comp_3.translation'))
+comp_3_rotation_before = copy(prob.get_val('system.components.comp_3.rotation'))
+comp_3_start_points_before = copy(prob.get_val('system.components.comp_3.updated_sphere_positions'))
+comp_3_radii_before = copy(prob.get_val('system.components.comp_3.updated_sphere_radii'))
+
+
+bounds_before = copy(prob.get_val('bbv.bounds'))
+densities_before = copy(prob.get_val('projections.aggregator.aggregated_densities'))
+
 # tot_before = prob.compute_totals(of=['bbv.volume'], wrt=['system.components.comp_1.translation','system.components.comp_2.translation','system.components.comp_3.translation','system.components.comp_4.translation'])
 # tot_before_comp_1 = copy(tot_before[('bbv.volume', 'system.components.comp_1.translation')][0])
 # tot_before_comp_2 = copy(tot_before[('bbv.volume', 'system.components.comp_2.translation')][0])
 # tot_before_comp_3 = copy(tot_before[('bbv.volume', 'system.components.comp_3.translation')][0])
-#
-#
-# # # Run the optimization
-# # t3 = time_ns()
-# # prob.run_driver()
-# # t4 = time_ns()
-# # print(f"Optimization time: {(t4 - t3) / 1e9} seconds")
-#
-#
-#
-#
+
+
+# # Run the optimization
+# t3 = time_ns()
+# prob.run_driver()
+# t4 = time_ns()
+# print(f"Optimization time: {(t4 - t3) / 1e9} seconds")
+
+
 # # # Check the final state
 # print("BBV After:", prob.get_val('bbv.volume'))
 # # print("BBV Bounds:", prob.get_val('bbv.bounds'))
@@ -238,104 +240,67 @@ t2 = time_ns()
 # comp_1_translation_after = prob.get_val('system.components.comp_1.translation')
 # comp_1_rotation_after = prob.get_val('system.components.comp_1.rotation')
 # comp_1_start_points_after = prob.get_val('system.components.comp_1.updated_sphere_positions')
-# comp_1_end_points_after = prob.get_val('system.components.comp_1.updated_end_points')
 # comp_1_radii_after = prob.get_val('system.components.comp_1.updated_sphere_radii')
 # comp_2_translation_after = prob.get_val('system.components.comp_2.translation')
 # comp_2_rotation_after = prob.get_val('system.components.comp_2.rotation')
 # comp_2_start_points_after = prob.get_val('system.components.comp_2.updated_sphere_positions')
-# comp_2_end_points_after = prob.get_val('system.components.comp_2.updated_end_points')
 # comp_2_radii_after = prob.get_val('system.components.comp_2.updated_sphere_radii')
 # bounds_after = prob.get_val('bbv.bounds')
 # densities_after = prob.get_val('projections.aggregator.aggregated_densities')
-#
+
 # tot_after = prob.compute_totals(of=['bbv.volume'], wrt=['system.components.comp_1.translation','system.components.comp_2.translation'])
 # tot_after_comp_1 = copy(tot_after[('bbv.volume', 'system.components.comp_1.translation')][0])
 # tot_after_comp_2 = copy(tot_after[('bbv.volume', 'system.components.comp_2.translation')][0])
-#
-#
-# # Convert JAX arrays to NumPy arrays
-# centers = np.array(centers)
-# comp_1_translation_before = tuple(np.array(comp_1_translation_before).tolist())
-# comp_1_rotation_before = tuple(np.array(comp_1_rotation_before).tolist())
-# comp_1_start_points_before = np.array(comp_1_start_points_before)
-# comp_1_end_points_before = np.array(comp_1_end_points_before)
-# comp_1_radii_before = np.array(comp_1_radii_before)
-# comp_2_translation_before = tuple(np.array(comp_2_translation_before).tolist())
-# comp_2_rotation_before = tuple(np.array(comp_2_rotation_before).tolist())
-# comp_2_start_points_before = np.array(comp_2_start_points_before)
-# comp_2_end_points_before = np.array(comp_2_end_points_before)
-# comp_2_radii_before = np.array(comp_2_radii_before)
-# comp_3_translation_before = tuple(np.array(comp_3_translation_before).tolist())
-# comp_3_rotation_before = tuple(np.array(comp_3_rotation_before).tolist())
-# comp_3_start_points_before = np.array(comp_3_start_points_before)
-# comp_3_end_points_before = np.array(comp_3_end_points_before)
-# comp_3_radii_before = np.array(comp_3_radii_before)
-#
-# comp_1_translation_after = tuple(np.array(comp_1_translation_after).tolist())
-# comp_1_rotation_after = tuple(np.array(comp_1_rotation_after).tolist())
-# comp_1_start_points_after = np.array(comp_1_start_points_after)
-# comp_1_end_points_after = np.array(comp_1_end_points_after)
-# comp_1_radii_after = np.array(comp_1_radii_after)
-# comp_2_translation_after = tuple(np.array(comp_2_translation_after).tolist())
-# comp_2_rotation_after = tuple(np.array(comp_2_rotation_after).tolist())
-# comp_2_start_points_after = np.array(comp_2_start_points_after)
-# comp_2_end_points_after = np.array(comp_2_end_points_after)
-# comp_2_radii_after = np.array(comp_2_radii_after)
-# bounds_before = np.array(bounds_before)
-# bounds_after = np.array(bounds_after)
-# densities_before = np.array(densities_before)
-# densities_after = np.array(densities_after)
-#
-#
-#
-# densities_before = np.array(densities_before)
-# densities_after = np.array(densities_after)
-#
-#
-#
-# # Plot the results
-# t5 = time_ns()
-# plotter = pv.Plotter(shape=(1, 3), window_size=(1500, 500), lighting='light kit')
-# # plotter.enable_ssao(radius=0.5)
-#
-#
-#
-#
-# # BEFORE
-#
-# # Geometry
-# plot_grid(plotter, (0, 0), centers, element_size, densities=None, min_opacity=0.0)
-# plot_capsules2(plotter, (0, 0), comp_1_start_points_before, comp_1_end_points_before, comp_1_radii_before, color='#77bbd2', opacity=1.0)
-# plot_capsules2(plotter, (0, 0), comp_2_start_points_before, comp_2_end_points_before, comp_2_radii_before, color='#f1cc7c', opacity=1.0)
-# plot_capsules2(plotter, (0, 0), comp_3_start_points_before, comp_3_end_points_before, comp_3_radii_before, color='#f1cc7c', opacity=1.0)
-#
-# # Block to box below
-# pv_box = pv.Box(bounds=[-3, 3, -5, 5, -5, -3])
-# plotter.add_mesh(pv_box, color='#7dc5da', opacity=1.0)
-#
-#
-# # Projection
-# plot_grid(plotter, (0, 1), centers, element_size, densities=None)
-# plot_grid(plotter, (0, 1), centers, element_size, densities=densities_before)
-#
-# plot_AABB(plotter, (0, 1), bounds_before, color='gray', opacity=0.15)
-#
+
+
+
+#%% Plot the results
+
+# Create multiple subplots
+plotter = pv.Plotter(shape=(1, 3), window_size=(1500, 500), lighting='light kit')
+
+
+
+#%% Plot the System Before Optimization
+
+# Subplot 1: Geometry and Components
+plotter.subplot(0, 0)
+plotter.add_title("Geometry before Optimization")
+
+# The problem domain
+plot_grid(plotter, (0, 0), centers, element_size, densities=None, min_opacity=0.0)
+
+# Components, CAD Models
+plot_stl_file(plotter, (0, 0), 'models/Bot_Eye_scaled.stl', translation=comp_1_translation_before, rotation=comp_1_rotation_before, opacity=0.25, color='blue')
+plot_stl_file(plotter, (0, 0), 'models/CogDrivenGear_scaled.stl', translation=comp_2_translation_before, rotation=comp_2_rotation_before, opacity=0.25, color='purple')
+plot_stl_file(plotter, (0, 0), 'models/CrossHead_Pin_scaled.stl', translation=comp_3_translation_before, rotation=comp_3_rotation_before, opacity=0.25, color='purple')
+
+# Components, MDBD Representation
+plot_spheres(plotter, (0, 0), comp_1_start_points_before, comp_1_radii_before, 'blue', opacity=0.5)
+plot_spheres(plotter, (0, 0), comp_2_start_points_before, comp_2_radii_before, 'orange', opacity=0.5)
+plot_spheres(plotter, (0, 0), comp_3_start_points_before, comp_3_radii_before, 'red', opacity=0.5)
+
+# Axis-aligned bounding box
+plot_AABB(plotter, (0, 0), bounds_before, color='gray', opacity=0.15)
+
+# Subplot 2: Pseudo-Density Projections
+plotter.subplot(0, 1)
+plotter.add_title("Pseudo-Densities before Optimization")
+
+# Projection
+plot_grid(plotter, (0, 1), centers, element_size, densities=None)
+plot_grid(plotter, (0, 1), centers, element_size, densities=densities_before)
+
+# Axis-aligned bounding box
+plot_AABB(plotter, (0, 1), bounds_before, color='gray', opacity=0.15)
+
 # plot_translation_sensitivities(plotter, (0, 1), comp_1_start_points_before[0], tot_before_comp_1, color='red', factor=2.0)
 # plot_translation_sensitivities(plotter, (0, 1), comp_2_start_points_before[0], tot_before_comp_2, color='red', factor=2.0)
-#
-#
-# # FEA
-# # plot_grid(plotter, (0, 2), centers, element_size, densities=None)
-#
-# plot_capsules2(plotter, (0, 2), comp_1_start_points_before, comp_1_end_points_before, comp_1_radii_before, color='#77bbd2', opacity=1.0)
-# plot_capsules2(plotter, (0, 2), comp_2_start_points_before, comp_2_end_points_before, comp_2_radii_before, color='#f1cc7c', opacity=1.0)
-# plot_capsules2(plotter, (0, 2), comp_3_start_points_before, comp_3_end_points_before, comp_3_radii_before, color='#f1cc7c', opacity=1.0)
-#
-#
-#
-# # # AFTER
-# #
-# # # Geometry
+
+
+#%% Plot the System After Optimization
+
+# # Geometry
 # # plot_grid(plotter, (1, 0), centers, element_size, densities=None)
 # # plot_stl_file(plotter, (1, 0), 'models/CrossHead_Pin_scaled.stl', translation=comp_1_translation_after, rotation=comp_1_rotation_after, opacity=0.25, color='blue')
 # # plot_spheres(plotter, (1, 0), comp_1_spheres_after, comp_1_radii_after, 'blue', opacity=0.5)
@@ -351,51 +316,24 @@ t2 = time_ns()
 # # plot_translation_sensitivities(plotter, (1, 1), comp_1_spheres_after[0], tot_after_comp_1, color='red', factor=3.0)
 # # plot_translation_sensitivities(plotter, (1, 1), comp_2_start_points_after[2], tot_after_comp_2, color='red', factor=3.0)
 # # plot_translation_sensitivities(plotter, (1, 1), int_1_control_points_after, tot_after_int_1, color='red', factor=3.0)
-# #
-# # # FEA
-# # plot_grid(plotter, (1, 2), centers, element_size, densities=None)
-# # plot_stl_file(plotter, (1, 2), 'models/CrossHead_Pin_scaled.stl', translation=comp_1_translation_after, rotation=comp_1_rotation_after, opacity=1.0, color='black')
-# # plot_capsules2(plotter, (1, 2), comp_2_start_points_after, comp_2_end_points_after, comp_2_radii_after, color='black', opacity=1.0)
-# # plot_capsules(plotter, (1, 2), int_1_points_after, 0.25, color='black', opacity=1.0)
-# # plot_temperature_distribution(plotter,
-# #                               (1, 2),
-# #                               np.array(nodes),
-# #                               T_after,
-# #                               heat_load_nodes=heat_load_nodes_after,
-# #                               robin_nodes=robin_nodes,
-# #                               dirichlet_nodes=dirichlet_nodes,
-# #                               dims=(nx + 1, ny + 1, nz + 1),
-# #                               cmap='jet')
 #
 #
-#
-# # Plot the geometries before optimization
-# # plotter.subplot(0, 0)
-# # plotter.add_title("Before Optimization")
-# # plot_stl_file(plotter, (0, 0), 'models/CrossHead_Pin_scaled.stl', translation=comp_1_translation_before, rotation=comp_1_rotation_before, opacity=0.25, color='purple')
-# # plot_stl_file(plotter, (0, 0), 'models/Bot_Eye_scaled.stl', translation=comp_2_translation_before, rotation=comp_2_rotation_before, opacity=0.25, color='blue')
-# # plot_spheres(plotter, (0, 0), sphere_positions_before, sphere_radii_before, 'purple', opacity=0.5)
-# # plot_AABB(plotter, (0, 0), bounds_before, color='blue')
+
 #
 # # Plot the geometries after optimization
 # # plotter.subplot(0, 1)
 # # plotter.add_title("After Optimization")
-#
-# # plot_stl_file(plotter, (0, 1), 'models/CrossHead_Pin_scaled.stl', translation=comp_1_translation_after, rotation=comp_1_rotation_after, opacity=0.25, color='purple')
-# # plot_stl_file(plotter, (0, 1), 'models/Bot_Eye_scaled.stl', translation=comp_2_translation_after, rotation=comp_2_rotation_after, opacity=0.25, color='blue')
-# # plot_spheres(plotter, (0, 1), sphere_positions_after, sphere_radii_after, 'purple', opacity=0.5)
-# # plot_AABB(plotter, (0, 1), bounds_after, color='blue')
-#
-#
-#
-# # Plotter configurations
-# plotter.link_views()
-# plotter.show_axes()
-# # plotter.enable_shadows()
-# plotter.enable_anti_aliasing('fxaa')
-# plotter.view_yz()
-# plotter.show()
-#
+
+
+# Plotter configurations
+plotter.link_views()
+plotter.show_axes()
+# plotter.enable_shadows()
+# plotter.enable_ssao(radius=0.5)
+plotter.enable_anti_aliasing('fxaa')
+plotter.view_yz()
+plotter.show()
+
 #
 #
 # t6 = time_ns()

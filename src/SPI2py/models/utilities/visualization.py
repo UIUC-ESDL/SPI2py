@@ -13,6 +13,12 @@ def plot_grid(plotter,
     plotter.subplot(*subplot_index)
     # plotter.render_window.SetMultiSamples(0)
 
+    # If inputs are JAX arrays, convert them to NumPy arrays for PyVista compatibility.
+    centers = np.asarray(centers)
+    size = np.asarray(size)
+    if densities is not None:
+        densities = np.asarray(densities)
+
     # Plot the bounding box (unchanged)
     flat_centers = centers.reshape(-1, 3)
     x_min, y_min, z_min = np.min(flat_centers - size / 2, axis=0)
@@ -58,6 +64,12 @@ def plot_grid(plotter,
 
 
 def plot_spheres(plotter, subplot_index, positions, radii, color, opacity=0.15):
+
+    # If inputs are JAX arrays, convert them to NumPy arrays for PyVista compatibility.
+    positions = np.asarray(positions)
+    radii = np.asarray(radii)
+
+
     # Create the subplot
     plotter.subplot(*subplot_index)
     # plotter.render_window.SetMultiSamples(0)
@@ -83,6 +95,12 @@ def plot_spheres(plotter, subplot_index, positions, radii, color, opacity=0.15):
 
 
 def plot_capsules(plotter, subplot_index, cyl_control_points, cyl_radius, color, opacity=0.875):
+
+    # If inputs are JAX arrays, convert them to NumPy arrays for PyVista compatibility.
+    cyl_control_points = np.asarray(cyl_control_points)
+    cyl_radius = np.asarray(cyl_radius)
+
+
     cyl_starts, cyl_stops, cyl_radii = create_cylinders(cyl_control_points, cyl_radius)
 
     # Create the subplot
@@ -106,6 +124,12 @@ def plot_capsules(plotter, subplot_index, cyl_control_points, cyl_radius, color,
 
 
 def plot_capsules2(plotter, subplot_index, start_points, end_points, radii, color, opacity=0.875):
+
+    # If inputs are JAX arrays, convert them to NumPy arrays for PyVista compatibility.
+    start_points = np.asarray(start_points)
+    end_points = np.asarray(end_points)
+    radii = np.asarray(radii)
+
     # Create the subplot
     plotter.subplot(*subplot_index)
     # plotter.render_window.SetMultiSamples(0)
@@ -128,6 +152,11 @@ def plot_capsules2(plotter, subplot_index, start_points, end_points, radii, colo
 
 
 def plot_AABB_spheres(plotter, subplot_index, centers, radii, color, opacity=0.25):
+
+    # If inputs are JAX arrays, convert them to NumPy arrays for PyVista compatibility.
+    centers = np.asarray(centers)
+    radii = np.asarray(radii)
+
     # Create the subplot
     plotter.subplot(*subplot_index)
     # plotter.render_window.SetMultiSamples(0)
@@ -146,6 +175,7 @@ def plot_AABB_spheres(plotter, subplot_index, centers, radii, color, opacity=0.2
 
 
 def plot_AABB(plotter, subplot_index, bounds, color, opacity=0.25):
+
     # Create the subplot
     plotter.subplot(*subplot_index)
     # plotter.render_window.SetMultiSamples(0)
@@ -174,6 +204,11 @@ def plot_stl_file(plotter, subplot_index, stl_file_path, translation=(0, 0, 0), 
     - stl_file_path: Path to the STL file.
     - translation: Tuple (x, y, z) to shift the STL mesh.
     """
+
+    # If inputs are JAX arrays, convert them to NumPy arrays for PyVista compatibility.
+    translation = tuple(translation)
+    rotation = tuple(rotation)
+
     # Create the subplot
     plotter.subplot(*subplot_index)
     # plotter.render_window.SetMultiSamples(0)
@@ -330,6 +365,11 @@ def plot_translation_sensitivities(plotter, subplot_index, centers, sensitivitie
     Each arrow starts at centers[i] and points in the direction given by the normalized vector
     (sens_x[i], sens_y[i], sens_z[i]).
     """
+
+    # If inputs are JAX arrays, convert them to NumPy arrays for PyVista compatibility.
+    centers = np.asarray(centers)
+    sensitivities = np.asarray(sensitivities)
+
     # Set the desired subplot.
     plotter.subplot(*subplot_index)
     # plotter.render_window.SetMultiSamples(0)
