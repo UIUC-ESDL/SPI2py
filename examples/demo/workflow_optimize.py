@@ -43,12 +43,12 @@ prob          = om.Problem()
 model         = prob.model
 system        = System()
 components    = Components()
-# interconnects = Interconnect()
+interconnects = Interconnects()
 projections   = Projections()
 
 model.add_subsystem('system', system)
 model.system.add_subsystem('components', components)
-# model.system.add_subsystem('interconnects', interconnects)
+model.system.add_subsystem('interconnects', interconnects)
 model.add_subsystem('projections', projections)
 
 
@@ -86,25 +86,29 @@ comp_3 = MDBDComponent(filepath='csvs/CrossHead_Pin_5k_300s.csv',port_positions=
 model.system.components.add_subsystem('comp_1', comp_1)
 model.system.components.add_subsystem('comp_2', comp_2)
 model.system.components.add_subsystem('comp_3', comp_3)
-# int_1 = Interconnect(start_points=[[0, 0, 0]], end_points=[[6, 0, 0]], radii=[0.35], port_positions=[[0, 0, 0]])
-# int_2 = Interconnect(start_points=[[0, 0, 0]], end_points=[[6, 0, 0]], radii=[0.75], port_positions=[[0, 0, 0]])
-# int_3 = Interconnect(start_points=[[0, 0, 0]], end_points=[[6, 0, 0]], radii=[0.75], port_positions=[[0, 0, 0]])
-# model.system.interconnects.add_subsystem('int_1', int_1)
+int_1 = Interconnect(radius=0.35, n_segments=2)
+# int_2 = Interconnect(radius=0.75, n_segments=2)
+# int_3 = Interconnect(radius=0.75, n_segments=2)
+model.system.interconnects.add_subsystem('int_1', int_1)
 # model.system.interconnects.add_subsystem('int_2', int_2)
 # model.system.interconnects.add_subsystem('int_3', int_3)
+
+# Connect the Interconnects to the components
+model.connect('system.components.comp_1.ports', 'system.interconnects.int_1.start_points')
+# model.connect('system.components.comp_2.ports', 'system.interconnects.int
 
 
 # # Define the projections
 proj_c1 = ProjectMDBDComponent(mesh_size=element_size, mesh_centers=centers, kernel_centers=kernel_points, kernel_radii=kernel_radii)
 proj_c2 = ProjectMDBDComponent(mesh_size=element_size, mesh_centers=centers, kernel_centers=kernel_points, kernel_radii=kernel_radii)
 proj_c3 = ProjectMDBDComponent(mesh_size=element_size, mesh_centers=centers, kernel_centers=kernel_points, kernel_radii=kernel_radii)
-# proj_i1 = ProjectInterconnect(mesh_size=element_size, mesh_centers=centers, kernel_centers=kernel_points, kernel_radii=kernel_radii)
+proj_i1 = ProjectInterconnect(mesh_size=element_size, mesh_centers=centers, kernel_centers=kernel_points, kernel_radii=kernel_radii)
 # proj_i2 = ProjectInterconnect(mesh_size=element_size, mesh_centers=centers, kernel_centers=kernel_points, kernel_radii=kernel_radii)
 # proj_i3 = ProjectInterconnect(mesh_size=element_size, mesh_centers=centers, kernel_centers=kernel_points, kernel_radii=kernel_radii)
 model.projections.add_subsystem('proj_c1', proj_c1)
 model.projections.add_subsystem('proj_c2', proj_c2)
 model.projections.add_subsystem('proj_c3', proj_c3)
-# model.projections.add_subsystem('proj_i1', proj_i1)
+model.projections.add_subsystem('proj_i1', proj_i1)
 # model.projections.add_subsystem('proj_i2', proj_i2)
 # model.projections.add_subsystem('proj_i3', proj_i3)
 
@@ -117,11 +121,17 @@ model.connect('system.components.comp_2.updated_sphere_positions', 'projections.
 model.connect('system.components.comp_2.updated_sphere_radii', 'projections.proj_c2.radii')
 model.connect('system.components.comp_3.updated_sphere_positions', 'projections.proj_c3.centers')
 model.connect('system.components.comp_3.updated_sphere_radii', 'projections.proj_c3.radii')
+model.connect('system.interconnects.int_1.updated_cyl_positions', 'projections.proj_i1.control_points')
+model.connect('system.interconnects.int_1.updated_cyl_radius', 'projections.proj_i1.radius')
+# model.connect('system.interconnects.int_2.control_points', 'projections.proj_i2.control_points')
+# model.connect('system.interconnects.int_2.radii', 'projections.proj_i2.radii')
+# model.connect('system.interconnects.int_3.control_points', 'projections.proj_i3.control_points')
+# model.connect('system.interconnects.int_3.radii', 'projections.proj_i3.radii')
 
 
 # Aggregate the spheres of each component
-mux_centers = Multiplexer(n_i=[122, 1119, 195], m=3)
-mux_radii = Multiplexer(n_i=[122, 1119, 195], m=1)
+mux_centers = Multiplexer(n_i=[122, 1119, 195, 3, 3, 3], m=3)
+mux_radii = Multiplexer(n_i=[122, 1119, 195, 3, 3, 3], m=1)
 prob.model.add_subsystem('mux_centers', mux_centers)
 prob.model.add_subsystem('mux_radii', mux_radii)
 prob.model.connect('system.components.comp_1.updated_sphere_positions', 'mux_centers.input_0')
@@ -130,6 +140,13 @@ prob.model.connect('system.components.comp_3.updated_sphere_positions', 'mux_cen
 prob.model.connect('system.components.comp_1.updated_sphere_radii', 'mux_radii.input_0')
 prob.model.connect('system.components.comp_2.updated_sphere_radii', 'mux_radii.input_1')
 prob.model.connect('system.components.comp_3.updated_sphere_radii', 'mux_radii.input_2')
+prob.model.connect('system.interconnects.int_1.updated_cyl_positions', 'mux_centers.input_3')
+# prob.model.connect('system.interconnects.int_2.control_points', 'mux_centers.input_4')
+# prob.model.connect('system.interconnects.int_3.control_points', 'mux_centers.input_5')
+prob.model.connect('system.interconnects.int_1.updated_cyl_radius', 'mux_radii.input_3')
+# prob.model.connect('system.interconnects.int_2.radii', 'mux_radii.input_4')
+# prob.model.connect('system.interconnects.int_3.radii', 'mux_radii.input_5')
+
 
 
 # Define and connect the objective
@@ -141,7 +158,7 @@ prob.model.connect('mux_radii.stacked_output', 'bbv.radii')
 
 # Aggregate the pseudo-densities
 rho_min = 1e-2
-projection_aggregator = ProjectionAggregator(n_projections=3, rho_min=rho_min)
+projection_aggregator = ProjectionAggregator(n_projections=4, rho_min=rho_min)
 model.projections.add_subsystem('aggregator', projection_aggregator)
 model.connect('projections.proj_c1.penalized_densities', 'projections.aggregator.densities_0')
 model.connect('projections.proj_c2.penalized_densities', 'projections.aggregator.densities_1')
@@ -149,9 +166,12 @@ model.connect('projections.proj_c3.penalized_densities', 'projections.aggregator
 model.connect('projections.proj_c1.penalized_heat_loads', 'projections.aggregator.heat_loads_0')
 model.connect('projections.proj_c2.penalized_heat_loads', 'projections.aggregator.heat_loads_1')
 model.connect('projections.proj_c3.penalized_heat_loads', 'projections.aggregator.heat_loads_2')
-# model.connect('projections.proj_i1.penalized_densities', 'projections.aggregator.densities_4')
+model.connect('projections.proj_i1.penalized_densities', 'projections.aggregator.densities_3')
 # model.connect('projections.proj_i2.penalized_densities', 'projections.aggregator.densities_5')
 # model.connect('projections.proj_i3.penalized_densities', 'projections.aggregator.densities_6')
+model.connect('projections.proj_i1.penalized_heat_loads', 'projections.aggregator.heat_loads_3')
+# model.connect('projections.proj_i2.penalized_heat_loads', 'projections.aggregator.heat_loads_5')
+# model.connect('projections.proj_i3.penalized_heat_loads', 'projections.aggregator.heat_loads_6')
 
 
 
@@ -182,7 +202,7 @@ prob.set_val('system.components.comp_1.translation', [1, 1, 1])  # Blue
 prob.set_val('system.components.comp_2.translation', [5, 2, 0])  # Orange
 prob.set_val('system.components.comp_3.translation', [0.5, 4, 1])  # Red
 prob.set_val('system.components.comp_3.rotation', [-np.pi/2, 0, 0])
-# prob.set_val('system.interconnects.int_1.control_points', [[1.6, 1.6, 0.5]])
+prob.set_val('system.interconnects.int_1.control_points', [[1.6, 1.6, 0.5]])
 # prob.set_val('system.interconnects.int_2.control_points', [[2.35, 3.75, 0.5]])
 # prob.set_val('system.interconnects.int_3.control_points', [[0.65, 1.75, 0.5]])
 
@@ -216,6 +236,9 @@ comp_3_rotation_before = copy(prob.get_val('system.components.comp_3.rotation'))
 comp_3_start_points_before = copy(prob.get_val('system.components.comp_3.updated_sphere_positions'))
 comp_3_radii_before = copy(prob.get_val('system.components.comp_3.updated_sphere_radii'))
 
+int_1_points_before = prob.get_val('system.interconnects.int_1.updated_cyl_positions')
+int_1_radius_before = prob.get_val('system.interconnects.int_1.updated_cyl_radius')
+
 
 bounds_before = copy(prob.get_val('bbv.bounds'))
 densities_before = copy(prob.get_val('projections.aggregator.aggregated_densities'))
@@ -245,6 +268,9 @@ comp_2_translation_after = prob.get_val('system.components.comp_2.translation')
 comp_2_rotation_after = prob.get_val('system.components.comp_2.rotation')
 comp_2_start_points_after = prob.get_val('system.components.comp_2.updated_sphere_positions')
 comp_2_radii_after = prob.get_val('system.components.comp_2.updated_sphere_radii')
+
+
+
 bounds_after = prob.get_val('bbv.bounds')
 densities_after = prob.get_val('projections.aggregator.aggregated_densities')
 
@@ -274,6 +300,9 @@ plot_grid(plotter, (0, 0), centers, element_size, densities=None, min_opacity=0.
 plot_spheres(plotter, (0, 0), comp_1_start_points_before, comp_1_radii_before, 'blue', opacity=0.5)
 plot_spheres(plotter, (0, 0), comp_2_start_points_before, comp_2_radii_before, 'orange', opacity=0.5)
 plot_spheres(plotter, (0, 0), comp_3_start_points_before, comp_3_radii_before, 'red', opacity=0.5)
+
+# Interconnects
+plot_capsules(plotter, (0, 0), int_1_points_before, int_1_radius_before, color='black', opacity=0.5)
 
 # Axis-aligned bounding box
 plot_AABB(plotter, (0, 0), bounds_before, color='gray', opacity=0.15)
