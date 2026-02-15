@@ -14,6 +14,7 @@ build/*
 
 # Files
 **/.openmdao_out
+**/cases.sql
 **/.DS_Store
 **/output.log
 **/output.json

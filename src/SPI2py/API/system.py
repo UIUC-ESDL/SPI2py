@@ -81,6 +81,8 @@ class MDBDComponent(ExplicitComponent):
         self.add_output('updated_sphere_radii', val=sphere_radii)
         self.add_output('updated_ports', val=ports)
 
+        # TODO output MDBD Volume, AABB bounds, etc.
+
     def setup_partials(self):
 
         # Declare the partials for the outputs wrt the design variables
@@ -178,6 +180,13 @@ class MDBDComponent(ExplicitComponent):
         radii   = prob.get_val(self.pathname + '.' + 'updated_sphere_radii')
         color   = self.options['color']
         plot_spheres(plotter, subplot, centers, radii, color, opacity=opacity)
+
+        # TODO Implement utility plots
+        # plot_AABB(plotter, subplot, bounds, color='gray', opacity=0.15)
+        # plot_translation_sensitivities(plotter, subplot, origin, tot_before_comp_1, color=color,
+        #                                factor=2.0)
+        # plot_rotation_sensitivities(plotter, subplot, origin, tot_before_comp_2, color=color,
+        #                             factor=2.0)
 
 
 class LinearSplineComponent(ExplicitComponent):
@@ -389,6 +398,12 @@ class Interconnect(ExplicitComponent):
         radii   = prob.get_val(self.pathname + '.' + 'updated_cyl_radius')
         color   = self.options['color']
         plot_capsules(plotter, subplot, centers, radii, color, opacity=opacity)
+
+        # TODO Implement utility plots
+        # plot_AABB(plotter, subplot, bounds, color='gray', opacity=0.15)
+        # plot_translation_sensitivities(plotter, subplot, origin, tot_before_comp_1, color=color,
+        #                                factor=2.0)
+
 
 
 

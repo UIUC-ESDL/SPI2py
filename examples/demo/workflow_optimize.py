@@ -186,8 +186,7 @@ prob.model.connect('system.ints.int_3.updated_cyl_radius', 'mux_radii.input_5')
 
 
 # Aggregate the pseudo-densities
-rho_min = 1e-2
-projection_aggregator = ProjectionAggregator(n_projections=6, rho_min=rho_min)
+projection_aggregator = ProjectionAggregator(n_projections=6, rho_min=1e-2, mesh_size=element_size, mesh_centers=centers)
 model.proj.add_subsystem('aggregator', projection_aggregator)
 model.connect('proj.proj_c1.penalized_densities', 'proj.aggregator.densities_0')
 model.connect('proj.proj_c2.penalized_densities', 'proj.aggregator.densities_1')
@@ -260,22 +259,9 @@ print(f"Run time: {(t2 - t1) / 1e9} seconds")
 # Check the initial state
 print("BBV Before:", prob.get_val('bbv.volume'))
 print("Max Density:", prob.get_val('proj.aggregator.max_density'))
-# comp_1_translation_before = copy(prob.get_val('system.comps.comp_1.translation'))
-# comp_1_rotation_before = copy(prob.get_val('system.comps.comp_1.rotation'))
-# comp_1_start_points_before = copy(prob.get_val('system.comps.comp_1.updated_sphere_positions'))
-# comp_1_radii_before = copy(prob.get_val('system.comps.comp_1.updated_sphere_radii'))
-# comp_2_translation_before = copy(prob.get_val('system.comps.comp_2.translation'))
-# comp_2_rotation_before = copy(prob.get_val('system.comps.comp_2.rotation'))
-# comp_2_start_points_before = copy(prob.get_val('system.comps.comp_2.updated_sphere_positions'))
-# comp_2_radii_before = copy(prob.get_val('system.comps.comp_2.updated_sphere_radii'))
-# comp_3_translation_before = copy(prob.get_val('system.comps.comp_3.translation'))
-# comp_3_rotation_before = copy(prob.get_val('system.comps.comp_3.rotation'))
-# comp_3_start_points_before = copy(prob.get_val('system.comps.comp_3.updated_sphere_positions'))
-# comp_3_radii_before = copy(prob.get_val('system.comps.comp_3.updated_sphere_radii'))
-# int_1_points_before = prob.get_val('system.ints.int_1.updated_cyl_positions')
-# int_1_radius_before = prob.get_val('system.ints.int_1.updated_cyl_radius')
+
 bounds_before = copy(prob.get_val('bbv.bounds'))
-densities_before = copy(prob.get_val('proj.aggregator.aggregated_densities'))
+
 
 # Check the initial sensitivities
 tot_before = prob.compute_totals(of=['bbv.volume'], wrt=['system.comps.comp_1.translation','system.comps.comp_2.translation','system.comps.comp_3.translation'])
@@ -290,7 +276,7 @@ tot_before_comp_3 = copy(tot_before[('bbv.volume', 'system.comps.comp_3.translat
 
 
 
-prob.record('before_opt')
+prob.record('before')
 
 
 # Run the optimization
@@ -299,7 +285,7 @@ t3 = time_ns()
 t4 = time_ns()
 print(f"Optimization time: {(t4 - t3) / 1e9} seconds")
 
-prob.record('after_opt')
+prob.record('after')
 prob.cleanup()
 
 
@@ -325,64 +311,53 @@ t5 = time_ns()
 # Create multiple subplots
 plotter = pv.Plotter(shape=(2, 2), window_size=(1500, 500), lighting='light kit')
 
+# Define the subplots
+sp1, sp2, sp3, sp4 = (0, 0), (1, 0), (0, 1), (1, 1)
+
+# Load the case recorded
+cr     = om.CaseReader(prob.get_outputs_dir() / 'cases.sql')
+before = cr.get_case('before')
+after  = cr.get_case('after')
+
 
 #%% Plot the System Before Optimization
-# TODO Add method to plot groups (components, interconnects, system)
 
-# Subplot 1: Geometry and Components
-plotter.subplot(0, 0)
-plotter.add_title("Geometry Before")
+# Load the recorded case before optimization
+prob.load_case(before)
 
-# The problem domain
-plot_grid(plotter, (0, 0), centers, element_size, densities=None, min_opacity=0.0)
+# Subplots 1: Geometry and Components
+plotter.subplot(*sp1)
+plotter.add_title("Before")
 
-# Draw the system
-model.system.draw(plotter, (0, 0), prob)
-
-# Axis-aligned bounding box
-plot_AABB(plotter, (0, 0), bounds_before, color='gray', opacity=0.15)
+plot_grid(plotter, sp1, centers, element_size, densities=None, min_opacity=0.0)
+model.system.draw(plotter, sp1, prob)
+plot_AABB(plotter, sp1, bounds_before, color='gray', opacity=0.15)
 
 # Subplot 2: Pseudo-Density Projections
-plotter.subplot(0, 1)
+plotter.subplot(*sp2)
 plotter.add_title("Densities Before")
 
-# Projection
-plot_grid(plotter, (0, 1), centers, element_size, densities=None)
-plot_grid(plotter, (0, 1), centers, element_size, densities=densities_before)
+model.proj.aggregator.draw(plotter, sp2, prob)
 
-# Axis-aligned bounding box
-plot_AABB(plotter, (0, 1), bounds_before, color='gray', opacity=0.15)
-
-# Plot the sensitivities
-# A good sanity check that things are pointing in the correct directions
-# plot_translation_sensitivities(plotter, (0, 1), comp_1_start_points_before[0], tot_before_comp_1, color='blue', factor=2.0)
-# plot_translation_sensitivities(plotter, (0, 1), comp_2_start_points_before[0], tot_before_comp_2, color='orange', factor=2.0)
-# plot_translation_sensitivities(plotter, (0, 1), comp_3_start_points_before[0], tot_before_comp_3, color='red', factor=2.0)
 
 
 #%% Plot the System After Optimization
 
+# Load the recorded case after optimization
 
-# Geometry
-# plot_grid(plotter, (1, 0), centers, element_size, densities=None)
-# plot_stl_file(plotter, (1, 0), 'models/CrossHead_Pin_scaled.stl', translation=comp_1_translation_after, rotation=comp_1_rotation_after, opacity=0.25, color='blue')
-# plot_spheres(plotter, (1, 0), comp_1_spheres_after, comp_1_radii_after, 'blue', opacity=0.5)
-# # plot_capsules2(plotter, (1, 0), comp_1_start_points_after, comp_1_end_points_after, comp_1_radii_after, color='blue', opacity=0.5)
-# plot_capsules2(plotter, (1, 0), comp_2_start_points_after, comp_2_end_points_after, comp_2_radii_after, color='red', opacity=0.5)
-# plot_capsules(plotter, (1, 0), int_1_points_after, 0.25, color='green', opacity=0.5)
+# Subplots 1: Geometry and Components
+plotter.subplot(*sp1)
+plotter.add_title("Before")
 
-# # Projection
-# plot_grid(plotter, (1, 1), centers, element_size, densities=None)
-# plot_grid(plotter, (1, 1), centers, element_size, densities=densities_after)
+plot_grid(plotter, sp1, centers, element_size, densities=None, min_opacity=0.0)
+model.system.draw(plotter, sp1, prob)
+plot_AABB(plotter, sp1, bounds_before, color='gray', opacity=0.15)
 
-# plot_AABB(plotter, (1, 1), bounds_after, color='blue', opacity=0.15)
-# plot_translation_sensitivities(plotter, (1, 1), comp_1_spheres_after[0], tot_after_comp_1, color='red', factor=3.0)
-# plot_translation_sensitivities(plotter, (1, 1), comp_2_start_points_after[2], tot_after_comp_2, color='red', factor=3.0)
-# plot_translation_sensitivities(plotter, (1, 1), int_1_control_points_after, tot_after_int_1, color='red', factor=3.0)
+# Subplot 2: Pseudo-Density Projections
+plotter.subplot(*sp2)
+plotter.add_title("Densities Before")
 
-# Plot the geometries after optimization
-# plotter.subplot(0, 1)
-# plotter.add_title("After Optimization")
+model.proj.aggregator.draw(plotter, sp2, prob)
 
 
 # %% Plotter configurations

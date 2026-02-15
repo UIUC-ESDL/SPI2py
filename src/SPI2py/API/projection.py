@@ -1,12 +1,15 @@
+# Standard imports
 import numpy as np
 from functools import partial
 import jax.numpy as jnp
 from jax import jacfwd, jvp, vjp
 from openmdao.api import ExplicitComponent, Group
 
+# SPI2py imports
 from ..models.geometry.cylinders import create_cylinders
 from ..models.projection.projection import project_component, project_capsules
 from ..models.utilities.aggregation import kreisselmeier_steinhauser_max
+from ..models.utilities.visualization import plot_grid
 
 
 class Projections(Group):
@@ -417,6 +420,11 @@ class ProjectInterconnect(ExplicitComponent):
 
         return densities, penalized_densities, penalized_heat_loads
 
+    def draw(self, plotter, subplot, prob):
+        centers      = self.options['mesh_centers']
+        element_size = self.options['mesh_size']
+        densities    = prob.get_val(self.pathname + '.' + 'densities')
+        plot_grid(plotter, subplot, centers, element_size, densities=densities)
 
 
 class ProjectionAggregator(ExplicitComponent):
@@ -424,6 +432,10 @@ class ProjectionAggregator(ExplicitComponent):
     def initialize(self):
         self.options.declare('n_projections', types=int, desc='Number of projections')
         self.options.declare('rho_min', types=(int, float), desc='Minimum value of the density', default=3e-3)
+
+        # Mesh parameters
+        self.options.declare('mesh_size', types=(int, float), desc='Size of the mesh elements', default=1.0)
+        self.options.declare('mesh_centers', types=jnp.ndarray, desc='Centers of the mesh elements')
 
     def setup(self):
 
@@ -541,4 +553,10 @@ class ProjectionAggregator(ExplicitComponent):
         # TODO Max above 1?
 
         return aggregated_densities, aggregated_heat_loads, max_density
+
+    def draw(self, plotter, subplot, prob):
+        centers      = self.options['mesh_centers']
+        element_size = self.options['mesh_size']
+        densities    = prob.get_val(self.pathname + '.' + 'aggregated_densities')
+        plot_grid(plotter, subplot, centers, element_size, densities=densities)
 
