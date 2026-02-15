@@ -16,20 +16,13 @@ class Projections(Group):
     pass
 
 
-class ProjectPointCloudComponent(ExplicitComponent):
-    # TODO Implement
-    pass
-
 
 class ProjectMDBDComponent(ExplicitComponent):
     """
-
     Calculates the pseudo-density of a set of points in a 3D grid
     """
 
     def initialize(self):
-        # General parameters
-        self.options.declare('color', types=str, desc='Color of the projection', default='blue')
 
         # Mesh parameters
         self.options.declare('mesh_size', types=(int, float), desc='Size of the mesh elements', default=1.0)
@@ -165,9 +158,6 @@ class ProjectLinearSplineComponent(ExplicitComponent):
 
     def initialize(self):
 
-        # General parameters
-        self.options.declare('color', types=str, desc='Color of the projection', default='blue')
-
         # Mesh parameters
         self.options.declare('mesh_size', types=(int, float), desc='Size of the mesh elements', default=1.0)
         self.options.declare('mesh_centers', types=jnp.ndarray, desc='Centers of the mesh elements')
@@ -289,16 +279,9 @@ class ProjectLinearSplineComponent(ExplicitComponent):
         return densities, penalized_densities, penalized_heat_loads
 
 
-
-
-
-
 class ProjectInterconnect(ExplicitComponent):
 
     def initialize(self):
-
-        # General parameters
-        self.options.declare('color', types=str, desc='Color of the projection', default='blue')
 
         # Mesh parameters
         self.options.declare('mesh_size', types=(int, float), desc='Size of the mesh elements', default=1.0)

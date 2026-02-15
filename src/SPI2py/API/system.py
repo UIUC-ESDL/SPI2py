@@ -89,6 +89,9 @@ class MDBDComponent(ExplicitComponent):
         self.declare_partials('updated_sphere_positions', ['translation', 'rotation'])
         self.declare_partials('updated_ports', ['translation', 'rotation'])
 
+        self.declare_partials('updated_sphere_radii', 'sphere_radii', val=1.0)
+
+
         # Declare the partials for the outputs wrt the static inputs
         # Note: The default check_partials step size of 1e-6 results in numerical errors on
         # some off-diagonal terms, which raises an error about non-zero rows and columns. Use 1e-4.
@@ -133,7 +136,6 @@ class MDBDComponent(ExplicitComponent):
 
         # Convert the input variables to Jax arrays
         sphere_positions = jnp.array(sphere_positions)
-        sphere_radii = jnp.array(sphere_radii)
         ports = jnp.array(ports)
         translation = jnp.array(translation)
         rotation = jnp.array(rotation)

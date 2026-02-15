@@ -22,9 +22,6 @@ SPI2 stands for the Spatial Packaging of Interconnected Systems with Physical In
 
 The SPI2 framework packages components, routes interconnects, and performs multiphysics simulations simultaneously.
 
-At this point in time, we are working on the initial release so many features are missing/untested. We plan to 
-demonstrate an early working version by Fall 2023.
-
 ## Highlights
 
 <img src="docs/images/SPI2py_example_before-after.png" width="200" class="center">
@@ -58,12 +55,12 @@ The instructions below cover setting SPI2Py up on your local machine for develop
 
 ## Requirements
 
-SPI2Py is primarily developed in Python 3.10. We recommend using the base Python installation and pip as opposed to environments like Anaconda and SageMath. We also recommend setting up a virtual environment.
+SPI2Py is primarily developed with recent versions of Python (e.g., 3.10, 3.12).  
 
 ## Steps
 
 1. Clone the SPI2Py GitHub repository
-2. **Switch from the main branch** to the develop branch (or a feature branch if you are working on a specific feature).
+2. Switch from the "main" branch to the "develop" branch.
 3. Create a virtual environment in the directory
 4. Navigate to the top-level directory (e.g., "SPI2py/") and run 
    

@@ -1,5 +1,8 @@
+# Standard imports
 import numpy as np
 import pyvista as pv
+
+# SPI2py imports
 from ..geometry.cylinders import create_cylinders
 from ..geometry.spheres import get_aabb_bounds
 
