@@ -53,7 +53,7 @@ jax.config.update("jax_debug_nans", True)
 x_min, x_max = (0, 7)
 y_min, y_max = (0, 7)
 z_min, z_max = (0, 2)
-element_size = 0.5
+element_size = 0.35
 nodes, elements, centers, nx, ny, nz, lx, ly, lz = generate_mesh(x_min, x_max, y_min, y_max, z_min, z_max, element_size=element_size)
 centers = centers.reshape(nx, ny, nz, 1, 3)
 
@@ -329,16 +329,23 @@ plotter.subplot(*sp1)
 plotter.add_title("Before")
 
 # Check the initial sensitivities
-tot_before = copy(prob.compute_totals(of=['bbv.volume'], wrt=['system.comps.comp_1.translation','system.comps.comp_2.translation','system.comps.comp_3.translation']))
+tot_before = copy(prob.compute_totals(of=['bbv.volume'], wrt=['system.comps.comp_1.translation','system.comps.comp_2.translation','system.comps.comp_3.translation',
+                                                              'system.ints.int_1.control_points','system.ints.int_2.control_points','system.ints.int_3.control_points']))
 tot_before_comp_1 = tot_before[('bbv.volume', 'system.comps.comp_1.translation')][0]
 tot_before_comp_2 = tot_before[('bbv.volume', 'system.comps.comp_2.translation')][0]
 tot_before_comp_3 = tot_before[('bbv.volume', 'system.comps.comp_3.translation')][0]
+tot_before_int_1 = tot_before[('bbv.volume', 'system.ints.int_1.control_points')][0]
+tot_before_int_2 = tot_before[('bbv.volume', 'system.ints.int_2.control_points')][0]
+tot_before_int_3 = tot_before[('bbv.volume', 'system.ints.int_3.control_points')][0]
 
 plot_grid(plotter, sp1, centers, element_size, densities=None, min_opacity=0.0)
 model.system.draw(plotter, sp1, prob)
 plot_translation_sensitivities(plotter, sp1, prob.get_val("system.comps.comp_1.updated_sphere_positions")[0], tot_before_comp_1, color="blue",factor=2.0)
 plot_translation_sensitivities(plotter, sp1, prob.get_val("system.comps.comp_2.updated_sphere_positions")[0], tot_before_comp_2, color="orange",factor=2.0)
 plot_translation_sensitivities(plotter, sp1, prob.get_val("system.comps.comp_3.updated_sphere_positions")[0], tot_before_comp_3, color="red",factor=2.0)
+plot_translation_sensitivities(plotter, sp1, prob.get_val("system.ints.int_1.updated_cyl_positions")[1], tot_before_int_1, color="gray",factor=2.0)
+plot_translation_sensitivities(plotter, sp1, prob.get_val("system.ints.int_2.updated_cyl_positions")[1], tot_before_int_2, color="gray",factor=2.0)
+plot_translation_sensitivities(plotter, sp1, prob.get_val("system.ints.int_3.updated_cyl_positions")[1], tot_before_int_3, color="gray",factor=2.0)
 plot_AABB(plotter, sp1, prob.get_val('bbv.bounds'), color='gray', opacity=0)
 
 model.proj.aggregator.draw(plotter, sp2, prob)

@@ -378,9 +378,9 @@ class ProjectInterconnect(ExplicitComponent):
                          d_outputs['penalized_heat_loads'])
             grads = pullback(cotangent)
             # Assign derivatives only to design inputs.
-            d_inputs['control_points'] = grads[0]
-            d_inputs['radius'] = grads[1]
-            d_inputs['heat_load'] = grads[2]
+            d_inputs['control_points'] += grads[0]
+            d_inputs['radius'] += grads[1]
+            d_inputs['heat_load'] += grads[2]
 
     @staticmethod
     def _compute_primal(mesh_centers, mesh_size,
