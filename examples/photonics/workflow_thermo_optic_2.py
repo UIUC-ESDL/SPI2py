@@ -93,10 +93,10 @@ comp_1 = LinearSplineComponent(start_points=[[0, 0, 0]], end_points=[[6, 0, 0]],
 comp_2 = LinearSplineComponent(start_points=[[0, 0, 0]], end_points=[[6, 0, 0]], radii=[0.75], port_positions=[[0, 0, 0]])
 comp_3 = LinearSplineComponent(start_points=[[0, 0, 0]], end_points=[[6, 0, 0]], radii=[0.75], port_positions=[[0, 0, 0]])
 comp_4 = LinearSplineComponent(start_points=[[0, 0, 0]], end_points=[[6, 0, 0]], radii=[0.35], port_positions=[[0, 0, 0]])
-model.system.components.add_subsystem('comp_1', comp_1)
-model.system.components.add_subsystem('comp_2', comp_2)
-model.system.components.add_subsystem('comp_3', comp_3)
-model.system.components.add_subsystem('comp_4', comp_4)
+model.system.comps.add_subsystem('comp_1', comp_1)
+model.system.comps.add_subsystem('comp_2', comp_2)
+model.system.comps.add_subsystem('comp_3', comp_3)
+model.system.comps.add_subsystem('comp_4', comp_4)
 
 
 # Define the projections
@@ -104,10 +104,10 @@ proj_1 = ProjectLinearSplineComponent(mesh_size=element_size, mesh_centers=cente
 proj_2 = ProjectLinearSplineComponent(mesh_size=element_size, mesh_centers=centers, kernel_centers=kernel_points, kernel_radii=kernel_radii)
 proj_3 = ProjectLinearSplineComponent(mesh_size=element_size, mesh_centers=centers, kernel_centers=kernel_points, kernel_radii=kernel_radii)
 proj_4 = ProjectLinearSplineComponent(mesh_size=element_size, mesh_centers=centers, kernel_centers=kernel_points, kernel_radii=kernel_radii)
-model.projections.add_subsystem('proj_1', proj_1)
-model.projections.add_subsystem('proj_2', proj_2)
-model.projections.add_subsystem('proj_3', proj_3)
-model.projections.add_subsystem('proj_4', proj_4)
+model.projs.add_subsystem('proj_1', proj_1)
+model.projs.add_subsystem('proj_2', proj_2)
+model.projs.add_subsystem('proj_3', proj_3)
+model.projs.add_subsystem('proj_4', proj_4)
 
 
 # Connect the system elements to the projections
@@ -161,7 +161,7 @@ prob.model.connect('mux_radii.stacked_output', 'bbv.radii')
 # rho_min = 1e-3
 rho_min = 1e-2
 projection_aggregator = ProjectionAggregator(n_projections=4, rho_min=rho_min)
-model.projections.add_subsystem('aggregator', projection_aggregator)
+model.projs.add_subsystem('aggregator', projection_aggregator)
 model.connect('projections.proj_1.penalized_densities', 'projections.aggregator.densities_0')
 model.connect('projections.proj_2.penalized_densities', 'projections.aggregator.densities_1')
 model.connect('projections.proj_3.penalized_densities', 'projections.aggregator.densities_2')

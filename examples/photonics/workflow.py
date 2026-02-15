@@ -83,8 +83,8 @@ kernel_radii = kernel_radii.reshape(-1, 1)
 comp_1 = LinearSplineComponent(start_points=[[0, 0, 0], [0, 2, 0]], end_points=[[0, 2, 0], [0, 2, 1]], radii=[0.5, 0.25], ports=[[0, 0, 0]], color='blue')
 comp_2 = LinearSplineComponent(start_points=[[0, 0, 0], [-1, 0, 0]], end_points=[[0, 2, 0], [1, 0, 0]], radii=[0.5, 0.75], ports=[[0, 0, 0]], color='red')
 # int_1 = Interconnect(n_segments=3, radius=0.25, color='green')
-model.system.components.add_subsystem('comp_1', comp_1)
-model.system.components.add_subsystem('comp_2', comp_2)
+model.system.comps.add_subsystem('comp_1', comp_1)
+model.system.comps.add_subsystem('comp_2', comp_2)
 # model.system.interconnects.add_subsystem('int_1', int_1)
 
 
@@ -97,8 +97,8 @@ model.system.components.add_subsystem('comp_2', comp_2)
 proj_1 = ProjectLinearSplineComponent(mesh_size=element_size, mesh_centers=centers, kernel_centers=kernel_points, kernel_radii=kernel_radii)
 proj_2 = ProjectLinearSplineComponent(mesh_size=element_size, mesh_centers=centers, kernel_centers=kernel_points, kernel_radii=kernel_radii)
 # proj_3 = ProjectInterconnect(mesh_size=element_size, mesh_centers=centers, kernel_centers=kernel_points, kernel_radii=kernel_radii)
-model.projections.add_subsystem('proj_1', proj_1)
-model.projections.add_subsystem('proj_2', proj_2)
+model.projs.add_subsystem('proj_1', proj_1)
+model.projs.add_subsystem('proj_2', proj_2)
 # model.projections.add_subsystem('proj_3', proj_3)
 
 
@@ -149,7 +149,7 @@ prob.model.connect('mux_radii.stacked_output', 'bbv.radii')
 # Aggregate the pseudo-densities
 # projection_aggregator = ProjectionAggregator(n_projections=2, rho_min=3e-3)
 projection_aggregator = ProjectionAggregator(n_projections=2, rho_min=1e-3)
-model.projections.add_subsystem('aggregator', projection_aggregator)
+model.projs.add_subsystem('aggregator', projection_aggregator)
 
 model.connect('projections.proj_1.penalized_densities', 'projections.aggregator.densities_0')
 model.connect('projections.proj_2.penalized_densities', 'projections.aggregator.densities_1')

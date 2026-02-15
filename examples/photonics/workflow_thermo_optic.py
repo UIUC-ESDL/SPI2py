@@ -84,15 +84,15 @@ h = 10.0  # Convection coefficient, W/m^2*K
 # Define the system elements
 comp_1 = LinearSplineComponent(start_points=[[0, 0, 0]], end_points=[[6, 0, 0]], radii=[0.35], port_positions=[[0, 0, 0]])
 comp_2 = LinearSplineComponent(start_points=[[0, 0, 0]], end_points=[[6, 0, 0]], radii=[0.75], port_positions=[[0, 0, 0]])
-model.system.components.add_subsystem('comp_1', comp_1)
-model.system.components.add_subsystem('comp_2', comp_2)
+model.system.comps.add_subsystem('comp_1', comp_1)
+model.system.comps.add_subsystem('comp_2', comp_2)
 
 
 # Define the projections
 proj_1 = ProjectLinearSplineComponent(mesh_size=element_size, mesh_centers=centers, kernel_centers=kernel_points, kernel_radii=kernel_radii)
 proj_2 = ProjectLinearSplineComponent(mesh_size=element_size, mesh_centers=centers, kernel_centers=kernel_points, kernel_radii=kernel_radii)
-model.projections.add_subsystem('proj_1', proj_1)
-model.projections.add_subsystem('proj_2', proj_2)
+model.projs.add_subsystem('proj_1', proj_1)
+model.projs.add_subsystem('proj_2', proj_2)
 
 
 # Connect the system elements to the projections
@@ -131,7 +131,7 @@ prob.model.connect('mux_radii.stacked_output', 'bbv.radii')
 # rho_min = 1e-3
 rho_min = 1e-2
 projection_aggregator = ProjectionAggregator(n_projections=2, rho_min=rho_min)
-model.projections.add_subsystem('aggregator', projection_aggregator)
+model.projs.add_subsystem('aggregator', projection_aggregator)
 model.connect('projections.proj_1.penalized_densities', 'projections.aggregator.densities_0')
 model.connect('projections.proj_2.penalized_densities', 'projections.aggregator.densities_1')
 model.connect('projections.proj_1.penalized_heat_loads', 'projections.aggregator.heat_loads_0')
