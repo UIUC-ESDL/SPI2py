@@ -1,22 +1,28 @@
-dist/*
-src/SPI2py/drivers/design_study/result/output/*
-!src/SPI2py/drivers/design_study/result/output/.gitkeep
-venv/*
+# Directories
 .idea
 .vscode
+.vscodecounter
+SPI2Py.egg-info
+reports
+
+
+# Subdirectories
+venv/*
+dist/*
+build/*
+
+
+# Files
+**/.openmdao_out
 **/.DS_Store
 **/output.log
 **/output.json
 **/.pytest_cache
 **/__pycache__
-SPI2Py.egg-info/
-.gif
-.vscodecounter/
-/UNKNOWN.egg-info/dependency_links.txt
 **/geometric_optimization.gif
 **/logger.log
-/UNKNOWN.egg-info/PKG-INFO
 **/report.json
-/UNKNOWN.egg-info/SOURCES.txt
-/UNKNOWN.egg-info/top_level.txt
-reports/
+
+# Filetypes
+.gif
+
