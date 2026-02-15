@@ -4,32 +4,49 @@ import jax.numpy as jnp
 from jax import jacfwd, jacrev
 from openmdao.api import ExplicitComponent, Group
 
-# Custom imports
+# SPI2py imports
 from ..models.mechanics.homogenous_transformation import transform_points
 from ..models.utilities.input_and_output import read_xyzr_file, read_csv_file
+from ..models.utilities.visualization import plot_spheres, plot_capsules
 
 
 class System(Group):
-    pass
+    """
+    A group to represent a physical system, which can contain components and interconnects.
+    """
+
+    def draw(self, plotter, subplot, prob):
+        for element in self.system_iter(recurse=False, include_self=False):
+            element.draw(plotter, subplot, prob)
 
 
 
 class Components(Group):
-    pass
+    """
+    A group to logically organize the components of a system.
+    """
+
+    def draw(self, plotter, subplot, prob):
+        for component in self.system_iter(recurse=False, include_self=False):
+            component.draw(plotter, subplot, prob)
 
 
 class Interconnects(Group):
-    pass
+    """
+    A group to logically organize the interconnects of a system.
+    """
 
+    def draw(self, plotter, subplot, prob):
+        for interconnect in self.system_iter(recurse=False, include_self=False):
+            interconnect.draw(plotter, subplot, prob)
 
-# class PointCloudComponent(ExplicitComponent):
-#     raise NotImplementedError("PointCloudComponent is not implemented yet.")
 
 
 class MDBDComponent(ExplicitComponent):
 
     def initialize(self):
         self.options.declare('filepath', types=str)
+        self.options.declare('color', types=str)
         self.options.declare('port_positions', types=list)
         self.options.declare('minimum_radius', types=(int, float))
 
@@ -156,6 +173,12 @@ class MDBDComponent(ExplicitComponent):
 
         return spheres_positions_transformed, ports_transformed
 
+    def draw(self, plotter, subplot, prob, opacity=0.5):
+        centers = prob.get_val(self.pathname + '.' + 'updated_sphere_positions')
+        radii   = prob.get_val(self.pathname + '.' + 'updated_sphere_radii')
+        color   = self.options['color']
+        plot_spheres(plotter, subplot, centers, radii, color, opacity=opacity)
+
 
 class LinearSplineComponent(ExplicitComponent):
 
@@ -280,7 +303,7 @@ class Interconnect(ExplicitComponent):
     def initialize(self):
         self.options.declare('n_segments', types=int)
         self.options.declare('radius', types=float)
-        self.options.declare('color', types=str)
+        self.options.declare('color', types=str, default='black')
 
     def setup(self):
 
@@ -301,7 +324,6 @@ class Interconnect(ExplicitComponent):
 
         # Define the outputs
         self.add_output('updated_cyl_positions', shape=shape_positions)
-        # self.add_output('updated_cyl_radius', val=radius)
         self.add_output('updated_cyl_radius', shape=(n_segments + 1, 1))
 
     def setup_partials(self):
@@ -361,6 +383,12 @@ class Interconnect(ExplicitComponent):
         partials['updated_cyl_positions', 'control_points'] = jac_translated_positions_control_points
         partials['updated_cyl_positions', 'end_point'] = jac_translated_positions_end_point
         partials['updated_cyl_radius', 'radius'] = jac_translated_positions_radius
+
+    def draw(self, plotter, subplot, prob, opacity=0.5):
+        centers = prob.get_val(self.pathname + '.' + 'updated_cyl_positions')
+        radii   = prob.get_val(self.pathname + '.' + 'updated_cyl_radius')
+        color   = self.options['color']
+        plot_capsules(plotter, subplot, centers, radii, color, opacity=opacity)
 
 
 

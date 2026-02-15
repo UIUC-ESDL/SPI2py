@@ -64,11 +64,18 @@ kernel_radii = kernel_radii.reshape(-1, 1)
 
 
 # %% Initialize the problem and model structure
+# Note: Models are initialized in the order they are added to the model.
 
 
 # OpenMDAO problem and model
 prob   = om.Problem()
 model  = prob.model
+
+# Recorder that writes to a sqlite file
+rec = om.SqliteRecorder('cases.sql')
+prob.add_recorder(rec)
+prob.recording_options['record_inputs'] = True
+prob.recording_options['record_outputs'] = True
 
 # SPI2py Nested Groups
 system = System()
@@ -91,18 +98,18 @@ model.add_subsystem('proj', proj)
 min_rad = 4.0e-2
 
 # Define the components
-comp_1 = MDBDComponent(filepath='csvs/Bot_Eye_5k_300s.csv', port_positions=[[0, 0.75, 0], [0.75, 0, 0]], minimum_radius=min_rad) # Blue
-comp_2 = MDBDComponent(filepath='csvs/CogDrivenGear_5k_300s.csv', port_positions=[[-1.75, 0, 0], [0, 1.75, 0]], minimum_radius=min_rad) # Orange
-comp_3 = MDBDComponent(filepath='csvs/CrossHead_Pin_5k_300s.csv', port_positions=[[1.25, 0.5, 1.0], [0.15, 0.5, 1.0]], minimum_radius=min_rad) # Red
+comp_1 = MDBDComponent(filepath='csvs/Bot_Eye_5k_300s.csv', port_positions=[[0.75, 0, 0], [0, 0.75, 0]], minimum_radius=min_rad, color='blue')
+comp_2 = MDBDComponent(filepath='csvs/CogDrivenGear_5k_300s.csv', port_positions=[[0, 1.75, 0], [-1.75, 0, 0]], minimum_radius=min_rad, color='orange')
+comp_3 = MDBDComponent(filepath='csvs/CrossHead_Pin_5k_300s.csv', port_positions=[[0.15, 0.5, 1.0], [1.25, 0.5, 1.0]], minimum_radius=min_rad, color='red')
 model.system.comps.add_subsystem('comp_1', comp_1)
 model.system.comps.add_subsystem('comp_2', comp_2)
 model.system.comps.add_subsystem('comp_3', comp_3)
 
 
 # Define the interconnects
-int_1 = Interconnect(radius=0.35, n_segments=2)
-int_2 = Interconnect(radius=0.75, n_segments=2)
-int_3 = Interconnect(radius=0.75, n_segments=2)
+int_1 = Interconnect(radius=0.25, n_segments=2)
+int_2 = Interconnect(radius=0.25, n_segments=2)
+int_3 = Interconnect(radius=0.25, n_segments=2)
 model.system.ints.add_subsystem('int_1', int_1)
 model.system.ints.add_subsystem('int_2', int_2)
 model.system.ints.add_subsystem('int_3', int_3)
@@ -112,11 +119,10 @@ model.system.ints.add_subsystem('int_3', int_3)
 # The interconnect start and stop points are dependent on the translation and rotation of comps and their ports.
 # The slicer is used to index rows.
 model.connect('system.comps.comp_1.updated_ports', 'system.ints.int_1.start_point', src_indices=om.slicer[0, :])
-model.connect('system.comps.comp_2.updated_ports', 'system.ints.int_1.end_point', src_indices=om.slicer[0, :])
-model.connect('system.comps.comp_2.updated_ports', 'system.ints.int_1.end_point', src_indices=om.slicer[0, :])
-model.connect('system.comps.comp_2.updated_ports', 'system.ints.int_2.start_point', src_indices=om.slicer[1, :])
-model.connect('system.comps.comp_3.updated_ports', 'system.ints.int_2.end_point', src_indices=om.slicer[0, :])
-model.connect('system.comps.comp_3.updated_ports', 'system.ints.int_3.start_point', src_indices=om.slicer[1, :])
+model.connect('system.comps.comp_2.updated_ports', 'system.ints.int_1.end_point', src_indices=om.slicer[1, :])
+model.connect('system.comps.comp_2.updated_ports', 'system.ints.int_2.start_point', src_indices=om.slicer[0, :])
+model.connect('system.comps.comp_3.updated_ports', 'system.ints.int_2.end_point', src_indices=om.slicer[1, :])
+model.connect('system.comps.comp_3.updated_ports', 'system.ints.int_3.start_point', src_indices=om.slicer[0, :])
 model.connect('system.comps.comp_1.updated_ports', 'system.ints.int_3.end_point', src_indices=om.slicer[1, :])
 
 
@@ -149,12 +155,13 @@ model.connect('system.comps.comp_2.updated_sphere_positions', 'proj.proj_c2.cent
 model.connect('system.comps.comp_2.updated_sphere_radii', 'proj.proj_c2.radii')
 model.connect('system.comps.comp_3.updated_sphere_positions', 'proj.proj_c3.centers')
 model.connect('system.comps.comp_3.updated_sphere_radii', 'proj.proj_c3.radii')
+
 model.connect('system.ints.int_1.updated_cyl_positions', 'proj.proj_i1.control_points')
 model.connect('system.ints.int_1.updated_cyl_radius', 'proj.proj_i1.radius')
-model.connect('system.ints.int_2.control_points', 'proj.proj_i2.control_points')
-model.connect('system.ints.int_2.radii', 'proj.proj_i2.radii')
-model.connect('system.ints.int_3.control_points', 'proj.proj_i3.control_points')
-model.connect('system.ints.int_3.radii', 'proj.proj_i3.radii')
+model.connect('system.ints.int_2.updated_cyl_positions', 'proj.proj_i2.control_points')
+model.connect('system.ints.int_2.updated_cyl_radius', 'proj.proj_i2.radius')
+model.connect('system.ints.int_3.updated_cyl_positions', 'proj.proj_i3.control_points')
+model.connect('system.ints.int_3.updated_cyl_radius', 'proj.proj_i3.radius')
 
 
 # Now combine (overlay) all the projections
@@ -171,23 +178,23 @@ prob.model.connect('system.comps.comp_1.updated_sphere_radii', 'mux_radii.input_
 prob.model.connect('system.comps.comp_2.updated_sphere_radii', 'mux_radii.input_1')
 prob.model.connect('system.comps.comp_3.updated_sphere_radii', 'mux_radii.input_2')
 prob.model.connect('system.ints.int_1.updated_cyl_positions', 'mux_centers.input_3')
-prob.model.connect('system.ints.int_2.control_points', 'mux_centers.input_4')
-prob.model.connect('system.ints.int_3.control_points', 'mux_centers.input_5')
+prob.model.connect('system.ints.int_2.updated_cyl_positions', 'mux_centers.input_4')
+prob.model.connect('system.ints.int_3.updated_cyl_positions', 'mux_centers.input_5')
 prob.model.connect('system.ints.int_1.updated_cyl_radius', 'mux_radii.input_3')
-prob.model.connect('system.ints.int_2.radii', 'mux_radii.input_4')
-prob.model.connect('system.ints.int_3.radii', 'mux_radii.input_5')
+prob.model.connect('system.ints.int_2.updated_cyl_radius', 'mux_radii.input_4')
+prob.model.connect('system.ints.int_3.updated_cyl_radius', 'mux_radii.input_5')
 
 
 # Aggregate the pseudo-densities
 rho_min = 1e-2
-projection_aggregator = ProjectionAggregator(n_proj=4, rho_min=rho_min)
+projection_aggregator = ProjectionAggregator(n_projections=6, rho_min=rho_min)
 model.proj.add_subsystem('aggregator', projection_aggregator)
 model.connect('proj.proj_c1.penalized_densities', 'proj.aggregator.densities_0')
 model.connect('proj.proj_c2.penalized_densities', 'proj.aggregator.densities_1')
 model.connect('proj.proj_c3.penalized_densities', 'proj.aggregator.densities_2')
 model.connect('proj.proj_i1.penalized_densities', 'proj.aggregator.densities_3')
-model.connect('proj.proj_i2.penalized_densities', 'proj.aggregator.densities_5')
-model.connect('proj.proj_i3.penalized_densities', 'proj.aggregator.densities_6')
+model.connect('proj.proj_i2.penalized_densities', 'proj.aggregator.densities_4')
+model.connect('proj.proj_i3.penalized_densities', 'proj.aggregator.densities_5')
 
 
 # Optional: Aggregate the loads
@@ -196,8 +203,8 @@ model.connect('proj.proj_c1.penalized_heat_loads', 'proj.aggregator.heat_loads_0
 model.connect('proj.proj_c2.penalized_heat_loads', 'proj.aggregator.heat_loads_1')
 model.connect('proj.proj_c3.penalized_heat_loads', 'proj.aggregator.heat_loads_2')
 model.connect('proj.proj_i1.penalized_heat_loads', 'proj.aggregator.heat_loads_3')
-model.connect('proj.proj_i2.penalized_heat_loads', 'proj.aggregator.heat_loads_5')
-model.connect('proj.proj_i3.penalized_heat_loads', 'proj.aggregator.heat_loads_6')
+model.connect('proj.proj_i2.penalized_heat_loads', 'proj.aggregator.heat_loads_4')
+model.connect('proj.proj_i3.penalized_heat_loads', 'proj.aggregator.heat_loads_5')
 
 
 
@@ -216,7 +223,7 @@ prob.set_val('system.comps.comp_2.translation', [5, 2, 0])  # Orange
 prob.set_val('system.comps.comp_3.translation', [0.5, 4, 1])  # Red
 prob.set_val('system.comps.comp_3.rotation', [-np.pi/2, 0, 0])
 prob.set_val('system.ints.int_1.control_points', [[1.6, 1.6, 0.5]])
-prob.set_val('system.ints.int_2.control_points', [[2.35, 3.75, 0.5]])
+prob.set_val('system.ints.int_2.control_points', [[2.5, 5, 0.5]])
 prob.set_val('system.ints.int_3.control_points', [[0.65, 1.75, 0.5]])
 
 
@@ -253,20 +260,20 @@ print(f"Run time: {(t2 - t1) / 1e9} seconds")
 # Check the initial state
 print("BBV Before:", prob.get_val('bbv.volume'))
 print("Max Density:", prob.get_val('proj.aggregator.max_density'))
-comp_1_translation_before = copy(prob.get_val('system.comps.comp_1.translation'))
-comp_1_rotation_before = copy(prob.get_val('system.comps.comp_1.rotation'))
-comp_1_start_points_before = copy(prob.get_val('system.comps.comp_1.updated_sphere_positions'))
-comp_1_radii_before = copy(prob.get_val('system.comps.comp_1.updated_sphere_radii'))
-comp_2_translation_before = copy(prob.get_val('system.comps.comp_2.translation'))
-comp_2_rotation_before = copy(prob.get_val('system.comps.comp_2.rotation'))
-comp_2_start_points_before = copy(prob.get_val('system.comps.comp_2.updated_sphere_positions'))
-comp_2_radii_before = copy(prob.get_val('system.comps.comp_2.updated_sphere_radii'))
-comp_3_translation_before = copy(prob.get_val('system.comps.comp_3.translation'))
-comp_3_rotation_before = copy(prob.get_val('system.comps.comp_3.rotation'))
-comp_3_start_points_before = copy(prob.get_val('system.comps.comp_3.updated_sphere_positions'))
-comp_3_radii_before = copy(prob.get_val('system.comps.comp_3.updated_sphere_radii'))
-int_1_points_before = prob.get_val('system.ints.int_1.updated_cyl_positions')
-int_1_radius_before = prob.get_val('system.ints.int_1.updated_cyl_radius')
+# comp_1_translation_before = copy(prob.get_val('system.comps.comp_1.translation'))
+# comp_1_rotation_before = copy(prob.get_val('system.comps.comp_1.rotation'))
+# comp_1_start_points_before = copy(prob.get_val('system.comps.comp_1.updated_sphere_positions'))
+# comp_1_radii_before = copy(prob.get_val('system.comps.comp_1.updated_sphere_radii'))
+# comp_2_translation_before = copy(prob.get_val('system.comps.comp_2.translation'))
+# comp_2_rotation_before = copy(prob.get_val('system.comps.comp_2.rotation'))
+# comp_2_start_points_before = copy(prob.get_val('system.comps.comp_2.updated_sphere_positions'))
+# comp_2_radii_before = copy(prob.get_val('system.comps.comp_2.updated_sphere_radii'))
+# comp_3_translation_before = copy(prob.get_val('system.comps.comp_3.translation'))
+# comp_3_rotation_before = copy(prob.get_val('system.comps.comp_3.rotation'))
+# comp_3_start_points_before = copy(prob.get_val('system.comps.comp_3.updated_sphere_positions'))
+# comp_3_radii_before = copy(prob.get_val('system.comps.comp_3.updated_sphere_radii'))
+# int_1_points_before = prob.get_val('system.ints.int_1.updated_cyl_positions')
+# int_1_radius_before = prob.get_val('system.ints.int_1.updated_cyl_radius')
 bounds_before = copy(prob.get_val('bbv.bounds'))
 densities_before = copy(prob.get_val('proj.aggregator.aggregated_densities'))
 
@@ -277,7 +284,13 @@ tot_before_comp_2 = copy(tot_before[('bbv.volume', 'system.comps.comp_2.translat
 tot_before_comp_3 = copy(tot_before[('bbv.volume', 'system.comps.comp_3.translation')][0])
 
 
+
 # %% Now run the optimization
+
+
+
+
+prob.record('before_opt')
 
 
 # Run the optimization
@@ -286,18 +299,14 @@ t3 = time_ns()
 t4 = time_ns()
 print(f"Optimization time: {(t4 - t3) / 1e9} seconds")
 
+prob.record('after_opt')
+prob.cleanup()
+
 
 # Check the final state
 print("BBV After:", prob.get_val('bbv.volume'))
 print("Max Density:", prob.get_val('proj.aggregator.max_density'))
-comp_1_translation_after = prob.get_val('system.comps.comp_1.translation')
-comp_1_rotation_after = prob.get_val('system.comps.comp_1.rotation')
-comp_1_start_points_after = prob.get_val('system.comps.comp_1.updated_sphere_positions')
-comp_1_radii_after = prob.get_val('system.comps.comp_1.updated_sphere_radii')
-comp_2_translation_after = prob.get_val('system.comps.comp_2.translation')
-comp_2_rotation_after = prob.get_val('system.comps.comp_2.rotation')
-comp_2_start_points_after = prob.get_val('system.comps.comp_2.updated_sphere_positions')
-comp_2_radii_after = prob.get_val('system.comps.comp_2.updated_sphere_radii')
+
 bounds_after = prob.get_val('bbv.bounds')
 densities_after = prob.get_val('proj.aggregator.aggregated_densities')
 
@@ -318,6 +327,7 @@ plotter = pv.Plotter(shape=(2, 2), window_size=(1500, 500), lighting='light kit'
 
 
 #%% Plot the System Before Optimization
+# TODO Add method to plot groups (components, interconnects, system)
 
 # Subplot 1: Geometry and Components
 plotter.subplot(0, 0)
@@ -326,13 +336,8 @@ plotter.add_title("Geometry Before")
 # The problem domain
 plot_grid(plotter, (0, 0), centers, element_size, densities=None, min_opacity=0.0)
 
-# Components, MDBD Representation
-plot_spheres(plotter, (0, 0), comp_1_start_points_before, comp_1_radii_before, 'blue', opacity=0.5)
-plot_spheres(plotter, (0, 0), comp_2_start_points_before, comp_2_radii_before, 'orange', opacity=0.5)
-plot_spheres(plotter, (0, 0), comp_3_start_points_before, comp_3_radii_before, 'red', opacity=0.5)
-
-# Interconnects
-plot_capsules(plotter, (0, 0), int_1_points_before, int_1_radius_before, color='black', opacity=0.5)
+# Draw the system
+model.system.draw(plotter, (0, 0), prob)
 
 # Axis-aligned bounding box
 plot_AABB(plotter, (0, 0), bounds_before, color='gray', opacity=0.15)
@@ -350,9 +355,9 @@ plot_AABB(plotter, (0, 1), bounds_before, color='gray', opacity=0.15)
 
 # Plot the sensitivities
 # A good sanity check that things are pointing in the correct directions
-plot_translation_sensitivities(plotter, (0, 1), comp_1_start_points_before[0], tot_before_comp_1, color='blue', factor=2.0)
-plot_translation_sensitivities(plotter, (0, 1), comp_2_start_points_before[0], tot_before_comp_2, color='orange', factor=2.0)
-plot_translation_sensitivities(plotter, (0, 1), comp_3_start_points_before[0], tot_before_comp_3, color='red', factor=2.0)
+# plot_translation_sensitivities(plotter, (0, 1), comp_1_start_points_before[0], tot_before_comp_1, color='blue', factor=2.0)
+# plot_translation_sensitivities(plotter, (0, 1), comp_2_start_points_before[0], tot_before_comp_2, color='orange', factor=2.0)
+# plot_translation_sensitivities(plotter, (0, 1), comp_3_start_points_before[0], tot_before_comp_3, color='red', factor=2.0)
 
 
 #%% Plot the System After Optimization
