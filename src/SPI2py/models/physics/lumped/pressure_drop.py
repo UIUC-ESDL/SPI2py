@@ -115,6 +115,7 @@ def calculate_pressure_drop(
         
         # Estimate friction factor (Blasius correlation)
         friction_factor = 0.316/ reynolds_number**0.25
+
         # Darcy-Weisbach equation constants
         gravity = 9.81  # m/s²
         

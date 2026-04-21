@@ -57,19 +57,20 @@ def create_uniform_kernel(steps_per_edge, mode='inscription'):
       positions (jnp.array): Array of sphere positions with shape (steps_per_edge, steps_per_edge, steps_per_edge, 3).
       radii (jnp.array): Array of sphere radii with shape (steps_per_edge, steps_per_edge, steps_per_edge).
     """
+    if steps_per_edge < 1:
+        raise ValueError("steps_per_edge must be at least 1")
+
     step_size = 1.0 / steps_per_edge
 
     if mode == 'inscription':
         sphere_radius = 0.5 * step_size  # Inscribed sphere: half the cube edge length.
-        center_offset = 0.5 * step_size  # Center is shifted by half an edge.
     elif mode == 'circumscription':
         sphere_radius = jnp.sqrt(3) * 0.5 * step_size  # Circumscribed: half the cube diagonal.
-        center_offset = 0.0
     else:
         raise ValueError("Invalid mode. Use 'inscription' or 'circumscription'.")
 
     # Create 1D coordinate array for each axis.
-    coords = (jnp.arange(steps_per_edge) + center_offset) * step_size
+    coords = -0.5 + (jnp.arange(steps_per_edge) + 0.5) * step_size
     # Use meshgrid to generate the full 3D grid of coordinates.
     X, Y, Z = jnp.meshgrid(coords, coords, coords, indexing='ij')
     # Stack the coordinates along a new last axis to get positions.

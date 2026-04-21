@@ -41,16 +41,3 @@ def solve_system_partition(K, f, u,
 
     return u
 
-
-def solve_system_penalty():
-    # Archived code
-    # # Solve via the penalty method.
-    #
-    # # Update the global stiffness matrix using current densities.
-    # K_updated, f_updated = update_global_system_penalty(K_base, f_base,
-    #                                                     elements, elem_indices,
-    #                                                     densities, heat_loads)
-    #
-    # # Solve the global system using a sparse solver.
-    # u, _ = cg(K_updated, f_updated, tol=1e-8, maxiter=500)
-    pass

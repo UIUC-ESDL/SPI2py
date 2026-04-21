@@ -41,6 +41,7 @@ def recurse_mdbd(n_spheres, distances_filtered_sorted, points_filtered_sorted):
     # Preallocate arrays for sphere centers and radii
     sphere_points = np.zeros((n_spheres, 3))
     sphere_radii = np.zeros((n_spheres, 1))
+    accepted_count = 0
 
     # Iterate to pack spheres until reaching the limit or the smallest sphere is smaller than min_radius
     for i in range(n_spheres):
@@ -55,6 +56,7 @@ def recurse_mdbd(n_spheres, distances_filtered_sorted, points_filtered_sorted):
         # Update lists of points and distances
         sphere_points[i] = sphere_center
         sphere_radii[i] = sphere_radius
+        accepted_count += 1
 
         # Update distances considering the newly added sphere
         point_distances_to_new_sphere = np.linalg.norm(points_filtered_sorted - sphere_center, axis=1)
@@ -63,10 +65,10 @@ def recurse_mdbd(n_spheres, distances_filtered_sorted, points_filtered_sorted):
         distances_filtered_sorted = distances_filtered_sorted[~within_new_sphere]
 
     # Trim the arrays to remove unused entries
-    sphere_points = sphere_points[:i]
-    sphere_radii = sphere_radii[:i]
+    sphere_points = sphere_points[:accepted_count]
+    sphere_radii = sphere_radii[:accepted_count]
 
-    return i, sphere_points, sphere_radii
+    return accepted_count, sphere_points, sphere_radii
 
 
 def convert_primitive_to_mdbd(x_min, x_max, y_min, y_max, z_min, z_max,
@@ -159,31 +161,24 @@ def get_aabb_indices(el_centers, el_size, obj_centers, obj_radii):
 
     obj_x_min, obj_x_max, obj_y_min, obj_y_max, obj_z_min, obj_z_max = aabb_bounds
 
-    element_half_size = el_size / 2
+    element_size = jnp.asarray(el_size).reshape(())
+    element_half_size = element_size / 2
 
-    el_x_min = el_centers[:, :, :, :, 0].squeeze() - element_half_size
-    el_x_max = el_centers[:, :, :, :, 0].squeeze() + element_half_size
-    el_y_min = el_centers[:, :, :, :, 1].squeeze() - element_half_size
-    el_y_max = el_centers[:, :, :, :, 1].squeeze() + element_half_size
-    el_z_min = el_centers[:, :, :, :, 2].squeeze() - element_half_size
-    el_z_max = el_centers[:, :, :, :, 2].squeeze() + element_half_size
+    x_centers = el_centers[:, 0, 0, 0, 0]
+    y_centers = el_centers[0, :, 0, 0, 1]
+    z_centers = el_centers[0, 0, :, 0, 2]
 
-    # Find the overlapping elements along each dimension
-    x_overlap = (obj_x_min <= el_x_max) & (obj_x_max >= el_x_min)
-    y_overlap = (obj_y_min <= el_y_max) & (obj_y_max >= el_y_min)
-    z_overlap = (obj_z_min <= el_z_max) & (obj_z_max >= el_z_min)
+    def clipped_axis_indices(axis_centers, obj_min, obj_max):
+        axis_min = axis_centers[0] - element_half_size
+        n_axis = axis_centers.shape[0]
+        raw_min = jnp.floor((obj_min - axis_min) / element_size).astype(jnp.int32)
+        raw_max = jnp.floor((obj_max - axis_min) / element_size).astype(jnp.int32)
+        i_min = jnp.clip(raw_min, 0, n_axis - 1)
+        i_max = jnp.clip(raw_max, 0, n_axis - 1)
+        return jnp.minimum(i_min, i_max), jnp.maximum(i_min, i_max)
 
-    # Combine overlaps to get the AABB
-    overlap = x_overlap & y_overlap & z_overlap
-
-    # Get indices of overlapping elements
-    indices = jnp.argwhere(overlap)
-
-    i1 = jnp.min(indices[:, 0])
-    i2 = jnp.max(indices[:, 0])
-    j1 = jnp.min(indices[:, 1])
-    j2 = jnp.max(indices[:, 1])
-    k1 = jnp.min(indices[:, 2])
-    k2 = jnp.max(indices[:, 2])
+    i1, i2 = clipped_axis_indices(x_centers, obj_x_min, obj_x_max)
+    j1, j2 = clipped_axis_indices(y_centers, obj_y_min, obj_y_max)
+    k1, k2 = clipped_axis_indices(z_centers, obj_z_min, obj_z_max)
 
     return i1, i2, j1, j2, k1, k2

@@ -1,7 +1,9 @@
-from SPI2py.models.physics.distributed import assembly as asb
-from SPI2py.models.physics.lumped import pressure_drop as pd
 import numpy as np
 import matplotlib.pyplot as plt
+
+# from SPI2py.models.physics.distributed import assembly as asb
+from SPI2py.models.physics.lumped import pressure_drop as pd
+
 def main():
     # Example 1: Simple straight pipe
     print("Example 1: Straight pipe")

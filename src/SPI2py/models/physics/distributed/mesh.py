@@ -2,182 +2,6 @@ import math
 import jax.numpy as jnp
 from jax import jit
 
-# def generate_mesh(x_min, x_max, y_min, y_max, z_min, z_max, element_size=1.0):
-#     """
-#     Generate a cubic mesh for a rectangular domain.
-#
-#     The domain is defined by the ranges [x_min, x_max], [y_min, y_max], [z_min, z_max].
-#     The mesh cells are cubes with side length element_size.
-#
-#     Returns:
-#       nodes: An array of shape ((nx+1)*(ny+1)*(nz+1), 3) with the vertex coordinates.
-#       elements: An array of shape (nx*ny*nz, 8) with the connectivity (indices into nodes)
-#                 for each hexahedral cell.
-#       centers: An array of shape (nx*ny*nz, 3) with the center coordinates of each element.
-#     """
-#
-#     # Calculate the element length
-#     lx = x_max - x_min
-#     ly = y_max - y_min
-#     lz = z_max - z_min
-#
-#     # Determine number of cells (elements) along each axis.
-#     nx = math.ceil(lx / element_size)
-#     ny = math.ceil(ly / element_size)
-#     nz = math.ceil(lz / element_size)
-#
-#     # Generate vertex coordinates along each axis.
-#     x = jnp.linspace(x_min, x_min + lx, nx + 1)
-#     y = jnp.linspace(y_min, y_min + ly, ny + 1)
-#     z = jnp.linspace(z_min, z_min + lz, nz + 1)
-#
-#     # Create a 3D meshgrid of node positions.
-#     X, Y, Z = jnp.meshgrid(x, y, z, indexing='ij')
-#     # X = X.ravel()
-#     # Y = Y.ravel()
-#     # Z = Z.ravel()
-#
-#     # 2) Flatten in column-major so that x changes fastest:
-#     X = X.flatten(order='F')
-#     Y = Y.flatten(order='F')
-#     Z = Z.flatten(order='F')
-#
-#     nodes = jnp.stack([X, Y, Z], axis=-1)
-#
-#     # Create the element connectivity.
-#     # Each element is defined by its "base" indices in the grid of cells.
-#     i = jnp.arange(nx)
-#     j = jnp.arange(ny)
-#     k = jnp.arange(nz)
-#
-#     I, J, K = jnp.meshgrid(i, j, k, indexing='ij')
-#     I = I.ravel()
-#     J = J.ravel()
-#     K = K.ravel()
-#
-#     # # Node numbering in the grid of vertices:
-#     # # index = i * ((ny+1) * (nz+1)) + j * (nz+1) + k.
-#     # stride_j = (nz + 1)
-#     # stride_i = (ny + 1) * (nz + 1)
-#     #
-#     # def idx(i, j, k):
-#     #     return i * stride_i + j * stride_j + k
-#
-#
-#
-#     # 3) Now define an idx that does:
-#     stride_y = (nx + 1)
-#     stride_z = (nx + 1) * (ny + 1)
-#
-#     def idx(i, j, k):
-#         return i + j * stride_y + k * stride_z
-#
-#     # For each cell, compute the indices of its 8 vertices.
-#     n0 = idx(I, J, K)
-#     n1 = idx(I + 1, J, K)
-#     n2 = idx(I + 1, J + 1, K)
-#     n3 = idx(I, J + 1, K)
-#     n4 = idx(I, J, K + 1)
-#     n5 = idx(I + 1, J, K + 1)
-#     n6 = idx(I + 1, J + 1, K + 1)
-#     n7 = idx(I, J + 1, K + 1)
-#     elements = jnp.stack([n0, n1, n2, n3, n4, n5, n6, n7], axis=-1)
-#
-#     # Compute centers of each element.
-#     # The center along each axis is x_min + element_size/2 + i * element_size,
-#     # for i = 0,...,nx-1 (similarly for y and z).
-#     centers_x = x_min + element_size / 2 + jnp.arange(nx) * element_size
-#     centers_y = y_min + element_size / 2 + jnp.arange(ny) * element_size
-#     centers_z = z_min + element_size / 2 + jnp.arange(nz) * element_size
-#
-#     C_X, C_Y, C_Z = jnp.meshgrid(centers_x, centers_y, centers_z, indexing='ij')
-#     C_X = C_X.ravel()
-#     C_Y = C_Y.ravel()
-#     C_Z = C_Z.ravel()
-#     centers = jnp.stack([C_X, C_Y, C_Z], axis=-1)
-#
-#     return nodes, elements, centers, nx, ny, nz, lx, ly, lz
-
-# def generate_mesh(x_min, x_max, y_min, y_max, z_min, z_max, element_size=1.0):
-#     """
-#     Generate a cubic mesh for a rectangular domain.
-#
-#     The domain is defined by the ranges [x_min, x_max], [y_min, y_max], [z_min, z_max].
-#     The mesh cells are cubes with side length element_size.
-#
-#     Returns:
-#       nodes: An array of shape ((nx+1)*(ny+1)*(nz+1), 3) with the vertex coordinates.
-#       elements: An array of shape (nx*ny*nz, 8) with the connectivity (indices into nodes)
-#                 for each hexahedral cell.
-#       centers: An array of shape (nx*ny*nz, 3) with the center coordinates of each element.
-#     """
-#
-#     # Calculate the element length
-#     lx = x_max - x_min
-#     ly = y_max - y_min
-#     lz = z_max - z_min
-#
-#     # Determine number of cells (elements) along each axis.
-#     nx = math.ceil(lx / element_size)
-#     ny = math.ceil(ly / element_size)
-#     nz = math.ceil(lz / element_size)
-#
-#     # Generate vertex coordinates along each axis.
-#     x = jnp.linspace(x_min, x_min + lx, nx + 1)
-#     y = jnp.linspace(y_min, y_min + ly, ny + 1)
-#     z = jnp.linspace(z_min, z_min + lz, nz + 1)
-#
-#     # Create a 3D meshgrid of node positions.
-#     X, Y, Z = jnp.meshgrid(x, y, z, indexing='ij')
-#     X = X.ravel()
-#     Y = Y.ravel()
-#     Z = Z.ravel()
-#
-#     nodes = jnp.stack([X, Y, Z], axis=-1)
-#
-#     # Create the element connectivity.
-#     # Each element is defined by its "base" indices in the grid of cells.
-#     i = jnp.arange(nx)
-#     j = jnp.arange(ny)
-#     k = jnp.arange(nz)
-#     I, J, K = jnp.meshgrid(i, j, k, indexing='ij')
-#     I = I.ravel()
-#     J = J.ravel()
-#     K = K.ravel()
-#
-#     # Node numbering in the grid of vertices:
-#     # index = i * ((ny+1) * (nz+1)) + j * (nz+1) + k.
-#     stride_j = (nz + 1)
-#     stride_i = (ny + 1) * (nz + 1)
-#
-#     def idx(i, j, k):
-#         return i * stride_i + j * stride_j + k
-#
-#     # For each cell, compute the indices of its 8 vertices.
-#     n0 = idx(I, J, K)
-#     n1 = idx(I + 1, J, K)
-#     n2 = idx(I + 1, J + 1, K)
-#     n3 = idx(I, J + 1, K)
-#     n4 = idx(I, J, K + 1)
-#     n5 = idx(I + 1, J, K + 1)
-#     n6 = idx(I + 1, J + 1, K + 1)
-#     n7 = idx(I, J + 1, K + 1)
-#     elements = jnp.stack([n0, n1, n2, n3, n4, n5, n6, n7], axis=-1)
-#
-#     # Compute centers of each element.
-#     # The center along each axis is x_min + element_size/2 + i * element_size,
-#     # for i = 0,...,nx-1 (similarly for y and z).
-#     centers_x = x_min + element_size / 2 + jnp.arange(nx) * element_size
-#     centers_y = y_min + element_size / 2 + jnp.arange(ny) * element_size
-#     centers_z = z_min + element_size / 2 + jnp.arange(nz) * element_size
-#
-#     C_X, C_Y, C_Z = jnp.meshgrid(centers_x, centers_y, centers_z, indexing='ij')
-#     C_X = C_X.ravel()
-#     C_Y = C_Y.ravel()
-#     C_Z = C_Z.ravel()
-#     centers = jnp.stack([C_X, C_Y, C_Z], axis=-1)
-#
-#     return nodes, elements, centers, nx, ny, nz, lx, ly, lz
 
 def generate_mesh(x_min, x_max, y_min, y_max, z_min, z_max, element_size=1.0):
     """
@@ -193,20 +17,29 @@ def generate_mesh(x_min, x_max, y_min, y_max, z_min, z_max, element_size=1.0):
       centers: An array of shape (nx*ny*nz, 3) with the center coordinates of each element.
     """
 
-    # Calculate the element length
-    lx = x_max - x_min
-    ly = y_max - y_min
-    lz = z_max - z_min
+    if element_size <= 0:
+        raise ValueError("element_size must be positive")
+
+    # Calculate the requested domain length
+    requested_lx = x_max - x_min
+    requested_ly = y_max - y_min
+    requested_lz = z_max - z_min
 
     # Determine number of cells (elements) along each axis.
-    nx = math.ceil(lx / element_size)
-    ny = math.ceil(ly / element_size)
-    nz = math.ceil(lz / element_size)
+    nx = math.ceil(requested_lx / element_size)
+    ny = math.ceil(requested_ly / element_size)
+    nz = math.ceil(requested_lz / element_size)
+
+    # The mesh uses cubic elements, so non-divisible domains are extended to
+    # the next full element instead of shrinking the last cells.
+    lx = nx * element_size
+    ly = ny * element_size
+    lz = nz * element_size
 
     # Generate vertex coordinates along each axis.
-    x = jnp.linspace(x_min, x_min + lx, nx + 1)
-    y = jnp.linspace(y_min, y_min + ly, ny + 1)
-    z = jnp.linspace(z_min, z_min + lz, nz + 1)
+    x = x_min + jnp.arange(nx + 1) * element_size
+    y = y_min + jnp.arange(ny + 1) * element_size
+    z = z_min + jnp.arange(nz + 1) * element_size
 
     # Create a 3D meshgrid of node positions.
     X, Y, Z = jnp.meshgrid(x, y, z, indexing='ij')

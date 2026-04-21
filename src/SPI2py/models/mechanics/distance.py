@@ -11,41 +11,22 @@ from chex import assert_shape, assert_type
 @jit
 def distances_points_points(a: jnp.ndarray,
                             b: jnp.ndarray) -> jnp.ndarray:
-    # a: shape (..., n, 3)
-    # b: shape (..., m, 3)
 
-    # Expand the dimensions to enable broadcasting:
-    # a_expanded: shape (..., n, 1, 3)
-    # b_expanded: shape (..., 1, m, 3)
-    aa = a[..., :, None, :]
-    bb = b[..., None, :, :]
+    # TODO Validate shapes with chex
+    #     # Validate the inputs
+    #     # assert_shape(a, (None, 3))
+    #     # assert_shape(b, (None, 3))
+    #     # assert_type(a, 'float64')
+    #     # assert_type(b, 'float64')
 
-    # Compute the pairwise differences:
-    diff = aa - bb  # shape (..., n, m, 3)
+    if a.ndim == 2 and b.ndim == 2:
+        diff = a[:, None, :] - b[None, :, :]
+    else:
+        diff = a - b
 
-    # Compute the norm over the last axis (the 3D coordinates):
-    distances = jnp.linalg.norm(diff, axis=-1).squeeze(4)  # shape (..., n, m)
+    distances = jnp.linalg.norm(diff, axis=-1)
 
     return distances
-
-# def distances_points_points(a: jnp.ndarray,
-#                             b: jnp.ndarray) -> jnp.ndarray:
-#
-#     # Validate the inputs
-#     # assert_shape(a, (None, 3))
-#     # assert_shape(b, (None, 3))
-#     # assert_type(a, 'float64')
-#     # assert_type(b, 'float64')
-#
-#     # Reshape the arrays for broadcasting
-#     aa = a.reshape(-1, 1, 3)
-#     bb = b.reshape(1, -1, 3)
-#     cc = aa - bb
-#
-#     # Calculate the distances
-#     c = jnp.linalg.norm(cc, axis=2)
-#
-#     return c
 
 
 def distances_radii_radii(radii_1: jnp.ndarray,
@@ -243,8 +224,21 @@ def signed_distances_capsules_capsules(centers_1: jnp.ndarray,
     assert_type(centers_2, 'float64')
     assert_type(radii_2, 'float64')
 
-    delta_positions = minimum_distances_segments_segments(centers_1, centers_2)
-    delta_radii     = distances_radii_radii(radii_1, radii_2)
+    starts_1 = centers_1[:-1]
+    stops_1 = centers_1[1:]
+    starts_2 = centers_2[:-1]
+    stops_2 = centers_2[1:]
+
+    segment_count_1 = starts_1.shape[0]
+    segment_count_2 = starts_2.shape[0]
+    segment_radii_1 = radii_1 if radii_1.shape[0] == segment_count_1 else radii_1[:-1]
+    segment_radii_2 = radii_2 if radii_2.shape[0] == segment_count_2 else radii_2[:-1]
+
+    delta_positions = minimum_distances_segments_segments(starts_1[:, None, :],
+                                                          stops_1[:, None, :],
+                                                          starts_2[None, :, :],
+                                                          stops_2[None, :, :])
+    delta_radii = distances_radii_radii(segment_radii_1, segment_radii_2)
 
     signed_distances = delta_radii - delta_positions
 
