@@ -450,11 +450,11 @@ class Interconnect(ExplicitComponent):
                 control_points)
             t_end = jnp.array(d_inputs['end_point']) if 'end_point' in d_inputs else jnp.zeros_like(end_point)
 
-            # radius tangent might come in as shape (1,) or scalar; normalize to scalar
+            # Match the primal radius shape for JAX's JVP shape contract.
             if 'radius' in d_inputs:
-                t_rad = jnp.asarray(d_inputs['radius']).reshape(())
+                t_rad = jnp.asarray(d_inputs['radius'])
             else:
-                t_rad = jnp.asarray(0.0)
+                t_rad = jnp.zeros_like(radius)
 
             # JVP through primal for positions (and radius too, but we’ll handle radius analytically)
             _, tangent_out = jvp(self._compute_primal, primals, (t_start, t_ctrl, t_end, t_rad))
@@ -467,7 +467,7 @@ class Interconnect(ExplicitComponent):
 
             # Handle radius broadcast analytically (more robust than relying on tangent_out[1])
             if 'updated_cyl_radius' in d_outputs and 'radius' in d_inputs:
-                d_outputs['updated_cyl_radius'] += np.asarray(t_rad) * np.ones((npts, 1))
+                d_outputs['updated_cyl_radius'] += np.asarray(t_rad).reshape(()) * np.ones((npts, 1))
 
         else:  # mode == 'rev'
             # VJP pullback for positions

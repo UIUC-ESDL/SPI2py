@@ -111,8 +111,8 @@ class ProjectMDBDComponent(ExplicitComponent):
             # Compute the Jacobian-vector product (JVP) using JAX.
             _, tangent_out = jvp(self._compute_primal, primals, tangents)
 
-            # Unpack and set the outputs.
-            d_outputs['densities'] = +tangent_out[0]
+            # Unpack and accumulate the outputs.
+            d_outputs['densities'] += tangent_out[0]
             d_outputs['penalized_densities'] += tangent_out[1]
             d_outputs['penalized_heat_loads'] += tangent_out[2]
 
@@ -233,10 +233,13 @@ class ProjectLinearSplineComponent(ExplicitComponent):
 
         if mode == 'fwd':
             # Get tangents for design inputs (defaulting to zeros if not provided).
-            t_start_points = d_inputs.get('start_points', jnp.zeros_like(start_points))
-            t_end_points = d_inputs.get('end_points', jnp.zeros_like(end_points))
-            t_radii = d_inputs.get('radii', jnp.zeros_like(radii))
-            t_heat_load = d_inputs.get('heat_load', jnp.zeros_like(heat_load))
+            t_start_points = (jnp.array(d_inputs['start_points'])
+                              if 'start_points' in d_inputs else jnp.zeros_like(start_points))
+            t_end_points = (jnp.array(d_inputs['end_points'])
+                            if 'end_points' in d_inputs else jnp.zeros_like(end_points))
+            t_radii = jnp.array(d_inputs['radii']) if 'radii' in d_inputs else jnp.zeros_like(radii)
+            t_heat_load = (jnp.array(d_inputs['heat_load'])
+                           if 'heat_load' in d_inputs else jnp.zeros_like(heat_load))
             tangents = (t_start_points, t_end_points, t_radii, t_heat_load)
 
             # Compute the forward Jacobian-vector product.
@@ -424,9 +427,6 @@ class ProjectionAggregator(ExplicitComponent):
 
         # Get the options
         n_projections = self.options['n_projections']
-
-        # Set the inputs
-        self.add_input('element_length', val=0)
 
         for i in range(n_projections):
             self.add_input(f'densities_{i}', shape_by_conn=True)
