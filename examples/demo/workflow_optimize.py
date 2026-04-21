@@ -34,7 +34,6 @@ from SPI2py.API.utilities import Multiplexer
 
 
 # SPI2py supporting model imports
-from SPI2py.models.projection.mesh_kernels import create_uniform_kernel
 from SPI2py.models.physics.distributed.mesh import generate_mesh, find_active_nodes, find_face_nodes
 from SPI2py.models.utilities.visualization import plot_grid, plot_spheres, plot_capsules, plot_stl_file, plot_AABB, plot_capsules2
 from SPI2py.models.utilities.visualization import plot_translation_sensitivities
@@ -53,18 +52,9 @@ jax.config.update("jax_debug_nans", True)
 x_min, x_max = (0, 7)
 y_min, y_max = (0, 7)
 z_min, z_max = (0, 2)
-element_size = 0.35
+element_size = 0.3  #0.35
 nodes, elements, centers, nx, ny, nz, lx, ly, lz = generate_mesh(x_min, x_max, y_min, y_max, z_min, z_max, element_size=element_size)
 centers = centers.reshape(nx, ny, nz, 1, 3)
-
-
-# Optional: Define a mesh kernel
-# Kernels are used to refine the accuracy of grid-based calculations.
-kernel_steps_per_unit_length = 1
-kernel_points, kernel_radii = create_uniform_kernel(kernel_steps_per_unit_length, mode='circumscription')
-kernel_points = kernel_points.reshape(-1, 3)
-kernel_radii = kernel_radii.reshape(-1, 1)
-
 
 # Projection mode:
 #   individual - project each object separately, then aggregate densities.
@@ -138,12 +128,12 @@ model.connect('system.comps.comp_1.updated_ports', 'system.ints.int_3.end_point'
 
 if projection_mode == 'individual':
     # Project each component and interconnect onto independent copies of the mesh.
-    proj_c1 = ProjectMDBDComponent(mesh_size=element_size, mesh_centers=centers, kernel_centers=kernel_points, kernel_radii=kernel_radii)
-    proj_c2 = ProjectMDBDComponent(mesh_size=element_size, mesh_centers=centers, kernel_centers=kernel_points, kernel_radii=kernel_radii)
-    proj_c3 = ProjectMDBDComponent(mesh_size=element_size, mesh_centers=centers, kernel_centers=kernel_points, kernel_radii=kernel_radii)
-    proj_i1 = ProjectInterconnect(mesh_size=element_size, mesh_centers=centers, kernel_centers=kernel_points, kernel_radii=kernel_radii)
-    proj_i2 = ProjectInterconnect(mesh_size=element_size, mesh_centers=centers, kernel_centers=kernel_points, kernel_radii=kernel_radii)
-    proj_i3 = ProjectInterconnect(mesh_size=element_size, mesh_centers=centers, kernel_centers=kernel_points, kernel_radii=kernel_radii)
+    proj_c1 = ProjectMDBDComponent(mesh_size=element_size, mesh_centers=centers)
+    proj_c2 = ProjectMDBDComponent(mesh_size=element_size, mesh_centers=centers)
+    proj_c3 = ProjectMDBDComponent(mesh_size=element_size, mesh_centers=centers)
+    proj_i1 = ProjectInterconnect(mesh_size=element_size, mesh_centers=centers)
+    proj_i2 = ProjectInterconnect(mesh_size=element_size, mesh_centers=centers)
+    proj_i3 = ProjectInterconnect(mesh_size=element_size, mesh_centers=centers)
     model.proj.add_subsystem('proj_c1', proj_c1)
     model.proj.add_subsystem('proj_c2', proj_c2)
     model.proj.add_subsystem('proj_c3', proj_c3)
@@ -170,8 +160,6 @@ if projection_mode == 'individual':
 # Now combine (overlay) all the projections
 # This requires "multiplexing" the outputs of each projection into single, unified vectors for centers and radii.
 # Row dimensions are manually specified at this time. Column dimensions are self-determined (3D coord, 1D radii)
-# mux_centers = Multiplexer(n_i=[122, 1119, 195, 3, 3, 3, 3, 3, 3], m=3)
-# mux_radii = Multiplexer(n_i=[122, 1119, 195, 3, 3, 3, 3, 3, 3], m=1)
 mux_centers = Multiplexer(n_i=[44, 422, 80, 3, 3, 3, 3, 3, 3], m=3)
 mux_radii = Multiplexer(n_i=[44, 422, 80, 3, 3, 3, 3, 3, 3], m=1)
 prob.model.add_subsystem('mux_centers', mux_centers)
@@ -214,8 +202,7 @@ if projection_mode == 'individual':
 
 elif projection_mode == 'combined':
     projection_aggregator = ProjectionAggregator(mode='combined', n_components=3, n_interconnects=3,
-                                                 rho_min=1e-2, mesh_size=element_size, mesh_centers=centers,
-                                                 kernel_centers=kernel_points, kernel_radii=kernel_radii)
+                                                 rho_min=1e-2, mesh_size=element_size, mesh_centers=centers)
     model.proj.add_subsystem('aggregator', projection_aggregator)
 
     model.connect('system.comps.comp_1.updated_sphere_positions', 'proj.aggregator.component_centers_0')

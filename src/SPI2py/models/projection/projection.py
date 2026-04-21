@@ -6,7 +6,7 @@ from chex import assert_shape, assert_type, assert_equal
 
 from ..geometry.intersection import volume_intersection_two_spheres
 from ..mechanics.distance import minimum_distances_points_segments, distances_points_points
-from ..projection.mesh_kernels import apply_kernel
+from ..projection.mesh_kernels import apply_kernel, default_projection_kernel
 from ..utilities.aggregation import kreisselmeier_steinhauser_max
 
 
@@ -14,7 +14,7 @@ from ..utilities.aggregation import kreisselmeier_steinhauser_max
 
 def project_component(grid_centers, grid_size,
                       obj_points, obj_radii,
-                      kernel_points, kernel_radii):
+                      kernel_points=None, kernel_radii=None):
     """
     Projects object points to the grid and calculates pseudo-densities.
 
@@ -42,6 +42,8 @@ def project_component(grid_centers, grid_size,
     kernel_radii : array, shape (nxs, nys, nzs, nk, 1)
         Kernel radii in the grid's active area.
     """
+
+    kernel_points, kernel_radii = _resolve_projection_kernel(kernel_points, kernel_radii)
 
     # Check the input shapes
     assert_shape(grid_centers, (None, None, None, None, 3))
@@ -104,8 +106,8 @@ def project_component(grid_centers, grid_size,
     return all_densities, all_penalized_densities
 
 def project_capsules(grid_centers, grid_size,
-                     kernel_points, kernel_radii,
-                     start_points, end_points, radii):
+                     kernel_points=None, kernel_radii=None,
+                     start_points=None, end_points=None, radii=None):
     """
     Projects the points to the mesh and calculates the pseudo-densities
 
@@ -124,6 +126,11 @@ def project_capsules(grid_centers, grid_size,
 
     pseudo_densities: (n_el_x, n_el_y, n_el_z) tensor
     """
+
+    if start_points is None or end_points is None or radii is None:
+        raise ValueError("start_points, end_points, and radii are required.")
+
+    kernel_points, kernel_radii = _resolve_projection_kernel(kernel_points, kernel_radii)
 
     # Extract grid dimensions
     grid_nx, grid_ny, grid_nz, _, _ = grid_centers.shape
@@ -170,6 +177,14 @@ def project_capsules(grid_centers, grid_size,
     assert_equal(jnp.all(all_penalized_densities <= 1 + atol), True)
 
     return all_densities, all_penalized_densities
+
+
+def _resolve_projection_kernel(kernel_points, kernel_radii):
+    if kernel_points is None and kernel_radii is None:
+        return default_projection_kernel()
+    if kernel_points is None or kernel_radii is None:
+        raise ValueError("kernel_points and kernel_radii must be supplied together.")
+    return jnp.asarray(kernel_points), jnp.asarray(kernel_radii)
 
 
 # def projected_density(self, phi, r):

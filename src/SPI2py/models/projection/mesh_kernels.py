@@ -38,6 +38,11 @@ def create_uniform_kernel(steps_per_edge, mode='inscription'):
     return positions, radii
 
 
+def default_projection_kernel():
+    positions, radii = create_uniform_kernel(1, mode='circumscription')
+    return positions.reshape(-1, 3), radii.reshape(-1, 1)
+
+
 def apply_kernel(element_centers, element_size, kernel_positions, kernel_radii):
 
     # Expand the kernel arrays to allow broadcasting

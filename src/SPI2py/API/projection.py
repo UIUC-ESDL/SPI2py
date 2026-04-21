@@ -8,8 +8,22 @@ from openmdao.api import ExplicitComponent, Group
 # SPI2py imports
 from ..models.geometry.cylinders import create_cylinders
 from ..models.projection.projection import project_component, project_capsules
+from ..models.projection.mesh_kernels import default_projection_kernel
 from ..models.utilities.aggregation import kreisselmeier_steinhauser_max
 from ..models.utilities.visualization import plot_grid
+
+
+_KERNEL_OPTION_TYPES = (jnp.ndarray, np.ndarray, list, tuple, type(None))
+
+
+def _projection_kernel_options(component):
+    kernel_centers = component.options['kernel_centers']
+    kernel_radii = component.options['kernel_radii']
+    if kernel_centers is None and kernel_radii is None:
+        return default_projection_kernel()
+    if kernel_centers is None or kernel_radii is None:
+        raise ValueError("kernel_centers and kernel_radii must be supplied together.")
+    return jnp.array(kernel_centers), jnp.array(kernel_radii)
 
 
 class Projections(Group):
@@ -27,8 +41,10 @@ class ProjectMDBDComponent(ExplicitComponent):
         # Mesh parameters
         self.options.declare('mesh_size', types=(int, float), desc='Size of the mesh elements', default=1.0)
         self.options.declare('mesh_centers', types=jnp.ndarray, desc='Centers of the mesh elements')
-        self.options.declare('kernel_centers', types=jnp.ndarray, desc='Points representing the mesh kernel')
-        self.options.declare('kernel_radii', types=jnp.ndarray, desc='Radii of kernel points')
+        self.options.declare('kernel_centers', default=None, types=_KERNEL_OPTION_TYPES,
+                             desc='Optional points representing the mesh kernel')
+        self.options.declare('kernel_radii', default=None, types=_KERNEL_OPTION_TYPES,
+                             desc='Optional radii of kernel points')
 
     def setup(self):
 
@@ -57,8 +73,7 @@ class ProjectMDBDComponent(ExplicitComponent):
         # Get the mesh parameters
         mesh_size = jnp.atleast_1d(self.options['mesh_size'])
         mesh_centers = jnp.array(self.options['mesh_centers'])
-        kernel_centers = jnp.array(self.options['kernel_centers'])
-        kernel_radii = jnp.array(self.options['kernel_radii'])
+        kernel_centers, kernel_radii = _projection_kernel_options(self)
 
         # Get the inputs
         centers = jnp.array(inputs['centers'])
@@ -84,8 +99,7 @@ class ProjectMDBDComponent(ExplicitComponent):
         # Get mesh and kernel parameters.
         mesh_size = jnp.atleast_1d(self.options['mesh_size'])
         mesh_centers = jnp.array(self.options['mesh_centers'])
-        kernel_centers = jnp.array(self.options['kernel_centers'])
-        kernel_radii = jnp.array(self.options['kernel_radii'])
+        kernel_centers, kernel_radii = _projection_kernel_options(self)
 
         # Get input variables.
         centers = jnp.array(inputs['centers'])
@@ -161,8 +175,10 @@ class ProjectLinearSplineComponent(ExplicitComponent):
         # Mesh parameters
         self.options.declare('mesh_size', types=(int, float), desc='Size of the mesh elements', default=1.0)
         self.options.declare('mesh_centers', types=jnp.ndarray, desc='Centers of the mesh elements')
-        self.options.declare('kernel_centers', types=jnp.ndarray, desc='Points representing the mesh kernel')
-        self.options.declare('kernel_radii', types=jnp.ndarray, desc='Radii of kernel points')
+        self.options.declare('kernel_centers', default=None, types=_KERNEL_OPTION_TYPES,
+                             desc='Optional points representing the mesh kernel')
+        self.options.declare('kernel_radii', default=None, types=_KERNEL_OPTION_TYPES,
+                             desc='Optional radii of kernel points')
 
     def setup(self):
 
@@ -188,8 +204,7 @@ class ProjectLinearSplineComponent(ExplicitComponent):
         # Get the Mesh parameters
         mesh_size = jnp.atleast_1d(self.options['mesh_size'])
         mesh_centers = jnp.array(self.options['mesh_centers'])
-        kernel_centers = jnp.array(self.options['kernel_centers'])
-        kernel_radii = jnp.array(self.options['kernel_radii'])
+        kernel_centers, kernel_radii = _projection_kernel_options(self)
 
         # Get the inputs
         start_points = jnp.array(inputs['start_points'])
@@ -213,8 +228,7 @@ class ProjectLinearSplineComponent(ExplicitComponent):
         # Get constant mesh parameters.
         mesh_size = jnp.atleast_1d(self.options['mesh_size'])
         mesh_centers = jnp.array(self.options['mesh_centers'])
-        kernel_centers = jnp.array(self.options['kernel_centers'])
-        kernel_radii = jnp.array(self.options['kernel_radii'])
+        kernel_centers, kernel_radii = _projection_kernel_options(self)
 
         # Get design inputs.
         start_points = jnp.array(inputs['start_points'])
@@ -289,8 +303,10 @@ class ProjectInterconnect(ExplicitComponent):
         # Mesh parameters
         self.options.declare('mesh_size', types=(int, float), desc='Size of the mesh elements', default=1.0)
         self.options.declare('mesh_centers', types=jnp.ndarray, desc='Centers of the mesh elements')
-        self.options.declare('kernel_centers', types=jnp.ndarray, desc='Points representing the mesh kernel')
-        self.options.declare('kernel_radii', types=jnp.ndarray, desc='Radii of kernel points')
+        self.options.declare('kernel_centers', default=None, types=_KERNEL_OPTION_TYPES,
+                             desc='Optional points representing the mesh kernel')
+        self.options.declare('kernel_radii', default=None, types=_KERNEL_OPTION_TYPES,
+                             desc='Optional radii of kernel points')
 
     def setup(self):
 
@@ -319,8 +335,7 @@ class ProjectInterconnect(ExplicitComponent):
         # Get the Mesh parameters
         mesh_size = jnp.atleast_1d(self.options['mesh_size'])
         mesh_centers = jnp.array(self.options['mesh_centers'])
-        kernel_centers = jnp.array(self.options['kernel_centers'])
-        kernel_radii = jnp.array(self.options['kernel_radii'])
+        kernel_centers, kernel_radii = _projection_kernel_options(self)
 
         # Get the inputs
         control_points = jnp.array(inputs['control_points'])
@@ -343,8 +358,7 @@ class ProjectInterconnect(ExplicitComponent):
         # Freeze constant mesh and kernel parameters.
         mesh_size = jnp.atleast_1d(self.options['mesh_size'])
         mesh_centers = jnp.array(self.options['mesh_centers'])
-        kernel_centers = jnp.array(self.options['kernel_centers'])
-        kernel_radii = jnp.array(self.options['kernel_radii'])
+        kernel_centers, kernel_radii = _projection_kernel_options(self)
 
         # Get design inputs.
         control_points = jnp.array(inputs['control_points'])
@@ -426,10 +440,10 @@ class ProjectionAggregator(ExplicitComponent):
         # Mesh parameters
         self.options.declare('mesh_size', types=(int, float), desc='Size of the mesh elements', default=1.0)
         self.options.declare('mesh_centers', types=jnp.ndarray, desc='Centers of the mesh elements')
-        self.options.declare('kernel_centers', default=None, types=(jnp.ndarray, np.ndarray, type(None)),
-                             desc='Points representing the mesh kernel for combined mode')
-        self.options.declare('kernel_radii', default=None, types=(jnp.ndarray, np.ndarray, type(None)),
-                             desc='Radii of kernel points for combined mode')
+        self.options.declare('kernel_centers', default=None, types=_KERNEL_OPTION_TYPES,
+                             desc='Optional points representing the mesh kernel for combined mode')
+        self.options.declare('kernel_radii', default=None, types=_KERNEL_OPTION_TYPES,
+                             desc='Optional radii of kernel points for combined mode')
 
     def setup(self):
         mode = self.options['mode']
@@ -451,8 +465,6 @@ class ProjectionAggregator(ExplicitComponent):
         else:
             if n_components + n_interconnects < 1:
                 raise ValueError("ProjectionAggregator combined mode requires at least one primitive input.")
-            if self.options['kernel_centers'] is None or self.options['kernel_radii'] is None:
-                raise ValueError("ProjectionAggregator combined mode requires kernel_centers and kernel_radii.")
 
             for i in range(n_components):
                 self.add_input(f'component_centers_{i}', shape_by_conn=True)
@@ -513,8 +525,7 @@ class ProjectionAggregator(ExplicitComponent):
             aggregated_densities, aggregated_heat_loads, max_density = self._compute_combined_primal(
                 jnp.array(self.options['mesh_centers']),
                 jnp.atleast_1d(self.options['mesh_size']),
-                jnp.array(self.options['kernel_centers']),
-                jnp.array(self.options['kernel_radii']),
+                *_projection_kernel_options(self),
                 *primals,
                 rho_min)
 
@@ -599,8 +610,7 @@ class ProjectionAggregator(ExplicitComponent):
             self._compute_combined_primal,
             jnp.array(self.options['mesh_centers']),
             jnp.atleast_1d(self.options['mesh_size']),
-            jnp.array(self.options['kernel_centers']),
-            jnp.array(self.options['kernel_radii']),
+            *_projection_kernel_options(self),
             rho_min=rho_min)
 
         if mode == 'fwd':

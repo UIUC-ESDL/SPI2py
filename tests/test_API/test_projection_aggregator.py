@@ -3,6 +3,7 @@ import jax.numpy as jnp
 
 from SPI2py.API.projection import ProjectionAggregator
 from SPI2py.models.geometry.cylinders import create_cylinders
+from SPI2py.models.projection.mesh_kernels import default_projection_kernel
 from SPI2py.models.projection.projection import project_capsules, project_component
 
 
@@ -19,6 +20,21 @@ def test_full_grid_projection_returns_zero_for_off_grid_component():
 
     np.testing.assert_allclose(densities, jnp.zeros((1, 1, 1)))
     np.testing.assert_allclose(penalized_densities, jnp.zeros((1, 1, 1)))
+
+
+def test_project_component_uses_default_kernel_when_omitted():
+    mesh_centers = jnp.array([[[[[0.0, 0.0, 0.0]]]]])
+    mesh_size = jnp.array([1.0])
+    obj_centers = jnp.array([[0.0, 0.0, 0.0]])
+    obj_radii = jnp.array([[0.25]])
+    kernel_centers, kernel_radii = default_projection_kernel()
+
+    default_result = project_component(mesh_centers, mesh_size, obj_centers, obj_radii)
+    explicit_result = project_component(
+        mesh_centers, mesh_size, obj_centers, obj_radii, kernel_centers, kernel_radii)
+
+    for default_value, explicit_value in zip(default_result, explicit_result):
+        np.testing.assert_allclose(default_value, explicit_value)
 
 
 def test_combined_aggregator_matches_individual_projection_math():
