@@ -68,53 +68,38 @@ def construct_global_stiffness_matrix(node_positions,
 
 
 def partition_sparse_matrix(K, idx_f, idx_p):
-
-    Ke_flat = K.data
     indices = K.indices
-    rows_flat = K.indices[:, 0]
-    cols_flat = K.indices[:, 1]
+    rows_flat = indices[:, 0]
+    cols_flat = indices[:, 1]
 
-    # Partition the contributions into four blocks based on free (idx_f) and prescribed (idx_p) DOF indices.
-    mask_ff = jnp.logical_and(jnp.isin(rows_flat, idx_f), jnp.isin(cols_flat, idx_f))
-    mask_fp = jnp.logical_and(jnp.isin(rows_flat, idx_f), jnp.isin(cols_flat, idx_p))
-    mask_pf = jnp.logical_and(jnp.isin(rows_flat, idx_p), jnp.isin(cols_flat, idx_f))
-    mask_pp = jnp.logical_and(jnp.isin(rows_flat, idx_p), jnp.isin(cols_flat, idx_p))
+    n_nodes = K.shape[0]
+    n_f = idx_f.shape[0]
+    n_p = idx_p.shape[0]
 
-    # Helper function: remap a global index to local indices using the sorted index array.
-    def remap_local(global_inds, idx_array):
-        return jnp.searchsorted(idx_array, global_inds)
+    free_map = -jnp.ones(n_nodes, dtype=indices.dtype)
+    free_map = free_map.at[idx_f].set(jnp.arange(n_f, dtype=indices.dtype))
 
-    # Free–Free block.
-    data_ff = Ke_flat[mask_ff]
-    indices_ff = indices[mask_ff]
-    local_rows_ff = remap_local(indices_ff[:, 0], idx_f)
-    local_cols_ff = remap_local(indices_ff[:, 1], idx_f)
-    indices_ff_local = jnp.stack([local_rows_ff, local_cols_ff], axis=-1)
-    K_ff = BCOO((data_ff, indices_ff_local), shape=(len(idx_f), len(idx_f)))
+    prescribed_map = -jnp.ones(n_nodes, dtype=indices.dtype)
+    prescribed_map = prescribed_map.at[idx_p].set(jnp.arange(n_p, dtype=indices.dtype))
 
-    # Free–Prescribed block.
-    data_fp = Ke_flat[mask_fp]
-    indices_fp = indices[mask_fp]
-    local_rows_fp = remap_local(indices_fp[:, 0], idx_f)
-    local_cols_fp = remap_local(indices_fp[:, 1], idx_p)
-    indices_fp_local = jnp.stack([local_rows_fp, local_cols_fp], axis=-1)
-    K_fp = BCOO((data_fp, indices_fp_local), shape=(len(idx_f), len(idx_p)))
+    rows_f = free_map[rows_flat]
+    cols_f = free_map[cols_flat]
+    rows_p = prescribed_map[rows_flat]
+    cols_p = prescribed_map[cols_flat]
 
-    # Prescribed–Free block.
-    data_pf = Ke_flat[mask_pf]
-    indices_pf = indices[mask_pf]
-    local_rows_pf = remap_local(indices_pf[:, 0], idx_p)
-    local_cols_pf = remap_local(indices_pf[:, 1], idx_f)
-    indices_pf_local = jnp.stack([local_rows_pf, local_cols_pf], axis=-1)
-    K_pf = BCOO((data_pf, indices_pf_local), shape=(len(idx_p), len(idx_f)))
+    def make_block(local_rows, local_cols, shape):
+        mask = (local_rows >= 0) & (local_cols >= 0)
+        data = jnp.where(mask, K.data, 0)
+        local_indices = jnp.stack([
+            jnp.where(mask, local_rows, 0),
+            jnp.where(mask, local_cols, 0),
+        ], axis=-1)
+        return BCOO((data, local_indices), shape=shape).sum_duplicates()
 
-    # Prescribed–Prescribed block.
-    data_pp = Ke_flat[mask_pp]
-    indices_pp = indices[mask_pp]
-    local_rows_pp = remap_local(indices_pp[:, 0], idx_p)
-    local_cols_pp = remap_local(indices_pp[:, 1], idx_p)
-    indices_pp_local = jnp.stack([local_rows_pp, local_cols_pp], axis=-1)
-    K_pp = BCOO((data_pp, indices_pp_local), shape=(len(idx_p), len(idx_p)))
+    K_ff = make_block(rows_f, cols_f, (n_f, n_f))
+    K_fp = make_block(rows_f, cols_p, (n_f, n_p))
+    K_pf = make_block(rows_p, cols_f, (n_p, n_f))
+    K_pp = make_block(rows_p, cols_p, (n_p, n_p))
 
     return K_ff, K_fp, K_pf, K_pp
 
@@ -174,152 +159,6 @@ def assemble_global_system_partition(nodes, elements,
     return K_base, f_base, u_base
 
 
-
-
-# @jit
-def assemble_base_global_system_penalty(nodes, elements, base_k,
-                                        r_nodes, r_h, r_T_inf, r_area,
-                                        d_nodes, d_T):
-
-    Ke_flat, elem_indices, rows_flat, cols_flat, n_nodes, n_elem = construct_global_stiffness_matrix(nodes, elements, base_k)
-
-    # Stack rows and cols to form an index array of shape (n_elem*64, 2).
-    indices = jnp.stack([rows_flat, cols_flat], axis=-1)
-
-    # Create the sparse matrix in BCOO format.
-    K_base = BCOO((Ke_flat, indices), shape=(n_nodes, n_nodes))
-
-    # Define forces
-    f_base = jnp.zeros((n_nodes,))
-
-    # Apply boundary conditions (both Robin and Dirichlet).
-    K_base, f_base = apply_bc_penalty(K_base, f_base,
-                                      r_nodes, r_h, r_T_inf, r_area,
-                                      d_nodes, d_T,
-                                      beta=1e10)
-
-    return K_base, f_base, elem_indices
-
-
-def apply_bc_penalty(K, f,
-                     r_nodes, r_h, r_T_inf, r_area,
-                     d_nodes, d_T,
-                     beta=1e10):
-    """
-    Apply Robin and Dirichlet BCs via sparse additions to the global system.
-
-    Robin (convective) BC:
-      For nodes in r_nodes, add a contribution to the diagonal and right-hand side:
-        K[ii, ii] += (r_h * r_area)
-        f[ii]      += (r_h * r_area * r_T_inf)
-
-    Dirichlet BC (penalty method):
-      For nodes in d_nodes, add a large penalty to force the solution toward d_T:
-        K[ii, ii] += beta
-        f[ii]      += beta * d_T
-
-    Parameters:
-      K : sparse global stiffness matrix (BCOO format)
-      f : global load vector (dense jnp.array)
-      r_nodes : 1D array of node indices for Robin BC
-      r_h, r_T_inf, r_area : scalars for the Robin condition
-      d_nodes : 1D array of node indices for Dirichlet BC
-      d_T : Dirichlet values at d_nodes (same shape as d_nodes)
-      beta : penalty coefficient (large positive scalar)
-
-    Returns:
-      K_new, f_new : the updated sparse system (BCOO and dense vector)
-    """
-    # n = K.shape[0]
-    #
-    # # K--Robin BC contribution
-    # # Build a sparse diagonal matrix R with non-zeros only at r_nodes.
-    # robin_value = r_h * r_area
-    # data_R = jnp.full(r_nodes.shape, robin_value)
-    # indices_R = jnp.stack([r_nodes, r_nodes], axis=-1)
-    # R = BCOO((data_R, indices_R), shape=K.shape)
-    #
-    # # K--Dirichlet BC contribution
-    # data_P = jnp.full(d_nodes.shape, beta)
-    # indices_P = jnp.stack([d_nodes, d_nodes], axis=-1)
-    # P = BCOO((data_P, indices_P), shape=K.shape)
-    #
-    # # f--Robin contribution
-    # # f[i] += r_h * r_area * r_T_inf for each i in r_nodes.
-    # f_robin = jnp.zeros_like(f)
-    # f_robin = f_robin.at[r_nodes].set(r_h * r_area * r_T_inf)
-    #
-    # # f--Dirichlet penalty
-    # # f[i] += beta * d_T[i] for i in d_nodes.
-    # f_penalty = jnp.zeros_like(f)
-    # f_penalty = f_penalty.at[d_nodes].set(beta * d_T)
-    #
-    # # Combine contributions with K and f
-    # K_new = K + R + P
-    # f_new = f + f_robin + f_penalty
-    #
-    # return K_new, f_new
-
-    # Identify diagonal entries (where row index equals column index).
-    diag_mask = (K.indices[:, 0] == K.indices[:, 1])
-    diag_nodes = K.indices[:, 0]  # these are the node indices for the diagonal entries
-
-    # Create masks for Robin and Dirichlet BCs on the diagonal.
-    robin_mask = diag_mask & jnp.isin(diag_nodes, r_nodes)
-    dirichlet_mask = diag_mask & jnp.isin(diag_nodes, d_nodes)
-
-    # Compute the total update for each diagonal entry.
-    # If a diagonal entry corresponds to a Robin node, add r_h*r_area.
-    # If it corresponds to a Dirichlet node, add beta.
-    # (If a node is in both sets, the contributions are summed.)
-    update = robin_mask.astype(K.data.dtype) * (r_h * r_area) \
-             + dirichlet_mask.astype(K.data.dtype) * (beta)
-
-    # Update the K data array.
-    new_data = K.data + update
-    K_new = BCOO((new_data, K.indices), shape=K.shape)
-
-    # Update the load vector f.
-    f_new = f
-    f_new = f_new.at[r_nodes].add(r_h * r_area * r_T_inf)
-    f_new = f_new.at[d_nodes].add(beta * d_T)
-
-    return K_new, f_new
-
-
-# @jit
-def update_global_system_penalty(K_base, f_base,
-                                 elements, elem_indices,
-                                 densities, heat_loads):
-    """
-    Update the base global stiffness matrix using the current densities.
-
-    Parameters:
-      K_base:      Sparse base stiffness matrix (for density = 1) in BCOO format.
-      elem_indices: (nnz,) array mapping each nonzero entry in K_base to its element index.
-      densities:     (n_elem,) array of current element densities (or broadcastable to that shape).
-
-    Returns:
-      K_updated:   Updated global stiffness matrix in BCOO format.
-    """
-
-    # Ensure density is a 1D vector.
-    densities = densities.flatten()
-    heat_loads = heat_loads.flatten()
-
-    # Use the element mapping to broadcast the scaling to each nonzero.
-    scaling = densities[elem_indices]
-
-    # Multiply the data in the base matrix by the scaling factors.
-    new_data = K_base.data * scaling
-    K_updated = BCOO((new_data, K_base.indices), shape=K_base.shape)
-
-    # Assemble the global load vector from heat loads.
-    nodes_per_elem = 8
-    element_contrib = (heat_loads * densities) / nodes_per_elem
-    f_updated = f_base.at[elements.flatten()].add(jnp.repeat(element_contrib, nodes_per_elem))
-
-    return K_updated, f_updated
 
 
 

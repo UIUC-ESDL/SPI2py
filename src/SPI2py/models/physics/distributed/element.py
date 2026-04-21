@@ -2,10 +2,6 @@ from jax import jit
 import jax.numpy as jnp
 from .quadrature import shape_functions
 
-# @jit
-def assemble_local_stiffness_matrix_vector():
-    pass
-
 
 # @jit
 def assemble_local_stiffness_matrix_scalar(nodes, k_eff, gauss_pts, gauss_wts):
@@ -34,11 +30,6 @@ def assemble_local_stiffness_matrix_scalar(nodes, k_eff, gauss_pts, gauss_wts):
     xi = xi_grid.flatten()
     eta = eta_grid.flatten()
     zeta = zeta_grid.flatten()
-
-    # xi_grid, eta_grid, zeta_grid = jnp.meshgrid(gauss_pts, gauss_pts, gauss_pts, indexing='ij')
-    # xi = xi_grid.flatten(order='F')
-    # eta = eta_grid.flatten(order='F')
-    # zeta = zeta_grid.flatten(order='F')
 
     # Build the total quadrature weights.
     # Shape: (n_qp,)

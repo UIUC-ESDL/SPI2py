@@ -41,8 +41,8 @@ components  = Components()
 projections = Projections()
 
 model.add_subsystem('system', system)
-model.system.add_subsystem('components', components)
-model.add_subsystem('projections', projections)
+model.system.add_subsystem('comps', components)
+model.add_subsystem('projs', projections)
 
 
 # Initialize the Mesh

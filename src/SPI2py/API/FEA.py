@@ -6,9 +6,8 @@ from openmdao.api import ExplicitComponent, IndepVarComp
 
 # Local imports
 from SPI2py.models.physics.distributed.mesh import generate_mesh
-from SPI2py.models.physics.distributed.assembly import assemble_base_global_system_penalty, apply_bc_penalty,  update_global_system_penalty
 from SPI2py.models.physics.distributed.assembly import assemble_global_system_partition
-from SPI2py.models.physics.distributed.solver import solve_system_partition, solve_system_penalty
+from SPI2py.models.physics.distributed.solver import solve_system_partition
 from SPI2py.models.utilities.aggregation import kreisselmeier_steinhauser_max
 
 

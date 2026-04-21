@@ -60,17 +60,7 @@ def generate_mesh(x_min, x_max, y_min, y_max, z_min, z_max, element_size=1.0):
     J = J.ravel()
     K = K.ravel()
 
-    # Node numbering in the grid of vertices:
-    # # index = i * ((ny+1) * (nz+1)) + j * (nz+1) + k.
-    # stride_j = (nz + 1)
-    # stride_i = (ny + 1) * (nz + 1)
-    #
-    # def idx(i, j, k):
-    #     return i * stride_i + j * stride_j + k
-
-
-
-    # 3) Now define an idx that does:
+    # Now define an idx that does:
     stride_y = (nx + 1)
     stride_z = (nx + 1) * (ny + 1)
 
