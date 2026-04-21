@@ -2,7 +2,7 @@
 import numpy as np
 from functools import partial
 import jax.numpy as jnp
-from jax import jacfwd, jvp, vjp
+from jax import jvp, vjp
 from openmdao.api import ExplicitComponent, Group
 
 # SPI2py imports
@@ -416,54 +416,108 @@ class ProjectInterconnect(ExplicitComponent):
 class ProjectionAggregator(ExplicitComponent):
 
     def initialize(self):
-        self.options.declare('n_projections', types=int, desc='Number of projections')
+        self.options.declare('mode', default='individual', values=('individual', 'combined'),
+                             desc='Projection aggregation interface to use')
+        self.options.declare('n_projections', types=int, desc='Number of precomputed projections', default=0)
+        self.options.declare('n_components', types=int, desc='Number of MDBD component primitive inputs', default=0)
+        self.options.declare('n_interconnects', types=int, desc='Number of interconnect primitive inputs', default=0)
         self.options.declare('rho_min', types=(int, float), desc='Minimum value of the density', default=3e-3)
 
         # Mesh parameters
         self.options.declare('mesh_size', types=(int, float), desc='Size of the mesh elements', default=1.0)
         self.options.declare('mesh_centers', types=jnp.ndarray, desc='Centers of the mesh elements')
+        self.options.declare('kernel_centers', default=None, types=(jnp.ndarray, np.ndarray, type(None)),
+                             desc='Points representing the mesh kernel for combined mode')
+        self.options.declare('kernel_radii', default=None, types=(jnp.ndarray, np.ndarray, type(None)),
+                             desc='Radii of kernel points for combined mode')
 
     def setup(self):
-
-        # Get the options
+        mode = self.options['mode']
         n_projections = self.options['n_projections']
+        n_components = self.options['n_components']
+        n_interconnects = self.options['n_interconnects']
 
-        for i in range(n_projections):
-            self.add_input(f'densities_{i}', shape_by_conn=True)
-            self.add_input(f'heat_loads_{i}', shape_by_conn=True)
+        if mode == 'individual':
+            if n_projections < 1:
+                raise ValueError("ProjectionAggregator individual mode requires n_projections >= 1.")
 
+            for i in range(n_projections):
+                self.add_input(f'densities_{i}', shape_by_conn=True)
+                self.add_input(f'heat_loads_{i}', shape_by_conn=True)
 
-        # Set the outputs
-        self.add_output('aggregated_densities', copy_shape='densities_0')
-        self.add_output('aggregated_heat_loads', copy_shape='heat_loads_0')
+            self.add_output('aggregated_densities', copy_shape='densities_0')
+            self.add_output('aggregated_heat_loads', copy_shape='heat_loads_0')
+
+        else:
+            if n_components + n_interconnects < 1:
+                raise ValueError("ProjectionAggregator combined mode requires at least one primitive input.")
+            if self.options['kernel_centers'] is None or self.options['kernel_radii'] is None:
+                raise ValueError("ProjectionAggregator combined mode requires kernel_centers and kernel_radii.")
+
+            for i in range(n_components):
+                self.add_input(f'component_centers_{i}', shape_by_conn=True)
+                self.add_input(f'component_radii_{i}', shape_by_conn=True)
+                self.add_input(f'component_heat_load_{i}', val=0.0)
+
+            for i in range(n_interconnects):
+                self.add_input(f'interconnect_points_{i}', shape_by_conn=True)
+                self.add_input(f'interconnect_radius_{i}', shape_by_conn=True)
+                self.add_input(f'interconnect_heat_load_{i}', val=0.0)
+
+            nx, ny, nz = self.options['mesh_centers'].shape[:3]
+            self.add_output('aggregated_densities', shape=(nx, ny, nz))
+            self.add_output('aggregated_heat_loads', shape=(nx, ny, nz))
+
         self.add_output('max_density', val=0.0)
 
     def setup_partials(self):
-
-        # Get the options
+        mode = self.options['mode']
         n_projections = self.options['n_projections']
+        n_components = self.options['n_components']
+        n_interconnects = self.options['n_interconnects']
 
-        # Set the partials
-        for i in range(n_projections):
-            self.declare_partials('aggregated_densities', f'densities_{i}')
-            self.declare_partials('aggregated_heat_loads', f'heat_loads_{i}')
-            self.declare_partials('max_density', f'densities_{i}')
+        if mode == 'individual':
+            for i in range(n_projections):
+                self.declare_partials('aggregated_densities', f'densities_{i}')
+                self.declare_partials('aggregated_heat_loads', f'heat_loads_{i}')
+                self.declare_partials('max_density', f'densities_{i}')
+        else:
+            for i in range(n_components):
+                self.declare_partials('aggregated_densities', f'component_centers_{i}')
+                self.declare_partials('aggregated_densities', f'component_radii_{i}')
+                self.declare_partials('aggregated_heat_loads', f'component_centers_{i}')
+                self.declare_partials('aggregated_heat_loads', f'component_radii_{i}')
+                self.declare_partials('aggregated_heat_loads', f'component_heat_load_{i}')
+                self.declare_partials('max_density', f'component_centers_{i}')
+                self.declare_partials('max_density', f'component_radii_{i}')
+
+            for i in range(n_interconnects):
+                self.declare_partials('aggregated_densities', f'interconnect_points_{i}')
+                self.declare_partials('aggregated_densities', f'interconnect_radius_{i}')
+                self.declare_partials('aggregated_heat_loads', f'interconnect_points_{i}')
+                self.declare_partials('aggregated_heat_loads', f'interconnect_radius_{i}')
+                self.declare_partials('aggregated_heat_loads', f'interconnect_heat_load_{i}')
+                self.declare_partials('max_density', f'interconnect_points_{i}')
+                self.declare_partials('max_density', f'interconnect_radius_{i}')
 
 
     def compute(self, inputs, outputs):
-
-        # Get the options
-        n_projections = self.options['n_projections']
         rho_min = self.options['rho_min']
 
-        # Get the inputs
-        densities = [jnp.array(inputs[f'densities_{i}']) for i in range(n_projections)]
-        heat_loads = [jnp.array(inputs[f'heat_loads_{i}']) for i in range(n_projections)]
+        if self.options['mode'] == 'individual':
+            densities, heat_loads = self._individual_inputs(inputs)
+            aggregated_densities, aggregated_heat_loads, max_density = self._compute_individual_primal(
+                densities, heat_loads, rho_min)
+        else:
+            primals = self._combined_inputs(inputs)
+            aggregated_densities, aggregated_heat_loads, max_density = self._compute_combined_primal(
+                jnp.array(self.options['mesh_centers']),
+                jnp.atleast_1d(self.options['mesh_size']),
+                jnp.array(self.options['kernel_centers']),
+                jnp.array(self.options['kernel_radii']),
+                *primals,
+                rho_min)
 
-        # Calculate the values
-        aggregated_densities, aggregated_heat_loads, max_density = self._compute_primal(densities, heat_loads, rho_min)
-
-        # Write the outputs
         outputs['aggregated_densities'] = aggregated_densities
         outputs['aggregated_heat_loads'] = aggregated_heat_loads
         outputs['max_density'] = max_density
@@ -477,65 +531,167 @@ class ProjectionAggregator(ExplicitComponent):
         and the outputs are:
             aggregated_densities, aggregated_heat_loads, max_density.
         """
-        n_projections = self.options['n_projections']
-        rho_min = self.options['rho_min']
+        if self.options['mode'] == 'individual':
+            self._compute_individual_jacvec_product(inputs, d_inputs, d_outputs, mode)
+        else:
+            self._compute_combined_jacvec_product(inputs, d_inputs, d_outputs, mode)
 
-        # Assemble the list inputs from the OpenMDAO inputs dictionary.
+    def _individual_inputs(self, inputs):
+        n_projections = self.options['n_projections']
         densities = [jnp.array(inputs[f'densities_{i}']) for i in range(n_projections)]
         heat_loads = [jnp.array(inputs[f'heat_loads_{i}']) for i in range(n_projections)]
+        return densities, heat_loads
 
-        # Our _compute_primal function takes a tuple: (densities, heat_loads, rho_min)
+    def _combined_inputs(self, inputs):
+        n_components = self.options['n_components']
+        n_interconnects = self.options['n_interconnects']
+
+        component_centers = [jnp.array(inputs[f'component_centers_{i}']) for i in range(n_components)]
+        component_radii = [jnp.array(inputs[f'component_radii_{i}']) for i in range(n_components)]
+        component_heat_loads = [jnp.array(inputs[f'component_heat_load_{i}']) for i in range(n_components)]
+        interconnect_points = [jnp.array(inputs[f'interconnect_points_{i}']) for i in range(n_interconnects)]
+        interconnect_radii = [jnp.array(inputs[f'interconnect_radius_{i}']) for i in range(n_interconnects)]
+        interconnect_heat_loads = [jnp.array(inputs[f'interconnect_heat_load_{i}']) for i in range(n_interconnects)]
+
+        return (component_centers, component_radii, component_heat_loads,
+                interconnect_points, interconnect_radii, interconnect_heat_loads)
+
+    def _compute_individual_jacvec_product(self, inputs, d_inputs, d_outputs, mode):
+        n_projections = self.options['n_projections']
+        rho_min = self.options['rho_min']
+        densities, heat_loads = self._individual_inputs(inputs)
         primals = (densities, heat_loads, rho_min)
 
         if mode == 'fwd':
-            tan_densities = [jnp.array(d_inputs[f'densities_{i}']) for i in range(n_projections)]
-            tan_heat_loads = [jnp.array(d_inputs[f'heat_loads_{i}']) for i in range(n_projections)]
-            tan_rho_min = jnp.zeros_like(rho_min)
-            tangents = (tan_densities, tan_heat_loads, tan_rho_min)
-
-            # Compute the forward Jacobian-vector product.
-            _, tangent_out = jvp(self._compute_primal, primals, tangents)
+            tan_densities = [
+                jnp.array(d_inputs[f'densities_{i}'])
+                if f'densities_{i}' in d_inputs else jnp.zeros_like(densities[i])
+                for i in range(n_projections)
+            ]
+            tan_heat_loads = [
+                jnp.array(d_inputs[f'heat_loads_{i}'])
+                if f'heat_loads_{i}' in d_inputs else jnp.zeros_like(heat_loads[i])
+                for i in range(n_projections)
+            ]
+            tangents = (tan_densities, tan_heat_loads, jnp.zeros_like(rho_min))
+            _, tangent_out = jvp(self._compute_individual_primal, primals, tangents)
 
             d_outputs['aggregated_densities'] += tangent_out[0]
             d_outputs['aggregated_heat_loads'] += tangent_out[1]
             d_outputs['max_density'] += tangent_out[2]
 
         elif mode == 'rev':
-
-            primal_out, pullback = vjp(self._compute_primal, *primals)
-
-            cotan_agg_dens = d_outputs['aggregated_densities']
-            cotan_agg_heat = d_outputs['aggregated_heat_loads']
-            cotan_max = d_outputs['max_density']
-
-            # Evaluate the pullback (adjoint) for the cotangents.
-            grads = pullback((cotan_agg_dens, cotan_agg_heat, cotan_max))
-
+            _, pullback = vjp(self._compute_individual_primal, *primals)
+            grads = pullback((d_outputs['aggregated_densities'],
+                              d_outputs['aggregated_heat_loads'],
+                              d_outputs['max_density']))
             for i in range(n_projections):
                 d_inputs[f'densities_{i}'] += grads[0][i]
                 d_inputs[f'heat_loads_{i}'] += grads[1][i]
 
+    def _compute_combined_jacvec_product(self, inputs, d_inputs, d_outputs, mode):
+        n_components = self.options['n_components']
+        n_interconnects = self.options['n_interconnects']
+        rho_min = self.options['rho_min']
+        primals = self._combined_inputs(inputs)
+
+        frozen_compute_primal = partial(
+            self._compute_combined_primal,
+            jnp.array(self.options['mesh_centers']),
+            jnp.atleast_1d(self.options['mesh_size']),
+            jnp.array(self.options['kernel_centers']),
+            jnp.array(self.options['kernel_radii']),
+            rho_min=rho_min)
+
+        if mode == 'fwd':
+            tangents = self._combined_tangents(d_inputs, primals)
+            _, tangent_out = jvp(frozen_compute_primal, primals, tangents)
+
+            d_outputs['aggregated_densities'] += tangent_out[0]
+            d_outputs['aggregated_heat_loads'] += tangent_out[1]
+            d_outputs['max_density'] += tangent_out[2]
+
+        elif mode == 'rev':
+            _, pullback = vjp(frozen_compute_primal, *primals)
+            grads = pullback((d_outputs['aggregated_densities'],
+                              d_outputs['aggregated_heat_loads'],
+                              d_outputs['max_density']))
+
+            for i in range(n_components):
+                self._add_if_present(d_inputs, f'component_centers_{i}', grads[0][i])
+                self._add_if_present(d_inputs, f'component_radii_{i}', grads[1][i])
+                self._add_if_present(d_inputs, f'component_heat_load_{i}', grads[2][i])
+
+            for i in range(n_interconnects):
+                self._add_if_present(d_inputs, f'interconnect_points_{i}', grads[3][i])
+                self._add_if_present(d_inputs, f'interconnect_radius_{i}', grads[4][i])
+                self._add_if_present(d_inputs, f'interconnect_heat_load_{i}', grads[5][i])
+
+    def _combined_tangents(self, d_inputs, primals):
+        (component_centers, component_radii, component_heat_loads,
+         interconnect_points, interconnect_radii, interconnect_heat_loads) = primals
+
+        return (
+            self._tangent_list(d_inputs, 'component_centers', component_centers),
+            self._tangent_list(d_inputs, 'component_radii', component_radii),
+            self._tangent_list(d_inputs, 'component_heat_load', component_heat_loads),
+            self._tangent_list(d_inputs, 'interconnect_points', interconnect_points),
+            self._tangent_list(d_inputs, 'interconnect_radius', interconnect_radii),
+            self._tangent_list(d_inputs, 'interconnect_heat_load', interconnect_heat_loads),
+        )
 
     @staticmethod
-    def _compute_primal(densities, heat_loads, rho_min):
+    def _tangent_list(d_inputs, prefix, values):
+        return [
+            jnp.array(d_inputs[f'{prefix}_{i}'])
+            if f'{prefix}_{i}' in d_inputs else jnp.zeros_like(value)
+            for i, value in enumerate(values)
+        ]
 
-        # Aggregate the pseudo-densities
+    @staticmethod
+    def _add_if_present(d_inputs, name, value):
+        if name in d_inputs:
+            d_inputs[name] += value
+
+    @staticmethod
+    def _compute_individual_primal(densities, heat_loads, rho_min):
         aggregated_densities = jnp.sum(jnp.stack(densities, axis=0), axis=0)
         aggregated_heat_loads = jnp.sum(jnp.stack(heat_loads, axis=0), axis=0)
 
-        # Ensure that no pseudo-density is below the minimum value
-        # aggregated_densities = jnp.maximum(aggregated_densities, rho_min)
         aggregated_densities = jnp.where(aggregated_densities < rho_min, rho_min, aggregated_densities)
-
-        # Calculate the maximum pseudo-density
         max_density = kreisselmeier_steinhauser_max(aggregated_densities.flatten(), rho=100)
-        # Manual TODO Change
-        # max_density = aggregated_densities.flatten()[132:133]
-
-        # TODO Min
-        # TODO Max above 1?
 
         return aggregated_densities, aggregated_heat_loads, max_density
+
+    @staticmethod
+    def _compute_primal(densities, heat_loads, rho_min):
+        return ProjectionAggregator._compute_individual_primal(densities, heat_loads, rho_min)
+
+    @staticmethod
+    def _compute_combined_primal(mesh_centers, mesh_size,
+                                 kernel_centers, kernel_radii,
+                                 component_centers, component_radii, component_heat_loads,
+                                 interconnect_points, interconnect_radii, interconnect_heat_loads,
+                                 rho_min):
+        density_fields = []
+        heat_load_fields = []
+
+        for centers, radii, heat_load in zip(component_centers, component_radii, component_heat_loads):
+            _, penalized_densities = project_component(mesh_centers, mesh_size,
+                                                       centers, radii,
+                                                       kernel_centers, kernel_radii)
+            density_fields.append(penalized_densities)
+            heat_load_fields.append(heat_load * penalized_densities)
+
+        for points, radius, heat_load in zip(interconnect_points, interconnect_radii, interconnect_heat_loads):
+            start_points, end_points, radii = create_cylinders(points, radius)
+            _, penalized_densities = project_capsules(mesh_centers, mesh_size,
+                                                      kernel_centers, kernel_radii,
+                                                      start_points, end_points, radii)
+            density_fields.append(penalized_densities)
+            heat_load_fields.append(heat_load * penalized_densities)
+
+        return ProjectionAggregator._compute_individual_primal(density_fields, heat_load_fields, rho_min)
 
     def draw(self, plotter, subplot, prob):
         centers      = self.options['mesh_centers']

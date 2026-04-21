@@ -151,34 +151,3 @@ def get_aabb_bounds(centers, radii):
 
     return x_min, x_max, y_min, y_max, z_min, z_max
 
-
-def get_aabb_indices(el_centers, el_size, obj_centers, obj_radii):
-    """
-    Get the indices of the AABB bounds in the grid
-    """
-
-    aabb_bounds = get_aabb_bounds(obj_centers, obj_radii)
-
-    obj_x_min, obj_x_max, obj_y_min, obj_y_max, obj_z_min, obj_z_max = aabb_bounds
-
-    element_size = jnp.asarray(el_size).reshape(())
-    element_half_size = element_size / 2
-
-    x_centers = el_centers[:, 0, 0, 0, 0]
-    y_centers = el_centers[0, :, 0, 0, 1]
-    z_centers = el_centers[0, 0, :, 0, 2]
-
-    def clipped_axis_indices(axis_centers, obj_min, obj_max):
-        axis_min = axis_centers[0] - element_half_size
-        n_axis = axis_centers.shape[0]
-        raw_min = jnp.floor((obj_min - axis_min) / element_size).astype(jnp.int32)
-        raw_max = jnp.floor((obj_max - axis_min) / element_size).astype(jnp.int32)
-        i_min = jnp.clip(raw_min, 0, n_axis - 1)
-        i_max = jnp.clip(raw_max, 0, n_axis - 1)
-        return jnp.minimum(i_min, i_max), jnp.maximum(i_min, i_max)
-
-    i1, i2 = clipped_axis_indices(x_centers, obj_x_min, obj_x_max)
-    j1, j2 = clipped_axis_indices(y_centers, obj_y_min, obj_y_max)
-    k1, k2 = clipped_axis_indices(z_centers, obj_z_min, obj_z_max)
-
-    return i1, i2, j1, j2, k1, k2

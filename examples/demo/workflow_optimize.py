@@ -66,6 +66,12 @@ kernel_points = kernel_points.reshape(-1, 3)
 kernel_radii = kernel_radii.reshape(-1, 1)
 
 
+# Projection mode:
+#   individual - project each object separately, then aggregate densities.
+#   combined   - pass object primitives to one aggregator component.
+projection_mode = 'combined'
+
+
 # %% Initialize the problem and model structure
 # Note: Models are initialized in the order they are added to the model.
 
@@ -97,8 +103,9 @@ model.add_subsystem('proj', proj)
 
 
 # Define the minimum radius of the MDBD representation
-# For Bot_Eye, r >=4.0e-2 ~ 122 points, >=3.0e-2 ~ 238 points, >=2.0e-2 ~ 623 points
-min_rad = 4.0e-2
+# For Bot_Eye, r >=6.0e-2 ~ 44 points, 4.0e-2 ~ 122 points, >=3.0e-2 ~ 238 points, >=2.0e-2 ~ 623 points
+# min_rad = 4.0e-2
+min_rad = 6.0e-2
 
 # Define the components
 comp_1 = MDBDComponent(filepath='csvs/Bot_Eye_5k_300s.csv', port_positions=[[0.75, 0, 0], [0, 0.75, 0]], minimum_radius=min_rad, color='blue')
@@ -129,43 +136,44 @@ model.connect('system.comps.comp_3.updated_ports', 'system.ints.int_3.start_poin
 model.connect('system.comps.comp_1.updated_ports', 'system.ints.int_3.end_point', src_indices=om.slicer[1, :])
 
 
+if projection_mode == 'individual':
+    # Project each component and interconnect onto independent copies of the mesh.
+    proj_c1 = ProjectMDBDComponent(mesh_size=element_size, mesh_centers=centers, kernel_centers=kernel_points, kernel_radii=kernel_radii)
+    proj_c2 = ProjectMDBDComponent(mesh_size=element_size, mesh_centers=centers, kernel_centers=kernel_points, kernel_radii=kernel_radii)
+    proj_c3 = ProjectMDBDComponent(mesh_size=element_size, mesh_centers=centers, kernel_centers=kernel_points, kernel_radii=kernel_radii)
+    proj_i1 = ProjectInterconnect(mesh_size=element_size, mesh_centers=centers, kernel_centers=kernel_points, kernel_radii=kernel_radii)
+    proj_i2 = ProjectInterconnect(mesh_size=element_size, mesh_centers=centers, kernel_centers=kernel_points, kernel_radii=kernel_radii)
+    proj_i3 = ProjectInterconnect(mesh_size=element_size, mesh_centers=centers, kernel_centers=kernel_points, kernel_radii=kernel_radii)
+    model.proj.add_subsystem('proj_c1', proj_c1)
+    model.proj.add_subsystem('proj_c2', proj_c2)
+    model.proj.add_subsystem('proj_c3', proj_c3)
+    model.proj.add_subsystem('proj_i1', proj_i1)
+    model.proj.add_subsystem('proj_i2', proj_i2)
+    model.proj.add_subsystem('proj_i3', proj_i3)
 
-# Project each component and interconnect onto independent copies of the mesh.
-proj_c1 = ProjectMDBDComponent(mesh_size=element_size, mesh_centers=centers, kernel_centers=kernel_points, kernel_radii=kernel_radii)
-proj_c2 = ProjectMDBDComponent(mesh_size=element_size, mesh_centers=centers, kernel_centers=kernel_points, kernel_radii=kernel_radii)
-proj_c3 = ProjectMDBDComponent(mesh_size=element_size, mesh_centers=centers, kernel_centers=kernel_points, kernel_radii=kernel_radii)
-proj_i1 = ProjectInterconnect(mesh_size=element_size, mesh_centers=centers, kernel_centers=kernel_points, kernel_radii=kernel_radii)
-proj_i2 = ProjectInterconnect(mesh_size=element_size, mesh_centers=centers, kernel_centers=kernel_points, kernel_radii=kernel_radii)
-proj_i3 = ProjectInterconnect(mesh_size=element_size, mesh_centers=centers, kernel_centers=kernel_points, kernel_radii=kernel_radii)
-model.proj.add_subsystem('proj_c1', proj_c1)
-model.proj.add_subsystem('proj_c2', proj_c2)
-model.proj.add_subsystem('proj_c3', proj_c3)
-model.proj.add_subsystem('proj_i1', proj_i1)
-model.proj.add_subsystem('proj_i2', proj_i2)
-model.proj.add_subsystem('proj_i3', proj_i3)
+    # Now connect the components and interconnects to their projections
+    model.connect('system.comps.comp_1.updated_sphere_positions', 'proj.proj_c1.centers')
+    model.connect('system.comps.comp_1.updated_sphere_radii', 'proj.proj_c1.radii')
+    model.connect('system.comps.comp_2.updated_sphere_positions', 'proj.proj_c2.centers')
+    model.connect('system.comps.comp_2.updated_sphere_radii', 'proj.proj_c2.radii')
+    model.connect('system.comps.comp_3.updated_sphere_positions', 'proj.proj_c3.centers')
+    model.connect('system.comps.comp_3.updated_sphere_radii', 'proj.proj_c3.radii')
 
-
-# Now connect the components and interconnects to their projections
-model.connect('system.comps.comp_1.updated_sphere_positions', 'proj.proj_c1.centers')
-model.connect('system.comps.comp_1.updated_sphere_radii', 'proj.proj_c1.radii')
-model.connect('system.comps.comp_2.updated_sphere_positions', 'proj.proj_c2.centers')
-model.connect('system.comps.comp_2.updated_sphere_radii', 'proj.proj_c2.radii')
-model.connect('system.comps.comp_3.updated_sphere_positions', 'proj.proj_c3.centers')
-model.connect('system.comps.comp_3.updated_sphere_radii', 'proj.proj_c3.radii')
-
-model.connect('system.ints.int_1.updated_cyl_positions', 'proj.proj_i1.control_points')
-model.connect('system.ints.int_1.updated_cyl_radius', 'proj.proj_i1.radius')
-model.connect('system.ints.int_2.updated_cyl_positions', 'proj.proj_i2.control_points')
-model.connect('system.ints.int_2.updated_cyl_radius', 'proj.proj_i2.radius')
-model.connect('system.ints.int_3.updated_cyl_positions', 'proj.proj_i3.control_points')
-model.connect('system.ints.int_3.updated_cyl_radius', 'proj.proj_i3.radius')
+    model.connect('system.ints.int_1.updated_cyl_positions', 'proj.proj_i1.control_points')
+    model.connect('system.ints.int_1.updated_cyl_radius', 'proj.proj_i1.radius')
+    model.connect('system.ints.int_2.updated_cyl_positions', 'proj.proj_i2.control_points')
+    model.connect('system.ints.int_2.updated_cyl_radius', 'proj.proj_i2.radius')
+    model.connect('system.ints.int_3.updated_cyl_positions', 'proj.proj_i3.control_points')
+    model.connect('system.ints.int_3.updated_cyl_radius', 'proj.proj_i3.radius')
 
 
 # Now combine (overlay) all the projections
 # This requires "multiplexing" the outputs of each projection into single, unified vectors for centers and radii.
 # Row dimensions are manually specified at this time. Column dimensions are self-determined (3D coord, 1D radii)
-mux_centers = Multiplexer(n_i=[122, 1119, 195, 3, 3, 3, 3, 3, 3], m=3)
-mux_radii = Multiplexer(n_i=[122, 1119, 195, 3, 3, 3, 3, 3, 3], m=1)
+# mux_centers = Multiplexer(n_i=[122, 1119, 195, 3, 3, 3, 3, 3, 3], m=3)
+# mux_radii = Multiplexer(n_i=[122, 1119, 195, 3, 3, 3, 3, 3, 3], m=1)
+mux_centers = Multiplexer(n_i=[44, 422, 80, 3, 3, 3, 3, 3, 3], m=3)
+mux_radii = Multiplexer(n_i=[44, 422, 80, 3, 3, 3, 3, 3, 3], m=1)
 prob.model.add_subsystem('mux_centers', mux_centers)
 prob.model.add_subsystem('mux_radii', mux_radii)
 prob.model.connect('system.comps.comp_1.updated_sphere_positions', 'mux_centers.input_0')
@@ -183,25 +191,49 @@ prob.model.connect('system.ints.int_3.updated_cyl_radius', 'mux_radii.input_5')
 
 
 # Aggregate the pseudo-densities
-n_proj = 6
-projection_aggregator = ProjectionAggregator(n_projections=n_proj, rho_min=1e-2, mesh_size=element_size, mesh_centers=centers)
-model.proj.add_subsystem('aggregator', projection_aggregator)
-model.connect('proj.proj_c1.penalized_densities', 'proj.aggregator.densities_0')
-model.connect('proj.proj_c2.penalized_densities', 'proj.aggregator.densities_1')
-model.connect('proj.proj_c3.penalized_densities', 'proj.aggregator.densities_2')
-model.connect('proj.proj_i1.penalized_densities', 'proj.aggregator.densities_3')
-model.connect('proj.proj_i2.penalized_densities', 'proj.aggregator.densities_4')
-model.connect('proj.proj_i3.penalized_densities', 'proj.aggregator.densities_5')
+if projection_mode == 'individual':
+    n_proj = 6
+    projection_aggregator = ProjectionAggregator(mode='individual', n_projections=n_proj, rho_min=1e-2,
+                                                 mesh_size=element_size, mesh_centers=centers)
+    model.proj.add_subsystem('aggregator', projection_aggregator)
+    model.connect('proj.proj_c1.penalized_densities', 'proj.aggregator.densities_0')
+    model.connect('proj.proj_c2.penalized_densities', 'proj.aggregator.densities_1')
+    model.connect('proj.proj_c3.penalized_densities', 'proj.aggregator.densities_2')
+    model.connect('proj.proj_i1.penalized_densities', 'proj.aggregator.densities_3')
+    model.connect('proj.proj_i2.penalized_densities', 'proj.aggregator.densities_4')
+    model.connect('proj.proj_i3.penalized_densities', 'proj.aggregator.densities_5')
 
+    # Optional: Aggregate the loads
+    # Default values are zero. Explicit connections left for clarity.
+    model.connect('proj.proj_c1.penalized_heat_loads', 'proj.aggregator.heat_loads_0')
+    model.connect('proj.proj_c2.penalized_heat_loads', 'proj.aggregator.heat_loads_1')
+    model.connect('proj.proj_c3.penalized_heat_loads', 'proj.aggregator.heat_loads_2')
+    model.connect('proj.proj_i1.penalized_heat_loads', 'proj.aggregator.heat_loads_3')
+    model.connect('proj.proj_i2.penalized_heat_loads', 'proj.aggregator.heat_loads_4')
+    model.connect('proj.proj_i3.penalized_heat_loads', 'proj.aggregator.heat_loads_5')
 
-# Optional: Aggregate the loads
-# Default values are zero. Explicit connections left for clarity.
-model.connect('proj.proj_c1.penalized_heat_loads', 'proj.aggregator.heat_loads_0')
-model.connect('proj.proj_c2.penalized_heat_loads', 'proj.aggregator.heat_loads_1')
-model.connect('proj.proj_c3.penalized_heat_loads', 'proj.aggregator.heat_loads_2')
-model.connect('proj.proj_i1.penalized_heat_loads', 'proj.aggregator.heat_loads_3')
-model.connect('proj.proj_i2.penalized_heat_loads', 'proj.aggregator.heat_loads_4')
-model.connect('proj.proj_i3.penalized_heat_loads', 'proj.aggregator.heat_loads_5')
+elif projection_mode == 'combined':
+    projection_aggregator = ProjectionAggregator(mode='combined', n_components=3, n_interconnects=3,
+                                                 rho_min=1e-2, mesh_size=element_size, mesh_centers=centers,
+                                                 kernel_centers=kernel_points, kernel_radii=kernel_radii)
+    model.proj.add_subsystem('aggregator', projection_aggregator)
+
+    model.connect('system.comps.comp_1.updated_sphere_positions', 'proj.aggregator.component_centers_0')
+    model.connect('system.comps.comp_1.updated_sphere_radii', 'proj.aggregator.component_radii_0')
+    model.connect('system.comps.comp_2.updated_sphere_positions', 'proj.aggregator.component_centers_1')
+    model.connect('system.comps.comp_2.updated_sphere_radii', 'proj.aggregator.component_radii_1')
+    model.connect('system.comps.comp_3.updated_sphere_positions', 'proj.aggregator.component_centers_2')
+    model.connect('system.comps.comp_3.updated_sphere_radii', 'proj.aggregator.component_radii_2')
+
+    model.connect('system.ints.int_1.updated_cyl_positions', 'proj.aggregator.interconnect_points_0')
+    model.connect('system.ints.int_1.updated_cyl_radius', 'proj.aggregator.interconnect_radius_0')
+    model.connect('system.ints.int_2.updated_cyl_positions', 'proj.aggregator.interconnect_points_1')
+    model.connect('system.ints.int_2.updated_cyl_radius', 'proj.aggregator.interconnect_radius_1')
+    model.connect('system.ints.int_3.updated_cyl_positions', 'proj.aggregator.interconnect_points_2')
+    model.connect('system.ints.int_3.updated_cyl_radius', 'proj.aggregator.interconnect_radius_2')
+
+else:
+    raise ValueError(f"Unknown projection_mode: {projection_mode}")
 
 
 
@@ -282,7 +314,7 @@ prob.record('before')
 
 # Run the optimization
 t3 = time_ns()
-# prob.run_driver()
+prob.run_driver()
 t4 = time_ns()
 print(f"Optimization time: {(t4 - t3) / 1e9} seconds")
 
@@ -375,7 +407,6 @@ plotter.show_axes()
 # plotter.enable_shadows()
 # plotter.enable_ssao(radius=0.5)
 plotter.enable_anti_aliasing('fxaa')
-# plotter.view_yz()
 plotter.view_xy()
 plotter.show()
 
