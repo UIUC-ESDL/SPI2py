@@ -19,16 +19,81 @@ Notes:
 
 # Standard imports
 import jax
+import matplotlib
 import numpy as np
 import pyvista as pv
 import openmdao.api as om
 from copy import copy
 from time import time_ns
 
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+
+
+OBJECTIVE_NAME = 'bbv.volume'
+DENSITY_CONSTRAINT_NAME = 'proj.density_constraint.max_density'
+DENSITY_CONSTRAINT_UPPER = 1.1
+DRIVER_CASES_FILENAME = 'driver_cases.sql'
+TRAJECTORY_PLOT_FILENAME = 'optimization_trajectory.png'
+
+
+def _recorded_scalar(case, getter, variable_name):
+    values = getter(scaled=False)
+    if variable_name not in values:
+        raise KeyError(f"'{variable_name}' was not recorded. Available names: {list(values.keys())}")
+    return float(np.asarray(values[variable_name]).reshape(-1)[0])
+
+
+def plot_driver_trajectory(outputs_dir, reports_dir,
+                           objective_name=OBJECTIVE_NAME,
+                           constraint_name=DENSITY_CONSTRAINT_NAME,
+                           constraint_upper=DENSITY_CONSTRAINT_UPPER):
+    case_db = outputs_dir / DRIVER_CASES_FILENAME
+    if not case_db.exists():
+        print(f"Driver trajectory not plotted because {case_db} was not found.")
+        return None
+
+    cr = om.CaseReader(case_db)
+    case_names = cr.list_cases('driver', out_stream=None)
+    if not case_names:
+        print(f"Driver trajectory not plotted because {case_db} contains no driver cases.")
+        return None
+
+    iterations = []
+    objectives = []
+    constraints = []
+    for i, case_name in enumerate(case_names):
+        case = cr.get_case(case_name)
+        iterations.append(i)
+        objectives.append(_recorded_scalar(case, case.get_objectives, objective_name))
+        constraints.append(_recorded_scalar(case, case.get_constraints, constraint_name))
+
+    reports_dir.mkdir(parents=True, exist_ok=True)
+    plot_path = reports_dir / TRAJECTORY_PLOT_FILENAME
+
+    fig, axes = plt.subplots(2, 1, sharex=True, figsize=(7, 5), constrained_layout=True)
+    axes[0].plot(iterations, objectives, marker='o', linewidth=1.5)
+    axes[0].set_ylabel(objective_name)
+    axes[0].grid(True, alpha=0.3)
+
+    axes[1].plot(iterations, constraints, marker='o', linewidth=1.5)
+    axes[1].axhline(constraint_upper, color='tab:red', linestyle='--',
+                    linewidth=1.0, label=f'upper = {constraint_upper:g}')
+    axes[1].set_xlabel('Driver iteration')
+    axes[1].set_ylabel(constraint_name)
+    axes[1].grid(True, alpha=0.3)
+    axes[1].legend(loc='best')
+
+    fig.suptitle('Optimization Trajectory')
+    fig.savefig(plot_path, dpi=200)
+    plt.close(fig)
+
+    return plot_path
+
 
 # SPI2py API imports
 from SPI2py.API.system import System, Components, Interconnects, MDBDComponent, Interconnect
-from SPI2py.API.projection import Projections, ProjectionAggregator, ProjectMDBDComponent, ProjectInterconnect
+from SPI2py.API.projection import Projections, ProjectionConstraint
 from SPI2py.API.objectives import BoundingBoxVolume
 from SPI2py.API.utilities import Multiplexer
 
@@ -44,22 +109,17 @@ t0 = time_ns()
 
 
 # Configure JAX settings
-jax.config.update("jax_enable_x64", True)
-jax.config.update("jax_debug_nans", True)
+# jax.config.update("jax_enable_x64", True)
+# jax.config.update("jax_debug_nans", True)
 
 
 # Define the domain as a uniform grid
 x_min, x_max = (0, 7)
 y_min, y_max = (0, 7)
-z_min, z_max = (0, 2)
-element_size = 0.3  #0.35
+z_min, z_max = (0, 4)
+element_size = 0.3
 nodes, elements, centers, nx, ny, nz, lx, ly, lz = generate_mesh(x_min, x_max, y_min, y_max, z_min, z_max, element_size=element_size)
 centers = centers.reshape(nx, ny, nz, 1, 3)
-
-# Projection mode:
-#   individual - project each object separately, then aggregate densities.
-#   combined   - pass object primitives to one aggregator component.
-projection_mode = 'combined'
 
 
 # %% Initialize the problem and model structure
@@ -126,36 +186,6 @@ model.connect('system.comps.comp_3.updated_ports', 'system.ints.int_3.start_poin
 model.connect('system.comps.comp_1.updated_ports', 'system.ints.int_3.end_point', src_indices=om.slicer[1, :])
 
 
-if projection_mode == 'individual':
-    # Project each component and interconnect onto independent copies of the mesh.
-    proj_c1 = ProjectMDBDComponent(mesh_size=element_size, mesh_centers=centers)
-    proj_c2 = ProjectMDBDComponent(mesh_size=element_size, mesh_centers=centers)
-    proj_c3 = ProjectMDBDComponent(mesh_size=element_size, mesh_centers=centers)
-    proj_i1 = ProjectInterconnect(mesh_size=element_size, mesh_centers=centers)
-    proj_i2 = ProjectInterconnect(mesh_size=element_size, mesh_centers=centers)
-    proj_i3 = ProjectInterconnect(mesh_size=element_size, mesh_centers=centers)
-    model.proj.add_subsystem('proj_c1', proj_c1)
-    model.proj.add_subsystem('proj_c2', proj_c2)
-    model.proj.add_subsystem('proj_c3', proj_c3)
-    model.proj.add_subsystem('proj_i1', proj_i1)
-    model.proj.add_subsystem('proj_i2', proj_i2)
-    model.proj.add_subsystem('proj_i3', proj_i3)
-
-    # Now connect the components and interconnects to their projections
-    model.connect('system.comps.comp_1.updated_sphere_positions', 'proj.proj_c1.centers')
-    model.connect('system.comps.comp_1.updated_sphere_radii', 'proj.proj_c1.radii')
-    model.connect('system.comps.comp_2.updated_sphere_positions', 'proj.proj_c2.centers')
-    model.connect('system.comps.comp_2.updated_sphere_radii', 'proj.proj_c2.radii')
-    model.connect('system.comps.comp_3.updated_sphere_positions', 'proj.proj_c3.centers')
-    model.connect('system.comps.comp_3.updated_sphere_radii', 'proj.proj_c3.radii')
-
-    model.connect('system.ints.int_1.updated_cyl_positions', 'proj.proj_i1.control_points')
-    model.connect('system.ints.int_1.updated_cyl_radius', 'proj.proj_i1.radius')
-    model.connect('system.ints.int_2.updated_cyl_positions', 'proj.proj_i2.control_points')
-    model.connect('system.ints.int_2.updated_cyl_radius', 'proj.proj_i2.radius')
-    model.connect('system.ints.int_3.updated_cyl_positions', 'proj.proj_i3.control_points')
-    model.connect('system.ints.int_3.updated_cyl_radius', 'proj.proj_i3.radius')
-
 
 # Now combine (overlay) all the projections
 # This requires "multiplexing" the outputs of each projection into single, unified vectors for centers and radii.
@@ -179,48 +209,25 @@ prob.model.connect('system.ints.int_3.updated_cyl_radius', 'mux_radii.input_5')
 
 
 # Aggregate the pseudo-densities
-if projection_mode == 'individual':
-    n_proj = 6
-    projection_aggregator = ProjectionAggregator(mode='individual', n_projections=n_proj, rho_min=1e-2,
-                                                 mesh_size=element_size, mesh_centers=centers)
-    model.proj.add_subsystem('aggregator', projection_aggregator)
-    model.connect('proj.proj_c1.penalized_densities', 'proj.aggregator.densities_0')
-    model.connect('proj.proj_c2.penalized_densities', 'proj.aggregator.densities_1')
-    model.connect('proj.proj_c3.penalized_densities', 'proj.aggregator.densities_2')
-    model.connect('proj.proj_i1.penalized_densities', 'proj.aggregator.densities_3')
-    model.connect('proj.proj_i2.penalized_densities', 'proj.aggregator.densities_4')
-    model.connect('proj.proj_i3.penalized_densities', 'proj.aggregator.densities_5')
 
-    # Optional: Aggregate the loads
-    # Default values are zero. Explicit connections left for clarity.
-    model.connect('proj.proj_c1.penalized_heat_loads', 'proj.aggregator.heat_loads_0')
-    model.connect('proj.proj_c2.penalized_heat_loads', 'proj.aggregator.heat_loads_1')
-    model.connect('proj.proj_c3.penalized_heat_loads', 'proj.aggregator.heat_loads_2')
-    model.connect('proj.proj_i1.penalized_heat_loads', 'proj.aggregator.heat_loads_3')
-    model.connect('proj.proj_i2.penalized_heat_loads', 'proj.aggregator.heat_loads_4')
-    model.connect('proj.proj_i3.penalized_heat_loads', 'proj.aggregator.heat_loads_5')
+projection_constraint = ProjectionConstraint(n_components=3, n_interconnects=3,
+                                             rho_min=1e-2, mesh_size=element_size, mesh_centers=centers)
+model.proj.add_subsystem('density_constraint', projection_constraint)
 
-elif projection_mode == 'combined':
-    projection_aggregator = ProjectionAggregator(mode='combined', n_components=3, n_interconnects=3,
-                                                 rho_min=1e-2, mesh_size=element_size, mesh_centers=centers)
-    model.proj.add_subsystem('aggregator', projection_aggregator)
+model.connect('system.comps.comp_1.updated_sphere_positions', 'proj.density_constraint.component_centers_0')
+model.connect('system.comps.comp_1.updated_sphere_radii', 'proj.density_constraint.component_radii_0')
+model.connect('system.comps.comp_2.updated_sphere_positions', 'proj.density_constraint.component_centers_1')
+model.connect('system.comps.comp_2.updated_sphere_radii', 'proj.density_constraint.component_radii_1')
+model.connect('system.comps.comp_3.updated_sphere_positions', 'proj.density_constraint.component_centers_2')
+model.connect('system.comps.comp_3.updated_sphere_radii', 'proj.density_constraint.component_radii_2')
 
-    model.connect('system.comps.comp_1.updated_sphere_positions', 'proj.aggregator.component_centers_0')
-    model.connect('system.comps.comp_1.updated_sphere_radii', 'proj.aggregator.component_radii_0')
-    model.connect('system.comps.comp_2.updated_sphere_positions', 'proj.aggregator.component_centers_1')
-    model.connect('system.comps.comp_2.updated_sphere_radii', 'proj.aggregator.component_radii_1')
-    model.connect('system.comps.comp_3.updated_sphere_positions', 'proj.aggregator.component_centers_2')
-    model.connect('system.comps.comp_3.updated_sphere_radii', 'proj.aggregator.component_radii_2')
+model.connect('system.ints.int_1.updated_cyl_positions', 'proj.density_constraint.interconnect_points_0')
+model.connect('system.ints.int_1.updated_cyl_radius', 'proj.density_constraint.interconnect_radius_0')
+model.connect('system.ints.int_2.updated_cyl_positions', 'proj.density_constraint.interconnect_points_1')
+model.connect('system.ints.int_2.updated_cyl_radius', 'proj.density_constraint.interconnect_radius_1')
+model.connect('system.ints.int_3.updated_cyl_positions', 'proj.density_constraint.interconnect_points_2')
+model.connect('system.ints.int_3.updated_cyl_radius', 'proj.density_constraint.interconnect_radius_2')
 
-    model.connect('system.ints.int_1.updated_cyl_positions', 'proj.aggregator.interconnect_points_0')
-    model.connect('system.ints.int_1.updated_cyl_radius', 'proj.aggregator.interconnect_radius_0')
-    model.connect('system.ints.int_2.updated_cyl_positions', 'proj.aggregator.interconnect_points_1')
-    model.connect('system.ints.int_2.updated_cyl_radius', 'proj.aggregator.interconnect_radius_1')
-    model.connect('system.ints.int_3.updated_cyl_positions', 'proj.aggregator.interconnect_points_2')
-    model.connect('system.ints.int_3.updated_cyl_radius', 'proj.aggregator.interconnect_radius_2')
-
-else:
-    raise ValueError(f"Unknown projection_mode: {projection_mode}")
 
 
 
@@ -229,14 +236,14 @@ else:
 
 # Set the design variables
 prob.model.add_design_var('system.comps.comp_1.translation', ref=0.25, lower=-5, upper=5)
-# prob.model.add_design_var('system.comps.comp_1.rotation', ref=(np.pi/2)/4, lower=-np.pi, upper=np.pi)
 prob.model.add_design_var('system.comps.comp_2.translation', ref=0.25, lower=-5, upper=5)
-# prob.model.add_design_var('system.comps.comp_2.rotation', ref=(np.pi/2)/4, lower=-np.pi, upper=np.pi)
 prob.model.add_design_var('system.comps.comp_3.translation', ref=0.25, lower=-5, upper=5)
-# prob.model.add_design_var('system.comps.comp_3.rotation', ref=(np.pi/2)/4, lower=-np.pi, upper=np.pi)
-# prob.model.add_design_var('system.ints.int_1.control_points', ref=0.25, lower=-5, upper=5)
-# prob.model.add_design_var('system.ints.int_2.control_points', ref=0.25, lower=-5, upper=5)
-# prob.model.add_design_var('system.ints.int_3.control_points', ref=0.25, lower=-5, upper=5)
+prob.model.add_design_var('system.comps.comp_1.rotation', ref=(np.pi/2)/4, lower=-np.pi, upper=np.pi)
+prob.model.add_design_var('system.comps.comp_2.rotation', ref=(np.pi/2)/4, lower=-np.pi, upper=np.pi)
+prob.model.add_design_var('system.comps.comp_3.rotation', ref=(np.pi/2)/4, lower=-np.pi, upper=np.pi)
+prob.model.add_design_var('system.ints.int_1.control_points', ref=0.25, lower=-5, upper=5)
+prob.model.add_design_var('system.ints.int_2.control_points', ref=0.25, lower=-5, upper=5)
+prob.model.add_design_var('system.ints.int_3.control_points', ref=0.25, lower=-5, upper=5)
 
 
 
@@ -245,16 +252,27 @@ bbv = BoundingBoxVolume()
 model.add_subsystem('bbv', bbv)
 prob.model.connect('mux_centers.stacked_output', 'bbv.centers')
 prob.model.connect('mux_radii.stacked_output', 'bbv.radii')
-prob.model.add_objective('bbv.volume', ref=1)
+prob.model.add_objective(OBJECTIVE_NAME, ref=1)
 
 
 # Set the constraint(s)
-prob.model.add_constraint('proj.aggregator.max_density', upper=1.1)
+prob.model.add_constraint(DENSITY_CONSTRAINT_NAME, upper=DENSITY_CONSTRAINT_UPPER)
 
 
 # Set up the optimizer
 prob.driver = om.ScipyOptimizeDriver()
-prob.driver.options['maxiter'] = 10
+prob.driver.options['maxiter'] = 20
+
+# Driver-level recorder for objective/constraint trajectories.
+driver_rec = om.SqliteRecorder(DRIVER_CASES_FILENAME)
+prob.driver.add_recorder(driver_rec)
+prob.driver.recording_options['record_desvars'] = True
+prob.driver.recording_options['record_objectives'] = True
+prob.driver.recording_options['record_constraints'] = True
+prob.driver.recording_options['record_inputs'] = False
+prob.driver.recording_options['record_outputs'] = True
+prob.driver.recording_options['record_residuals'] = False
+prob.driver.recording_options['includes'] = [OBJECTIVE_NAME, DENSITY_CONSTRAINT_NAME]
 
 
 # ...
@@ -287,14 +305,11 @@ print(f"Run time: {(t2 - t1) / 1e9} seconds")
 
 # Check the initial state
 print("BBV Before:", prob.get_val('bbv.volume'))
-print("Max Density:", prob.get_val('proj.aggregator.max_density'))
+print("Max Density:", prob.get_val('proj.density_constraint.max_density'))
 
 
 
 # %% Now run the optimization
-
-
-
 
 prob.record('before')
 
@@ -305,16 +320,22 @@ prob.run_driver()
 t4 = time_ns()
 print(f"Optimization time: {(t4 - t3) / 1e9} seconds")
 
+outputs_dir = prob.get_outputs_dir()
+reports_dir = prob.get_reports_dir()
 prob.record('after')
 prob.cleanup()
+
+trajectory_plot = plot_driver_trajectory(outputs_dir, reports_dir)
+if trajectory_plot is not None:
+    print(f"Optimization trajectory plot: {trajectory_plot}")
 
 
 # Check the final state
 print("BBV After:", prob.get_val('bbv.volume'))
-print("Max Density:", prob.get_val('proj.aggregator.max_density'))
+print("Max Density:", prob.get_val('proj.density_constraint.max_density'))
 
 bounds_after = prob.get_val('bbv.bounds')
-densities_after = prob.get_val('proj.aggregator.aggregated_densities')
+densities_after = prob.get_val('proj.density_constraint.aggregated_densities')
 
 
 
@@ -367,7 +388,7 @@ plot_translation_sensitivities(plotter, sp1, prob.get_val("system.ints.int_2.upd
 plot_translation_sensitivities(plotter, sp1, prob.get_val("system.ints.int_3.updated_cyl_positions")[1], tot_before_int_3, color="gray",factor=2.0)
 plot_AABB(plotter, sp1, prob.get_val('bbv.bounds'), color='gray', opacity=0)
 
-model.proj.aggregator.draw(plotter, sp2, prob)
+model.proj.density_constraint.draw(plotter, sp2, prob)
 
 
 #%% Plot the System After Optimization
@@ -383,7 +404,7 @@ plot_grid(plotter, sp3, centers, element_size, densities=None, min_opacity=0.0)
 model.system.draw(plotter, sp3, prob)
 plot_AABB(plotter, sp3, prob.get_val('bbv.bounds'), color='gray', opacity=0)
 
-model.proj.aggregator.draw(plotter, sp4, prob)
+model.proj.density_constraint.draw(plotter, sp4, prob)
 
 
 # %% Plotter configurations
@@ -422,7 +443,7 @@ print('Done')
 # tot_after_comp_2 = copy(tot_after[('bbv.volume', 'system.comps.comp_2.translation')][0])
 
 # Check the total derivative of an output wrt a design variable
-# totals_c_approx = copy(prob.compute_totals(of=['proj.aggregator.max_density'], wrt=['system.comps.comp_2.translation']))
+# totals_c_approx = copy(prob.compute_totals(of=['proj.density_constraint.max_density'], wrt=['system.comps.comp_2.translation']))
 # pf = prob.check_partials(includes='FEA')
 # tot = prob.compute_totals(of=['FEA.max_temperature'], wrt=['system.comps.comp_2.translation'])
 # tot = tot[('FEA.max_temperature', 'system.comps.comp_2.translation')][0]

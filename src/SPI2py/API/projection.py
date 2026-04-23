@@ -45,6 +45,8 @@ class ProjectMDBDComponent(ExplicitComponent):
                              desc='Optional points representing the mesh kernel')
         self.options.declare('kernel_radii', default=None, types=_KERNEL_OPTION_TYPES,
                              desc='Optional radii of kernel points')
+        self.options.declare('debug_checks', default=False, types=bool,
+                             desc='Run projection shape/type/value checks')
 
     def setup(self):
 
@@ -74,6 +76,7 @@ class ProjectMDBDComponent(ExplicitComponent):
         mesh_size = jnp.atleast_1d(self.options['mesh_size'])
         mesh_centers = jnp.array(self.options['mesh_centers'])
         kernel_centers, kernel_radii = _projection_kernel_options(self)
+        debug_checks = self.options['debug_checks']
 
         # Get the inputs
         centers = jnp.array(inputs['centers'])
@@ -84,7 +87,8 @@ class ProjectMDBDComponent(ExplicitComponent):
         densities, penalized_densities, penalized_heat_loads = self._compute_primal(mesh_centers, mesh_size,
                                                                                     centers, radii,
                                                                                     kernel_centers, kernel_radii,
-                                                                                    heat_load)
+                                                                                    heat_load,
+                                                                                    debug_checks=debug_checks)
 
         # Set the outputs
         outputs['densities'] = np.asarray(densities)
@@ -100,6 +104,7 @@ class ProjectMDBDComponent(ExplicitComponent):
         mesh_size = jnp.atleast_1d(self.options['mesh_size'])
         mesh_centers = jnp.array(self.options['mesh_centers'])
         kernel_centers, kernel_radii = _projection_kernel_options(self)
+        debug_checks = self.options['debug_checks']
 
         # Get input variables.
         centers = jnp.array(inputs['centers'])
@@ -123,7 +128,8 @@ class ProjectMDBDComponent(ExplicitComponent):
             tangents = (t_mesh_centers, t_mesh_size, t_centers, t_radii, t_kernel_centers, t_kernel_radii, t_heat_load)
 
             # Compute the Jacobian-vector product (JVP) using JAX.
-            _, tangent_out = jvp(self._compute_primal, primals, tangents)
+            compute_primal = partial(self._compute_primal, debug_checks=debug_checks)
+            _, tangent_out = jvp(compute_primal, primals, tangents)
 
             # Unpack and accumulate the outputs.
             d_outputs['densities'] += tangent_out[0]
@@ -131,7 +137,8 @@ class ProjectMDBDComponent(ExplicitComponent):
             d_outputs['penalized_heat_loads'] += tangent_out[2]
 
         elif mode == 'rev':
-            primal_out, pullback = vjp(self._compute_primal, *primals)
+            compute_primal = partial(self._compute_primal, debug_checks=debug_checks)
+            primal_out, pullback = vjp(compute_primal, *primals)
 
             # The cotangent for outputs is provided in d_outputs.
             cotangent = (d_outputs['densities'],
@@ -155,12 +162,14 @@ class ProjectMDBDComponent(ExplicitComponent):
     def _compute_primal(mesh_centers, mesh_size,
                         obj_centers, obj_radii,
                         kernel_centers, kernel_radii,
-                        heat_load):
+                        heat_load,
+                        debug_checks=False):
 
         # Calculate the pseudo-densities
         densities, penalized_densities = project_component(mesh_centers, mesh_size,
                                                            obj_centers, obj_radii,
-                                                           kernel_centers, kernel_radii)
+                                                           kernel_centers, kernel_radii,
+                                                           debug_checks=debug_checks)
 
         # Heat load
         penalized_heat_loads = heat_load * penalized_densities
@@ -179,6 +188,8 @@ class ProjectLinearSplineComponent(ExplicitComponent):
                              desc='Optional points representing the mesh kernel')
         self.options.declare('kernel_radii', default=None, types=_KERNEL_OPTION_TYPES,
                              desc='Optional radii of kernel points')
+        self.options.declare('debug_checks', default=False, types=bool,
+                             desc='Run projection shape/type/value checks')
 
     def setup(self):
 
@@ -205,6 +216,7 @@ class ProjectLinearSplineComponent(ExplicitComponent):
         mesh_size = jnp.atleast_1d(self.options['mesh_size'])
         mesh_centers = jnp.array(self.options['mesh_centers'])
         kernel_centers, kernel_radii = _projection_kernel_options(self)
+        debug_checks = self.options['debug_checks']
 
         # Get the inputs
         start_points = jnp.array(inputs['start_points'])
@@ -216,7 +228,8 @@ class ProjectLinearSplineComponent(ExplicitComponent):
         densities, penalized_densities, penalized_heat_loads = self._compute_primal(mesh_centers, mesh_size,
                                                                          kernel_centers, kernel_radii,
                                                                          start_points, end_points, radii,
-                                                                         heat_load)
+                                                                         heat_load,
+                                                                         debug_checks=debug_checks)
 
         # Write the outputs
         outputs['densities'] = densities
@@ -229,6 +242,7 @@ class ProjectLinearSplineComponent(ExplicitComponent):
         mesh_size = jnp.atleast_1d(self.options['mesh_size'])
         mesh_centers = jnp.array(self.options['mesh_centers'])
         kernel_centers, kernel_radii = _projection_kernel_options(self)
+        debug_checks = self.options['debug_checks']
 
         # Get design inputs.
         start_points = jnp.array(inputs['start_points'])
@@ -240,7 +254,8 @@ class ProjectLinearSplineComponent(ExplicitComponent):
         # The _compute_primal function now only expects the design inputs.
         frozen_compute_primal = partial(self._compute_primal,
                                         mesh_centers, mesh_size,
-                                        kernel_centers, kernel_radii)
+                                        kernel_centers, kernel_radii,
+                                        debug_checks=debug_checks)
 
         # Pack design inputs.
         primals = (start_points, end_points, radii, heat_load)
@@ -284,11 +299,13 @@ class ProjectLinearSplineComponent(ExplicitComponent):
     def _compute_primal(mesh_centers, mesh_size,
                         kernel_centers, kernel_radii,
                         start_points, end_points, radii,
-                        heat_load):
+                        heat_load,
+                        debug_checks=False):
 
         densities, penalized_densities = project_capsules(mesh_centers, mesh_size,
                                                           kernel_centers, kernel_radii,
-                                                          start_points, end_points, radii)
+                                                          start_points, end_points, radii,
+                                                          debug_checks=debug_checks)
 
         # Heat load
         penalized_heat_loads = heat_load * penalized_densities
@@ -307,6 +324,8 @@ class ProjectInterconnect(ExplicitComponent):
                              desc='Optional points representing the mesh kernel')
         self.options.declare('kernel_radii', default=None, types=_KERNEL_OPTION_TYPES,
                              desc='Optional radii of kernel points')
+        self.options.declare('debug_checks', default=False, types=bool,
+                             desc='Run projection shape/type/value checks')
 
     def setup(self):
 
@@ -336,6 +355,7 @@ class ProjectInterconnect(ExplicitComponent):
         mesh_size = jnp.atleast_1d(self.options['mesh_size'])
         mesh_centers = jnp.array(self.options['mesh_centers'])
         kernel_centers, kernel_radii = _projection_kernel_options(self)
+        debug_checks = self.options['debug_checks']
 
         # Get the inputs
         control_points = jnp.array(inputs['control_points'])
@@ -346,7 +366,8 @@ class ProjectInterconnect(ExplicitComponent):
         densities, penalized_densities, penalized_heat_loads = self._compute_primal(mesh_centers, mesh_size,
                                                                                     kernel_centers, kernel_radii,
                                                                                     control_points, radius,
-                                                                                    heat_load)
+                                                                                    heat_load,
+                                                                                    debug_checks=debug_checks)
 
         # Write the outputs
         outputs['densities'] = densities
@@ -359,6 +380,7 @@ class ProjectInterconnect(ExplicitComponent):
         mesh_size = jnp.atleast_1d(self.options['mesh_size'])
         mesh_centers = jnp.array(self.options['mesh_centers'])
         kernel_centers, kernel_radii = _projection_kernel_options(self)
+        debug_checks = self.options['debug_checks']
 
         # Get design inputs.
         control_points = jnp.array(inputs['control_points'])
@@ -368,7 +390,8 @@ class ProjectInterconnect(ExplicitComponent):
         # Freeze the static parameters in _compute_primal.
         frozen_compute_primal = partial(
             self._compute_primal,
-            mesh_centers, mesh_size, kernel_centers, kernel_radii
+            mesh_centers, mesh_size, kernel_centers, kernel_radii,
+            debug_checks=debug_checks
         )
 
         # Now, frozen_compute_primal only expects (control_points, radius, heat_load).
@@ -403,7 +426,8 @@ class ProjectInterconnect(ExplicitComponent):
     def _compute_primal(mesh_centers, mesh_size,
                         kernel_centers, kernel_radii,
                         cyl_points, cyl_radii,
-                        heat_load):
+                        heat_load,
+                        debug_checks=False):
 
         # TODO Fix this
         cyl_radii = cyl_radii[0]
@@ -413,7 +437,8 @@ class ProjectInterconnect(ExplicitComponent):
 
         densities, penalized_densities = project_capsules(mesh_centers, mesh_size,
                                                           kernel_centers, kernel_radii,
-                                                          start_points, end_points, radii)
+                                                          start_points, end_points, radii,
+                                                          debug_checks=debug_checks)
 
         # Heat load
         penalized_heat_loads = heat_load * penalized_densities
@@ -424,6 +449,191 @@ class ProjectInterconnect(ExplicitComponent):
         centers      = self.options['mesh_centers']
         element_size = self.options['mesh_size']
         densities    = prob.get_val(self.pathname + '.' + 'densities')
+        plot_grid(plotter, subplot, centers, element_size, densities=densities)
+
+
+class ProjectionConstraint(ExplicitComponent):
+    """
+    Lightweight combined projection for density constraints.
+
+    This component keeps the combined primitive interface but avoids the
+    aggregator's individual/heat-load bookkeeping. It computes a density field
+    for visualization and differentiates only the scalar max-density output.
+    """
+
+    def initialize(self):
+        self.options.declare('n_components', types=int, desc='Number of MDBD component primitive inputs', default=0)
+        self.options.declare('n_interconnects', types=int, desc='Number of interconnect primitive inputs', default=0)
+        self.options.declare('rho_min', types=(int, float), desc='Minimum value of the density', default=3e-3)
+
+        self.options.declare('mesh_size', types=(int, float), desc='Size of the mesh elements', default=1.0)
+        self.options.declare('mesh_centers', types=jnp.ndarray, desc='Centers of the mesh elements')
+        self.options.declare('kernel_centers', default=None, types=_KERNEL_OPTION_TYPES,
+                             desc='Optional points representing the mesh kernel')
+        self.options.declare('kernel_radii', default=None, types=_KERNEL_OPTION_TYPES,
+                             desc='Optional radii of kernel points')
+        self.options.declare('debug_checks', default=False, types=bool,
+                             desc='Run projection shape/type/value checks')
+
+    def setup(self):
+        n_components = self.options['n_components']
+        n_interconnects = self.options['n_interconnects']
+
+        if n_components + n_interconnects < 1:
+            raise ValueError("ProjectionConstraint requires at least one primitive input.")
+
+        for i in range(n_components):
+            self.add_input(f'component_centers_{i}', shape_by_conn=True)
+            self.add_input(f'component_radii_{i}', shape_by_conn=True)
+
+        for i in range(n_interconnects):
+            self.add_input(f'interconnect_points_{i}', shape_by_conn=True)
+            self.add_input(f'interconnect_radius_{i}', shape_by_conn=True)
+
+        nx, ny, nz = self.options['mesh_centers'].shape[:3]
+        self.add_output('aggregated_densities', shape=(nx, ny, nz))
+        self.add_output('max_density', val=0.0)
+
+    def setup_partials(self):
+        n_components = self.options['n_components']
+        n_interconnects = self.options['n_interconnects']
+
+        for i in range(n_components):
+            self.declare_partials('max_density', f'component_centers_{i}')
+            self.declare_partials('max_density', f'component_radii_{i}')
+
+        for i in range(n_interconnects):
+            self.declare_partials('max_density', f'interconnect_points_{i}')
+            self.declare_partials('max_density', f'interconnect_radius_{i}')
+
+    def compute(self, inputs, outputs):
+        primals = self._primitive_inputs(inputs)
+        aggregated_densities, max_density = self._compute_projection_primal(
+            jnp.array(self.options['mesh_centers']),
+            jnp.atleast_1d(self.options['mesh_size']),
+            *_projection_kernel_options(self),
+            *primals,
+            rho_min=self.options['rho_min'],
+            debug_checks=self.options['debug_checks'])
+
+        outputs['aggregated_densities'] = np.asarray(aggregated_densities)
+        outputs['max_density'] = np.asarray(max_density)
+
+    def compute_jacvec_product(self, inputs, d_inputs, d_outputs, mode, discrete_inputs=None):
+        primals = self._primitive_inputs(inputs)
+        frozen_max_density = partial(
+            self._compute_max_density_primal,
+            jnp.array(self.options['mesh_centers']),
+            jnp.atleast_1d(self.options['mesh_size']),
+            *_projection_kernel_options(self),
+            rho_min=self.options['rho_min'],
+            debug_checks=self.options['debug_checks'])
+
+        if mode == 'fwd':
+            tangents = self._primitive_tangents(d_inputs, primals)
+            _, tangent_out = jvp(frozen_max_density, primals, tangents)
+            if 'max_density' in d_outputs:
+                d_outputs['max_density'] += tangent_out
+
+        elif mode == 'rev':
+            _, pullback = vjp(frozen_max_density, *primals)
+            max_density_seed = (jnp.array(d_outputs['max_density'])
+                                if 'max_density' in d_outputs else jnp.zeros((1,)))
+            grads = pullback(max_density_seed)
+
+            n_components = self.options['n_components']
+            n_interconnects = self.options['n_interconnects']
+
+            for i in range(n_components):
+                self._add_if_present(d_inputs, f'component_centers_{i}', grads[0][i])
+                self._add_if_present(d_inputs, f'component_radii_{i}', grads[1][i])
+
+            for i in range(n_interconnects):
+                self._add_if_present(d_inputs, f'interconnect_points_{i}', grads[2][i])
+                self._add_if_present(d_inputs, f'interconnect_radius_{i}', grads[3][i])
+
+    def _primitive_inputs(self, inputs):
+        n_components = self.options['n_components']
+        n_interconnects = self.options['n_interconnects']
+
+        component_centers = [jnp.array(inputs[f'component_centers_{i}']) for i in range(n_components)]
+        component_radii = [jnp.array(inputs[f'component_radii_{i}']) for i in range(n_components)]
+        interconnect_points = [jnp.array(inputs[f'interconnect_points_{i}']) for i in range(n_interconnects)]
+        interconnect_radii = [jnp.array(inputs[f'interconnect_radius_{i}']) for i in range(n_interconnects)]
+
+        return component_centers, component_radii, interconnect_points, interconnect_radii
+
+    def _primitive_tangents(self, d_inputs, primals):
+        component_centers, component_radii, interconnect_points, interconnect_radii = primals
+        return (
+            self._tangent_list(d_inputs, 'component_centers', component_centers),
+            self._tangent_list(d_inputs, 'component_radii', component_radii),
+            self._tangent_list(d_inputs, 'interconnect_points', interconnect_points),
+            self._tangent_list(d_inputs, 'interconnect_radius', interconnect_radii),
+        )
+
+    @staticmethod
+    def _tangent_list(d_inputs, prefix, values):
+        return [
+            jnp.array(d_inputs[f'{prefix}_{i}'])
+            if f'{prefix}_{i}' in d_inputs else jnp.zeros_like(value)
+            for i, value in enumerate(values)
+        ]
+
+    @staticmethod
+    def _add_if_present(d_inputs, name, value):
+        if name in d_inputs:
+            d_inputs[name] += value
+
+    @staticmethod
+    def _compute_projection_primal(mesh_centers, mesh_size,
+                                   kernel_centers, kernel_radii,
+                                   component_centers, component_radii,
+                                   interconnect_points, interconnect_radii,
+                                   rho_min,
+                                   debug_checks=False):
+        density_fields = []
+
+        for centers, radii in zip(component_centers, component_radii):
+            _, penalized_densities = project_component(mesh_centers, mesh_size,
+                                                       centers, radii,
+                                                       kernel_centers, kernel_radii,
+                                                       debug_checks=debug_checks)
+            density_fields.append(penalized_densities)
+
+        for points, radius in zip(interconnect_points, interconnect_radii):
+            start_points, end_points, radii = create_cylinders(points, radius)
+            _, penalized_densities = project_capsules(mesh_centers, mesh_size,
+                                                      kernel_centers, kernel_radii,
+                                                      start_points, end_points, radii,
+                                                      debug_checks=debug_checks)
+            density_fields.append(penalized_densities)
+
+        aggregated_densities = jnp.sum(jnp.stack(density_fields, axis=0), axis=0)
+        aggregated_densities = jnp.where(aggregated_densities < rho_min, rho_min, aggregated_densities)
+        max_density = kreisselmeier_steinhauser_max(aggregated_densities.flatten(), rho=100)
+
+        return aggregated_densities, max_density
+
+    @staticmethod
+    def _compute_max_density_primal(mesh_centers, mesh_size,
+                                    kernel_centers, kernel_radii,
+                                    component_centers, component_radii,
+                                    interconnect_points, interconnect_radii,
+                                    rho_min,
+                                    debug_checks=False):
+        return ProjectionConstraint._compute_projection_primal(
+            mesh_centers, mesh_size,
+            kernel_centers, kernel_radii,
+            component_centers, component_radii,
+            interconnect_points, interconnect_radii,
+            rho_min,
+            debug_checks=debug_checks)[1]
+
+    def draw(self, plotter, subplot, prob):
+        centers      = self.options['mesh_centers']
+        element_size = self.options['mesh_size']
+        densities    = prob.get_val(self.pathname + '.' + 'aggregated_densities')
         plot_grid(plotter, subplot, centers, element_size, densities=densities)
 
 
@@ -444,6 +654,8 @@ class ProjectionAggregator(ExplicitComponent):
                              desc='Optional points representing the mesh kernel for combined mode')
         self.options.declare('kernel_radii', default=None, types=_KERNEL_OPTION_TYPES,
                              desc='Optional radii of kernel points for combined mode')
+        self.options.declare('debug_checks', default=False, types=bool,
+                             desc='Run projection shape/type/value checks')
 
     def setup(self):
         mode = self.options['mode']
@@ -527,7 +739,8 @@ class ProjectionAggregator(ExplicitComponent):
                 jnp.atleast_1d(self.options['mesh_size']),
                 *_projection_kernel_options(self),
                 *primals,
-                rho_min)
+                rho_min,
+                debug_checks=self.options['debug_checks'])
 
         outputs['aggregated_densities'] = aggregated_densities
         outputs['aggregated_heat_loads'] = aggregated_heat_loads
@@ -611,7 +824,8 @@ class ProjectionAggregator(ExplicitComponent):
             jnp.array(self.options['mesh_centers']),
             jnp.atleast_1d(self.options['mesh_size']),
             *_projection_kernel_options(self),
-            rho_min=rho_min)
+            rho_min=rho_min,
+            debug_checks=self.options['debug_checks'])
 
         if mode == 'fwd':
             tangents = self._combined_tangents(d_inputs, primals)
@@ -682,14 +896,16 @@ class ProjectionAggregator(ExplicitComponent):
                                  kernel_centers, kernel_radii,
                                  component_centers, component_radii, component_heat_loads,
                                  interconnect_points, interconnect_radii, interconnect_heat_loads,
-                                 rho_min):
+                                 rho_min,
+                                 debug_checks=False):
         density_fields = []
         heat_load_fields = []
 
         for centers, radii, heat_load in zip(component_centers, component_radii, component_heat_loads):
             _, penalized_densities = project_component(mesh_centers, mesh_size,
                                                        centers, radii,
-                                                       kernel_centers, kernel_radii)
+                                                       kernel_centers, kernel_radii,
+                                                       debug_checks=debug_checks)
             density_fields.append(penalized_densities)
             heat_load_fields.append(heat_load * penalized_densities)
 
@@ -697,7 +913,8 @@ class ProjectionAggregator(ExplicitComponent):
             start_points, end_points, radii = create_cylinders(points, radius)
             _, penalized_densities = project_capsules(mesh_centers, mesh_size,
                                                       kernel_centers, kernel_radii,
-                                                      start_points, end_points, radii)
+                                                      start_points, end_points, radii,
+                                                      debug_checks=debug_checks)
             density_fields.append(penalized_densities)
             heat_load_fields.append(heat_load * penalized_densities)
 

@@ -1,7 +1,7 @@
 import numpy as np
 import jax.numpy as jnp
 
-from SPI2py.API.projection import ProjectionAggregator
+from SPI2py.API.projection import ProjectionAggregator, ProjectionConstraint
 from SPI2py.models.geometry.cylinders import create_cylinders
 from SPI2py.models.projection.mesh_kernels import default_projection_kernel
 from SPI2py.models.projection.projection import project_capsules, project_component
@@ -35,6 +35,18 @@ def test_project_component_uses_default_kernel_when_omitted():
 
     for default_value, explicit_value in zip(default_result, explicit_result):
         np.testing.assert_allclose(default_value, explicit_value)
+
+
+def test_project_component_debug_checks_can_be_enabled():
+    mesh_centers = jnp.array([[[[[0.0, 0.0, 0.0]]]]])
+    mesh_size = jnp.array([1.0])
+    obj_centers = jnp.array([[0.0, 0.0, 0.0]])
+    obj_radii = jnp.array([[0.25]])
+
+    densities, penalized_densities = project_component(
+        mesh_centers, mesh_size, obj_centers, obj_radii, debug_checks=True)
+
+    np.testing.assert_allclose(densities, penalized_densities ** (1 / 3))
 
 
 def test_combined_aggregator_matches_individual_projection_math():
@@ -75,3 +87,34 @@ def test_combined_aggregator_matches_individual_projection_math():
 
     for actual_value, expected_value in zip(actual, expected):
         np.testing.assert_allclose(actual_value, expected_value)
+
+
+def test_projection_constraint_matches_combined_aggregator_density_constraint():
+    mesh_centers = jnp.array([[[[[0.0, 0.0, 0.0]]],
+                               [[[1.0, 0.0, 0.0]]]]])
+    mesh_size = jnp.array([1.0])
+    kernel_centers = jnp.array([[0.0, 0.0, 0.0]])
+    kernel_radii = jnp.array([[0.5]])
+    rho_min = 1e-2
+
+    component_centers = [jnp.array([[0.0, 0.0, 0.0]])]
+    component_radii = [jnp.array([[0.25]])]
+    component_heat_loads = [jnp.array(2.0)]
+    interconnect_points = [jnp.array([[0.0, 0.0, 0.0],
+                                      [1.0, 0.0, 0.0]])]
+    interconnect_radii = [jnp.array([[0.2], [0.2]])]
+    interconnect_heat_loads = [jnp.array(3.0)]
+
+    expected_densities, _, expected_max_density = ProjectionAggregator._compute_combined_primal(
+        mesh_centers, mesh_size, kernel_centers, kernel_radii,
+        component_centers, component_radii, component_heat_loads,
+        interconnect_points, interconnect_radii, interconnect_heat_loads,
+        rho_min)
+    actual_densities, actual_max_density = ProjectionConstraint._compute_projection_primal(
+        mesh_centers, mesh_size, kernel_centers, kernel_radii,
+        component_centers, component_radii,
+        interconnect_points, interconnect_radii,
+        rho_min)
+
+    np.testing.assert_allclose(actual_densities, expected_densities)
+    np.testing.assert_allclose(actual_max_density, expected_max_density)

@@ -1,181 +1,279 @@
-import math
+from dataclasses import dataclass
+
+import jax.numpy as jnp
 import numpy as np
 
+
+@dataclass(frozen=True)
 class Fluid:
-    def __init__(self, name, density, dynamic_viscosity):
-        """
-        Fluid properties class to define different fluids
-        
-        Args:
-            name (str): Name of the fluid
-            density (float): Density of the fluid in kg/m³
-            dynamic_viscosity (float): Dynamic viscosity of the fluid in Pa·s
-        """
-        self.name = name
-        self.density = density
-        self.dynamic_viscosity = dynamic_viscosity
+    """Fluid properties for incompressible pressure-drop calculations."""
+
+    name: str
+    density: float
+    dynamic_viscosity: float
+
 
 # Predefined fluids
 WATER = Fluid("Water", density=998.2, dynamic_viscosity=0.001002)
 AIR = Fluid("Air", density=1.225, dynamic_viscosity=1.81e-5)
 
-def calculate_bend_angle(coord1, coord2, coord3,d,tolc=1e-6):
-    """
-    Calculate the angle between pipe segments at a bend. It is assumed that bend radius is 3 times the pipe diameter.
-    
-    Args:
-        coord1 (array): First coordinate point
-        coord2 (array): Bend coordinate point
-        coord3 (array): Third coordinate point
-    
-    Returns:
-        float: Angle between pipe segments in degrees
-    """
-    r=d*3
-    # Create vectors
-    vector1 = np.array(coord1) - np.array(coord2)
-    vector2 = np.array(coord3) - np.array(coord2)
-    
-    # Normalize vectors
-    vector1_norm = vector1 / np.linalg.norm(vector1)
-    vector2_norm = vector2 / np.linalg.norm(vector2)
-    
-    # Calculate angle using dot product
-    cos_angle = np.dot(vector1_norm, vector2_norm)
-    nu=(1-tolc)*cos_angle
-    theta_radians = np.arccos(np.clip(nu, -1.0, 1.0))
-    alpha=math.pi-theta_radians
-    l=r*np.sqrt((1+nu)/(1-nu))
-    
-    
-    return alpha,l
 
-def calculate_pressure_drop(
-    coordinates, 
-    pipe_radius, 
-    fluid=WATER, 
-    flow_rate=None, 
+def smooth_pipe_friction_factor(reynolds_number):
+    """
+    Smooth-pipe Darcy friction factor with a blended transition region.
+
+    Laminar flow uses 64/Re. Turbulent flow uses the Blasius correlation, which
+    is appropriate for smooth pipes over ordinary turbulent Reynolds numbers.
+    The transition from Re=2300 to Re=4000 is blended to avoid a hard model
+    failure during optimization.
+    """
+    re = jnp.maximum(jnp.asarray(reynolds_number), 1e-12)
+    laminar = 64.0 / re
+    turbulent = 0.3164 / (re ** 0.25)
+
+    transition = jnp.clip((re - 2300.0) / (4000.0 - 2300.0), 0.0, 1.0)
+    transition = transition * transition * (3.0 - 2.0 * transition)
+    return (1.0 - transition) * laminar + transition * turbulent
+
+
+def bend_loss_coefficient(turn_angle, friction_factor, bend_radius_ratio=3.0):
+    """
+    Estimate bend-loss coefficient for a smooth elbow.
+
+    The angle is the pipe turn angle in radians, where 0 is straight and pi/2 is
+    a 90-degree bend. The ratio is bend radius divided by pipe diameter.
+    """
+    angle = jnp.clip(jnp.asarray(turn_angle), 0.0, jnp.pi)
+    ratio = jnp.asarray(bend_radius_ratio)
+    sin_half = jnp.sin(angle / 2.0)
+
+    coefficient = (
+        friction_factor * angle * ratio
+        + (0.1 + 2.4 * friction_factor) * sin_half
+        + (
+            6.6
+            * friction_factor
+            * (sin_half + jnp.sqrt(jnp.maximum(sin_half, 0.0) + 1e-12))
+        )
+        / (ratio ** (4.0 * angle / jnp.pi))
+    )
+    return jnp.where(angle > 1e-10, coefficient, 0.0)
+
+
+def calculate_bend_angle(coord1, coord2, coord3, d=None, tolc=1e-12):
+    """
+    Calculate the pipe turn angle at a bend in radians.
+
+    Coordinates are interpreted as centerline stations. A straight run returns
+    0.0 and a right-angle bend returns pi/2. If ``d`` is provided, the function
+    returns ``(angle, tangent_length)`` for backward compatibility with older
+    callers; pressure-drop calculations do not use that tangent length.
+    """
+    v1 = np.asarray(coord1, dtype=float) - np.asarray(coord2, dtype=float)
+    v2 = np.asarray(coord3, dtype=float) - np.asarray(coord2, dtype=float)
+
+    norm1 = np.linalg.norm(v1)
+    norm2 = np.linalg.norm(v2)
+    if norm1 <= tolc or norm2 <= tolc:
+        raise ValueError("Bend angle requires nonzero adjacent segment lengths.")
+
+    cos_included = np.dot(v1 / norm1, v2 / norm2)
+    included_angle = np.arccos(np.clip(cos_included, -1.0, 1.0))
+    turn_angle = float(np.pi - included_angle)
+
+    if d is None:
+        return turn_angle
+
+    bend_radius = 3.0 * float(d)
+    tangent_length = bend_radius * np.tan(turn_angle / 2.0)
+    return turn_angle, tangent_length
+
+
+def pressure_drop_primal(
+    coordinates,
+    pipe_radius,
+    flow_rate,
+    density=WATER.density,
+    dynamic_viscosity=WATER.dynamic_viscosity,
+    bend_radius_ratio=3.0,
 ):
     """
-    Calculate pressure drop in a pipe with multiple segments and bends. It is assumed that the flow is incompressible and turbulent in a smooth pipe.
-    
-    Args:
-        coordinates (list): List of coordinate tuples [(x1,y1,z1), (x2,y2,z2), ...]
-        pipe_radius (float): Pipe radius in meters
-        fluid (Fluid): Fluid object (default is water)
-        flow_rate (float, optional): Volume flow rate in m³/s 
-    
-    Returns:
-        float: total pressure drop 
-    """
-    # Validate input
-    if len(coordinates) < 2:
-        raise ValueError("At least two coordinates are required")
-    
-    # Convert coordinates to numpy array if it's a list
-    if isinstance(coordinates, list):
-        coordinates = np.array(coordinates)
-    
-    # Validate input
-    if not isinstance(coordinates, np.ndarray):
-        raise TypeError("Coordinates must be a list or numpy array")
-    
-    # Total pressure drop accumulator
-    total_pressure_drop = 0
-    detailed_results = []
-    
-    # Pressure drop calculation for each pipe segment
-    for i in range(len(coordinates) - 1):
-        # Get start and end coordinates for this segment
-        start_coords = coordinates[i]
-        end_coords = coordinates[i+1]
-        
-        # Calculate pipe segment length
-        segment_length = np.linalg.norm(
-            np.array(end_coords) - np.array(start_coords)
-        )
-        
-        # Calculate pipe diameter
-        pipe_diameter = 2 * pipe_radius
-        
-        # If flow rate not provided, use a default assumption
-        if flow_rate is None:
-            # Typical flow velocity for water pipes (1-2 m/s)
-            flow_velocity = 1.5  # m/s
-            flow_rate = flow_velocity * math.pi * (pipe_radius**2)
-        
-        # Calculate flow velocity
-        cross_sectional_area = math.pi * (pipe_radius**2)
-        flow_velocity = flow_rate / cross_sectional_area
-        
-        # Calculate Reynolds number
-        reynolds_number = (fluid.density * flow_velocity * pipe_diameter) / fluid.dynamic_viscosity
-        if reynolds_number < 2100:
-            raise ValueError("Flow is not turbulent. Reynolds number must be greater than 2100 for this calculation.")
-        
-        # Estimate friction factor (Blasius correlation)
-        friction_factor = 0.316/ reynolds_number**0.25
+    JAX-compatible pressure-drop calculation.
 
-        # Darcy-Weisbach equation constants
-        gravity = 9.81  # m/s²
-        
-        # Major losses (friction)
+    Coordinates are centerline stations. Major loss is computed over the
+    polyline centerline length, and bend loss is added at each interior station.
+    """
+    coordinates = jnp.asarray(coordinates)
+    pipe_radius = jnp.mean(jnp.ravel(jnp.asarray(pipe_radius)))
+    flow_rate = jnp.mean(jnp.ravel(jnp.asarray(flow_rate)))
+    density = jnp.asarray(density)
+    dynamic_viscosity = jnp.asarray(dynamic_viscosity)
+
+    pipe_diameter = 2.0 * pipe_radius
+    cross_sectional_area = jnp.pi * pipe_radius ** 2
+    flow_velocity = flow_rate / cross_sectional_area
+    velocity_head = flow_velocity ** 2 / (2.0 * 9.81)
+
+    segment_vectors = coordinates[1:] - coordinates[:-1]
+    segment_lengths = jnp.linalg.norm(segment_vectors, axis=1)
+    centerline_length = jnp.sum(segment_lengths)
+
+    reynolds_number = (
+        density * jnp.abs(flow_velocity) * pipe_diameter / dynamic_viscosity
+    )
+    friction_factor = smooth_pipe_friction_factor(reynolds_number)
+
+    major_loss_head = (
+        friction_factor * (centerline_length / pipe_diameter) * velocity_head
+    )
+
+    minor_loss_head = 0.0
+    if coordinates.shape[0] > 2:
+        incoming = coordinates[:-2] - coordinates[1:-1]
+        outgoing = coordinates[2:] - coordinates[1:-1]
+        incoming_norms = jnp.linalg.norm(incoming, axis=1, keepdims=True)
+        outgoing_norms = jnp.linalg.norm(outgoing, axis=1, keepdims=True)
+        incoming_unit = incoming / incoming_norms
+        outgoing_unit = outgoing / outgoing_norms
+
+        cos_included = jnp.sum(incoming_unit * outgoing_unit, axis=1)
+        included_angles = jnp.arccos(jnp.clip(cos_included, -1.0, 1.0))
+        turn_angles = jnp.pi - included_angles
+        bend_coefficients = bend_loss_coefficient(
+            turn_angles, friction_factor, bend_radius_ratio
+        )
+        minor_loss_head = jnp.sum(bend_coefficients) * velocity_head
+
+    total_head_loss = major_loss_head + minor_loss_head
+    total_pressure_drop = total_head_loss * density * 9.81
+    return jnp.atleast_1d(total_pressure_drop)
+
+
+def _validate_scalar(name, value):
+    arr = np.asarray(value, dtype=float)
+    if arr.size != 1:
+        raise ValueError(f"{name} must be scalar.")
+    scalar = float(arr.reshape(-1)[0])
+    if not np.isfinite(scalar):
+        raise ValueError(f"{name} must be finite.")
+    if scalar <= 0.0:
+        raise ValueError(f"{name} must be greater than zero.")
+    return scalar
+
+
+def _validate_coordinates(coordinates):
+    coordinates = np.asarray(coordinates, dtype=float)
+    if coordinates.ndim != 2 or coordinates.shape[1] != 3:
+        raise ValueError("coordinates must have shape (n_points, 3).")
+    if coordinates.shape[0] < 2:
+        raise ValueError("At least two coordinates are required.")
+    if not np.all(np.isfinite(coordinates)):
+        raise ValueError("coordinates must be finite.")
+
+    segment_lengths = np.linalg.norm(np.diff(coordinates, axis=0), axis=1)
+    if np.any(segment_lengths <= 1e-12):
+        raise ValueError("coordinates must not contain zero-length pipe segments.")
+    return coordinates
+
+
+def _pressure_drop_details(
+    coordinates,
+    pipe_radius,
+    flow_rate,
+    fluid,
+    bend_radius_ratio,
+):
+    pipe_diameter = 2.0 * pipe_radius
+    cross_sectional_area = np.pi * pipe_radius ** 2
+    flow_velocity = flow_rate / cross_sectional_area
+    reynolds_number = (
+        fluid.density * abs(flow_velocity) * pipe_diameter / fluid.dynamic_viscosity
+    )
+    friction_factor = float(smooth_pipe_friction_factor(reynolds_number))
+    velocity_head = flow_velocity ** 2 / (2.0 * 9.81)
+
+    details = []
+    for i, (start, end) in enumerate(zip(coordinates[:-1], coordinates[1:])):
+        segment_length = np.linalg.norm(end - start)
         major_loss_head = (
-            friction_factor * 
-            (segment_length / pipe_diameter) * 
-            (flow_velocity**2 / (2 * gravity))
+            friction_factor * (segment_length / pipe_diameter) * velocity_head
         )
-        
-        # Calculate bend loss if not the last segment
-        minor_loss_head = 0
-        bend_angle = 0
-        if i < len(coordinates) - 2:
-            # Calculate bend angle
-            alpha, l_c = calculate_bend_angle(
-                coordinates[i], 
-                coordinates[i+1], 
-                coordinates[i+2],
-                pipe_diameter
+
+        bend_angle = 0.0
+        minor_loss_head = 0.0
+        if i < coordinates.shape[0] - 2:
+            bend_angle = calculate_bend_angle(
+                coordinates[i], coordinates[i + 1], coordinates[i + 2]
             )
-            
-            # Estimate minor loss coefficient for bend
-            # This is a simplified model and can be refined
-            bend_radius_ratio = 3  # Bend radius is 3 times the pipe diameter
-            K_bend = (friction_factor * alpha*bend_radius_ratio)+(0.1+2.4*friction_factor)*np.sin(alpha/2)+(6.6*friction_factor*(np.sin(alpha/2)+np.sqrt(np.sin(alpha/2)+1e-6)))/((bend_radius_ratio)**(4*alpha/math.pi))
-            minor_loss_head = (
-                K_bend * 
-                (flow_velocity**2 / (2 * gravity))
+            k_bend = float(
+                bend_loss_coefficient(bend_angle, friction_factor, bend_radius_ratio)
             )
-        
-        # Total head loss for this segment
-        segment_head_loss = major_loss_head + minor_loss_head
-        
-        # Pressure drop for this segment
+            minor_loss_head = k_bend * velocity_head
+
         segment_pressure_drop = (
-            segment_head_loss * 
-            fluid.density * 
-            gravity
+            major_loss_head + minor_loss_head
+        ) * fluid.density * 9.81
+
+        details.append(
+            {
+                "segment": i + 1,
+                "length": segment_length,
+                "flow_velocity": flow_velocity,
+                "reynolds_number": reynolds_number,
+                "friction_factor": friction_factor,
+                "major_head_loss": major_loss_head,
+                "minor_head_loss": minor_loss_head,
+                "bend_angle": bend_angle,
+                "bend_angle_degrees": np.degrees(bend_angle),
+                "segment_pressure_drop": segment_pressure_drop,
+            }
         )
-        
-        # Accumulate total pressure drop
-        total_pressure_drop += segment_pressure_drop
-        
-        # Store detailed results for this segment
-        detailed_results.append({
-            'segment': i+1,
-            'length': segment_length,
-            'flow_velocity': flow_velocity,
-            'reynolds_number': reynolds_number,
-            'friction_factor': friction_factor,
-            'major_head_loss': major_loss_head,
-            'minor_head_loss': minor_loss_head,
-            'bend_angle': bend_angle,
-            'segment_pressure_drop': segment_pressure_drop
-        })
-    
-    return total_pressure_drop
-    #{
-        #'total_pressure_drop': total_pressure_drop,
-        #'fluid': fluid.name,
-        #'segments': detailed_results
-    #}
+    return details
+
+
+def calculate_pressure_drop(
+    coordinates,
+    pipe_radius,
+    fluid=WATER,
+    flow_rate=None,
+    bend_radius_ratio=3.0,
+    return_details=False,
+):
+    """
+    Calculate pressure drop in a pipe with multiple segments and bends.
+
+    The model assumes incompressible flow in a smooth pipe. Coordinates are
+    interpreted as centerline stations. Major loss is computed using the
+    Darcy-Weisbach equation, and each interior station contributes an empirical
+    bend loss based on the turn angle.
+    """
+    coordinates = _validate_coordinates(coordinates)
+    pipe_radius = _validate_scalar("pipe_radius", pipe_radius)
+    bend_radius_ratio = _validate_scalar("bend_radius_ratio", bend_radius_ratio)
+    if flow_rate is None:
+        raise ValueError("flow_rate is required.")
+    flow_rate = _validate_scalar("flow_rate", flow_rate)
+    _validate_scalar("fluid.density", fluid.density)
+    _validate_scalar("fluid.dynamic_viscosity", fluid.dynamic_viscosity)
+
+    total_pressure_drop = float(
+        pressure_drop_primal(
+            coordinates,
+            pipe_radius,
+            flow_rate,
+            fluid.density,
+            fluid.dynamic_viscosity,
+            bend_radius_ratio,
+        )[0]
+    )
+
+    if not return_details:
+        return total_pressure_drop
+
+    return {
+        "total_pressure_drop": total_pressure_drop,
+        "fluid": fluid.name,
+        "segments": _pressure_drop_details(
+            coordinates, pipe_radius, flow_rate, fluid, bend_radius_ratio
+        ),
+    }

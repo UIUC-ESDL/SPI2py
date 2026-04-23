@@ -14,7 +14,8 @@ from ..utilities.aggregation import kreisselmeier_steinhauser_max
 
 def project_component(grid_centers, grid_size,
                       obj_points, obj_radii,
-                      kernel_points=None, kernel_radii=None):
+                      kernel_points=None, kernel_radii=None,
+                      debug_checks=False):
     """
     Projects object points to the grid and calculates pseudo-densities.
 
@@ -45,21 +46,22 @@ def project_component(grid_centers, grid_size,
 
     kernel_points, kernel_radii = _resolve_projection_kernel(kernel_points, kernel_radii)
 
-    # Check the input shapes
-    assert_shape(grid_centers, (None, None, None, None, 3))
-    assert_shape(grid_size, (1,))
-    assert_shape(obj_points, (None, 3))
-    assert_shape(obj_radii, (None, 1))
-    assert_shape(kernel_points, (None, 3))
-    assert_shape(kernel_radii, (None, 1))
+    if debug_checks:
+        # Check the input shapes
+        assert_shape(grid_centers, (None, None, None, None, 3))
+        assert_shape(grid_size, (1,))
+        assert_shape(obj_points, (None, 3))
+        assert_shape(obj_radii, (None, 1))
+        assert_shape(kernel_points, (None, 3))
+        assert_shape(kernel_radii, (None, 1))
 
-    # Check the input types
-    assert_type(grid_centers, "float64")
-    assert_type(grid_size, "float64")
-    assert_type(obj_points, "float64")
-    assert_type(obj_radii, "float64")
-    assert_type(kernel_points, "float64")
-    assert_type(kernel_radii, "float64")
+        # Check the input types
+        assert_type(grid_centers, "float64")
+        assert_type(grid_size, "float64")
+        assert_type(obj_points, "float64")
+        assert_type(obj_radii, "float64")
+        assert_type(kernel_points, "float64")
+        assert_type(kernel_radii, "float64")
 
     # Extract grid dimensions
     grid_nx, grid_ny, grid_nz, _, _ = grid_centers.shape
@@ -96,18 +98,20 @@ def project_component(grid_centers, grid_size,
     # Penalize the densities
     all_penalized_densities = penalize_densities(all_densities)
 
-    # Check the output values
-    atol = 1e-2
-    assert_equal(jnp.all(0 - atol <= all_densities), True)
-    assert_equal(jnp.all(all_densities <= 1 + atol), True)
-    assert_equal(jnp.all(0 - atol <= all_penalized_densities), True)
-    assert_equal(jnp.all(all_penalized_densities <= 1 + atol), True)
+    if debug_checks:
+        # Check the output values
+        atol = 1e-2
+        assert_equal(jnp.all(0 - atol <= all_densities), True)
+        assert_equal(jnp.all(all_densities <= 1 + atol), True)
+        assert_equal(jnp.all(0 - atol <= all_penalized_densities), True)
+        assert_equal(jnp.all(all_penalized_densities <= 1 + atol), True)
 
     return all_densities, all_penalized_densities
 
 def project_capsules(grid_centers, grid_size,
                      kernel_points=None, kernel_radii=None,
-                     start_points=None, end_points=None, radii=None):
+                     start_points=None, end_points=None, radii=None,
+                     debug_checks=False):
     """
     Projects the points to the mesh and calculates the pseudo-densities
 
@@ -169,12 +173,13 @@ def project_capsules(grid_centers, grid_size,
     all_densities = densities_combined
     all_penalized_densities = penalized_densities_combined
 
-    # Check the output values
-    atol = 1e-2
-    assert_equal(jnp.all(0 - atol <= all_densities), True)
-    assert_equal(jnp.all(all_densities <= 1 + atol), True)
-    assert_equal(jnp.all(0 - atol <= all_penalized_densities), True)
-    assert_equal(jnp.all(all_penalized_densities <= 1 + atol), True)
+    if debug_checks:
+        # Check the output values
+        atol = 1e-2
+        assert_equal(jnp.all(0 - atol <= all_densities), True)
+        assert_equal(jnp.all(all_densities <= 1 + atol), True)
+        assert_equal(jnp.all(0 - atol <= all_penalized_densities), True)
+        assert_equal(jnp.all(all_penalized_densities <= 1 + atol), True)
 
     return all_densities, all_penalized_densities
 
