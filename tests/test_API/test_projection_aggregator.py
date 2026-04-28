@@ -118,3 +118,27 @@ def test_projection_constraint_matches_combined_aggregator_density_constraint():
 
     np.testing.assert_allclose(actual_densities, expected_densities)
     np.testing.assert_allclose(actual_max_density, expected_max_density)
+
+
+def test_projection_constraint_supports_degenerate_capsule_as_sphere():
+    mesh_centers = jnp.array([[[[[0.0, 0.0, 0.0]]]]])
+    mesh_size = jnp.array([1.0])
+    kernel_centers = jnp.array([[0.0, 0.0, 0.0]])
+    kernel_radii = jnp.array([[0.5]])
+    rho_min = 1e-2
+
+    component_centers = []
+    component_radii = []
+    interconnect_points = [jnp.array([[0.0, 0.0, 0.0],
+                                      [0.0, 0.0, 0.0]])]
+    interconnect_radii = [jnp.array([[0.5], [0.5]])]
+
+    densities, max_density = ProjectionConstraint._compute_projection_primal(
+        mesh_centers, mesh_size, kernel_centers, kernel_radii,
+        component_centers, component_radii,
+        interconnect_points, interconnect_radii,
+        rho_min)
+
+    assert jnp.isfinite(densities).all()
+    assert jnp.isfinite(max_density).all()
+    np.testing.assert_array_less(rho_min, densities + 1e-12)

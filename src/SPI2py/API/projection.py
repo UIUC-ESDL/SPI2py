@@ -483,12 +483,12 @@ class ProjectionConstraint(ExplicitComponent):
             raise ValueError("ProjectionConstraint requires at least one primitive input.")
 
         for i in range(n_components):
-            self.add_input(f'component_centers_{i}', shape_by_conn=True)
-            self.add_input(f'component_radii_{i}', shape_by_conn=True)
+            self.add_input(f'component_centers_{i}', val=0.0, shape_by_conn=True)
+            self.add_input(f'component_radii_{i}', val=0.0, shape_by_conn=True)
 
         for i in range(n_interconnects):
-            self.add_input(f'interconnect_points_{i}', shape_by_conn=True)
-            self.add_input(f'interconnect_radius_{i}', shape_by_conn=True)
+            self.add_input(f'interconnect_points_{i}', val=0.0, shape_by_conn=True)
+            self.add_input(f'interconnect_radius_{i}', val=0.0, shape_by_conn=True)
 
         nx, ny, nz = self.options['mesh_centers'].shape[:3]
         self.add_output('aggregated_densities', shape=(nx, ny, nz))
@@ -668,8 +668,8 @@ class ProjectionAggregator(ExplicitComponent):
                 raise ValueError("ProjectionAggregator individual mode requires n_projections >= 1.")
 
             for i in range(n_projections):
-                self.add_input(f'densities_{i}', shape_by_conn=True)
-                self.add_input(f'heat_loads_{i}', shape_by_conn=True)
+                self.add_input(f'densities_{i}', val=0.0, shape_by_conn=True)
+                self.add_input(f'heat_loads_{i}', val=0.0, shape_by_conn=True)
 
             self.add_output('aggregated_densities', copy_shape='densities_0')
             self.add_output('aggregated_heat_loads', copy_shape='heat_loads_0')
@@ -679,13 +679,13 @@ class ProjectionAggregator(ExplicitComponent):
                 raise ValueError("ProjectionAggregator combined mode requires at least one primitive input.")
 
             for i in range(n_components):
-                self.add_input(f'component_centers_{i}', shape_by_conn=True)
-                self.add_input(f'component_radii_{i}', shape_by_conn=True)
+                self.add_input(f'component_centers_{i}', val=0.0, shape_by_conn=True)
+                self.add_input(f'component_radii_{i}', val=0.0, shape_by_conn=True)
                 self.add_input(f'component_heat_load_{i}', val=0.0)
 
             for i in range(n_interconnects):
-                self.add_input(f'interconnect_points_{i}', shape_by_conn=True)
-                self.add_input(f'interconnect_radius_{i}', shape_by_conn=True)
+                self.add_input(f'interconnect_points_{i}', val=0.0, shape_by_conn=True)
+                self.add_input(f'interconnect_radius_{i}', val=0.0, shape_by_conn=True)
                 self.add_input(f'interconnect_heat_load_{i}', val=0.0)
 
             nx, ny, nz = self.options['mesh_centers'].shape[:3]

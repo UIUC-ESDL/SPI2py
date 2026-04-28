@@ -7,7 +7,7 @@ from openmdao.api import ExplicitComponent, Group
 # SPI2py imports
 from ..models.mechanics.homogenous_transformation import transform_points
 from ..models.utilities.input_and_output import read_xyzr_file, read_csv_file
-from ..models.utilities.visualization import plot_spheres, plot_capsules, plot_AABB_spheres, plot_translation_sensitivities
+from ..models.utilities.visualization import plot_spheres, plot_capsules, plot_capsules2, plot_AABB_spheres, plot_translation_sensitivities
 
 
 class System(Group):
@@ -210,7 +210,9 @@ class LinearSplineComponent(ExplicitComponent):
         self.options.declare('start_points', types=list)
         self.options.declare('end_points', types=list)
         self.options.declare('radii', types=list)
-        self.options.declare('port_positions', types=list)
+        self.options.declare('port_positions', default=None, types=(list, type(None)))
+        self.options.declare('ports', default=None, types=(list, type(None)))
+        self.options.declare('color', types=str, default='black')
 
     def setup(self):
 
@@ -219,12 +221,24 @@ class LinearSplineComponent(ExplicitComponent):
         end_points = self.options['end_points']
         radii = self.options['radii']
         ports = self.options['port_positions']
+        if ports is None:
+            ports = self.options['ports']
+        if ports is None:
+            raise ValueError("LinearSplineComponent requires port_positions or ports.")
 
-        # Convert the lists to JAX numpy arrays
-        start_points = jnp.array(start_points).reshape(-1, 3)
-        end_points   = jnp.array(end_points).reshape(-1, 3)
-        radii        = jnp.array(radii).reshape(-1, 1)
-        ports        = jnp.array(ports).reshape(-1, 3)
+        # Convert the lists to arrays
+        start_points = np.array(start_points, dtype=float).reshape(-1, 3)
+        end_points   = np.array(end_points, dtype=float).reshape(-1, 3)
+        radii        = np.array(radii, dtype=float).reshape(-1, 1)
+        ports        = np.array(ports, dtype=float).reshape(-1, 3)
+
+        if start_points.shape != end_points.shape:
+            raise ValueError("LinearSplineComponent start_points and end_points must have the same shape.")
+        if radii.shape[0] != start_points.shape[0]:
+            raise ValueError("LinearSplineComponent requires one radius per capsule segment.")
+        if np.any(radii <= 0.0):
+            raise ValueError("LinearSplineComponent radii must be greater than zero.")
+        self.num_capsules = start_points.shape[0]
 
         # Define the input shapes
         self.add_input('start_points', val=start_points)
@@ -252,11 +266,7 @@ class LinearSplineComponent(ExplicitComponent):
                               ['ports', 'translation', 'rotation'],
                               method='exact')
 
-        # Pass-through radii: updated_radii = radii
-        n = int(np.prod(self._inputs['radii'].shape))  # or store radii size in setup
-        rows = np.arange(n, dtype=int)
-        cols = np.arange(n, dtype=int)
-        self.declare_partials('updated_radii', 'radii', rows=rows, cols=cols, val=1.0)
+        self.declare_partials('updated_radii', 'radii', method='exact')
 
     def compute(self, inputs, outputs):
 
@@ -360,6 +370,13 @@ class LinearSplineComponent(ExplicitComponent):
                                                 rotation.flatten())
 
         return updated_start_points, updated_end_points, radii, updated_ports
+
+    def draw(self, plotter, subplot, prob, opacity=0.5, debug=True):
+        start_points = prob.get_val(self.pathname + '.' + 'updated_start_points')
+        end_points = prob.get_val(self.pathname + '.' + 'updated_end_points')
+        radii = prob.get_val(self.pathname + '.' + 'updated_radii')
+        color = self.options['color']
+        plot_capsules2(plotter, subplot, start_points, end_points, radii, color, opacity=opacity)
 
 
 class Interconnect(ExplicitComponent):

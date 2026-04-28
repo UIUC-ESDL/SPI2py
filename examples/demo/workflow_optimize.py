@@ -92,15 +92,15 @@ def plot_driver_trajectory(outputs_dir, reports_dir,
 
 
 # SPI2py API imports
-from SPI2py.API.system import System, Components, Interconnects, MDBDComponent, Interconnect
+from SPI2py.API.system import System, Components, Interconnects, LinearSplineComponent, Interconnect
 from SPI2py.API.projection import Projections, ProjectionConstraint
 from SPI2py.API.objectives import BoundingBoxVolume
 from SPI2py.API.utilities import Multiplexer
 
 
 # SPI2py supporting model imports
-from SPI2py.models.physics.distributed.mesh import generate_mesh, find_active_nodes, find_face_nodes
-from SPI2py.models.utilities.visualization import plot_grid, plot_spheres, plot_capsules, plot_stl_file, plot_AABB, plot_capsules2
+from SPI2py.models.physics.distributed.mesh import generate_mesh
+from SPI2py.models.utilities.visualization import plot_grid, plot_spheres, plot_capsules, plot_stl_file, plot_AABB
 from SPI2py.models.utilities.visualization import plot_translation_sensitivities
 
 
@@ -114,9 +114,9 @@ t0 = time_ns()
 
 
 # Define the domain as a uniform grid
-x_min, x_max = (0, 7)
+x_min, x_max = (0, 14)
 y_min, y_max = (0, 7)
-z_min, z_max = (0, 4)
+z_min, z_max = (0, 7)
 element_size = 0.3
 nodes, elements, centers, nx, ny, nz, lx, ly, lz = generate_mesh(x_min, x_max, y_min, y_max, z_min, z_max, element_size=element_size)
 centers = centers.reshape(nx, ny, nz, 1, 3)
@@ -145,22 +145,23 @@ proj   = Projections()
 model.add_subsystem('system', system)
 model.system.add_subsystem('comps', comps)
 model.system.add_subsystem('ints', ints)
-model.add_subsystem('proj', proj)
 
 
 
 # %% Define the system
 
 
-# Define the minimum radius of the MDBD representation
-# For Bot_Eye, r >=6.0e-2 ~ 44 points, 4.0e-2 ~ 122 points, >=3.0e-2 ~ 238 points, >=2.0e-2 ~ 623 points
-# min_rad = 4.0e-2
-min_rad = 6.0e-2
-
 # Define the components
-comp_1 = MDBDComponent(filepath='csvs/Bot_Eye_5k_300s.csv', port_positions=[[0.75, 0, 0], [0, 0.75, 0]], minimum_radius=min_rad, color='blue')
-comp_2 = MDBDComponent(filepath='csvs/CogDrivenGear_5k_300s.csv', port_positions=[[0, 1.75, 0], [-1.75, 0, 0]], minimum_radius=min_rad, color='orange')
-comp_3 = MDBDComponent(filepath='csvs/CrossHead_Pin_5k_300s.csv', port_positions=[[0.15, 0.5, 1.0], [1.25, 0.5, 1.0]], minimum_radius=min_rad, color='red')
+bot_eye_ports = [[0.75, 0, 0], [0, 0.75, 0]]
+cog_ports = [[0, 1.75, 0], [-1.75, 0, 0]]
+pin_ports = [[0.15, 0.5, 1.0], [1.25, 0.5, 1.0]]
+
+comp_1 = LinearSplineComponent(start_points=[[0.0, 0.0, 0.35]], end_points=[[0.0, 0.0, 0.65]],
+                               radii=[0.35], port_positions=bot_eye_ports, color='blue')
+comp_2 = LinearSplineComponent(start_points=[[0.0, 0.0, 0.5]], end_points=[[0.0, 0.0, 0.5]],
+                               radii=[1.5], port_positions=cog_ports, color='orange')
+comp_3 = LinearSplineComponent(start_points=[[0.7, 0.5, 0.5]], end_points=[[0.7, 0.5, 1.75]],
+                               radii=[0.45], port_positions=pin_ports, color='red')
 model.system.comps.add_subsystem('comp_1', comp_1)
 model.system.comps.add_subsystem('comp_2', comp_2)
 model.system.comps.add_subsystem('comp_3', comp_3)
@@ -190,16 +191,40 @@ model.connect('system.comps.comp_1.updated_ports', 'system.ints.int_3.end_point'
 # Now combine (overlay) all the projections
 # This requires "multiplexing" the outputs of each projection into single, unified vectors for centers and radii.
 # Row dimensions are manually specified at this time. Column dimensions are self-determined (3D coord, 1D radii)
-mux_centers = Multiplexer(n_i=[44, 422, 80, 3, 3, 3, 3, 3, 3], m=3)
-mux_radii = Multiplexer(n_i=[44, 422, 80, 3, 3, 3, 3, 3, 3], m=1)
+comp_1_capsule_points = Multiplexer(n_i=[1, 1], m=3)
+comp_1_capsule_radii = Multiplexer(n_i=[1, 1], m=1)
+comp_2_capsule_points = Multiplexer(n_i=[1, 1], m=3)
+comp_2_capsule_radii = Multiplexer(n_i=[1, 1], m=1)
+comp_3_capsule_points = Multiplexer(n_i=[1, 1], m=3)
+comp_3_capsule_radii = Multiplexer(n_i=[1, 1], m=1)
+mux_centers = Multiplexer(n_i=[2, 2, 2, 3, 3, 3], m=3)
+mux_radii = Multiplexer(n_i=[2, 2, 2, 3, 3, 3], m=1)
+prob.model.add_subsystem('comp_1_capsule_points', comp_1_capsule_points)
+prob.model.add_subsystem('comp_1_capsule_radii', comp_1_capsule_radii)
+prob.model.add_subsystem('comp_2_capsule_points', comp_2_capsule_points)
+prob.model.add_subsystem('comp_2_capsule_radii', comp_2_capsule_radii)
+prob.model.add_subsystem('comp_3_capsule_points', comp_3_capsule_points)
+prob.model.add_subsystem('comp_3_capsule_radii', comp_3_capsule_radii)
 prob.model.add_subsystem('mux_centers', mux_centers)
 prob.model.add_subsystem('mux_radii', mux_radii)
-prob.model.connect('system.comps.comp_1.updated_sphere_positions', 'mux_centers.input_0')
-prob.model.connect('system.comps.comp_2.updated_sphere_positions', 'mux_centers.input_1')
-prob.model.connect('system.comps.comp_3.updated_sphere_positions', 'mux_centers.input_2')
-prob.model.connect('system.comps.comp_1.updated_sphere_radii', 'mux_radii.input_0')
-prob.model.connect('system.comps.comp_2.updated_sphere_radii', 'mux_radii.input_1')
-prob.model.connect('system.comps.comp_3.updated_sphere_radii', 'mux_radii.input_2')
+prob.model.connect('system.comps.comp_1.updated_start_points', 'comp_1_capsule_points.input_0')
+prob.model.connect('system.comps.comp_1.updated_end_points', 'comp_1_capsule_points.input_1')
+prob.model.connect('system.comps.comp_1.updated_radii', 'comp_1_capsule_radii.input_0')
+prob.model.connect('system.comps.comp_1.updated_radii', 'comp_1_capsule_radii.input_1')
+prob.model.connect('system.comps.comp_2.updated_start_points', 'comp_2_capsule_points.input_0')
+prob.model.connect('system.comps.comp_2.updated_end_points', 'comp_2_capsule_points.input_1')
+prob.model.connect('system.comps.comp_2.updated_radii', 'comp_2_capsule_radii.input_0')
+prob.model.connect('system.comps.comp_2.updated_radii', 'comp_2_capsule_radii.input_1')
+prob.model.connect('system.comps.comp_3.updated_start_points', 'comp_3_capsule_points.input_0')
+prob.model.connect('system.comps.comp_3.updated_end_points', 'comp_3_capsule_points.input_1')
+prob.model.connect('system.comps.comp_3.updated_radii', 'comp_3_capsule_radii.input_0')
+prob.model.connect('system.comps.comp_3.updated_radii', 'comp_3_capsule_radii.input_1')
+prob.model.connect('comp_1_capsule_points.stacked_output', 'mux_centers.input_0')
+prob.model.connect('comp_2_capsule_points.stacked_output', 'mux_centers.input_1')
+prob.model.connect('comp_3_capsule_points.stacked_output', 'mux_centers.input_2')
+prob.model.connect('comp_1_capsule_radii.stacked_output', 'mux_radii.input_0')
+prob.model.connect('comp_2_capsule_radii.stacked_output', 'mux_radii.input_1')
+prob.model.connect('comp_3_capsule_radii.stacked_output', 'mux_radii.input_2')
 prob.model.connect('system.ints.int_1.updated_cyl_positions', 'mux_centers.input_3')
 prob.model.connect('system.ints.int_2.updated_cyl_positions', 'mux_centers.input_4')
 prob.model.connect('system.ints.int_3.updated_cyl_positions', 'mux_centers.input_5')
@@ -209,24 +234,24 @@ prob.model.connect('system.ints.int_3.updated_cyl_radius', 'mux_radii.input_5')
 
 
 # Aggregate the pseudo-densities
+model.add_subsystem('proj', proj)
 
-projection_constraint = ProjectionConstraint(n_components=3, n_interconnects=3,
+projection_constraint = ProjectionConstraint(n_components=0, n_interconnects=6,
                                              rho_min=1e-2, mesh_size=element_size, mesh_centers=centers)
 model.proj.add_subsystem('density_constraint', projection_constraint)
 
-model.connect('system.comps.comp_1.updated_sphere_positions', 'proj.density_constraint.component_centers_0')
-model.connect('system.comps.comp_1.updated_sphere_radii', 'proj.density_constraint.component_radii_0')
-model.connect('system.comps.comp_2.updated_sphere_positions', 'proj.density_constraint.component_centers_1')
-model.connect('system.comps.comp_2.updated_sphere_radii', 'proj.density_constraint.component_radii_1')
-model.connect('system.comps.comp_3.updated_sphere_positions', 'proj.density_constraint.component_centers_2')
-model.connect('system.comps.comp_3.updated_sphere_radii', 'proj.density_constraint.component_radii_2')
-
-model.connect('system.ints.int_1.updated_cyl_positions', 'proj.density_constraint.interconnect_points_0')
-model.connect('system.ints.int_1.updated_cyl_radius', 'proj.density_constraint.interconnect_radius_0')
-model.connect('system.ints.int_2.updated_cyl_positions', 'proj.density_constraint.interconnect_points_1')
-model.connect('system.ints.int_2.updated_cyl_radius', 'proj.density_constraint.interconnect_radius_1')
-model.connect('system.ints.int_3.updated_cyl_positions', 'proj.density_constraint.interconnect_points_2')
-model.connect('system.ints.int_3.updated_cyl_radius', 'proj.density_constraint.interconnect_radius_2')
+model.connect('comp_1_capsule_points.stacked_output', 'proj.density_constraint.interconnect_points_0')
+model.connect('comp_1_capsule_radii.stacked_output', 'proj.density_constraint.interconnect_radius_0')
+model.connect('comp_2_capsule_points.stacked_output', 'proj.density_constraint.interconnect_points_1')
+model.connect('comp_2_capsule_radii.stacked_output', 'proj.density_constraint.interconnect_radius_1')
+model.connect('comp_3_capsule_points.stacked_output', 'proj.density_constraint.interconnect_points_2')
+model.connect('comp_3_capsule_radii.stacked_output', 'proj.density_constraint.interconnect_radius_2')
+model.connect('system.ints.int_1.updated_cyl_positions', 'proj.density_constraint.interconnect_points_3')
+model.connect('system.ints.int_1.updated_cyl_radius', 'proj.density_constraint.interconnect_radius_3')
+model.connect('system.ints.int_2.updated_cyl_positions', 'proj.density_constraint.interconnect_points_4')
+model.connect('system.ints.int_2.updated_cyl_radius', 'proj.density_constraint.interconnect_radius_4')
+model.connect('system.ints.int_3.updated_cyl_positions', 'proj.density_constraint.interconnect_points_5')
+model.connect('system.ints.int_3.updated_cyl_radius', 'proj.density_constraint.interconnect_radius_5')
 
 
 
@@ -261,7 +286,7 @@ prob.model.add_constraint(DENSITY_CONSTRAINT_NAME, upper=DENSITY_CONSTRAINT_UPPE
 
 # Set up the optimizer
 prob.driver = om.ScipyOptimizeDriver()
-prob.driver.options['maxiter'] = 20
+prob.driver.options['maxiter'] = 10
 
 # Driver-level recorder for objective/constraint trajectories.
 driver_rec = om.SqliteRecorder(DRIVER_CASES_FILENAME)
@@ -316,7 +341,7 @@ prob.record('before')
 
 # Run the optimization
 t3 = time_ns()
-prob.run_driver()
+# prob.run_driver()
 t4 = time_ns()
 print(f"Optimization time: {(t4 - t3) / 1e9} seconds")
 
@@ -380,9 +405,9 @@ tot_before_int_3 = tot_before[('bbv.volume', 'system.ints.int_3.control_points')
 
 plot_grid(plotter, sp1, centers, element_size, densities=None, min_opacity=0.0)
 model.system.draw(plotter, sp1, prob)
-plot_translation_sensitivities(plotter, sp1, prob.get_val("system.comps.comp_1.updated_sphere_positions")[0], tot_before_comp_1, color="blue",factor=2.0)
-plot_translation_sensitivities(plotter, sp1, prob.get_val("system.comps.comp_2.updated_sphere_positions")[0], tot_before_comp_2, color="orange",factor=2.0)
-plot_translation_sensitivities(plotter, sp1, prob.get_val("system.comps.comp_3.updated_sphere_positions")[0], tot_before_comp_3, color="red",factor=2.0)
+plot_translation_sensitivities(plotter, sp1, prob.get_val("system.comps.comp_1.updated_start_points")[0], tot_before_comp_1, color="blue",factor=2.0)
+plot_translation_sensitivities(plotter, sp1, prob.get_val("system.comps.comp_2.updated_start_points")[0], tot_before_comp_2, color="orange",factor=2.0)
+plot_translation_sensitivities(plotter, sp1, prob.get_val("system.comps.comp_3.updated_start_points")[0], tot_before_comp_3, color="red",factor=2.0)
 plot_translation_sensitivities(plotter, sp1, prob.get_val("system.ints.int_1.updated_cyl_positions")[1], tot_before_int_1, color="gray",factor=2.0)
 plot_translation_sensitivities(plotter, sp1, prob.get_val("system.ints.int_2.updated_cyl_positions")[1], tot_before_int_2, color="gray",factor=2.0)
 plot_translation_sensitivities(plotter, sp1, prob.get_val("system.ints.int_3.updated_cyl_positions")[1], tot_before_int_3, color="gray",factor=2.0)

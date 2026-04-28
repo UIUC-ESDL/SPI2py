@@ -138,13 +138,16 @@ def plot_capsules2(plotter, subplot_index, start_points, end_points, radii, colo
     # plotter.render_window.SetMultiSamples(0)
 
     for cyl_start, cyl_stop, cyl_radius in zip(start_points, end_points, radii):
-        # Plot the spheres
-        # TODO Add back in
-        # plot_spheres(plotter, subplot_index, cyl_start, cyl_radius, color, opacity)
-        # plot_spheres(plotter, subplot_index, cyl_stop, cyl_radius, color, opacity)
+        # Plot the spherical ends.
+        plot_spheres(plotter, subplot_index, cyl_start, cyl_radius, color, opacity)
 
-        # Plot the cylinders
         length = np.linalg.norm(cyl_stop - cyl_start)
+        if length <= 1e-12:
+            continue
+
+        plot_spheres(plotter, subplot_index, cyl_stop, cyl_radius, color, opacity)
+
+        # Plot the cylinder body
         direction = (cyl_stop - cyl_start) / length
         center = (cyl_start + cyl_stop) / 2
         cylinder = pv.Cylinder(center=center, direction=direction, radius=cyl_radius, height=length)
