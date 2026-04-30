@@ -1,10 +1,29 @@
 # Standard imports
 import numpy as np
 import pyvista as pv
+from matplotlib import pyplot as plt
+from openmdao import api as om
+
+
 
 # SPI2py imports
 from ..geometry.cylinders import create_cylinders
 from ..geometry.spheres import get_aabb_bounds
+
+
+def _density_rgba(densities, min_opacity=5e-3, violation_color=(255, 0, 0)):
+
+    flat_densities = np.asarray(densities).flatten()
+
+    # Clamp densities to the range [min_opacity, 1.0] for visibility.
+    clamped = np.maximum(min_opacity, np.minimum(flat_densities, 1.0))
+    alphas = (clamped * 255).astype(np.uint8)
+
+    rgba = np.zeros((flat_densities.size, 4), dtype=np.uint8)
+    rgba[:, 3] = alphas
+    rgba[flat_densities > 1.1, :3] = violation_color
+
+    return rgba
 
 
 def plot_grid(plotter,
@@ -43,22 +62,12 @@ def plot_grid(plotter,
 
     # If densities are provided, create an RGBA array for per-glyph opacity.
     if densities is not None:
-        flat_densities = densities.flatten()
-        # Clamp densities to the range [min_opacity, 1.0]
-        clamped = np.maximum(min_opacity, np.minimum(flat_densities, 1.0))
-        # Convert clamped densities to alpha values in 0-255.
-        alphas = (clamped * 255).astype(np.uint8)
+        cell_rgba = _density_rgba(densities, min_opacity=min_opacity)
         # Determine the number of points per glyph.
         n_input = flat_centers.shape[0]
         npts_per_glyph = glyphs.n_points // n_input
-        # Repeat each alpha value so that each glyph's points get the same alpha.
-        new_alphas = np.repeat(alphas, npts_per_glyph)
-
-        # Create an RGBA array for all points in the glyph mesh.
-        rgba = np.zeros((glyphs.n_points, 4), dtype=np.uint8)
-        rgba[:, 3] = new_alphas  # Set the alpha channel.
-        # R, G, B remain zero for black.
-        glyphs.point_data["RGBA"] = rgba  # Use point_data here
+        # Repeat each color so that each glyph's points get the same RGBA value.
+        glyphs.point_data["RGBA"] = np.repeat(cell_rgba, npts_per_glyph, axis=0)
 
         # Add the glyph mesh using the RGBA values.
         plotter.add_mesh(glyphs, rgba=True, lighting=False)
@@ -411,3 +420,54 @@ def plot_translation_sensitivities(plotter, subplot_index, centers, sensitivitie
     plotter.add_mesh(sphere, color=color)
 
 
+def plot_driver_trajectory(outputs_dir, reports_dir,
+                           objective_name,
+                           constraint_name,
+                           constraint_upper, driver_cases_filename, trajectory_plot_filename):
+    def _recorded_scalar(case, getter, variable_name):
+        values = getter(scaled=False)
+        if variable_name not in values:
+            raise KeyError(f"'{variable_name}' was not recorded. Available names: {list(values.keys())}")
+        return float(np.asarray(values[variable_name]).reshape(-1)[0])
+
+    case_db = outputs_dir / driver_cases_filename
+    if not case_db.exists():
+        print(f"Driver trajectory not plotted because {case_db} was not found.")
+        return None
+
+    cr = om.CaseReader(case_db)
+    case_names = cr.list_cases('driver', out_stream=None)
+    if not case_names:
+        print(f"Driver trajectory not plotted because {case_db} contains no driver cases.")
+        return None
+
+    iterations = []
+    objectives = []
+    constraints = []
+    for i, case_name in enumerate(case_names):
+        case = cr.get_case(case_name)
+        iterations.append(i)
+        objectives.append(_recorded_scalar(case, case.get_objectives, objective_name))
+        constraints.append(_recorded_scalar(case, case.get_constraints, constraint_name))
+
+    reports_dir.mkdir(parents=True, exist_ok=True)
+    plot_path = reports_dir / trajectory_plot_filename
+
+    fig, axes = plt.subplots(2, 1, sharex=True, figsize=(7, 5), constrained_layout=True)
+    axes[0].plot(iterations, objectives, marker='o', linewidth=1.5)
+    axes[0].set_ylabel(objective_name)
+    axes[0].grid(True, alpha=0.3)
+
+    axes[1].plot(iterations, constraints, marker='o', linewidth=1.5)
+    axes[1].axhline(constraint_upper, color='tab:red', linestyle='--',
+                    linewidth=1.0, label=f'upper = {constraint_upper:g}')
+    axes[1].set_xlabel('Driver iteration')
+    axes[1].set_ylabel(constraint_name)
+    axes[1].grid(True, alpha=0.3)
+    axes[1].legend(loc='best')
+
+    fig.suptitle('Optimization Trajectory')
+    fig.savefig(plot_path, dpi=200)
+    plt.close(fig)
+
+    return plot_path

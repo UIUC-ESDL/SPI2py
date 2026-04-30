@@ -32,7 +32,7 @@ import matplotlib.pyplot as plt
 
 OBJECTIVE_NAME = 'bbv.volume'
 DENSITY_CONSTRAINT_NAME = 'proj.density_constraint.max_density'
-DENSITY_CONSTRAINT_UPPER = 1.1
+DENSITY_CONSTRAINT_UPPER = 1.2
 DRIVER_CASES_FILENAME = 'driver_cases.sql'
 TRAJECTORY_PLOT_FILENAME = 'optimization_trajectory.png'
 
@@ -271,7 +271,7 @@ prob.model.add_design_var('system.ints.int_2.control_points', ref=0.25, lower=-5
 prob.model.add_design_var('system.ints.int_3.control_points', ref=0.25, lower=-5, upper=5)
 
 
-
+# TODO Update to Pressure Drop
 # Define the objective function
 bbv = BoundingBoxVolume()
 model.add_subsystem('bbv', bbv)
@@ -286,7 +286,7 @@ prob.model.add_constraint(DENSITY_CONSTRAINT_NAME, upper=DENSITY_CONSTRAINT_UPPE
 
 # Set up the optimizer
 prob.driver = om.ScipyOptimizeDriver()
-prob.driver.options['maxiter'] = 10
+prob.driver.options['maxiter'] = 20
 
 # Driver-level recorder for objective/constraint trajectories.
 driver_rec = om.SqliteRecorder(DRIVER_CASES_FILENAME)
@@ -341,7 +341,7 @@ prob.record('before')
 
 # Run the optimization
 t3 = time_ns()
-# prob.run_driver()
+prob.run_driver()
 t4 = time_ns()
 print(f"Optimization time: {(t4 - t3) / 1e9} seconds")
 

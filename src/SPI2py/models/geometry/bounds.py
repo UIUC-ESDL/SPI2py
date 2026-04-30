@@ -27,8 +27,6 @@ def bounding_box_bounds(positions, radii):
     return bounds
 
 
-
-
 def smooth_bounding_box_bounds(positions, radii):
     """
     Calculate the bounding box that contains all spheres.
